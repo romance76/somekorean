@@ -1,0 +1,1 @@
+<template><div class="p-4 text-center text-gray-400">페이지 준비 중</div></template>
