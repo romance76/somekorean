@@ -12,7 +12,7 @@
 
         <!-- 가격 (눈에 띄게) -->
         <div class="bg-red-50 border border-red-100 rounded-xl p-4">
-          <div class="flex items-center gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <div class="flex-1">
               <label class="block text-sm font-bold text-red-700 mb-1">가격 ($) *</label>
               <div class="relative">
@@ -110,7 +110,7 @@
         <!-- 연락처 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">연락처 정보</label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs text-gray-500 mb-1">전화번호</label>
               <input v-model="form.contact_phone" type="tel" placeholder="000-000-0000"
@@ -132,9 +132,9 @@
         <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{{ error }}</div>
 
         <!-- 버튼 -->
-        <div class="flex justify-end space-x-3">
-          <button @click="$router.back()" class="px-5 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">취소</button>
-          <button @click="submit" :disabled="loading" class="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
+        <div class="flex justify-end gap-3">
+          <button @click="$router.back()" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">취소</button>
+          <button @click="submit" :disabled="loading" class="w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
             {{ loading ? '등록 중...' : '물품 등록' }}
           </button>
         </div>

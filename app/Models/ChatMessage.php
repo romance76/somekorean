@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ChatMessage extends Model
 {
-    protected $fillable = ['chat_room_id', 'user_id', 'message', 'type'];
+    protected $fillable = ['chat_room_id', 'user_id', 'message', 'type', 'file_url', 'file_name', 'file_type'];
 
     public function user()
     {

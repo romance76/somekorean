@@ -1,13 +1,13 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-16">
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl">
-        <div class="flex items-center justify-between">
+      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl">
+        <div class="flex items-center justify-between px-6 py-5">
           <div>
             <h1 class="text-xl font-black">👥 커뮤니티 동호회</h1>
             <p class="text-blue-100 text-sm mt-0.5">관심사가 같은 한인들과 함께하세요</p>
           </div>
-          <button @click="showCreateModal = true" class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50 flex-shrink-0">
+          <button @click="showCreateModal = true" class="sm:self-auto bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50 flex-shrink-0">
             + 동호회 만들기
           </button>
         </div>
@@ -28,7 +28,7 @@
     <div class="max-w-[1200px] mx-auto px-4 mt-2">
       <div class="bg-white rounded-2xl shadow-sm p-3">
         <div class="flex items-center gap-2">
-          <select v-model="radius" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white flex-shrink-0">
+          <select v-model="radius" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white">
             <option :value="5">📍 5mi</option>
             <option :value="10">📍 10mi</option>
             <option :value="20">📍 20mi</option>
@@ -38,8 +38,8 @@
             <option :value="0">📍 전체</option>
           </select>
           <input v-model="search" type="text" placeholder="동호회 검색..."
-            class="flex-1 min-w-[100px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
-          <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex-shrink-0">검색</button>
+            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 min-w-0" />
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700">검색</button>
         </div>
       </div>
     </div>
@@ -50,8 +50,8 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       <div
         v-for="club in filteredClubs"
-        :key="club.name"
-        class="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+        :key="club.id || club.name"
+        class="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group" @click="goToClub(club.id)"
       >
         <!-- 그라데이션 배너 -->
         <div
@@ -102,7 +102,7 @@
               <span class="text-[11px] text-gray-400 ml-2">{{ club.memberCount }}명</span>
             </div>
             <button
-              class="bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs font-semibold px-4 py-2 rounded-full hover:from-pink-600 hover:to-red-600 transition shadow-sm"
+              class="bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:from-pink-600 hover:to-red-600 transition shadow-sm"
             >
               가입하기
             </button>
@@ -198,9 +198,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
+const router = useRouter()
 const radius = ref(30);
 const search = ref('');
 const selectedClubCategory = ref('all');
@@ -238,104 +240,7 @@ const clubCategories = [
   { value: '기타', label: '기타' },
 ];
 
-const clubs = ref([
-  {
-    name: '조지아 맘스 모임',
-    category: '육아/교육',
-    emoji: '👶',
-    description: '조지아 지역 한인 엄마들의 육아 정보 공유 및 모임',
-    memberCount: 248,
-    isApproval: true,
-    gradientFrom: '#F472B6',
-    gradientTo: '#A78BFA',
-    memberColors: ['#F472B6', '#A78BFA', '#60A5FA'],
-    memberInitials: ['김', '이', '박'],
-  },
-  {
-    name: '애틀랜타 한인 축구회',
-    category: '스포츠',
-    emoji: '⚽',
-    description: '매주 토요일 오전 축구 모임, 초보자도 환영합니다!',
-    memberCount: 156,
-    isApproval: false,
-    gradientFrom: '#34D399',
-    gradientTo: '#3B82F6',
-    memberColors: ['#34D399', '#3B82F6', '#F59E0B'],
-    memberInitials: ['정', '최', '한'],
-  },
-  {
-    name: '한인 골프 동호회',
-    category: '스포츠',
-    emoji: '⛳',
-    description: '함께 라운딩하며 친목을 다지는 골프 모임',
-    memberCount: 89,
-    isApproval: false,
-    gradientFrom: '#10B981',
-    gradientTo: '#059669',
-    memberColors: ['#10B981', '#059669', '#6EE7B7'],
-    memberInitials: ['유', '강', '조'],
-  },
-  {
-    name: 'IT 개발자 네트워크',
-    category: '비즈니스',
-    emoji: '💻',
-    description: '실리콘밸리부터 동부까지, 한인 개발자 커뮤니티',
-    memberCount: 312,
-    isApproval: false,
-    gradientFrom: '#6366F1',
-    gradientTo: '#8B5CF6',
-    memberColors: ['#6366F1', '#8B5CF6', '#A78BFA'],
-    memberInitials: ['서', '윤', '임'],
-  },
-  {
-    name: '요리 연구회',
-    category: '음식/요리',
-    emoji: '🍳',
-    description: '한식부터 양식까지, 요리 레시피 공유 및 쿡오프 모임',
-    memberCount: 174,
-    isApproval: false,
-    gradientFrom: '#F59E0B',
-    gradientTo: '#EF4444',
-    memberColors: ['#F59E0B', '#EF4444', '#F97316'],
-    memberInitials: ['안', '송', '배'],
-  },
-  {
-    name: '북클럽 - 한국 문학',
-    category: '취미/여가',
-    emoji: '📚',
-    description: '매월 한 권의 한국 문학 작품을 읽고 토론하는 모임',
-    memberCount: 63,
-    isApproval: true,
-    gradientFrom: '#8B5CF6',
-    gradientTo: '#EC4899',
-    memberColors: ['#8B5CF6', '#EC4899', '#A78BFA'],
-    memberInitials: ['문', '장', '권'],
-  },
-  {
-    name: '등산 동호회',
-    category: '스포츠',
-    emoji: '🏔️',
-    description: '주말마다 함께 산행하며 건강과 우정을 쌓아요',
-    memberCount: 108,
-    isApproval: false,
-    gradientFrom: '#059669',
-    gradientTo: '#0D9488',
-    memberColors: ['#059669', '#0D9488', '#34D399'],
-    memberInitials: ['오', '신', '황'],
-  },
-  {
-    name: '한인 교회 찬양팀',
-    category: '종교',
-    emoji: '🎵',
-    description: '찬양과 워십을 함께하는 한인 교회 음악 사역 모임',
-    memberCount: 45,
-    isApproval: true,
-    gradientFrom: '#3B82F6',
-    gradientTo: '#1D4ED8',
-    memberColors: ['#3B82F6', '#1D4ED8', '#60A5FA'],
-    memberInitials: ['홍', '노', '하'],
-  },
-]);
+const clubs = ref([]);
 
 const filteredClubs = computed(() => {
   let result = clubs.value;
@@ -348,6 +253,8 @@ const filteredClubs = computed(() => {
   }
   return result;
 });
+
+function goToClub(id) { router.push("/clubs/" + id) }
 
 async function submitCreateClub() {
   createError.value = '';
@@ -399,6 +306,44 @@ async function submitCreateClub() {
     creating.value = false;
   }
 }
+
+async function fetchClubs() {
+  try {
+    const { data } = await axios.get('/api/clubs');
+    const list = data.data || data || [];
+    const gradientColors = [
+      { from: '#F472B6', to: '#A78BFA' },
+      { from: '#34D399', to: '#3B82F6' },
+      { from: '#6366F1', to: '#8B5CF6' },
+      { from: '#F59E0B', to: '#EF4444' },
+      { from: '#059669', to: '#0D9488' },
+      { from: '#3B82F6', to: '#1D4ED8' },
+      { from: '#EC4899', to: '#BE185D' },
+    ];
+    clubs.value = list.map((c, i) => {
+      const g = gradientColors[i % gradientColors.length];
+      return {
+        id: c.id,
+        name: c.name,
+        category: c.category || '기타',
+        emoji: c.name?.charAt(0) || '👥',
+        description: c.description || '',
+        memberCount: c.member_count || 0,
+        isApproval: c.is_approval || false,
+        gradientFrom: g.from,
+        gradientTo: g.to,
+        memberColors: [g.from, g.to, '#60A5FA'],
+        memberInitials: ['M', 'E', 'M'],
+      };
+    });
+  } catch (e) {
+    console.error('clubs load error', e);
+  }
+}
+
+onMounted(() => {
+  fetchClubs();
+});
 </script>
 
 <style scoped>

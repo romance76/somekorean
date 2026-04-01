@@ -6,3 +6,10 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('shorts:fetch --limit=75 --keep=500')->dailyAt('03:00');
+Schedule::command('maangchi:fetch')->weeklyOn(1, '04:00');
+
+Schedule::command('elder:check')->everyMinute();

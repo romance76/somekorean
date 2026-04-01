@@ -12,17 +12,41 @@ class FetchNews extends Command
     protected $description = '한인 뉴스 RSS 피드를 가져와 DB에 저장합니다';
 
     private array $feeds = [
-        '연합뉴스' => 'https://www.yna.co.kr/rss/all.xml',
-        'KBS'     => 'https://world.kbs.co.kr/rss/rss_news.htm?lang=k',
-        '한겨레'   => 'https://www.hani.co.kr/rss/',
+        // 미국 이민/비자 공식 정보
+        'USCIS'       => 'https://www.uscis.gov/news/news-releases.rss',
+        // 미주 한인 언론 (영문)
+        '미주한국일보'  => 'https://www.koreatimes.com/rss/rss.asp',
+        '미주중앙일보'  => 'https://www.koreadaily.com/rss/list.aspx',
+        '코리아헤럴드'  => 'https://www.koreaherald.com/rss.php',
+        '코리아타임스'  => 'https://www.koreatimes.co.kr/www2/rss/rss.asp',
+        // 한국 주요 언론
+        '한겨레'       => 'https://www.hani.co.kr/rss/',
+        '연합뉴스'     => 'https://www.yna.co.kr/rss/all.xml',
+        'KBS월드'     => 'https://world.kbs.co.kr/rss/rss_news.htm?lang=k',
+        // 미국 한인 커뮤니티 관련
+        'VOA한국어'   => 'https://www.voakorea.com/rss/zopvoy$pqpmo.rss',
     ];
 
     private array $categoryKeywords = [
-        '정치/사회' => ['대통령', '국회', '선거', '법원', '경찰', '이민', '비자', '정치', '정부', '외교', '북한', '트럼프', '바이든'],
-        '경제'     => ['경제', '주식', '부동산', '달러', '환율', '투자', '금리', '코스피', '나스닥', '은행', '세금', 'GDP'],
-        '생활'     => ['건강', '교육', '학교', '대학', '요리', '맛집', '병원', '의료', '보험', '운전', '날씨', '생활'],
-        '문화'     => ['드라마', '영화', '음악', 'K-pop', '한류', '공연', 'BTS', '넷플릭스', '문화', '예술', '전시'],
-        '스포츠'   => ['야구', '축구', '농구', '올림픽', '골프', 'MLB', 'NBA', 'NFL', '손흥민', '오타니', '김하성'],
+        // 이민/비자 — 가장 먼저 검사 (한인들의 핵심 관심사)
+        '이민/비자'  => [
+            '비자', 'visa', 'Visa', 'USCIS', '이민', '영주권', 'green card', 'Green Card',
+            'H-1B', 'H1B', 'F-1', 'OPT', 'DACA', 'work permit', '취업비자', '학생비자',
+            '시민권', 'citizenship', 'naturalization', '귀화', '추방', 'deportation',
+            'immigration', 'Immigration', '이민국', '이민법', '비자 인터뷰', 'I-485', 'I-130',
+            'asylum', '망명', 'refugee', '난민', 'border', '국경',
+        ],
+        '미국생활'   => [
+            '미국', 'USA', 'America', '한인', '코리아타운', 'Koreatown', '한국인',
+            '미주', '교민', '세금신고', 'tax return', 'IRS', '소셜시큐리티', 'Social Security',
+            '운전면허', 'DMV', '건강보험', 'health insurance', 'Medicare', 'Medicaid',
+            '렌트', 'rent', '부동산', '학군', '공립학교', 'public school', '대입',
+        ],
+        '정치/사회'  => ['대통령', '국회', '선거', '법원', '경찰', '정치', '정부', '외교', '북한', '트럼프', '바이든', '행정명령'],
+        '경제'       => ['경제', '주식', '달러', '환율', '투자', '금리', '코스피', '나스닥', '은행', '세금', 'GDP', '관세', '무역'],
+        '생활'       => ['건강', '교육', '학교', '대학', '요리', '맛집', '병원', '의료', '보험', '날씨', '생활'],
+        '문화'       => ['드라마', '영화', '음악', 'K-pop', '한류', '공연', 'BTS', '넷플릭스', '문화', '예술'],
+        '스포츠'     => ['야구', '축구', '농구', '올림픽', '골프', 'MLB', 'NBA', 'NFL', '손흥민', '오타니', '김하성'],
     ];
 
     public function handle(): int
@@ -97,6 +121,10 @@ class FetchNews extends Command
                         if (str_starts_with($type, 'image/')) {
                             $imageUrl = (string) $item->enclosure->attributes()->url;
                         }
+                    }
+                    // Try to extract og:image from article HTML if no image found yet in RSS
+                    if (!$imageUrl) {
+                        $imageUrl = $this->extractArticleImage($link);
                     }
 
                     // 발행일
@@ -216,6 +244,55 @@ class FetchNews extends Command
             }
 
             return $text;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    private function extractArticleImage(string $url): ?string
+    {
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 8,
+                    'user_agent' => 'Mozilla/5.0 (SomeKorean Bot)',
+                ],
+                'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+            ]);
+
+            // Fetch only first 5KB to get meta tags without downloading full page
+            $html = @file_get_contents($url, false, $context, 0, 8192);
+            if (!$html) return null;
+
+            // Try og:image
+            if (preg_match('/<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']/', $html, $m)) {
+                return $m[1];
+            }
+            if (preg_match('/<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']/', $html, $m)) {
+                return $m[1];
+            }
+
+            // Try twitter:image
+            if (preg_match('/<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']/', $html, $m)) {
+                return $m[1];
+            }
+
+            // Try first img with src that looks like an article image (not logo/icon)
+            if (preg_match_all('/<img[^>]+src=["\']([^"\']+\.(jpg|jpeg|png|webp))["\'][^>]*>/i', $html, $matches)) {
+                foreach ($matches[1] as $imgSrc) {
+                    // Skip tiny images (icons, logos)
+                    if (strpos($imgSrc, 'logo') !== false) continue;
+                    if (strpos($imgSrc, 'icon') !== false) continue;
+                    if (strpos($imgSrc, 'pixel') !== false) continue;
+                    if (strlen($imgSrc) < 10) continue;
+                    // Return first valid image
+                    if (str_starts_with($imgSrc, 'http')) {
+                        return $imgSrc;
+                    }
+                }
+            }
+
+            return null;
         } catch (\Exception $e) {
             return null;
         }

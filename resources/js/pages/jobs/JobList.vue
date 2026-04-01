@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 pb-16">
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <div>
             <h1 class="text-xl font-black">💼 구인구직</h1>
             <p class="text-blue-100 text-sm mt-0.5">한인 채용 정보와 구직 공고</p>
@@ -37,7 +37,7 @@
             <option :value="0">📍 전체</option>
           </select>
           <input v-model="search" @keyup.enter="load(1)" type="text" placeholder="직종, 회사명 검색..."
-            class="flex-1 min-w-[100px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
           <select v-model="region" @change="load(1)" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white flex-shrink-0">
             <option value="">전체 지역</option>
             <option>Atlanta</option><option>New York</option><option>Los Angeles</option>
@@ -87,7 +87,7 @@
               <span v-if="job.is_pinned" class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">상단</span>
               <span class="font-semibold text-gray-800 truncate">{{ job.title }}</span>
             </div>
-            <div class="flex items-center space-x-3 text-xs text-gray-500">
+            <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-gray-500">
               <span>🏢 {{ job.company_name || '비공개' }}</span>
               <span v-if="job.region">📍 {{ job.region }}</span>
               <span v-if="job.job_type" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{{ job.job_type }}</span>

@@ -11,10 +11,15 @@ class PointController extends Controller
     public function balance()
     {
         $user = Auth::user();
+        $checkedInToday = \App\Models\Checkin::where('user_id', $user->id)
+            ->where('checkin_date', today())
+            ->exists();
         return response()->json([
-            'points' => $user->points_total,
-            'cash'   => $user->cash_balance,
-            'level'  => $user->level,
+            'points'          => $user->points_total,
+            'points_total'    => $user->points_total,
+            'cash'            => $user->cash_balance,
+            'level'           => $user->level,
+            'checked_in_today'=> $checkedInToday,
         ]);
     }
 

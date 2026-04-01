@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 pb-16">
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <div>
             <h1 class="text-xl font-black">🛒 중고장터</h1>
             <p class="text-blue-100 text-sm mt-0.5">한인 중고 거래 · 물물 교환</p>
@@ -37,9 +37,9 @@
             <option :value="0">📍 전체</option>
           </select>
           <input v-model="search" @keyup.enter="load(1)" type="text" placeholder="검색..."
-            class="flex-1 min-w-[100px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
-          <button @click="load(1)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex-shrink-0">검색</button>
-          <div class="flex gap-1 flex-shrink-0">
+            class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+          <div class="flex gap-2">
+            <button @click="load(1)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700">검색</button>
             <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'" class="p-2 rounded-lg">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
             </button>

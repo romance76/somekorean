@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>슬롯머신</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#1a0533,#2d0a5e,#1a0533);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Arial,sans-serif;color:white;overflow:hidden}
+.machine{background:linear-gradient(180deg,#7c3aed,#4c1d95);border-radius:20px;padding:20px;box-shadow:0 0 40px rgba(139,92,246,0.8);max-width:340px;width:95%;text-align:center}
+h1{font-size:22px;color:#fbbf24;text-shadow:0 0 10px #fbbf24;margin-bottom:10px;letter-spacing:2px}
+.cr{font-size:17px;margin-bottom:10px;color:#e879f9}
+.cr span{color:#fbbf24;font-weight:bold;font-size:20px}
+.reels{background:#0f0a1e;border-radius:10px;padding:10px;margin-bottom:12px;border:3px solid #7c3aed;display:flex;gap:8px;justify-content:center;height:90px;align-items:center}
+.reel{width:76px;height:76px;background:#1a0533;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:40px;border:2px solid #4c1d95}
+.reel.spin{animation:sp 0.09s linear infinite}
+@keyframes sp{0%{transform:scaleY(1)}50%{transform:scaleY(0.8)}100%{transform:scaleY(1)}}
+.bet-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
+.bb{background:#4c1d95;border:2px solid #7c3aed;color:white;width:34px;height:34px;border-radius:6px;font-size:18px;cursor:pointer}
+.ba{font-size:16px;color:#fbbf24;font-weight:bold;min-width:70px;text-align:center}
+.msg{min-height:32px;font-size:16px;font-weight:bold;color:#fbbf24;margin-bottom:10px}
+.sbtn{background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:#000;padding:13px 0;border-radius:10px;font-size:17px;font-weight:bold;cursor:pointer;width:100%;box-shadow:0 4px 14px rgba(245,158,11,0.5)}
+.sbtn:disabled{opacity:0.5;cursor:not-allowed}
+.pt{background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;font-size:11px;color:#c4b5fd;text-align:left;margin-top:10px}
+.pt h3{color:#fbbf24;margin-bottom:4px;text-align:center;font-size:12px}
+.pr{display:flex;justify-content:space-between;padding:2px 0}
+.bk{background:#475569;border:none;color:white;padding:7px 18px;border-radius:8px;cursor:pointer;margin-top:8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="machine">
+  <h1>🎰 SLOTS</h1>
+  <div class="cr">크레딧: <span id="cr">1000</span></div>
+  <div class="reels"><div class="reel" id="r0">🍒</div><div class="reel" id="r1">🍋</div><div class="reel" id="r2">🍊</div></div>
+  <div class="bet-row"><button class="bb" onclick="cb(-10)">-</button><div class="ba">베팅: <span id="bt">10</span></div><button class="bb" onclick="cb(10)">+</button></div>
+  <div class="msg" id="msg">🎰 행운을 빌어요!</div>
+  <button class="sbtn" id="sb" onclick="spin()">🎰 SPIN!</button>
+  <div class="pt"><h3>🏆 배당표</h3><div class="pr"><span>💎💎💎</span><span>×100</span></div><div class="pr"><span>7️⃣7️⃣7️⃣</span><span>×50</span></div><div class="pr"><span>🍀🍀🍀</span><span>×20</span></div><div class="pr"><span>⭐⭐⭐</span><span>×10</span></div><div class="pr"><span>같은 3개</span><span>×3</span></div><div class="pr"><span>같은 2개</span><span>×1.5</span></div><div class="pr"><span>🍒 하나</span><span>×1.2</span></div></div>
+  <button class="bk" onclick="exit()">← 나가기</button>
+</div>
+<script>
+const SYM=['🍒','🍋','🍊','🍇','⭐','🍀','7️⃣','💎'];
+const WT=[20,18,15,12,10,8,5,3];
+const TOT=WT.reduce((a,b)=>a+b,0);
+let cr=1000,bt=10,spinning=false,won=0;
+function rng(){let r=Math.random()*TOT,s=0;for(let i=0;i<SYM.length;i++){s+=WT[i];if(r<s)return SYM[i];}return SYM[0];}
+function cb(d){if(spinning)return;bt=Math.min(100,Math.max(10,bt+d));document.getElementById('bt').textContent=bt;}
+let timers=[];
+function spin(){
+  if(spinning||cr<bt)return;spinning=true;cr-=bt;
+  document.getElementById('cr').textContent=cr;
+  document.getElementById('msg').textContent='🎲 돌리는 중...';
+  document.getElementById('sb').disabled=true;
+  const reels=[0,1,2].map(i=>document.getElementById('r'+i));
+  reels.forEach(r=>r.classList.add('spin'));
+  const res=[];
+  timers.forEach(t=>clearInterval(t));timers=[];
+  reels.forEach((r,i)=>{
+    const t=setInterval(()=>r.textContent=SYM[Math.floor(Math.random()*SYM.length)],80);
+    timers.push(t);
+    setTimeout(()=>{clearInterval(t);const s=rng();res[i]=s;r.textContent=s;r.classList.remove('spin');if(i===2)setTimeout(()=>calc(res),200);},800+i*300);
+  });
+}
+function calc(r){
+  const [a,b,c]=r;let m=0,msg='';
+  if(a===b&&b===c){if(a==='💎')m=100;else if(a==='7️⃣')m=50;else if(a==='🍀')m=20;else if(a==='⭐')m=10;else m=3;msg=`🎉 JACKPOT! ×${m}`;}
+  else if(a===b||b===c||a===c){m=1.5;msg='✨ 2개 일치! ×1.5';}
+  else if(r.includes('🍒')){m=1.2;msg='🍒 체리! ×1.2';}
+  else{msg='😢 다시 도전!';}
+  if(m>0){const w=Math.floor(bt*m);cr+=w;won+=w;document.getElementById('cr').textContent=cr;msg+=` +${w}`;}
+  document.getElementById('msg').textContent=msg;
+  document.getElementById('sb').disabled=false;spinning=false;
+  if(cr<=0){setTimeout(over,1000);}
+}
+function over(){window.parent.postMessage({type:'GAME_SCORE',game:'slots',score:won},'*');}
+function exit(){window.parent.postMessage({type:'GAME_EXIT',game:'slots'},'*');}
+</script>
+</body>
+</html>

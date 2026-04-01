@@ -40,7 +40,7 @@ class ProfileController extends Controller
         $request->validate([
             'name'     => 'sometimes|string|max:50',
             'username' => ['sometimes', 'string', 'max:30', 'alpha_dash', Rule::unique('users')->ignore($user->id)],
-            'bio'      => 'nullable|string|max:300',
+            'bio'      => 'nullable|string|max:255',
             'region'   => 'nullable|string|max:100',
             'lang'     => 'nullable|in:ko,en',
             'avatar'   => 'nullable|image|max:2048',

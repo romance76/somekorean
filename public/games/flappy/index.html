@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Flappy Bird</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#70c5ce;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:Arial,sans-serif;touch-action:none}
+canvas{display:block;max-width:100vw;max-height:88vh}
+#tip{color:white;font-size:13px;text-shadow:1px 1px 2px rgba(0,0,0,0.5);margin-bottom:4px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:white}
+#ov h2{font-size:28px;color:#facc15}
+.btn{background:#facc15;color:#000;border:none;padding:12px 28px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
+.btn-b{background:#475569;color:#fff;margin-left:8px}
+</style>
+</head>
+<body>
+<div id="tip">탭/클릭/스페이스바로 날개짓!</div>
+<canvas id="c"></canvas>
+<div id="ov">
+  <div style="font-size:48px">&#128038;</div>
+  <h2>클럼지 버드</h2>
+  <p style="color:#94a3b8">파이프 사이를 통과하세요!</p>
+  <button class="btn" onclick="go()">시작하기</button>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),ov=document.getElementById('ov');
+cv.width=320;cv.height=480;
+const GR=300;
+let bird,pipes,sc,best=0,run=false,aId,fr;
+function Bird(){return{x:80,y:200,vy:0,a:0,flap(){this.vy=-7;}};}
+function go(){bird=Bird();pipes=[];sc=0;fr=0;run=true;ov.style.display='none';cancelAnimationFrame(aId);loop();}
+function loop(){update();draw3();aId=requestAnimationFrame(loop);}
+function update(){
+  if(!run)return;fr++;
+  bird.vy+=0.38;bird.y+=bird.vy;bird.a=Math.min(Math.PI/2,bird.vy*0.055);
+  if(fr%82===0)pipes.push({x:cv.width,top:Math.random()*(GR-140)+40,passed:false});
+  pipes.forEach(p=>p.x-=2.2);pipes=pipes.filter(p=>p.x>-55);
+  for(const p of pipes){
+    if(!p.passed&&p.x+52<bird.x){p.passed=true;sc++;best=Math.max(best,sc);}
+    if(bird.x+13>p.x&&bird.x-13<p.x+52&&(bird.y-13<p.top||bird.y+13>p.top+132))die();
+  }
+  if(bird.y+13>=GR||bird.y-13<0)die();
+}
+function draw3(){
+  const sky=ctx.createLinearGradient(0,0,0,GR);sky.addColorStop(0,'#87CEEB');sky.addColorStop(1,'#b8e4f0');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='rgba(255,255,255,0.7)';[[40,70,22],[140,45,18],[250,80,26]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc((x-fr*0.3+cv.width)%cv.width,y,r,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(((x+20-fr*0.3)+cv.width)%cv.width,y,r*0.7,0,Math.PI*2);ctx.fill();});
+  pipes.forEach(p=>{
+    const g=ctx.createLinearGradient(p.x,0,p.x+52,0);g.addColorStop(0,'#3d8b20');g.addColorStop(0.4,'#74c442');g.addColorStop(1,'#3d8b20');
+    ctx.fillStyle=g;ctx.fillRect(p.x,0,52,p.top);ctx.fillRect(p.x,p.top+132,52,GR-p.top-132);
+    ctx.fillStyle='#3d8b20';ctx.fillRect(p.x-4,p.top-20,60,20);ctx.fillRect(p.x-4,p.top+132,60,20);
+  });
+  ctx.fillStyle='#c8a95a';ctx.fillRect(0,GR,cv.width,cv.height-GR);ctx.fillStyle='#5a9e2f';ctx.fillRect(0,GR-7,cv.width,9);
+  ctx.save();ctx.translate(bird.x,bird.y);ctx.rotate(bird.a);
+  ctx.fillStyle='#facc15';ctx.beginPath();ctx.ellipse(0,0,17,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.ellipse(-3,4,13,5,-0.4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(8,-4,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(9,-4,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f97316';ctx.beginPath();ctx.moveTo(14,-2);ctx.lineTo(20,0);ctx.lineTo(14,3);ctx.closePath();ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='white';ctx.font='bold 26px Arial';ctx.textAlign='center';
+  ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=3;ctx.strokeText(sc,cv.width/2,50);ctx.fillText(sc,cv.width/2,50);
+  ctx.textAlign='left';
+}
+function die(){run=false;cancelAnimationFrame(aId);ov.innerHTML='<h2>&#128165; 게임 오버!</h2><p>점수: <strong style="color:#facc15">'+sc+'</strong> 최고: <strong style="color:#4ade80">'+best+'</strong></p><div style="display:flex;gap:10px"><button class="btn btn-b" onclick="exit()">나가기</button><button class="btn" onclick="go()">다시하기</button></div>';ov.style.display='flex';window.parent.postMessage({type:'GAME_SCORE',game:'flappy',score:sc},'*');}
+function exit(){window.parent.postMessage({type:'GAME_EXIT',game:'flappy'},'*');}
+['click','touchstart'].forEach(e=>cv.addEventListener(e,ev=>{ev.preventDefault();if(run)bird.flap();}));
+document.addEventListener('keydown',e=>{if(e.code==='Space'){if(run)bird.flap();e.preventDefault();}});
+</script>
+</body>
+</html>

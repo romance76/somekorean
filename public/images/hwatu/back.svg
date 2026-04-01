@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 976 1600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <pattern id="diamonds" width="60" height="60" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="60" height="60" fill="none"/>
+      <rect x="0" y="0" width="30" height="30" fill="#ffffff08"/>
+    </pattern>
+  </defs>
+  <rect width="976" height="1600" rx="48" fill="url(#bg)"/>
+  <rect width="976" height="1600" rx="48" fill="url(#diamonds)"/>
+  <rect x="40" y="40" width="896" height="1520" rx="32" fill="none" stroke="#e94560" stroke-width="4" opacity="0.5"/>
+  <rect x="60" y="60" width="856" height="1480" rx="24" fill="none" stroke="#e94560" stroke-width="2" opacity="0.3"/>
+  <circle cx="488" cy="800" r="200" fill="none" stroke="#e94560" stroke-width="4" opacity="0.5"/>
+  <circle cx="488" cy="800" r="140" fill="none" stroke="#e94560" stroke-width="3" opacity="0.4"/>
+  <circle cx="488" cy="800" r="80" fill="#e94560" opacity="0.2"/>
+  <text x="488" y="820" text-anchor="middle" font-family="serif" font-size="80" fill="#e94560" opacity="0.7">&#x82B1;</text>
+</svg>

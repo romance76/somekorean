@@ -23,6 +23,19 @@
         </button>
       </div>
     </div>
+    <!-- State filter buttons -->
+    <div class="max-w-[1200px] mx-auto px-4 mt-2">
+      <div class="flex gap-1.5 overflow-x-auto pb-1 flex-wrap" style="scrollbar-width:none">
+        <button v-for="st in stateButtons" :key="st.code" @click="selectState(st)"
+          :class="['flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition',
+            selectedState===st.code
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600']">
+          {{ st.label }}
+        </button>
+      </div>
+    </div>
+
     <!-- Search bar -->
     <div class="max-w-[1200px] mx-auto px-4 mt-2">
       <div class="bg-white rounded-2xl shadow-sm p-3">
@@ -38,10 +51,9 @@
           </select>
           <input v-model="search" @keyup.enter="load(1)" type="text" placeholder="업소명 검색..."
             class="flex-1 min-w-[100px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
-          <select v-model="region" @change="load(1)" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white flex-shrink-0">
+          <select v-model="region" @change="load(1)" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white flex-shrink-0 max-w-[140px]">
             <option value="">전체 지역</option>
-            <option>Atlanta</option><option>New York</option><option>Los Angeles</option>
-            <option>Dallas</option><option>Chicago</option>
+            <option v-for="r in regions" :key="r" :value="r">{{ r || '전체 지역' }}</option>
           </select>
           <button @click="load(1)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex-shrink-0">검색</button>
           <div class="flex gap-1 flex-shrink-0">
@@ -107,20 +119,41 @@
       </router-link>
     </div>
 
-    <div v-if="totalPages > 1" class="flex justify-center space-x-1 mt-5">
-      <button v-for="p in totalPages" :key="p" @click="load(p)"
-        :class="['px-3 py-1.5 rounded text-sm', p === currentPage ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300']">
+    <div v-if="totalPages > 1" class="flex justify-center items-center gap-1 mt-6 flex-wrap">
+      <!-- Prev -->
+      <button @click="load(currentPage-1)" :disabled="currentPage===1"
+        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+        ‹ 이전
+      </button>
+      <!-- First page -->
+      <button v-if="pageList[0] > 1" @click="load(1)"
+        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 hover:bg-blue-50">1</button>
+      <span v-if="pageList[0] > 2" class="px-1 text-gray-400">…</span>
+      <!-- Page window -->
+      <button v-for="p in pageList" :key="p" @click="load(p)"
+        :class="['px-3 py-1.5 rounded-lg text-sm border transition', p === currentPage
+          ? 'bg-blue-600 text-white border-blue-600 font-semibold'
+          : 'bg-white text-gray-700 hover:bg-blue-50']">
         {{ p }}
       </button>
+      <!-- Last page -->
+      <span v-if="pageList[pageList.length-1] < totalPages-1" class="px-1 text-gray-400">…</span>
+      <button v-if="pageList[pageList.length-1] < totalPages" @click="load(totalPages)"
+        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 hover:bg-blue-50">{{ totalPages }}</button>
+      <!-- Next -->
+      <button @click="load(currentPage+1)" :disabled="currentPage===totalPages"
+        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+        다음 ›
+      </button>
+      <span class="ml-2 text-xs text-gray-400">{{ currentPage }}/{{ totalPages }}페이지 · 총 {{ totalCount }}개</span>
     </div>
     </div><!-- /max-w-[1200px] -->
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '../../stores/auth';
-
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -133,28 +166,97 @@ const category = ref('');
 const region = ref('');
 const currentPage = ref(1);
 const totalPages = ref(1);
+const totalCount = ref(0);
+const selectedState = ref('');
+
+const stateButtons = [
+  { code: '', label: '전체' },
+  { code: 'CA', label: '🌴 CA', cities: ['Los Angeles','San Francisco','San Diego'] },
+  { code: 'NY', label: '🗽 NY', cities: ['New York','Flushing'] },
+  { code: 'TX', label: '🤠 TX', cities: ['Houston','Dallas'] },
+  { code: 'WA', label: '🌲 WA', cities: ['Seattle'] },
+  { code: 'IL', label: '🏙️ IL', cities: ['Chicago'] },
+  { code: 'GA', label: '🍑 GA', cities: ['Atlanta'] },
+  { code: 'DC', label: '🏛️ DC', cities: ['Washington'] },
+  { code: 'NV', label: '🎰 NV', cities: ['Las Vegas'] },
+  { code: 'FL', label: '🌊 FL', cities: ['Miami'] },
+  { code: 'MA', label: '🦞 MA', cities: ['Boston'] },
+  { code: 'HI', label: '🌺 HI', cities: ['Honolulu'] },
+  { code: 'CO', label: '⛰️ CO', cities: ['Denver'] },
+  { code: 'NJ', label: '🏘️ NJ', cities: ['Fort Lee'] },
+  { code: 'VA', label: '🌿 VA', cities: ['Annandale'] },
+  { code: 'OR', label: '🌧️ OR', cities: ['Portland'] },
+];
+
+function selectState(st) {
+  selectedState.value = st.code;
+  if (st.cities && st.cities.length === 1) {
+    region.value = st.cities[0];
+  } else if (st.code === '') {
+    region.value = '';
+  } else {
+    // Multiple cities - clear region to show all in state
+    region.value = '';
+  }
+  load(1);
+}
 
 const categories = [
   { value: '', label: '전체' },
-  { value: '식당', label: '🍽️ 식당' },
-  { value: '미용', label: '💇 미용' },
-  { value: '의료', label: '🏥 의료' },
-  { value: '법률', label: '⚖️ 법률' },
+  { value: '한식당', label: '🍽️ 식당' },
+  { value: '미용실', label: '💇 미용' },
+  { value: '의원/한의원', label: '🏥 의료' },
+  { value: '변호사', label: '⚖️ 법률' },
   { value: '부동산', label: '🏠 부동산' },
-  { value: '쇼핑', label: '🛍️ 쇼핑' },
-  { value: '교육', label: '📚 교육' },
-  { value: '기타', label: '기타' },
+  { value: '한국마트', label: '🛒 마트' },
+  { value: '한국BBQ', label: '🥩 BBQ' },
+  { value: '스파/네일', label: '💅 스파' },
+  { value: '교회', label: '⛪ 교회' },
+  { value: '한국학교', label: '📚 교육' },
 ];
 
+const regions = [
+  '', 'Los Angeles', 'New York', 'Chicago', 'Houston', 'Seattle',
+  'Atlanta', 'Dallas', 'San Francisco', 'Washington', 'Las Vegas',
+  'Boston', 'Philadelphia', 'Miami', 'San Diego', 'Denver',
+  'Annandale', 'Fort Lee', 'Flushing', 'Honolulu', 'Portland',
+  'Minneapolis', 'Detroit', 'Phoenix', 'Baltimore',
+];
+
+// Smart pagination: show window of 5 pages around current
+const pageList = computed(() => {
+  const total = totalPages.value;
+  const cur = currentPage.value;
+  if (total <= 11) return Array.from({ length: total }, (_, i) => i + 1);
+  const delta = 4;
+  const start = Math.max(2, cur - delta);
+  const end = Math.min(total - 1, cur + delta);
+  const pages = [];
+  for (let i = start; i <= end; i++) pages.push(i);
+  return pages;
+});
+
 async function load(page = 1) {
+  if (page < 1 || page > totalPages.value) return;
   loading.value = true;
+  currentPage.value = page;
   try {
-    const { data } = await axios.get('/api/businesses', { params: { page, search: search.value, category: category.value, region: region.value } });
-    businesses.value = data.data;
-    currentPage.value = data.current_page;
-    totalPages.value = data.last_page;
-  } catch {}
+    const params = {
+      page,
+      search: search.value || undefined,
+      category: category.value || undefined,
+      region: region.value || undefined,
+      state: selectedState.value || undefined,
+      per_page: 24,
+    };
+    const { data } = await axios.get('/api/businesses', { params });
+    businesses.value = data.data || [];
+    currentPage.value = data.current_page || page;
+    totalPages.value = data.last_page || 1;
+    totalCount.value = data.total || businesses.value.length;
+  } catch(e) { console.error(e) }
   loading.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 onMounted(() => load());

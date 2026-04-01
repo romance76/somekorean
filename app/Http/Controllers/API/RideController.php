@@ -44,15 +44,15 @@ class RideController extends Controller
             'requested_at'   => now(),
         ]);
 
-        return response()->json($ride->load('passenger:id,name,nickname,profile_photo'), 201);
+        return response()->json($ride->load('passenger:id,name,nickname,avatar'), 201);
     }
 
     // 라이드 상세
     public function show($id)
     {
         $ride = Ride::with([
-            'passenger:id,name,nickname,profile_photo',
-            'driver:id,name,nickname,profile_photo',
+            'passenger:id,name,nickname,avatar',
+            'driver:id,name,nickname,avatar',
         ])->findOrFail($id);
 
         return response()->json($ride);
@@ -100,7 +100,7 @@ class RideController extends Controller
                 )) < ?",
                 [$lat, $lng, $lat, $radius]
             )
-            ->with('passenger:id,name,nickname,profile_photo')
+            ->with('passenger:id,name,nickname,avatar')
             ->latest()
             ->limit(10)
             ->get();
@@ -145,13 +145,10 @@ class RideController extends Controller
         );
 
         // 승객 포인트
-        PointLog::create([
-            'user_id'     => $ride->passenger_id,
-            'type'        => 'earn',
-            'amount'      => 20,
-            'description' => '라이드 이용 포인트',
-        ]);
-        User::where('id', $ride->passenger_id)->increment('points', 20);
+        $passenger = User::find($ride->passenger_id);
+        if ($passenger) {
+            $passenger->addPoints(20, 'ride_complete', 'earn', $ride->id, '라이드 이용 포인트');
+        }
 
         return response()->json(['message' => '라이드 완료!', 'ride' => $ride]);
     }

@@ -86,13 +86,7 @@ class QuizController extends Controller
         ]);
 
         if ($isCorrect && $pointsEarned > 0) {
-            PointLog::create([
-                'user_id'     => Auth::id(),
-                'type'        => 'earn',
-                'amount'      => $pointsEarned,
-                'description' => '일일 퀴즈 정답',
-            ]);
-            User::where('id', Auth::id())->increment('points', $pointsEarned);
+            Auth::user()->addPoints($pointsEarned, 'quiz_correct', 'earn', $question->id, '일일 퀴즈 정답');
         }
 
         return response()->json([

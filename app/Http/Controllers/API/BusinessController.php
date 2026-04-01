@@ -17,9 +17,24 @@ class BusinessController extends Controller
 
         if ($request->category) $query->where('category', $request->category);
         if ($request->region)   $query->where('region', 'like', '%'.$request->region.'%');
+        if ($request->state) {
+            $stateCities = [
+                'CA'=>['Los Angeles','LA','San Francisco','San Diego'],
+                'NY'=>['New York','NY','Flushing'], 'TX'=>['Houston','Dallas'],
+                'WA'=>['Seattle'], 'IL'=>['Chicago'], 'GA'=>['Atlanta'],
+                'DC'=>['Washington'], 'NV'=>['Las Vegas'], 'FL'=>['Miami'],
+                'MA'=>['Boston'], 'HI'=>['Honolulu'], 'CO'=>['Denver'],
+                'NJ'=>['Fort Lee'], 'VA'=>['Annandale'], 'OR'=>['Portland'],
+                'MN'=>['Minneapolis'], 'MI'=>['Detroit'], 'AZ'=>['Phoenix'],
+                'MD'=>['Baltimore'], 'PA'=>['Philadelphia'],
+            ];
+            $s = strtoupper($request->state);
+            if (isset($stateCities[$s])) $query->whereIn('region', $stateCities[$s]);
+        }
         if ($request->search)   $query->where('name', 'like', '%'.$request->search.'%');
 
-        return response()->json($query->paginate(20));
+        $perPage = min((int)($request->per_page ?? 20), 50);
+        return response()->json($query->paginate($perPage));
     }
 
     public function store(Request $request)
@@ -36,6 +51,37 @@ class BusinessController extends Controller
     public function show(Business $business)
     {
         return response()->json($business->load(['owner:id,name,username', 'reviews.user:id,name,username,avatar']));
+    }
+
+    public function trackStat(Request $request, $id)
+    {
+        $type = $request->route('type'); // phone, direction, website, view
+        $col = match($type) {
+            'phone' => 'phone_clicks',
+            'direction' => 'direction_clicks',
+            'website' => 'website_clicks',
+            default => 'views'
+        };
+        $today = now()->toDateString();
+        \DB::table('business_stats')->updateOrInsert(
+            ['business_id' => $id, 'stat_date' => $today],
+            [$col => \DB::raw($col . ' + 1'), 'updated_at' => now()]
+        );
+        return response()->json(['ok' => true]);
+    }
+
+    public function toggleBookmark(Request $request, $id)
+    {
+        $userId = Auth::id();
+        $key = 'biz_bm_'.$id.'_'.$userId;
+        $exists = \DB::table('bookmarks')->where('user_id', $userId)->where('bookmarkable_type', 'App\Models\Business')->where('bookmarkable_id', $id)->exists();
+        if ($exists) {
+            \DB::table('bookmarks')->where('user_id', $userId)->where('bookmarkable_type', 'App\Models\Business')->where('bookmarkable_id', $id)->delete();
+            return response()->json(['bookmarked' => false]);
+        } else {
+            \DB::table('bookmarks')->insert(['user_id' => $userId, 'bookmarkable_type' => 'App\Models\Business', 'bookmarkable_id' => $id, 'created_at' => now(), 'updated_at' => now()]);
+            return response()->json(['bookmarked' => true]);
+        }
     }
 
     public function review(Request $request, Business $business)

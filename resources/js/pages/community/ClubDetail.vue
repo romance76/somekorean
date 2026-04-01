@@ -58,19 +58,19 @@
               <div v-for="post in notices" :key="post.id" class="px-5 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer"
                 @click="openPost(post)">
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">공지</span>
-                    <span class="text-sm text-gray-800 font-medium">{{ post.title }}</span>
+                  <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium flex-shrink-0">공지</span>
+                    <span class="text-sm text-gray-800 font-medium flex-1 truncate">{{ post.title }}</span>
                   </div>
-                  <span class="text-xs text-gray-400">{{ formatDate(post.created_at) }}</span>
+                  <span class="text-xs text-gray-400 flex-shrink-0 ml-2">{{ formatDate(post.created_at) }}</span>
                 </div>
               </div>
             </div>
 
             <!-- 글쓰기 버튼 -->
-            <div v-if="isMember" class="flex justify-end">
+            <div v-if="isMember" class="flex gap-2 justify-end">
               <button @click="showWriteForm = !showWriteForm"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-1">
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1">
                 ✏️ 글쓰기
               </button>
             </div>
@@ -100,7 +100,7 @@
                   class="px-5 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer transition"
                   @click="openPost(post)">
                   <div class="flex items-start justify-between mb-1">
-                    <h4 class="text-sm font-medium text-gray-800">{{ post.title }}</h4>
+                    <h4 class="text-sm font-medium text-gray-800 flex-1 truncate">{{ post.title }}</h4>
                     <span class="text-xs text-gray-400 flex-shrink-0 ml-2">{{ formatDate(post.created_at) }}</span>
                   </div>
                   <p class="text-xs text-gray-500 line-clamp-2">{{ post.content }}</p>
@@ -448,8 +448,10 @@ async function deleteClub() {
 
 async function fetchClub() {
   const { data } = await axios.get(`/api/clubs/${route.params.id}`);
-  club.value = data;
-  editForm.value = { name: data.name, description: data.description, category: data.category };
+  const c = data.club || data;
+  club.value = c;
+  if (c.members && c.members.length) { members.value = c.members; }
+  editForm.value = { name: c.name, description: c.description, category: c.category };
 }
 
 async function fetchMembers() {
@@ -462,8 +464,9 @@ async function fetchMembers() {
 async function fetchPosts() {
   try {
     const { data } = await axios.get(`/api/clubs/${route.params.id}/posts`);
-    notices.value = (data || []).filter(p => p.is_notice);
-    posts.value = (data || []).filter(p => !p.is_notice);
+    const list = data.data || data || [];
+    notices.value = list.filter(p => p.is_notice);
+    posts.value = list.filter(p => !p.is_notice);
   } catch {}
 }
 

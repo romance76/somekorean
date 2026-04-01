@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <div>
             <h1 class="text-xl font-black">🏠 부동산</h1>
             <p class="text-blue-100 text-sm mt-0.5">한인 부동산 매물 정보</p>
@@ -40,13 +40,13 @@
             <option :value="0">📍 전체</option>
           </select>
           <input v-model="search" @keyup.enter="load(1)" type="text" placeholder="지역, 주소, 키워드 검색..."
-            class="flex-1 min-w-[100px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
-          <select v-model="region" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white flex-shrink-0 hidden sm:block">
+            class="flex-1 min-w-0 w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+          <select v-model="region" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white hidden sm:block">
             <option value="">전체 지역</option>
             <option v-for="r in regions" :key="r" :value="r">{{ r }}</option>
           </select>
-          <button @click="load(1)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex-shrink-0">검색</button>
-          <div class="flex gap-1 flex-shrink-0">
+          <div class="flex gap-2">
+            <button @click="load(1)" class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700">검색</button>
             <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'" class="p-2 rounded-lg">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
             </button>
@@ -98,7 +98,7 @@
         <div v-else class="space-y-3">
           <router-link v-for="item in items" :key="item.id" :to="`/realestate/${item.id}`"
             class="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition flex group">
-            <div class="w-40 sm:w-56 flex-shrink-0 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+            <div class="w-28 sm:w-40 md:w-56 flex-shrink-0 bg-gray-100 flex items-center justify-center relative overflow-hidden">
               <img v-if="item.photos?.[0]" :src="item.photos[0]" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
               <span v-else class="text-4xl text-gray-300">🏠</span>
               <span class="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full"

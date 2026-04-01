@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pacman</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#fff;overflow:hidden}
+#info{display:flex;gap:20px;margin-bottom:6px;font-size:15px}
+.iv{color:#facc15;font-weight:bold}
+canvas{display:block;max-width:100vw;max-height:70vh}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#ov h2{font-size:28px;color:#facc15}
+.btn{background:#facc15;color:#000;border:none;padding:12px 28px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
+.btn-b{background:#475569;color:#fff;margin-left:8px}
+#dp{display:grid;grid-template-columns:repeat(3,46px);gap:4px;margin-top:8px}
+.db{background:#1e293b;border:1px solid #facc15;color:#fff;width:46px;height:46px;border-radius:6px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none}
+.db:active{background:#facc15;color:#000}
+</style>
+</head>
+<body>
+<div id="info"><span>점수: <span id="scEl" class="iv">0</span></span><span>생명: <span id="liEl" class="iv">3</span></span><span>레벨: <span id="lvEl" class="iv">1</span></span></div>
+<canvas id="c"></canvas>
+<div id="dp"><div></div><button class="db" id="dU">&#9650;</button><div></div><button class="db" id="dL">&#9664;</button><button class="db" id="dD">&#9660;</button><button class="db" id="dR">&#9654;</button></div>
+<div id="ov"><h2>&#128126; 팩맨</h2><p style="color:#94a3b8">방향키로 점을 먹으세요!</p><button class="btn" onclick="go()">게임 시작</button></div>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d'),ov=document.getElementById('ov');
+const SZ=18;
+const MAP=[
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0],
+[0,3,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,3,0],
+[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+[0,1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0],
+[0,1,1,1,1,0,1,1,1,0,0,0,1,1,1,0,1,1,1,1,0],
+[0,0,0,0,1,0,2,2,2,0,0,0,2,2,2,0,1,0,0,0,0],
+[0,0,0,0,1,0,2,0,2,2,2,2,2,0,2,0,1,0,0,0,0],
+[2,2,2,2,1,2,2,0,2,2,2,2,2,0,2,2,1,2,2,2,2],
+[0,0,0,0,1,0,2,0,0,0,0,0,0,0,2,0,1,0,0,0,0],
+[0,0,0,0,1,0,2,2,2,2,2,2,2,2,2,0,1,0,0,0,0],
+[0,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,0],
+[0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0],
+[0,3,1,0,1,1,1,1,1,1,4,1,1,1,1,1,1,0,1,3,0],
+[0,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,1,0,0],
+[0,1,1,1,1,0,1,1,1,0,0,0,1,1,1,0,1,1,1,1,0],
+[0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0],
+[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+const R=MAP.length,CL=MAP[0].length;
+C.width=CL*SZ;C.height=R*SZ;
+let map,pac,gh,sc,li,lv,pw,pwt,dir,nd,run,aId,fr;
+const GC=['#ff6b6b','#ff9ff3','#54a0ff','#ffeaa7'];
+function initMap(){map=MAP.map(r=>[...r]);}
+function go(){
+  sc=0;li=3;lv=1;pw=false;pwt=0;dir={x:0,y:0};nd={x:0,y:0};fr=0;run=true;
+  ov.style.display='none';initMap();
+  pac={x:10,y:13,m:0.2,md:1};
+  gh=[{x:9,y:7,dx:1,dy:0},{x:10,y:7,dx:-1,dy:0},{x:11,y:7,dx:0,dy:1},{x:10,y:8,dx:0,dy:-1}].map((g,i)=>({...g,color:GC[i],sc:false,dead:false}));
+  upd(['scEl','liEl','lvEl'],[0,3,1]);
+  cancelAnimationFrame(aId);let lt=0;
+  function loop(ts){if(!run)return;if(ts-lt>140){step();lt=ts;}draw2();aId=requestAnimationFrame(loop);}
+  aId=requestAnimationFrame(loop);
+}
+function upd(ids,vals){ids.forEach((id,i)=>document.getElementById(id).textContent=vals[i]);}
+function step(){
+  fr++;
+  const nx=pac.x+nd.x,ny=pac.y+nd.y;
+  if(nx>=0&&nx<CL&&ny>=0&&ny<R&&map[ny][nx]!==0)dir=nd;
+  const cx=(pac.x+dir.x+CL)%CL,cy=(pac.y+dir.y+R)%R;
+  if(map[cy][cx]!==0){pac.x=cx;pac.y=cy;}
+  if(map[pac.y][pac.x]===1){map[pac.y][pac.x]=2;sc+=10;document.getElementById('scEl').textContent=sc;}
+  if(map[pac.y][pac.x]===3){map[pac.y][pac.x]=2;sc+=50;document.getElementById('scEl').textContent=sc;pw=true;pwt=30;gh.forEach(g=>{if(!g.dead)g.sc=true;});}
+  if(pw){pwt--;if(pwt<=0){pw=false;gh.forEach(g=>g.sc=false);}}
+  pac.m+=0.1*pac.md;if(pac.m>0.35||pac.m<0.05)pac.md*=-1;
+  const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+  gh.forEach(g=>{
+    if(g.dead){g.x=10;g.y=7;g.dead=false;return;}
+    const vl=dirs.filter(d=>{const nx2=(g.x+d.x+CL)%CL,ny2=(g.y+d.y+R)%R;return map[ny2][nx2]!==0&&!(d.x===-g.dx&&d.y===-g.dy);});
+    if(!vl.length)return;
+    const ch=g.sc?vl[Math.floor(Math.random()*vl.length)]:vl.reduce((b,d)=>{const nx2=(g.x+d.x+CL)%CL,ny2=(g.y+d.y+R)%R;return(Math.abs(nx2-pac.x)+Math.abs(ny2-pac.y))<(Math.abs((g.x+b.x+CL)%CL-pac.x)+Math.abs((g.y+b.y+R)%R-pac.y))?d:b;});
+    g.dx=ch.x;g.dy=ch.y;g.x=(g.x+g.dx+CL)%CL;g.y=(g.y+g.dy+R)%R;
+    if(g.x===pac.x&&g.y===pac.y){if(g.sc){g.dead=true;g.sc=false;sc+=200;document.getElementById('scEl').textContent=sc;}else{li--;document.getElementById('liEl').textContent=li;if(li<=0)over();}}
+  });
+  if(!map.flat().includes(1)&&!map.flat().includes(3)){lv++;document.getElementById('lvEl').textContent=lv;initMap();pac.x=10;pac.y=13;}
+}
+function draw2(){
+  ctx.fillStyle='#000';ctx.fillRect(0,0,C.width,C.height);
+  for(let r=0;r<R;r++)for(let cl=0;cl<CL;cl++){const v=map[r][cl],x=cl*SZ,y=r*SZ;if(v===0){ctx.fillStyle='#1e3a8a';ctx.fillRect(x,y,SZ,SZ);ctx.strokeStyle='#2563eb';ctx.strokeRect(x+1,y+1,SZ-2,SZ-2);}else if(v===1){ctx.fillStyle='#fef3c7';ctx.beginPath();ctx.arc(x+SZ/2,y+SZ/2,2,0,Math.PI*2);ctx.fill();}else if(v===3){ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(x+SZ/2,y+SZ/2,5,0,Math.PI*2);ctx.fill();}}
+  const px=pac.x*SZ+SZ/2,py=pac.y*SZ+SZ/2,ang=dir.x<0?Math.PI:dir.y<0?Math.PI*1.5:dir.y>0?Math.PI*0.5:0;
+  ctx.fillStyle='#facc15';ctx.beginPath();ctx.moveTo(px,py);ctx.arc(px,py,SZ/2-1,ang+pac.m,ang+Math.PI*2-pac.m);ctx.closePath();ctx.fill();
+  gh.forEach(g=>{if(g.dead)return;const gx=g.x*SZ,gy=g.y*SZ;ctx.fillStyle=g.sc?(pwt<8&&Math.floor(pwt/2)%2===0?'#fff':'#3b82f6'):g.color;ctx.beginPath();ctx.arc(gx+SZ/2,gy+SZ/2,SZ/2-1,Math.PI,0);ctx.lineTo(gx+SZ-1,gy+SZ-3);for(let i=0;i<3;i++)ctx.lineTo(gx+SZ-1-(i+0.5)*(SZ-2)/3,gy+(i%2===0?SZ-6:SZ-2));ctx.lineTo(gx+1,gy+SZ-3);ctx.closePath();ctx.fill();if(!g.sc){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(gx+6,gy+7,3,0,Math.PI*2);ctx.arc(gx+12,gy+7,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(gx+7,gy+8,1.5,0,Math.PI*2);ctx.arc(gx+13,gy+8,1.5,0,Math.PI*2);ctx.fill();}});
+}
+function over(){run=false;cancelAnimationFrame(aId);ov.innerHTML='<h2>'+(li>0?'&#127942; 클리어!':'&#128128; 게임 오버')+'</h2><p>점수: <strong style="color:#facc15">'+sc+'</strong></p><div style="display:flex;gap:10px"><button class="btn btn-b" onclick="exit()">나가기</button><button class="btn" onclick="go()">다시하기</button></div>';ov.style.display='flex';window.parent.postMessage({type:'GAME_SCORE',game:'pacman',score:sc},'*');}
+function exit(){window.parent.postMessage({type:'GAME_EXIT',game:'pacman'},'*');}
+document.addEventListener('keydown',e=>{const m={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0}};if(m[e.key]){nd=m[e.key];e.preventDefault();}});
+['dU','dD','dL','dR'].forEach((id,i)=>{document.getElementById(id).addEventListener('click',()=>{nd=[{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}][i];});});
+draw2();
+</script>
+</body>
+</html>

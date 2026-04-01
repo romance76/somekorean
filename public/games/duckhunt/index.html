@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Duck Hunt</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#87CEEB;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:Arial,sans-serif;user-select:none}
+canvas{display:block;cursor:crosshair;max-width:100vw;max-height:80vh}
+#hud{color:white;font-size:14px;font-weight:bold;text-shadow:1px 1px 3px rgba(0,0,0,0.7);margin-bottom:5px;display:flex;gap:18px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:white}
+#ov h2{font-size:28px;color:#ef4444}
+.btn{background:#ef4444;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
+.btn-b{background:#475569;margin-left:8px}
+</style>
+</head>
+<body>
+<div id="hud"><span>&#127919; 점수: <span id="sc">0</span></span><span>&#128054; 남은: <span id="dk">10</span></span><span>&#128299; 탄환: <span id="am">3</span></span></div>
+<canvas id="c"></canvas>
+<div id="ov"><div style="font-size:48px">&#128054;</div><h2>덕 헌트</h2><p style="color:#94a3b8">오리를 클릭/터치해서 잡으세요!</p><button class="btn" onclick="go()">사냥 시작!</button></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),ov=document.getElementById('ov');
+cv.width=400;cv.height=340;
+const GR=290;
+let ducks,sc,ammo,total,run,aId,fr,fx;
+class Duck{
+  constructor(){this.x=Math.random()<0.5?-40:cv.width+40;this.dx=this.x<0?2.5+Math.random()*1.5:-(2.5+Math.random()*1.5);this.y=30+Math.random()*(GR-80);this.dy=(Math.random()-0.5)*1.5;this.fl=0;this.fld=1;this.fall=false;this.vy=0;this.sz=24+Math.random()*10;this.color=['#8B4513','#228B22','#9b59b6','#e67e22'][Math.floor(Math.random()*4)];}
+  update(){if(this.fall){this.vy+=0.4;this.y+=this.vy;return;}this.x+=this.dx;this.y+=this.dy;if(this.y<20)this.dy=Math.abs(this.dy);if(this.y>GR-30)this.dy=-Math.abs(this.dy);this.fl+=0.25*this.fld;if(Math.abs(this.fl)>0.4)this.fld*=-1;}
+  draw(){ctx.save();ctx.translate(this.x,this.y);if(this.dx<0)ctx.scale(-1,1);const sz=this.sz;ctx.fillStyle=this.color;ctx.beginPath();ctx.ellipse(0,0,sz*0.6,sz*0.38,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=this.color;ctx.beginPath();ctx.arc(sz*0.5,sz*-0.28,sz*0.26,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2d7a2d';ctx.beginPath();ctx.ellipse(sz*0.28,-sz*0.06,sz*0.11,sz*0.18,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=this.color;ctx.save();ctx.translate(-sz*0.1,0);ctx.rotate(this.fl);ctx.beginPath();ctx.ellipse(0,-sz*0.28,sz*0.18,sz*0.42,-0.5,0,Math.PI*2);ctx.fill();ctx.restore();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sz*0.58,-sz*0.32,sz*0.09,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(sz*0.6,-sz*0.32,sz*0.05,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f97316';ctx.beginPath();ctx.moveTo(sz*0.73,-sz*0.26);ctx.lineTo(sz*0.98,-sz*0.22);ctx.lineTo(sz*0.73,-sz*0.16);ctx.closePath();ctx.fill();ctx.restore();}
+  hit(mx,my){const dx=mx-this.x,dy=my-this.y;return Math.sqrt(dx*dx+dy*dy)<this.sz*0.75;}
+}
+function go(){ducks=[];sc=0;ammo=3;total=10;run=true;fr=0;fx=[];ov.style.display='none';['sc','dk','am'].forEach((id,i)=>document.getElementById(id).textContent=[0,10,3][i]);spawn();cancelAnimationFrame(aId);loop2();}
+function spawn(){if(total>0&&ducks.filter(d=>!d.fall&&!d.gone).length<3){ducks.push(new Duck());total--;document.getElementById('dk').textContent=total;}}
+function loop2(){step2();draw4();aId=requestAnimationFrame(loop2);}
+function step2(){fr++;ducks.forEach(d=>d.update());ducks=ducks.filter(d=>!(d.fall&&d.y>cv.height+60));fx=fx.filter(f=>f.t<25);fx.forEach(f=>f.t++);if(fr%120===0)spawn();if(total===0&&ducks.length===0)over2();}
+function draw4(){
+  ctx.fillStyle='#87CEEB';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='rgba(255,255,255,0.85)';[[55,45,20],[160,28,16],[290,55,24],[365,38,15]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+18,y,r*0.75,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='#4a7c2f';ctx.fillRect(0,GR,cv.width,cv.height-GR);ctx.fillStyle='#5a9e3d';ctx.fillRect(0,GR,cv.width,10);
+  ctx.fillStyle='#3d6e20';[[48,GR],[148,GR],[296,GR],[375,GR]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,18,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+12,y,14,0,Math.PI*2);ctx.fill();});
+  ducks.forEach(d=>d.draw());
+  fx.forEach(f=>{const a=1-f.t/25;ctx.fillStyle=f.hit?'rgba(255,120,0,'+a+')':'rgba(150,150,150,'+a+')';ctx.font='bold '+(14+f.t)+'px Arial';ctx.textAlign='center';ctx.fillText(f.hit?'HIT!':'MISS',f.x,f.y-f.t*0.8);ctx.textAlign='left';});
+}
+function shoot(mx,my){if(!run||ammo<=0)return;ammo--;document.getElementById('am').textContent=ammo;let hit=false;for(const d of ducks){if(!d.fall&&d.hit(mx,my)){d.fall=true;d.vy=-3;sc+=100;document.getElementById('sc').textContent=sc;fx.push({x:mx,y:my,t:0,hit:true});hit=true;break;}}if(!hit)fx.push({x:mx,y:my,t:0,hit:false});if(ammo<=0)setTimeout(()=>{ammo=3;document.getElementById('am').textContent=3;spawn();},900);}
+function pos(e,touch){const r=cv.getBoundingClientRect(),sx=cv.width/r.width,sy=cv.height/r.height;return touch?{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy}:{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+cv.addEventListener('click',e=>{const p=pos(e,false);shoot(p.x,p.y);});
+cv.addEventListener('touchstart',e=>{e.preventDefault();const p=pos(e,true);shoot(p.x,p.y);});
+function over2(){run=false;cancelAnimationFrame(aId);ov.innerHTML='<h2>&#127942; 사냥 완료!</h2><p>최종 점수: <strong style="color:#ef4444">'+sc+'</strong></p><div style="display:flex;gap:10px"><button class="btn btn-b" onclick="exit()">나가기</button><button class="btn" onclick="go()">다시하기</button></div>';ov.style.display='flex';window.parent.postMessage({type:'GAME_SCORE',game:'duckhunt',score:sc},'*');}
+function exit(){window.parent.postMessage({type:'GAME_EXIT',game:'duckhunt'},'*');}
+</script>
+</body>
+</html>

@@ -12,7 +12,7 @@
       <span v-else-if="phase==='bot_turn'" class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse" style="background:#e74c3c;color:#fff;">컴 생각중...</span>
       <div class="ml-auto flex items-center gap-2">
         <div class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px]" style="background:rgba(0,0,0,.5)">
-          <div style="width:9px;height:13px;background:#c0392b;border:1px solid #e74c3c;border-radius:2px;display:inline-block;"></div>
+          <img src="/images/hwatu/back.svg" style="width:9px;height:13px;border-radius:2px;display:inline-block;" />
           <span class="text-white font-bold">패더미 {{ deckLeft }}장</span>
         </div>
         <button @click="initGame" class="text-[11px] font-bold px-2.5 py-1 rounded" style="background:linear-gradient(180deg,#f39c12,#e67e22);color:#fff;">새게임</button>
@@ -23,9 +23,9 @@
     <div v-if="phase==='dealing'" class="flex-1 flex flex-col items-center justify-center gap-5">
       <div class="text-yellow-300 text-xl font-black animate-pulse">패를 나눠드립니다...</div>
       <div class="relative" style="width:50px;height:70px">
-        <div v-for="i in 7" :key="i" class="absolute rounded shadow"
-          style="width:42px;height:60px;background:linear-gradient(135deg,#8b0000,#c0392b);border:1px solid #e74c3c"
-          :style="{top:-(i*2)+'px',left:(i*1)+'px'}"></div>
+        <img v-for="i in 7" :key="i" src="/images/hwatu/back.svg" class="absolute rounded shadow"
+          style="width:42px;height:60px;"
+          :style="{top:-(i*2)+'px',left:(i*1)+'px'}" />
       </div>
       <div class="w-52 space-y-1.5">
         <div v-for="({label,val,max,color}) in dealProgress" :key="label" class="flex items-center gap-2">
@@ -55,9 +55,9 @@
             <template v-if="byType(botCapture,'gwang').length">
               <div class="text-yellow-400 text-[8px] font-bold mb-0.5">광 {{ byType(botCapture,'gwang').length }}</div>
               <div class="flex flex-wrap gap-0.5 mb-1">
-                <div v-for="c in byType(botCapture,'gwang')" :key="'bg'+c.id" class="rounded border border-yellow-500/40 flex flex-col items-center justify-center font-black text-white"
-                  style="width:22px;height:30px;font-size:9px" :style="{background:cardGradient(c)}">
-                  {{ c.month }}
+                <div v-for="c in byType(botCapture,'gwang')" :key="'bg'+c.id" class="rounded border border-yellow-500/40 overflow-hidden"
+                  style="width:22px;height:30px">
+                  <img :src="'/images/hwatu/' + c.img" class="w-full h-full object-contain" />
                 </div>
               </div>
             </template>
@@ -65,9 +65,9 @@
             <template v-if="byType(botCapture,'yeol').length">
               <div class="text-pink-300 text-[8px] font-bold mb-0.5">열끗 {{ byType(botCapture,'yeol').length }}</div>
               <div class="flex flex-wrap gap-0.5 mb-1">
-                <div v-for="c in byType(botCapture,'yeol')" :key="'by'+c.id" class="rounded flex flex-col items-center justify-center font-black text-white"
-                  style="width:22px;height:30px;font-size:9px" :style="{background:cardGradient(c)}">
-                  {{ c.month }}
+                <div v-for="c in byType(botCapture,'yeol')" :key="'by'+c.id" class="rounded overflow-hidden"
+                  style="width:22px;height:30px">
+                  <img :src="'/images/hwatu/' + c.img" class="w-full h-full object-contain" />
                 </div>
               </div>
             </template>
@@ -75,9 +75,9 @@
             <template v-if="byType(botCapture,'tti').length">
               <div class="text-blue-300 text-[8px] font-bold mb-0.5">띠 {{ byType(botCapture,'tti').length }}</div>
               <div class="flex flex-wrap gap-0.5 mb-1">
-                <div v-for="c in byType(botCapture,'tti')" :key="'bt'+c.id" class="rounded flex flex-col items-center justify-center font-black text-white"
-                  style="width:22px;height:30px;font-size:9px" :style="{background:cardGradient(c)}">
-                  {{ c.month }}
+                <div v-for="c in byType(botCapture,'tti')" :key="'bt'+c.id" class="rounded overflow-hidden"
+                  style="width:22px;height:30px">
+                  <img :src="'/images/hwatu/' + c.img" class="w-full h-full object-contain" />
                 </div>
               </div>
             </template>
@@ -95,9 +95,9 @@
             <template v-if="byType(myCapture,'gwang').length">
               <div class="text-yellow-400 text-[8px] font-bold mb-0.5">광 {{ byType(myCapture,'gwang').length }}</div>
               <div class="flex flex-wrap gap-0.5 mb-1">
-                <div v-for="c in byType(myCapture,'gwang')" :key="'mg'+c.id" class="rounded border border-yellow-400/60 flex flex-col items-center justify-center font-black text-white"
-                  style="width:22px;height:30px;font-size:9px" :style="{background:cardGradient(c)}">
-                  {{ c.month }}
+                <div v-for="c in byType(myCapture,'gwang')" :key="'mg'+c.id" class="rounded border border-yellow-400/60 overflow-hidden"
+                  style="width:22px;height:30px">
+                  <img :src="'/images/hwatu/' + c.img" class="w-full h-full object-contain" />
                 </div>
               </div>
             </template>
@@ -105,9 +105,9 @@
             <template v-if="byType(myCapture,'yeol').length">
               <div class="text-pink-300 text-[8px] font-bold mb-0.5">열끗 {{ byType(myCapture,'yeol').length }}</div>
               <div class="flex flex-wrap gap-0.5 mb-1">
-                <div v-for="c in byType(myCapture,'yeol')" :key="'my'+c.id" class="rounded flex flex-col items-center justify-center font-black text-white"
-                  style="width:22px;height:30px;font-size:9px" :style="{background:cardGradient(c)}">
-                  {{ c.month }}
+                <div v-for="c in byType(myCapture,'yeol')" :key="'my'+c.id" class="rounded overflow-hidden"
+                  style="width:22px;height:30px">
+                  <img :src="'/images/hwatu/' + c.img" class="w-full h-full object-contain" />
                 </div>
               </div>
             </template>
@@ -115,9 +115,9 @@
             <template v-if="byType(myCapture,'tti').length">
               <div class="text-blue-300 text-[8px] font-bold mb-0.5">띠 {{ byType(myCapture,'tti').length }}</div>
               <div class="flex flex-wrap gap-0.5 mb-1">
-                <div v-for="c in byType(myCapture,'tti')" :key="'mt'+c.id" class="rounded flex flex-col items-center justify-center font-black text-white"
-                  style="width:22px;height:30px;font-size:9px" :style="{background:cardGradient(c)}">
-                  {{ c.month }}
+                <div v-for="c in byType(myCapture,'tti')" :key="'mt'+c.id" class="rounded overflow-hidden"
+                  style="width:22px;height:30px">
+                  <img :src="'/images/hwatu/' + c.img" class="w-full h-full object-contain" />
                 </div>
               </div>
             </template>
@@ -137,9 +137,8 @@
           <div class="flex-shrink-0">
             <div class="text-red-300/40 mb-0.5 px-1" style="font-size:9px">컴퓨터 패 ({{ botHand.length }}장)</div>
             <div class="flex gap-0.5 flex-wrap">
-              <div v-for="(c,i) in botHand" :key="'bot'+i" class="rounded shadow"
-                style="width:32px;height:46px;background:linear-gradient(135deg,#8b0000,#c0392b);border:1px solid #c0392b;flex-shrink:0">
-              </div>
+              <img v-for="(c,i) in botHand" :key="'bot'+i" src="/images/hwatu/back.svg"
+                class="rounded shadow" style="width:32px;height:46px;flex-shrink:0" />
             </div>
           </div>
 
@@ -152,10 +151,9 @@
               <div class="flex-shrink-0 flex flex-col items-center" style="padding-top:8px">
                 <div class="text-white/25 mb-1" style="font-size:8px">패더미</div>
                 <div class="relative" style="width:36px;height:54px">
-                  <div v-for="i in Math.min(deckLeft,8)" :key="'dk'+i" class="absolute rounded shadow"
-                    style="width:32px;height:46px;background:linear-gradient(135deg,#8b0000,#c0392b);border:1px solid #c0392b"
-                    :style="{top:-(i*2.2)+'px',left:(i*.7)+'px'}">
-                  </div>
+                  <img v-for="i in Math.min(deckLeft,8)" :key="'dk'+i" src="/images/hwatu/back.svg"
+                    class="absolute rounded shadow" style="width:32px;height:46px;"
+                    :style="{top:-(i*2.2)+'px',left:(i*.7)+'px'}" />
                 </div>
                 <div class="text-white/50 font-bold mt-1" style="font-size:9px">{{ deckLeft }}장</div>
               </div>
@@ -166,14 +164,12 @@
                 <div class="flex gap-1 flex-wrap">
                   <TransitionGroup name="card-slide">
                     <div v-for="c in tableCards" :key="'t'+c.id"
-                      class="rounded-lg shadow-lg flex flex-col items-center justify-center font-bold border-2 transition-all duration-200"
+                      class="rounded-lg shadow-lg border-2 transition-all duration-200 overflow-hidden"
                       :class="selected?.month===c.month
                         ? 'border-yellow-400 scale-110 shadow-yellow-400/60 shadow-xl'
                         : 'border-white/10'"
-                      style="width:38px;height:54px;flex-shrink:0"
-                      :style="{background:cardGradient(c)}">
-                      <span class="font-black text-white drop-shadow leading-none" style="font-size:11px">{{ c.month }}</span>
-                      <span class="text-white/70 leading-none" style="font-size:7px">{{ typeLabel(c.type) }}</span>
+                      style="width:38px;height:54px;flex-shrink:0">
+                      <img :src="'/images/hwatu/' + c.img" :alt="c.month + ' ' + typeLabel(c.type)" class="w-full h-full object-contain" />
                     </div>
                   </TransitionGroup>
                 </div>
@@ -250,15 +246,13 @@
                 <div v-for="c in myHand" :key="'h'+c.id"
                   @click="onCardClick(c)"
                   @dblclick.prevent="onCardDblClick(c)"
-                  class="rounded-lg shadow-lg flex flex-col items-center justify-center font-bold cursor-pointer border-2 active:scale-90 transition-all duration-150"
+                  class="rounded-lg shadow-lg cursor-pointer border-2 active:scale-90 transition-all duration-150 overflow-hidden relative"
                   :class="selected?.id===c.id
                     ? 'border-yellow-400 -translate-y-4 shadow-yellow-300/70 shadow-xl z-10'
                     : 'border-white/10 hover:border-white/40 hover:-translate-y-2'"
-                  style="width:38px;height:54px;flex-shrink:0"
-                  :style="{background:cardGradient(c)}">
-                  <span class="font-black text-white drop-shadow leading-none" style="font-size:11px">{{ c.month }}</span>
-                  <span class="text-white/70 leading-none" style="font-size:7px">{{ typeLabel(c.type) }}</span>
-                  <span v-if="selected?.id===c.id" class="text-yellow-300 animate-pulse leading-none" style="font-size:6px">▲내기</span>
+                  style="width:38px;height:54px;flex-shrink:0">
+                  <img :src="'/images/hwatu/' + c.img" :alt="c.month + ' ' + typeLabel(c.type)" class="w-full h-full object-contain" />
+                  <span v-if="selected?.id===c.id" class="absolute bottom-0 left-0 right-0 text-center text-yellow-300 animate-pulse leading-none bg-black/60" style="font-size:6px">▲내기</span>
                 </div>
               </TransitionGroup>
             </div>
@@ -389,7 +383,7 @@ const DECK_DEF = [
   [8,'gwang',null],[8,'yeol',null],[8,'pi',null],[8,'pi',null],
   [9,'yeol',null],[9,'tti','chung'],[9,'pi',null],[9,'pi',null],
   [10,'yeol',null],[10,'tti','chung'],[10,'pi',null],[10,'pi',null],
-  [11,'gwang','bi'],[11,'yeol',null],[11,'tti',null],[11,'ssang',null],
+  [11,'gwang','bi'],[11,'yeol',null],[11,'pi',null],[11,'ssang',null],
   [12,'gwang',null],[12,'pi',null],[12,'pi',null],[12,'ssang',null],
 ]
 
@@ -404,7 +398,22 @@ function cardGradient(c) {
   const [a,b] = (MONTH_COLORS[c.month]||'#555,#333').split(',')
   return `linear-gradient(150deg,${a},${b})`
 }
-function buildDeck() { return DECK_DEF.map((d,i)=>({id:i,month:d[0],type:d[1],sub:d[2]})) }
+function buildDeck() {
+  const piCount = {}
+  return DECK_DEF.map((d, i) => {
+    const m = String(d[0]).padStart(2, '0')
+    let img
+    if (d[1] === 'gwang') img = m + '_gwang.svg'
+    else if (d[1] === 'yeol') img = m + '_animal.svg'
+    else if (d[1] === 'tti') img = m + '_tti.svg'
+    else {
+      const key = d[0]
+      piCount[key] = (piCount[key] || 0) + 1
+      img = m + '_pi_' + piCount[key] + '.svg'
+    }
+    return { id: i, month: d[0], type: d[1], sub: d[2], img }
+  })
+}
 function shuffle(a) {
   const arr=[...a]
   for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}

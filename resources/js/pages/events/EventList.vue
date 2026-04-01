@@ -1,14 +1,14 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-20">
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
-        <div class="flex items-center justify-between">
+      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl">
+        <div class="flex items-center justify-between px-6 py-6 gap-3">
           <div>
             <h1 class="text-xl font-black">🎉 이벤트 & 모임</h1>
             <p class="text-blue-100 text-sm mt-0.5">한인 커뮤니티 행사와 모임</p>
           </div>
           <button @click="$router.push('/events/create')" v-if="auth.isLoggedIn"
-            class="bg-white text-blue-600 text-sm px-4 py-2 rounded-lg font-bold hover:bg-blue-50">+ 등록</button>
+            class="sm:self-auto bg-white text-blue-600 text-sm px-4 py-2 rounded-lg font-bold hover:bg-blue-50">+ 등록</button>
         </div>
       </div>
     </div>
@@ -28,7 +28,7 @@
     <div class="max-w-[1200px] mx-auto px-4 mt-2">
       <div class="bg-white rounded-2xl shadow-sm p-3">
         <div class="flex items-center gap-2">
-          <select v-model="radius" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white flex-shrink-0">
+          <select v-model="radius" class="border border-gray-200 rounded-lg px-2 py-2 text-sm bg-white">
             <option :value="5">📍 5mi</option>
             <option :value="10">📍 10mi</option>
             <option :value="20">📍 20mi</option>
@@ -38,8 +38,8 @@
             <option :value="0">📍 전체</option>
           </select>
           <input v-model="search" @keyup.enter="load()" type="text" placeholder="이벤트 검색..."
-            class="flex-1 min-w-[100px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
-          <button @click="load()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex-shrink-0">검색</button>
+            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 min-w-0" />
+          <button @click="load()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700">검색</button>
         </div>
       </div>
     </div>

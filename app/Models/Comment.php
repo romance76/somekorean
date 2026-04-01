@@ -8,7 +8,7 @@ class Comment extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['post_id', 'user_id', 'parent_id', 'content', 'is_anonymous', 'status'];
+    protected $fillable = ['post_id', 'commentable_type', 'commentable_id', 'user_id', 'parent_id', 'content', 'is_anonymous', 'status'];
 
     protected $casts = ['is_anonymous' => 'boolean'];
 

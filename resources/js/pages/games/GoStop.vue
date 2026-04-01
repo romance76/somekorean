@@ -2,78 +2,149 @@
   <div class="min-h-screen bg-green-900 text-white pb-20">
     <!-- 헤더 -->
     <div class="bg-green-800 px-4 py-3 flex items-center justify-between">
-      <router-link to="/games" class="text-green-300">← 로비</router-link>
-      <h1 class="font-bold">🀄 고스톱</h1>
+      <button v-if="currentView !== 'menu'" @click="goBack" class="text-green-300 hover:text-white">
+        ← 뒤로
+      </button>
+      <router-link v-else to="/games" class="text-green-300 hover:text-white">← 로비</router-link>
+      <h1 class="font-bold text-lg">🎴 맞고</h1>
       <span class="text-green-300 text-sm">{{ room?.code || '' }}</span>
     </div>
 
-    <!-- 방 없음: 방 생성/입장 -->
-    <div v-if="!roomId && !room" class="max-w-md mx-auto px-4 py-8 space-y-4">
-      <div class="bg-green-800 rounded-2xl p-6 space-y-4">
-        <h2 class="text-lg font-bold text-center">방 만들기</h2>
-        <div>
-          <label class="text-green-300 text-sm">최대 인원</label>
-          <select v-model="newRoom.max_players" class="w-full mt-1 bg-green-700 rounded-lg px-3 py-2">
-            <option :value="2">2인</option>
-            <option :value="3">3인</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-green-300 text-sm">베팅 포인트</label>
-          <select v-model="newRoom.bet_points" class="w-full mt-1 bg-green-700 rounded-lg px-3 py-2">
+    <!-- ========== 화면 1: 모드 선택 ========== -->
+    <div v-if="currentView === 'menu'" class="max-w-md mx-auto px-4 py-8">
+      <div class="text-center mb-8">
+        <div class="text-6xl mb-4">🎴</div>
+        <h2 class="text-3xl font-bold mb-2">맞고</h2>
+        <p class="text-green-300">1:1 대전 카드 게임</p>
+      </div>
+
+      <div class="space-y-4">
+        <!-- 컴퓨터 대전 -->
+        <router-link to="/games/go-stop/solo"
+          class="block w-full bg-green-700 hover:bg-green-600 rounded-2xl p-5 transition-all transform hover:scale-[1.02]">
+          <div class="flex items-center gap-4">
+            <div class="text-4xl">🤖</div>
+            <div>
+              <div class="font-bold text-lg">컴퓨터 대전</div>
+              <div class="text-green-300 text-sm">AI와 연습 게임</div>
+            </div>
+          </div>
+        </router-link>
+
+        <!-- 빠른 대전 -->
+        <button @click="startQuickMatch"
+          class="block w-full bg-orange-600 hover:bg-orange-500 rounded-2xl p-5 transition-all transform hover:scale-[1.02] text-left">
+          <div class="flex items-center gap-4">
+            <div class="text-4xl">⚡</div>
+            <div>
+              <div class="font-bold text-lg">빠른 대전</div>
+              <div class="text-orange-200 text-sm">자동 매칭으로 바로 시작</div>
+            </div>
+          </div>
+        </button>
+
+        <!-- 친구와 대전 -->
+        <button @click="currentView = 'friend'"
+          class="block w-full bg-blue-600 hover:bg-blue-500 rounded-2xl p-5 transition-all transform hover:scale-[1.02] text-left">
+          <div class="flex items-center gap-4">
+            <div class="text-4xl">👥</div>
+            <div>
+              <div class="font-bold text-lg">친구와 대전</div>
+              <div class="text-blue-200 text-sm">방 코드로 초대하기</div>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 베팅 설정 -->
+      <div class="mt-8 bg-green-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-green-300 text-sm">베팅 포인트</span>
+          <select v-model="betPoints" class="bg-green-700 rounded-lg px-3 py-1 text-sm">
             <option :value="50">50P (연습)</option>
             <option :value="100">100P</option>
             <option :value="500">500P</option>
             <option :value="1000">1,000P</option>
           </select>
         </div>
-        <button @click="createRoom" :disabled="creating"
-          class="w-full bg-red-600 hover:bg-red-700 rounded-xl py-3 font-bold disabled:opacity-50">
+      </div>
+    </div>
+
+    <!-- ========== 화면 2: 빠른 대전 (매칭 중) ========== -->
+    <div v-else-if="currentView === 'quickmatch'" class="max-w-md mx-auto px-4 py-8">
+      <div class="bg-green-800 rounded-2xl p-8 text-center space-y-6">
+        <div class="text-5xl animate-pulse">⚡</div>
+        <h2 class="text-2xl font-bold">매칭 중...</h2>
+        <p class="text-green-300">상대를 찾고 있습니다</p>
+        <div class="flex justify-center">
+          <div class="flex gap-1">
+            <div class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+            <div class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+            <div class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+          </div>
+        </div>
+        <p class="text-yellow-300 text-sm">베팅: {{ betPoints.toLocaleString() }}P</p>
+        <button @click="cancelMatch" class="bg-gray-600 hover:bg-gray-500 rounded-xl px-6 py-3 font-bold">
+          취소
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== 화면 3: 친구와 대전 ========== -->
+    <div v-else-if="currentView === 'friend'" class="max-w-md mx-auto px-4 py-8 space-y-4">
+      <!-- 방 만들기 -->
+      <div class="bg-green-800 rounded-2xl p-6 space-y-4">
+        <h2 class="text-lg font-bold text-center">새 방 만들기</h2>
+        <button @click="createFriendRoom" :disabled="creating"
+          class="w-full bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-bold disabled:opacity-50">
           {{ creating ? '만드는 중...' : '방 만들기' }}
         </button>
       </div>
 
+      <!-- 코드로 입장 -->
       <div class="bg-green-800 rounded-2xl p-6 space-y-3">
         <h2 class="text-lg font-bold text-center">코드로 입장</h2>
         <input v-model="joinCode" placeholder="방 코드 6자리" maxlength="6"
-          class="w-full bg-green-700 rounded-lg px-3 py-2 text-center font-mono text-lg uppercase placeholder-green-400" />
-        <button @click="joinByCode" class="w-full bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-bold">
+          class="w-full bg-green-700 rounded-lg px-3 py-3 text-center font-mono text-xl uppercase placeholder-green-400 tracking-widest" />
+        <button @click="joinByCode" :disabled="!joinCode"
+          class="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 rounded-xl py-3 font-bold">
           입장하기
         </button>
       </div>
     </div>
 
-    <!-- 대기실 -->
-    <div v-else-if="room && room.status === 'waiting'" class="max-w-md mx-auto px-4 py-8 space-y-4">
+    <!-- ========== 화면 4: 대기실 (방 코드 공유) ========== -->
+    <div v-else-if="currentView === 'waiting'" class="max-w-md mx-auto px-4 py-8 space-y-4">
       <div class="bg-green-800 rounded-2xl p-6 text-center space-y-4">
         <div class="text-4xl">🀄</div>
-        <h2 class="text-xl font-bold">방 코드: <span class="font-mono text-yellow-300">{{ room.code }}</span></h2>
+        <h2 class="text-xl font-bold">
+          방 코드: <span class="font-mono text-yellow-300 text-2xl tracking-widest">{{ room?.code }}</span>
+        </h2>
         <p class="text-green-300 text-sm">친구에게 코드를 알려주세요</p>
 
-        <div class="space-y-2">
+        <button @click="copyCode"
+          class="bg-green-700 hover:bg-green-600 rounded-lg px-4 py-2 text-sm">
+          {{ copied ? '✅ 복사됨!' : '📋 코드 복사' }}
+        </button>
+
+        <div class="space-y-2 mt-4">
           <div v-for="p in players" :key="p.id"
             class="flex items-center justify-between bg-green-700 rounded-lg px-4 py-2">
             <span>{{ p.user?.name || p.user?.username }}</span>
-            <span :class="p.is_ready ? 'text-green-400' : 'text-gray-400'">
-              {{ p.is_ready ? '✅ 준비완료' : '⏳ 대기중' }}
-            </span>
+            <span class="text-green-400">✅ 입장</span>
           </div>
-          <div v-for="i in (room.max_players - players.length)" :key="'empty-'+i"
-            class="flex items-center justify-center bg-green-700/50 rounded-lg px-4 py-2 text-green-600">
-            빈 자리
+          <div v-for="i in (2 - players.length)" :key="'empty-'+i"
+            class="flex items-center justify-center bg-green-700/50 rounded-lg px-4 py-3 text-green-500">
+            <span class="animate-pulse">상대를 기다리는 중...</span>
           </div>
         </div>
 
-        <p class="text-yellow-300 text-sm">베팅: {{ room.bet_points.toLocaleString() }}P</p>
-        <button @click="readyUp" :disabled="isReady"
-          class="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-600 rounded-xl py-3 font-bold">
-          {{ isReady ? '✅ 준비완료' : '준비하기' }}
-        </button>
+        <p class="text-yellow-300 text-sm">베팅: {{ (room?.bet_points || betPoints).toLocaleString() }}P</p>
       </div>
     </div>
 
-    <!-- 게임 화면 -->
-    <div v-else-if="gameState" class="px-2 py-3 space-y-3">
+    <!-- ========== 화면 5: 게임 플레이 ========== -->
+    <div v-else-if="currentView === 'game' && gameState" class="px-2 py-3 space-y-3">
 
       <!-- 상대방 손패 수 -->
       <div class="flex justify-around">
@@ -147,7 +218,7 @@
       </div>
 
       <!-- 액션 버튼 -->
-      <div v-if="isMyTurn" class="flex gap-2">
+      <div v-if="isMyTurn && gameState.phase === 'playing'" class="flex gap-2">
         <button v-if="selectedCard" @click="playCard"
           :disabled="playing"
           class="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl py-3 font-bold">
@@ -183,48 +254,50 @@
             </div>
           </div>
           <div class="mt-4 text-yellow-300 font-bold">
-            {{ gameState.winner == myId ? `+${room.bet_points * (players.length - 1)}P 획득!` : `-${room.bet_points}P` }}
+            {{ gameState.winner == myId ? `+${(room?.bet_points || betPoints) * 1}P 획득!` : `-${room?.bet_points || betPoints}P` }}
           </div>
           <div class="mt-6 flex gap-2">
-            <button @click="playAgain" class="flex-1 bg-red-600 rounded-xl py-3 font-bold">다시 하기</button>
+            <button @click="resetToMenu" class="flex-1 bg-red-600 rounded-xl py-3 font-bold">다시 하기</button>
             <router-link to="/games" class="flex-1 bg-gray-600 rounded-xl py-3 font-bold text-center">로비</router-link>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 에러 -->
-    <div v-if="error" class="fixed bottom-20 left-4 right-4 bg-red-600 rounded-xl px-4 py-3 text-sm">
+    <!-- 에러 토스트 -->
+    <div v-if="error" class="fixed bottom-20 left-4 right-4 bg-red-600 rounded-xl px-4 py-3 text-sm z-50 text-center">
       {{ error }}
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
-import Echo from 'laravel-echo'
 
 const route  = useRoute()
+const router = useRouter()
 const auth   = useAuthStore()
 const myId   = auth.user?.id
 
-const room      = ref(null)
-const roomId    = ref(route.query.room ? parseInt(route.query.room) : null)
-const players   = ref([])
-const gameState = ref(null)
+// ---- State ----
+const currentView  = ref('menu')  // menu | quickmatch | friend | waiting | game
+const room         = ref(null)
+const roomId       = ref(null)
+const players      = ref([])
+const gameState    = ref(null)
 const selectedCard = ref(null)
-const isReady   = ref(false)
-const creating  = ref(false)
-const playing   = ref(false)
-const error     = ref('')
-const joinCode  = ref('')
-const newRoom   = ref({ max_players: 3, bet_points: 100 })
+const creating     = ref(false)
+const playing      = ref(false)
+const error        = ref('')
+const joinCode     = ref('')
+const betPoints    = ref(100)
+const copied       = ref(false)
+let matchTimer     = null
 
-let echo = null
-
+// ---- Computed (game play) ----
 const myHand = computed(() => {
   if (!gameState.value?.hands) return []
   return gameState.value.hands[myId] ?? []
@@ -252,6 +325,7 @@ const piCount = computed(() => {
   return pi.reduce((s, c) => s + (c.is_ssang ? 2 : 1), 0)
 })
 
+// ---- Helpers ----
 function typeEmoji(type) {
   return { gwang:'🌟', yeol:'🎯', tti:'🎀', pi:'🃏', ssang:'🃏🃏' }[type] ?? '🃏'
 }
@@ -269,102 +343,59 @@ function selectCard(card) {
   selectedCard.value = selectedCard.value?.id === card.id ? null : card
 }
 
-async function createRoom() {
-  creating.value = true
-  try {
-    const { data } = await axios.post('/api/games/rooms', newRoom.value)
-    room.value    = data
-    roomId.value  = data.id
-    players.value = data.players || []
-    subscribeToRoom(data.id)
-  } catch (e) {
-    error.value = e.response?.data?.message || '방 생성 실패'
-    setTimeout(() => error.value = '', 3000)
-  }
-  creating.value = false
+function showError(msg) {
+  error.value = msg
+  setTimeout(() => error.value = '', 3000)
 }
 
-async function joinByCode() {
-  if (!joinCode.value) return
-  try {
-    const { data: list } = await axios.get('/api/games/rooms')
-    const found = list.find(r => r.code === joinCode.value.toUpperCase())
-    if (!found) { error.value = '방을 찾을 수 없습니다.'; return }
-    const { data } = await axios.post(`/api/games/rooms/${found.id}/join`)
-    room.value    = data
-    roomId.value  = data.id
-    players.value = data.players || []
-    subscribeToRoom(data.id)
-  } catch (e) {
-    error.value = e.response?.data?.message || '입장 실패'
-    setTimeout(() => error.value = '', 3000)
+function goBack() {
+  if (currentView.value === 'quickmatch') {
+    cancelMatch()
+  } else if (currentView.value === 'waiting' || currentView.value === 'friend') {
+    leaveRoom()
+    currentView.value = 'menu'
+  } else if (currentView.value === 'game') {
+    // 게임 중에는 뒤로가기 제한
+    return
+  } else {
+    currentView.value = 'menu'
   }
 }
 
-async function readyUp() {
-  try {
-    await axios.post(`/api/games/rooms/${roomId.value}/ready`)
-    isReady.value = true
-  } catch (e) {
-    error.value = e.response?.data?.message || '준비 실패'
+function resetToMenu() {
+  leaveRoom()
+  room.value = null
+  roomId.value = null
+  gameState.value = null
+  players.value = []
+  selectedCard.value = null
+  currentView.value = 'menu'
+}
+
+function leaveRoom() {
+  if (roomId.value && window.Echo) {
+    window.Echo.leave(`game.${roomId.value}`)
   }
 }
 
-async function playCard() {
-  if (!selectedCard.value || !isMyTurn.value) return
-  playing.value = true
+async function copyCode() {
+  if (!room.value?.code) return
   try {
-    const { data } = await axios.post(`/api/games/rooms/${roomId.value}/play`, { card_id: selectedCard.value.id })
-    gameState.value = data
-    selectedCard.value = null
-  } catch (e) {
-    error.value = e.response?.data?.message || '카드를 낼 수 없습니다.'
-    setTimeout(() => error.value = '', 3000)
-  }
-  playing.value = false
-}
-
-async function doGo() {
-  try {
-    const { data } = await axios.post(`/api/games/rooms/${roomId.value}/go`)
-    gameState.value = data
-  } catch (e) {
-    error.value = e.response?.data?.message || '고 선언 실패'
+    await navigator.clipboard.writeText(room.value.code)
+    copied.value = true
+    setTimeout(() => copied.value = false, 2000)
+  } catch {
+    // fallback
+    showError('코드: ' + room.value.code)
   }
 }
 
-async function doStop() {
-  try {
-    const { data } = await axios.post(`/api/games/rooms/${roomId.value}/stop`)
-    gameState.value = data
-  } catch (e) {
-    error.value = e.response?.data?.message || '스톱 선언 실패'
-  }
-}
-
-function playAgain() {
-  room.value = null; roomId.value = null; gameState.value = null
-  players.value = []; isReady.value = false
-}
-
+// ---- WebSocket ----
 function subscribeToRoom(id) {
-  const win = window
-  if (!win.Echo) return
-  win.Echo.channel(`game.${id}`)
+  if (!window.Echo) return
+  window.Echo.channel(`game.${id}`)
     .listen('.state.changed', (e) => {
-      if (e.event === 'player_joined') {
-        loadState()
-      } else if (e.event === 'player_ready') {
-        loadState()
-      } else if (e.event === 'game_started') {
-        loadState()
-      } else if (e.event === 'card_played') {
-        loadState()
-      } else if (e.event === 'player_go') {
-        loadState()
-      } else if (e.event === 'game_over') {
-        loadState()
-      }
+      loadState()
     })
 }
 
@@ -374,20 +405,184 @@ async function loadState() {
     const { data } = await axios.get(`/api/games/rooms/${roomId.value}/state`)
     room.value    = data.room
     players.value = data.players
-    if (data.state) gameState.value = data.state
-  } catch { }
+
+    if (data.state) {
+      gameState.value = data.state
+      if (currentView.value !== 'game') {
+        currentView.value = 'game'
+      }
+    }
+
+    // 2명 입장 + 아직 게임 시작 전이면 자동 ready
+    if (data.room?.status === 'waiting' && data.players?.length >= 2) {
+      autoReady()
+    }
+  } catch (e) {
+    console.error('loadState error', e)
+  }
 }
 
+async function autoReady() {
+  try {
+    await axios.post(`/api/games/rooms/${roomId.value}/ready`)
+  } catch {
+    // 이미 ready 상태이면 무시
+  }
+}
+
+// ---- 빠른 대전 ----
+async function startQuickMatch() {
+  currentView.value = 'quickmatch'
+  try {
+    // 1. 대기 중인 방 찾기
+    const { data: rooms } = await axios.get('/api/games/rooms')
+    const waitingRoom = rooms.find(r =>
+      r.status === 'waiting' &&
+      r.max_players === 2 &&
+      r.players_count < 2 &&
+      !r.players?.some(p => p.user_id === myId)
+    )
+
+    if (waitingRoom) {
+      // 대기 방 있으면 입장
+      const { data } = await axios.post(`/api/games/rooms/${waitingRoom.id}/join`)
+      room.value    = data
+      roomId.value  = data.id
+      players.value = data.players || []
+      subscribeToRoom(data.id)
+      // 입장 후 자동 ready
+      await autoReady()
+      currentView.value = 'waiting'
+      return
+    }
+
+    // 2. 없으면 방 생성
+    const { data } = await axios.post('/api/games/rooms', {
+      max_players: 2,
+      bet_points: betPoints.value
+    })
+    room.value    = data
+    roomId.value  = data.id
+    players.value = data.players || []
+    subscribeToRoom(data.id)
+
+    // 5초마다 방 상태 확인 (WebSocket 보완)
+    matchTimer = setInterval(async () => {
+      await loadState()
+      if (players.value.length >= 2 || currentView.value === 'game') {
+        clearInterval(matchTimer)
+        matchTimer = null
+      }
+    }, 5000)
+  } catch (e) {
+    showError(e.response?.data?.message || '매칭 실패')
+    currentView.value = 'menu'
+  }
+}
+
+function cancelMatch() {
+  if (matchTimer) {
+    clearInterval(matchTimer)
+    matchTimer = null
+  }
+  leaveRoom()
+  room.value = null
+  roomId.value = null
+  players.value = []
+  currentView.value = 'menu'
+}
+
+// ---- 친구와 대전 ----
+async function createFriendRoom() {
+  creating.value = true
+  try {
+    const { data } = await axios.post('/api/games/rooms', {
+      max_players: 2,
+      bet_points: betPoints.value
+    })
+    room.value    = data
+    roomId.value  = data.id
+    players.value = data.players || []
+    subscribeToRoom(data.id)
+    currentView.value = 'waiting'
+  } catch (e) {
+    showError(e.response?.data?.message || '방 생성 실패')
+  }
+  creating.value = false
+}
+
+async function joinByCode() {
+  if (!joinCode.value) return
+  try {
+    const { data: list } = await axios.get('/api/games/rooms')
+    const found = list.find(r => r.code === joinCode.value.toUpperCase())
+    if (!found) {
+      showError('방을 찾을 수 없습니다.')
+      return
+    }
+    const { data } = await axios.post(`/api/games/rooms/${found.id}/join`)
+    room.value    = data
+    roomId.value  = data.id
+    players.value = data.players || []
+    subscribeToRoom(data.id)
+    await autoReady()
+    currentView.value = 'waiting'
+  } catch (e) {
+    showError(e.response?.data?.message || '입장 실패')
+  }
+}
+
+// ---- 게임 플레이 ----
+async function playCard() {
+  if (!selectedCard.value || !isMyTurn.value) return
+  playing.value = true
+  try {
+    const { data } = await axios.post(`/api/games/rooms/${roomId.value}/play`, { card_id: selectedCard.value.id })
+    gameState.value = data
+    selectedCard.value = null
+  } catch (e) {
+    showError(e.response?.data?.message || '카드를 낼 수 없습니다.')
+  }
+  playing.value = false
+}
+
+async function doGo() {
+  try {
+    const { data } = await axios.post(`/api/games/rooms/${roomId.value}/go`)
+    gameState.value = data
+  } catch (e) {
+    showError(e.response?.data?.message || '고 선언 실패')
+  }
+}
+
+async function doStop() {
+  try {
+    const { data } = await axios.post(`/api/games/rooms/${roomId.value}/stop`)
+    gameState.value = data
+  } catch (e) {
+    showError(e.response?.data?.message || '스톱 선언 실패')
+  }
+}
+
+// ---- URL 파라미터로 방 입장 ----
 onMounted(async () => {
-  if (roomId.value) {
+  const qRoom = route.query.room ? parseInt(route.query.room) : null
+  if (qRoom) {
+    roomId.value = qRoom
     await loadState()
-    subscribeToRoom(roomId.value)
+    subscribeToRoom(qRoom)
+    if (gameState.value) {
+      currentView.value = 'game'
+    } else {
+      currentView.value = 'waiting'
+    }
   }
 })
 
 onUnmounted(() => {
-  if (roomId.value && window.Echo) {
-    window.Echo.leave(`game.${roomId.value}`)
+  if (matchTimer) {
+    clearInterval(matchTimer)
   }
+  leaveRoom()
 })
 </script>

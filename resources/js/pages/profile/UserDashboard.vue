@@ -24,7 +24,7 @@
             <p class="text-blue-200 text-sm">@{{ auth.user?.username }}</p>
             <div class="flex items-center gap-2 mt-1">
               <span class="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-medium">{{ auth.user?.level || '씨앗' }}</span>
-              <span class="text-yellow-300 text-xs font-bold">{{ (auth.user?.points_total ?? 0).toLocaleString() }}P</span>
+              <span class="text-yellow-300 text-xs font-bold">{{ (auth.user?.points ?? 0).toLocaleString() }}P</span>
             </div>
           </div>
         </div>
@@ -52,7 +52,7 @@
           <div class="text-xs text-gray-500">숏츠</div>
         </div>
         <div>
-          <div class="text-xl font-black text-purple-600">{{ (auth.user?.points_total ?? 0).toLocaleString() }}</div>
+          <div class="text-xl font-black text-purple-600">{{ (auth.user?.points ?? 0).toLocaleString() }}</div>
           <div class="text-xs text-gray-500">포인트</div>
         </div>
         <div>
@@ -306,7 +306,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
             <p class="text-blue-100 text-xs mb-1">보유 포인트</p>
-            <p class="text-3xl font-black">{{ (auth.user?.points_total ?? 0).toLocaleString() }}</p>
+            <p class="text-3xl font-black">{{ (auth.user?.points ?? 0).toLocaleString() }}</p>
             <p class="text-blue-200 text-xs">P</p>
           </div>
           <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white">
@@ -810,8 +810,9 @@ async function doCheckin() {
   checkingIn.value = true
   try {
     const { data } = await axios.post('/api/points/checkin')
+      authStore.refreshPoints()
     checkedIn.value = true
-    auth.user = { ...auth.user, points_total: (auth.user?.points_total ?? 0) + (data.points ?? 10) }
+    auth.user = { ...auth.user, points: (auth.user?.points ?? 0) + (data.points ?? 10) }
     pointLogs.value.unshift({ type: 'earn', amount: data.points ?? 10, description: '출석 체크', created_at: new Date().toISOString() })
   } catch (e) {
     if (e.response?.status === 409) checkedIn.value = true

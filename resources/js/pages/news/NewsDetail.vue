@@ -6,126 +6,197 @@
 
       <template v-else-if="news">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl mb-6">
-          <button @click="router.push('/news')" class="text-blue-200 text-sm mb-2 hover:text-white transition">&larr; 뉴스 목록</button>
-          <span class="bg-white/20 text-xs px-3 py-1 rounded-full ml-2">{{ news.category || '뉴스' }}</span>
-          <h1 class="text-2xl font-black mt-3 leading-tight">{{ news.title }}</h1>
-          <div class="flex items-center gap-2 mt-3 text-sm text-blue-100">
-            <span>{{ news.source }}</span>
+        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-4 rounded-2xl mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <button @click="router.push('/news')" class="text-blue-200 text-sm hover:text-white transition">&larr; 뉴스 목록</button>
+              <span class="bg-white/20 text-xs px-3 py-1 rounded-full">{{ news.category || '뉴스' }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="shareNews" class="flex items-center gap-1 text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                공유
+              </button>
+              <button @click="bookmarked = !bookmarked" :class="bookmarked ? 'bg-yellow-400/30' : 'bg-white/10 hover:bg-white/20'" class="flex items-center gap-1 text-xs text-white/80 hover:text-white px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" :fill="bookmarked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                북마크
+              </button>
+            </div>
+          </div>
+          <h1 class="text-lg sm:text-xl font-black leading-tight">{{ news.title }}</h1>
+          <div class="flex items-center gap-2 mt-2 text-sm text-blue-100">
+            <span v-if="news.source" class="font-medium">{{ news.source }}</span>
             <span v-if="news.source && displayDate">·</span>
             <span>{{ displayDate }}</span>
           </div>
         </div>
 
-        <!-- Article Content -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
-          <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
-            {{ news.content || news.summary || '내용을 불러올 수 없습니다.' }}
-          </div>
+        <!-- 2컬럼 레이아웃: 본문(좌) + 사이드바(우) -->
+        <div class="flex gap-5 items-start">
 
-          <!-- Original Source Link -->
-          <div v-if="news.url" class="mt-6 pt-4 border-t border-gray-100">
-            <a :href="news.url" target="_blank" rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 bg-blue-50 text-blue-600 font-medium px-5 py-2.5 rounded-xl hover:bg-blue-100 transition text-sm">
-              원본 기사 보기 &rarr;
-            </a>
-          </div>
-        </div>
+          <!-- ── 본문 컬럼 (좌) ── -->
+          <div class="flex-1 min-w-0">
 
-        <!-- Actions -->
-        <div class="bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <!-- Like -->
-            <button @click="toggleLike"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition"
-              :class="liked ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'">
-              <span>{{ liked ? '&#10084;&#65039;' : '&#9825;' }}</span>
-              <span>관심</span>
-              <span v-if="likeCount" class="text-xs ml-0.5">({{ likeCount }})</span>
-            </button>
+            <!-- Article Content -->
+            <div class="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden">
+              <!-- Hero Image: 원본 비율 그대로 (크롭 없음) -->
+              <div v-if="heroImage" class="bg-gray-50 flex justify-center">
+                <img :src="heroImage" :alt="news.title"
+                  class="h-auto block"
+                  style="max-width:100%; max-height:70vh; object-fit:contain; background:#f9fafb;"
+                  @error="heroImage = null" />
+              </div>
+              <!-- 사진 설명 -->
+              <p v-if="news.image_caption || heroImageCaption"
+                class="text-xs text-gray-500 px-5 py-2 bg-gray-50 border-b border-gray-100">
+                {{ news.image_caption || heroImageCaption }}
+              </p>
 
-            <!-- Bookmark -->
-            <button @click="bookmarked = !bookmarked"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition"
-              :class="bookmarked ? 'bg-yellow-50 text-yellow-600' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'">
-              <span>{{ bookmarked ? '&#9733;' : '&#9734;' }}</span>
-              <span>저장</span>
-            </button>
-          </div>
+              <div class="p-5">
+                <div class="article-content" v-html="formattedContent"></div>
+                <p v-if="!formattedContent" class="text-gray-400 text-sm">내용을 불러올 수 없습니다.</p>
 
-          <!-- Share -->
-          <button @click="shareNews"
-            class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-gray-50 text-gray-500 hover:bg-gray-100 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            <span>공유</span>
-          </button>
-        </div>
-
-        <!-- Comments Section -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
-          <h3 class="font-bold text-gray-800 mb-4">댓글 ({{ comments.length }})</h3>
-
-          <!-- Comment Write Form -->
-          <div v-if="auth.isLoggedIn" class="flex gap-2 mb-5">
-            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-              {{ auth.user?.name?.charAt(0) || 'U' }}
+                <!-- 원본 기사 링크 -->
+                <div v-if="news.url" class="mt-6 pt-4 border-t border-gray-100">
+                  <a :href="news.url" target="_blank" rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 bg-blue-50 text-blue-600 font-medium px-4 py-2 rounded-xl hover:bg-blue-100 transition text-sm">
+                    원본 기사 보기 &rarr;
+                  </a>
+                </div>
+              </div>
             </div>
-            <div class="flex-1">
-              <textarea v-model="newComment" rows="2" placeholder="댓글을 작성하세요..."
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
-              <div class="flex justify-end mt-1">
-                <button @click="submitComment" :disabled="!newComment.trim()"
-                  class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition disabled:opacity-40">
-                  등록
+
+            <!-- Actions -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <button @click="toggleLike"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition"
+                  :class="liked ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'">
+                  <span>{{ liked ? '&#10084;&#65039;' : '&#9825;' }}</span>
+                  <span>관심</span>
+                  <span v-if="likeCount" class="text-xs ml-0.5">({{ likeCount }})</span>
+                </button>
+                <button @click="bookmarked = !bookmarked"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition"
+                  :class="bookmarked ? 'bg-yellow-50 text-yellow-600' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'">
+                  <span>{{ bookmarked ? '&#9733;' : '&#9734;' }}</span>
+                  <span>저장</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Comments -->
+            <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
+              <h3 class="font-bold text-gray-800 mb-4">댓글 ({{ comments.length }})</h3>
+              <div v-if="auth.isLoggedIn" class="flex gap-2 mb-5">
+                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {{ auth.user?.name?.charAt(0) || 'U' }}
+                </div>
+                <div class="flex-1">
+                  <textarea v-model="newComment" rows="2" placeholder="댓글을 작성하세요..."
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+                  <div class="flex justify-end mt-1">
+                    <button @click="submitComment" :disabled="!newComment.trim()"
+                      class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition disabled:opacity-40">
+                      등록
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-3 mb-4 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-500">댓글을 작성하려면 </span>
+                <router-link to="/auth/login" class="text-sm text-blue-600 font-medium">로그인</router-link>
+                <span class="text-sm text-gray-500">하세요.</span>
+              </div>
+              <div v-if="comments.length" class="space-y-4">
+                <div v-for="c in comments" :key="c.id" class="flex gap-2">
+                  <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    {{ c.user?.name?.charAt(0) || 'U' }}
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium text-gray-800">{{ c.user?.name || '익명' }}</span>
+                      <span class="text-xs text-gray-400">{{ c.created_at_human || '' }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-0.5">{{ c.content }}</p>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-6 text-gray-400 text-sm">첫 번째 댓글을 작성해보세요!</div>
+            </div>
+          </div><!-- /본문 컬럼 -->
+
+          <!-- ── 사이드바 (우) — 같은 카테고리 뉴스 ── -->
+          <div class="hidden lg:block flex-shrink-0 sticky top-4" style="width:320px">
+            <div class="bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden">
+              <!-- 헤더 -->
+              <h3 class="flex-shrink-0 font-bold text-gray-800 text-sm px-4 py-3 border-b border-gray-100">
+                {{ news.category || '관련' }} 뉴스
+              </h3>
+
+              <!-- 뉴스 목록 -->
+              <div>
+                <div v-if="pagedRelated.length">
+                  <div v-for="(r, idx) in pagedRelated" :key="r.id"
+                    @click="router.push('/news/' + r.id)"
+                    class="flex gap-3 py-3 px-3 cursor-pointer hover:bg-blue-50/40 transition border-b border-gray-50 last:border-0"
+                    :class="r.id == $route.params.id ? 'bg-blue-50' : ''">
+                    <!-- 순번: 현재 읽는 기사면 파란색 -->
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black mt-0.5"
+                      :class="String(r.id) === String(route.params.id) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'">
+                      {{ (relatedPage - 1) * relatedPerPage + idx + 1 }}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-800 line-clamp-2 leading-snug">{{ r.title }}</p>
+                      <div class="flex items-center gap-1.5 mt-1">
+                        <span class="text-[11px] text-gray-400">{{ r.source }}</span>
+                        <span class="text-gray-300 text-[10px]">·</span>
+                        <span class="text-[11px] text-gray-400">{{ r.date }}</span>
+                      </div>
+                    </div>
+                    <!-- 썸네일 -->
+                    <div v-if="r.image_url" class="flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden bg-gray-100">
+                      <img :src="r.image_url" class="w-full h-full object-cover" @error="r.image_url = null" />
+                    </div>
+                    <div v-else class="flex-shrink-0 w-16 h-12 rounded-lg flex items-center justify-center text-xl"
+                      :style="{ backgroundColor: r.iconBg || '#f3f4f6' }">
+                      {{ r.icon || '📰' }}
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="text-center py-10 text-gray-400 text-sm">관련 뉴스가 없습니다.</div>
+              </div>
+
+              <!-- 페이지네이션 -->
+              <div v-if="relatedTotalPages > 1"
+                class="flex-shrink-0 flex items-center justify-center gap-1 px-3 py-3 border-t border-gray-100 bg-white">
+                <!-- 이전 -->
+                <button @click="relatedPage > 1 && relatedPage--"
+                  :disabled="relatedPage === 1"
+                  class="w-7 h-7 rounded-full flex items-center justify-center text-sm transition"
+                  :class="relatedPage === 1 ? 'text-gray-300 cursor-default' : 'text-gray-500 hover:bg-gray-100'">
+                  &#8249;
+                </button>
+                <!-- 페이지 번호 -->
+                <button v-for="p in relatedTotalPages" :key="p"
+                  @click="relatedPage = p"
+                  class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition"
+                  :class="relatedPage === p ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'">
+                  {{ p }}
+                </button>
+                <!-- 다음 -->
+                <button @click="relatedPage < relatedTotalPages && relatedPage++"
+                  :disabled="relatedPage === relatedTotalPages"
+                  class="w-7 h-7 rounded-full flex items-center justify-center text-sm transition"
+                  :class="relatedPage === relatedTotalPages ? 'text-gray-300 cursor-default' : 'text-gray-500 hover:bg-gray-100'">
+                  &#8250;
                 </button>
               </div>
             </div>
-          </div>
-          <div v-else class="text-center py-3 mb-4 bg-gray-50 rounded-lg">
-            <span class="text-sm text-gray-500">댓글을 작성하려면 </span>
-            <router-link to="/auth/login" class="text-sm text-blue-600 font-medium">로그인</router-link>
-            <span class="text-sm text-gray-500">하세요.</span>
-          </div>
+          </div><!-- /사이드바 -->
 
-          <!-- Comment List -->
-          <div v-if="comments.length" class="space-y-4">
-            <div v-for="c in comments" :key="c.id" class="flex gap-2">
-              <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                {{ c.user?.name?.charAt(0) || 'U' }}
-              </div>
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-gray-800">{{ c.user?.name || '익명' }}</span>
-                  <span class="text-xs text-gray-400">{{ c.created_at_human || '' }}</span>
-                </div>
-                <p class="text-sm text-gray-600 mt-0.5">{{ c.content }}</p>
-              </div>
-            </div>
-          </div>
-          <div v-else class="text-center py-6 text-gray-400 text-sm">첫 번째 댓글을 작성해보세요!</div>
-        </div>
-
-        <!-- Related News -->
-        <div v-if="relatedNews.length" class="bg-white rounded-2xl shadow-sm p-6 mb-4">
-          <h3 class="font-bold text-gray-800 mb-4">관련 뉴스</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div v-for="r in relatedNews" :key="r.id"
-              @click="router.push('/news/' + r.id)"
-              class="flex gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
-                :style="{ backgroundColor: r.iconBg || '#f3f4f6' }">
-                {{ r.icon || '📰' }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-800 line-clamp-2">{{ r.title }}</p>
-                <span class="text-xs text-gray-400">{{ r.source }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        </div><!-- /2컬럼 -->
       </template>
 
       <!-- Not Found -->
@@ -138,7 +209,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
@@ -153,7 +224,19 @@ const newComment = ref('')
 const liked = ref(false)
 const likeCount = ref(0)
 const bookmarked = ref(false)
-const relatedNews = ref([])
+const relatedAll  = ref([])   // 전체 관련 뉴스
+const relatedPage = ref(1)
+const relatedPerPage = 5
+
+const relatedNews = computed(() => {           // 현재 페이지 슬라이스
+  const s = (relatedPage.value - 1) * relatedPerPage
+  return relatedAll.value.slice(s, s + relatedPerPage)
+})
+const pagedRelated     = relatedNews           // template alias
+const relatedTotalPages = computed(() => Math.ceil(relatedAll.value.length / relatedPerPage))
+
+const heroImage = ref(null)
+const heroImageCaption = ref(null)
 
 const categoryIcons = { '정치/사회':'🏛️', '경제':'💰', '생활':'🏥', '문화':'🎭', '스포츠':'⚽', '기타':'📰', '이민/비자':'📋', '경제/취업':'💰', '교육':'📚', '생활정보':'🏥', '한국소식':'🛂', '미국정치':'🏛️' }
 const categoryBgs   = { '정치/사회':'#e0e7ff', '경제':'#dcfce7', '생활':'#fef9c3', '문화':'#fce7f3', '스포츠':'#dbeafe', '기타':'#f3f4f6', '이민/비자':'#dbeafe', '경제/취업':'#dcfce7', '교육':'#fef9c3', '생활정보':'#fee2e2', '한국소식':'#e0e7ff', '미국정치':'#f3e8ff' }
@@ -166,6 +249,212 @@ const displayDate = computed(() => {
   return new Date(dt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 })
 
+// Smart content rendering: handles HTML and plain text
+const formattedContent = computed(() => {
+  if (!news.value) return ''
+  let content = news.value.content || news.value.summary || ''
+  if (!content.trim()) return ''
+
+  // ── Universal pre-cleaning (works on both HTML and plain text) ──────────
+  // 1. Strip everything before and including the audio player text (hankyoreh pattern)
+  //    "기사를 읽어드립니다...0:00" is always followed by real content
+  content = content.replace(/^[\s\S]*?기사를\s*읽어드립니다[\s\S]*?\d+:\d+\s*/m, '')
+
+  // 2. If still has leftover audio text (no timestamp), strip it
+  content = content
+    .replace(/기사를\s*읽어드립니다/g, '')
+    .replace(/Your browser does not support\s*the?\s*audio element\.?/gi, '')
+
+  // 3. Strip Korean news site metadata (author + timestamps)
+  //    Pattern: "손고운기자수정 2026-03-29 20:12등록 2026-03-29 18:00"
+  content = content.replace(/[가-힣]{2,10}기자\s*수정\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\s*등록\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\s*/g, '')
+  content = content.replace(/수정\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\s*등록\s*\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}\s*/g, '')
+
+  // 4. Strip breadcrumb prefix at start: "본문사회사회일반..." or "본문정치정치일반..."
+  content = content.replace(/^본문[가-힣\s]{2,30}(?=[가-힣"'0-9(])/g, '')
+
+  // 5. Strip standalone "광고" ad markers
+  content = content.replace(/(?<!\w)광고(?!\w)/g, '')
+
+  content = content.trim()
+  if (!content) return ''
+
+  // Detect HTML content
+  if (content.includes('<') && content.includes('>')) {
+    return content
+      // Strip audio/video elements (TTS and media players from news sites)
+      .replace(/<audio\b[^<]*(?:(?!<\/audio>)<[^<]*)*<\/audio>/gis, '')
+      .replace(/<video\b[^<]*(?:(?!<\/video>)<[^<]*)*<\/video>/gis, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gis, '')
+      .replace(/오디오 재생[^<]*/g, '')
+      // Strip scripts and styles
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      // Strip on* attributes (security)
+      .replace(/\s+on\w+="[^"]*"/gi, '')
+      .replace(/\s+on\w+='[^']*'/gi, '')
+      // Make images responsive
+      .replace(/<img([^>]*?)>/gi, (match, attrs) => {
+        // Remove existing class if any, then add responsive class
+        const cleaned = attrs.replace(/\s*class="[^"]*"/gi, '').replace(/\s*style="[^"]*"/gi, '')
+        return `<img${cleaned} class="article-img" loading="lazy">`
+      })
+      // Style paragraph tags
+      .replace(/<p(?:\s[^>]*)?>(\s*<\/p>)?/gi, (match) => {
+        if (match.includes('</p>')) return match // self-closing empty, skip
+        return '<p class="article-para">'
+      })
+      // Add class to headings
+      .replace(/<h([1-6])(?:\s[^>]*)?>/gi, (match, n) => `<h${n} class="article-heading article-h${n}">`)
+      // Style blockquotes
+      .replace(/<blockquote(?:\s[^>]*)?>/gi, '<blockquote class="article-blockquote">')
+      // Style lists
+      .replace(/<ul(?:\s[^>]*)?>/gi, '<ul class="article-ul">')
+      .replace(/<ol(?:\s[^>]*)?>/gi, '<ol class="article-ol">')
+  }
+
+  // ── Plain text handling ──────────────────────────────────────────────────
+
+  // Step 1: Try double-newline split
+  let paragraphs = content.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 0)
+  if (paragraphs.length >= 2) {
+    return paragraphs.map(p => `<p class="article-para">${p.replace(/\n/g, '<br>')}</p>`).join('')
+  }
+
+  // Step 2: Try single-newline split
+  const lines = content.split(/\n/).map(p => p.trim()).filter(p => p.length > 0)
+  if (lines.length >= 3) {
+    return lines.map(p => `<p class="article-para">${p}</p>`).join('')
+  }
+
+  // Step 3: Smart Korean sentence splitting for dense text blocks
+  // Split by inserting a delimiter at sentence boundaries
+  const delimited = content
+    .replace(/([다요죠까야어네군]\.)\s+/g, '$1\n')
+    .replace(/([!?])\s+/g, '$1\n')
+
+  const sentences = delimited.split('\n').map(s => s.trim()).filter(s => s.length > 0)
+
+  if (sentences.length >= 3) {
+    // Group every 3-4 sentences into a paragraph
+    const grouped = []
+    const groupSize = 3
+    for (let i = 0; i < sentences.length; i += groupSize) {
+      const group = sentences.slice(i, i + groupSize).join(' ')
+      if (group.trim()) grouped.push(group.trim())
+    }
+    return grouped.map(p => `<p class="article-para">${p}</p>`).join('')
+  }
+
+  // Step 4: Force split dense content by character count (~400 chars per paragraph)
+  if (content.length > 300) {
+    const chunkSize = 400
+    const chunks = []
+    let start = 0
+    while (start < content.length) {
+      let end = start + chunkSize
+      if (end < content.length) {
+        // Try to break at space or period
+        const breakAt = content.lastIndexOf(' ', end)
+        if (breakAt > start) end = breakAt
+      }
+      chunks.push(content.slice(start, end).trim())
+      start = end
+    }
+    return chunks.filter(c => c.length > 0).map(c => `<p class="article-para">${c}</p>`).join('')
+  }
+
+  // Fallback: single paragraph
+  return `<p class="article-para">${content}</p>`
+})
+
+function timeAgo(dt) {
+  if (!dt) return ''
+  const diff = Date.now() - new Date(dt).getTime()
+  const hrs = Math.floor(diff / 3600000)
+  if (hrs < 1) return '방금 전'
+  if (hrs < 24) return `${hrs}시간 전`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}일 전`
+  return `${Math.floor(days / 30)}개월 전`
+}
+
+// Extract first figcaption/caption from HTML for hero image caption
+function extractFirstCaption(content) {
+  if (!content) return null
+  const m = content.match(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i)
+  if (m) return m[1].replace(/<[^>]+>/g, '').trim().slice(0, 200)
+  const m2 = content.match(/class="[^"]*caption[^"]*"[^>]*>([\s\S]*?)<\//i)
+  if (m2) return m2[1].replace(/<[^>]+>/g, '').trim().slice(0, 200)
+  return null
+}
+
+// Extract first image from HTML content for hero, if no image_url
+function extractFirstImage(content) {
+  if (!content) return null
+  // Try standard src
+  let match = content.match(/<img[^>]+src=["']([^"']+)["']/i)
+  if (match && match[1] && !match[1].includes('data:image')) return match[1]
+  // Try data-src (lazy loading)
+  match = content.match(/<img[^>]+data-src=["']([^"']+)["']/i)
+  if (match && match[1]) return match[1]
+  return null
+}
+
+async function loadArticle(id, keepSidebar = false) {
+  loading.value = true
+  news.value = null
+  comments.value = []
+  heroImage.value = null
+  heroImageCaption.value = null
+  if (!keepSidebar) {
+    relatedAll.value = []
+    relatedPage.value = 1
+  }
+  // 페이지 상단으로 스크롤
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  try {
+    const { data } = await axios.get(`/api/news/${id}`)
+    news.value = data
+    comments.value = data.comments || []
+    likeCount.value = data.like_count || 0
+    liked.value = data.user_liked || false
+    bookmarked.value = data.user_bookmarked || false
+    heroImage.value = data.image_url || data.thumbnail || data.image || data.og_image || extractFirstImage(data.content) || null
+    heroImageCaption.value = data.image_caption || extractFirstCaption(data.content) || null
+    if (!keepSidebar) {
+      loadRelated(data.category)
+    }
+  } catch {
+    news.value = _legacy.find(n => n.id == id) || { title: '뉴스 기사', summary: '내용을 불러올 수 없습니다.' }
+  } finally {
+    loading.value = false
+  }
+}
+
+// 사이드바 뉴스 클릭 → 기사 전환하되 사이드바 유지
+function openSidebarNews(newsItem) {
+  // 현재 기사가 몇 페이지에 있는지 유지
+  router.push('/news/' + newsItem.id)
+}
+
+// route.params.id 변경 감지 → 기사 새로 로드
+// 사이드바 뉴스 목록에 현재 기사가 있으면 사이드바 유지
+watch(() => route.params.id, (newId) => {
+  if (!newId) return
+  const isInSidebar = relatedAll.value.some(n => String(n.id) === String(newId))
+  if (isInSidebar) {
+    // 사이드바 내 기사 클릭 → 사이드바 유지, 해당 기사 페이지로 자동 이동
+    const idx = relatedAll.value.findIndex(n => String(n.id) === String(newId))
+    if (idx >= 0) {
+      relatedPage.value = Math.floor(idx / relatedPerPage) + 1
+    }
+    loadArticle(newId, true)
+  } else {
+    loadArticle(newId, false)
+  }
+})
+
 onMounted(async () => {
   try {
     const { data } = await axios.get(`/api/news/${route.params.id}`)
@@ -174,9 +463,13 @@ onMounted(async () => {
     likeCount.value = data.like_count || 0
     liked.value = data.user_liked || false
     bookmarked.value = data.user_bookmarked || false
+
+    // Check multiple possible image fields
+    heroImage.value = data.image_url || data.thumbnail || data.image || data.og_image || extractFirstImage(data.content) || null
+    heroImageCaption.value = data.image_caption || extractFirstCaption(data.content) || null
+
     loadRelated(data.category)
   } catch {
-    // Fallback - show basic info from legacy data
     const legacyItem = _legacy.find(n => n.id == route.params.id)
     if (legacyItem) {
       news.value = legacyItem
@@ -202,19 +495,33 @@ const _legacy = [
 ]
 
 async function loadRelated(category) {
+  const toItem = n => ({
+    ...n,
+    icon:   categoryIcons[n.category] || '📰',
+    iconBg: categoryBgs[n.category]   || '#f3f4f6',
+    date:   timeAgo(n.published_at || n.created_at),
+  })
   try {
-    const { data } = await axios.get('/api/news', { params: { category, limit: 5 } })
-    const items = (data.data || data).filter(n => n.id != route.params.id).slice(0, 4)
-    relatedNews.value = items.map(n => ({
-      ...n,
-      icon: categoryIcons[n.category] || '📰',
-      iconBg: categoryBgs[n.category] || '#f3f4f6',
-    }))
+    // 1차: 같은 카테고리 최대 50개
+    const [catRes, allRes] = await Promise.allSettled([
+      axios.get('/api/news', { params: { category, limit: 50 } }),
+      axios.get('/api/news', { params: { limit: 50 } }),
+    ])
+    const catItems = catRes.status === 'fulfilled'
+      ? (catRes.value.data.data || catRes.value.data).filter(n => n.id != route.params.id)
+      : []
+    const allItems = allRes.status === 'fulfilled'
+      ? (allRes.value.data.data || allRes.value.data).filter(n => n.id != route.params.id)
+      : []
+
+    // 같은 카테고리가 5개 이상이면 그것만, 아니면 전체로 채움
+    const merged = catItems.length >= 5
+      ? catItems
+      : [...catItems, ...allItems.filter(n => !catItems.find(c => c.id === n.id))]
+
+    relatedAll.value = merged.slice(0, 50).map(toItem)
   } catch {
-    // Fallback from legacy
-    relatedNews.value = _legacy
-      .filter(n => n.category === category && n.id != route.params.id)
-      .slice(0, 4)
+    relatedAll.value = _legacy.filter(n => n.id != route.params.id).map(toItem)
   }
 }
 
@@ -244,7 +551,6 @@ async function submitComment() {
     })
     newComment.value = ''
   } catch {
-    // Optimistic add
     comments.value.unshift({
       id: Date.now(),
       content: newComment.value.trim(),
@@ -265,3 +571,122 @@ function shareNews() {
   }
 }
 </script>
+
+<style scoped>
+/* Article typography — applied via v-html content classes */
+:deep(.article-para) {
+  margin-bottom: 1.25rem;
+  color: #374151;
+  line-height: 1.85;
+  font-size: 1rem;
+}
+
+:deep(.article-img) {
+  max-width: 100%;
+  height: auto;          /* 원본 비율 유지 — 크롭 없음 */
+  border-radius: 0.75rem;
+  margin: 1.25rem auto;
+  display: block;
+}
+
+/* 본문 사진 설명 (figcaption, span.caption 등) */
+:deep(figcaption),
+:deep(.caption),
+:deep(.img-caption),
+:deep(.photo-caption) {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: -0.75rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+:deep(.article-heading) {
+  font-weight: 700;
+  color: #111827;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+:deep(.article-h1) { font-size: 1.5rem; }
+:deep(.article-h2) { font-size: 1.25rem; }
+:deep(.article-h3) { font-size: 1.125rem; }
+:deep(.article-h4) { font-size: 1rem; }
+
+:deep(.article-blockquote) {
+  border-left: 4px solid #3b82f6;
+  padding: 0.75rem 1rem;
+  margin: 1.25rem 0;
+  background: #eff6ff;
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: #1d4ed8;
+  font-style: italic;
+}
+
+:deep(.article-ul) {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+  color: #374151;
+  line-height: 1.85;
+}
+
+:deep(.article-ol) {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+  color: #374151;
+  line-height: 1.85;
+}
+
+:deep(.article-ul li),
+:deep(.article-ol li) {
+  margin-bottom: 0.35rem;
+}
+
+:deep(a) {
+  color: #2563eb;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+:deep(a:hover) {
+  color: #1d4ed8;
+}
+
+:deep(strong), :deep(b) {
+  font-weight: 700;
+  color: #111827;
+}
+
+:deep(figure) {
+  margin: 1.25rem 0;
+}
+
+:deep(figcaption) {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 0.4rem;
+}
+
+:deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+:deep(th), :deep(td) {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+:deep(th) {
+  background: #f9fafb;
+  font-weight: 600;
+}
+</style>

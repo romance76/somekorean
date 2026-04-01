@@ -10,6 +10,38 @@ use Illuminate\Support\Facades\DB;
 
 class ShortController extends Controller
 {
+
+    // ★ 전체 숏츠 목록 (셔플용, 최대 500)
+    public function index(Request $request)
+    {
+        $perPage = min((int) $request->query("per_page", 500), 500);
+        $user    = Auth::user();
+
+        $shorts = Short::with("user:id,username,avatar")
+            ->where("is_active", true)
+            ->orderBy("id")
+            ->limit($perPage)
+            ->when(request('search'), fn($q, $s) => $q->where('title', 'LIKE', '%'.$s.'%'))->get()
+            ->map(function ($s) use ($user) {
+                $s->liked = $user
+                    ? ShortLike::where("user_id", $user->id)->where("short_id", $s->id)->exists()
+                    : false;
+                return $s;
+            });
+
+        return response()->json(["data" => $shorts, "total" => $shorts->count()]);
+    }
+
+    /**
+     * Get a single short by ID.
+     */
+    public function show($id)
+    {
+        $short = Short::findOrFail($id);
+        return response()->json($short);
+    }
+
+
     // 피드 (로그인 시 개인화, 비로그인 시 인기순)
     public function feed(Request $request)
     {
@@ -147,7 +179,7 @@ class ShortController extends Controller
             $vid = $m[1];
             return [
                 'platform'  => 'youtube',
-                'embed_url' => "https://www.youtube.com/embed/{$vid}?autoplay=0&mute=0&controls=1&loop=1&playlist={$vid}&rel=0",
+                'embed_url' => "https://www.youtube.com/embed/{$vid}?autoplay=1&mute=1&controls=1&loop=1&playlist={$vid}&rel=0",
                 'thumbnail' => "https://img.youtube.com/vi/{$vid}/hqdefault.jpg",
             ];
         }

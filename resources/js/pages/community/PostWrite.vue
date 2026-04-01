@@ -99,6 +99,7 @@ import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore()
 const editId = ref(route.query.edit || null);
 const boards = ref([]);
 const loading = ref(false);
@@ -147,11 +148,13 @@ async function submit() {
       await axios.post(`/api/posts/${editId.value}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      authStore.refreshPoints()
       router.push(`/community/post/${editId.value}`);
     } else {
       const { data } = await axios.post('/api/posts', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      authStore.refreshPoints()
       router.push(`/community/post/${data.post.id}`);
     }
   } catch(e) {
@@ -164,6 +167,13 @@ onMounted(async () => {
   boards.value = data;
   if (editId.value) {
     const { data: post } = await axios.get(`/api/posts/${editId.value}`);
+    // 본인 글 또는 관리자만 수정 가능
+    if (post.user_id !== authStore.user?.id && !authStore.user?.is_admin) {
+      alert('수정 권한이 없습니다.');
+      authStore.refreshPoints()
+      router.push(`/community/post/${editId.value}`);
+      return;
+    }
     form.value.board_id = post.board_id;
     form.value.title = post.title;
     form.value.content = post.content;

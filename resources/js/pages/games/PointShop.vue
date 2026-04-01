@@ -95,7 +95,7 @@ import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
 
 const auth = useAuthStore()
-const myPoints   = ref(auth.user?.points_total ?? 0)
+const myPoints   = ref(auth.user?.points ?? 0)
 const items      = ref([])
 const loading    = ref(false)
 const confirmItem = ref(null)
@@ -128,8 +128,8 @@ async function doPurchase() {
   purchasing.value = true
   try {
     const { data } = await axios.post('/api/games/shop/redeem', { item_id: confirmItem.value.id })
-    myPoints.value = data.points_total
-    auth.user.points_total = data.points_total
+    myPoints.value = data.points
+    auth.user.points = data.points
     successMsg.value = data.message
     confirmItem.value = null
     setTimeout(() => successMsg.value = '', 3000)

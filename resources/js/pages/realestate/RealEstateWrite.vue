@@ -131,9 +131,9 @@
         <!-- 에러 / 버튼 -->
         <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-xl">{{ error }}</div>
         <div class="flex justify-end gap-3 pt-2">
-          <button @click="$router.back()" class="px-6 py-3 border border-gray-300 text-gray-600 rounded-xl text-sm hover:bg-gray-50">취소</button>
+          <button @click="$router.back()" class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-600 rounded-xl text-sm hover:bg-gray-50">취소</button>
           <button @click="submit" :disabled="submitting"
-            class="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
+            class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
             {{ submitting ? '등록 중...' : '매물 등록' }}
           </button>
         </div>
