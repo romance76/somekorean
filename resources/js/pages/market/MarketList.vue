@@ -114,6 +114,18 @@ import axios from 'axios';
 
 const authStore = useAuthStore();
 const radius = ref(30);
+const userLat = ref(null);
+const userLng = ref(null);
+
+function getUserLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { userLat.value = pos.coords.latitude; userLng.value = pos.coords.longitude; load(); },
+      () => {},
+      { timeout: 5000 }
+    );
+  }
+}
 const viewMode = ref('grid');
 const items = ref([]);
 const loading = ref(true);
@@ -136,7 +148,7 @@ const marketCategories = [
 async function load(page = 1) {
   loading.value = true;
   try {
-    const { data } = await axios.get('/api/market', { params: { page, search: search.value, category: category.value } });
+    const { data } = await axios.get('/api/market', { params: { page, search: search.value, category: category.value, lat: userLat.value, lng: userLng.value, radius: radius.value } });
     items.value = data.data;
     currentPage.value = data.current_page;
     totalPages.value = data.last_page;
@@ -148,5 +160,5 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('ko-KR');
 }
 
-onMounted(() => load());
+onMounted(() => { getUserLocation(); load(); });
 </script>

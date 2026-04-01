@@ -8,10 +8,12 @@ use App\Models\Bookmark;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HasDistanceFilter;
 use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
+    use HasDistanceFilter;
     public function index(Request $request)
     {
         $query = Event::whereIn('status', ['active', 'published'])
@@ -21,6 +23,7 @@ class EventController extends Controller
         if ($request->region)   $query->where('region', $request->region);
         if ($request->category) $query->where('category', $request->category);
 
+        $this->applyDistanceFilter($query, $request, "latitude", "longitude");
         return response()->json($query->paginate(20));
     }
 

@@ -36,11 +36,11 @@
             </li>
             <li v-for="cat in categories" :key="cat.slug">
               <router-link
-                :to="'/community/' + cat.slug"
+                :to="'/community/' + cat.slug" @click="markCategoryRead(cat.slug)"
                 class="block w-full text-left px-4 py-2.5 text-sm transition"
                 :class="currentSlug === cat.slug ? 'bg-red-50 text-red-600 font-semibold border-l-2 border-red-500' : 'text-gray-600 hover:bg-gray-50'"
               >
-                {{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span>
+                {{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span> <span v-if="isNewCategory(cat)" class="text-[10px] bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1">N</span>
               </router-link>
             </li>
           </ul>
@@ -184,6 +184,18 @@ function onMobileCategory() {
   } else {
     router.push('/community')
   }
+}
+
+function isNewCategory(cat) {
+  if (!cat.latest_at) return false
+  const readKey = 'community_read_' + cat.slug
+  const lastRead = localStorage.getItem(readKey)
+  if (!lastRead) return true
+  return new Date(cat.latest_at) > new Date(lastRead)
+}
+
+function markCategoryRead(slug) {
+  localStorage.setItem('community_read_' + slug, new Date().toISOString())
 }
 
 async function fetchCategories() {

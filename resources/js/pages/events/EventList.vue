@@ -121,5 +121,31 @@ async function load() {
   finally { loading.value = false }
 }
 
+
+const userLat = ref(null);
+const userLng = ref(null);
+const userRadius = ref(30);
+
+function getUserLocation() {
+  const saved = localStorage.getItem('sk_user_location');
+  if (saved) {
+    const loc = JSON.parse(saved);
+    userLat.value = loc.lat;
+    userLng.value = loc.lng;
+    return;
+  }
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLat.value = pos.coords.latitude;
+        userLng.value = pos.coords.longitude;
+        localStorage.setItem('sk_user_location', JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude}));
+      },
+      () => {},
+      { timeout: 5000 }
+    );
+  }
+}
+
 onMounted(load)
 </script>
