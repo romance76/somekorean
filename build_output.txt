@@ -1,0 +1,10 @@
+public/build/assets/Chats-BKjUI0XV.js               29.11 kB │ gzip:  7.75 kB
+public/build/assets/ChatRooms-BX3ypYxe.js           29.73 kB │ gzip:  7.78 kB
+public/build/assets/GroupBuy-UBJw4TRR.js            34.69 kB │ gzip:  8.26 kB
+public/build/assets/Rides-BsZoSCqS.js               34.79 kB │ gzip:  8.20 kB
+public/build/assets/UserDashboard-YNx8eEdX.js       39.70 kB │ gzip: 11.35 kB
+public/build/assets/Payments-CU57e0zs.js            42.07 kB │ gzip: 10.54 kB
+public/build/assets/SiteSettings-DFg2Qqap.js        47.88 kB │ gzip: 11.90 kB
+public/build/assets/Members-CRR95c1S.js             56.83 kB │ gzip: 15.21 kB
+public/build/assets/app-DlegNpq2.js                266.66 kB │ gzip: 92.10 kB
+✓ built in 33.18s

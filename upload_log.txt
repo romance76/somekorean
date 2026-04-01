@@ -1,0 +1,35 @@
+START
+Connecting...
+Connected!
+  mkdir: /var/www/somekorean/app/Http/Controllers/API
+OK: /var/www/somekorean/app/Http/Controllers/API/AdminController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/AuthController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/BoardController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/BusinessController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/CommentController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/JobController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/MarketController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/MessageController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/PointController.php
+OK: /var/www/somekorean/app/Http/Controllers/API/PostController.php
+  mkdir: /var/www/somekorean/app/Http/Middleware
+OK: /var/www/somekorean/app/Http/Middleware/AdminMiddleware.php
+OK: /var/www/somekorean/app/Models/Board.php
+OK: /var/www/somekorean/app/Models/Bookmark.php
+OK: /var/www/somekorean/app/Models/Business.php
+OK: /var/www/somekorean/app/Models/BusinessReview.php
+OK: /var/www/somekorean/app/Models/Checkin.php
+OK: /var/www/somekorean/app/Models/Comment.php
+OK: /var/www/somekorean/app/Models/JobPost.php
+OK: /var/www/somekorean/app/Models/MarketItem.php
+OK: /var/www/somekorean/app/Models/Message.php
+OK: /var/www/somekorean/app/Models/PointLog.php
+OK: /var/www/somekorean/app/Models/Post.php
+OK: /var/www/somekorean/app/Models/PostLike.php
+OK: /var/www/somekorean/app/Models/Report.php
+OK: /var/www/somekorean/app/Models/User.php
+OK: /var/www/somekorean/routes/api.php
+UPLOAD DONE: 26 files
+SAVED: C:/Users/Admin/Desktop/somekorean/app.php.remote.txt (525 bytes)
+SAVED: C:/Users/Admin/Desktop/somekorean/auth.php.remote.txt (4040 bytes)
+ALL DONE

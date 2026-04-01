@@ -1,0 +1,26 @@
+START
+Connecting...
+Connected!
+OK: /var/www/somekorean/bootstrap/app.php
+OK: /var/www/somekorean/config/auth.php
+DONE: 2 files
+CMD: cd /var/www/somekorean && php8.2 artisan config:clear
+OUT: 
+   INFO  Configuration cache cleared successfully.  
+
+
+CMD: cd /var/www/somekorean && php8.2 artisan route:clear
+OUT: 
+   INFO  Route cache cleared successfully.  
+
+
+CMD: cd /var/www/somekorean && php8.2 artisan cache:clear
+OUT: 
+   INFO  Application cache cleared successfully.  
+
+
+Running MySQL seed...
+MySQL OUT: 
+MySQL ERR: mysql: [Warning] Using a password on the command line interface can be insecure.
+
+ALL DONE
