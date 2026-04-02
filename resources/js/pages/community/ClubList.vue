@@ -1,9 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-16">
 
-    <!-- Location Bar -->
-    <LocationBar placeholder="동호회 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
-
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl">
         <div class="flex items-center justify-between px-6 py-5">
@@ -28,6 +25,9 @@
         </button>
       </div>
     </div>
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="동호회 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
     <!-- Content area -->
     <div class="max-w-[1200px] mx-auto px-4 py-4">
 

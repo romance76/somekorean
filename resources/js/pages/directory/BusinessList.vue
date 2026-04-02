@@ -1,9 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-16">
 
-    <!-- Location Bar -->
-    <LocationBar placeholder="업소록 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
-
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
         <div class="flex items-center justify-between">
@@ -27,18 +24,9 @@
         </button>
       </div>
     </div>
-    <!-- State filter buttons -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-2">
-      <div class="flex gap-1.5 overflow-x-auto pb-1 flex-wrap" style="scrollbar-width:none">
-        <button v-for="st in stateButtons" :key="st.code" @click="selectState(st)"
-          :class="['flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition',
-            selectedState===st.code
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600']">
-          {{ st.label }}
-        </button>
-      </div>
-    </div>
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="업소록 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
 
     <!-- Content area -->
     <div class="max-w-[1200px] mx-auto px-4 py-4">

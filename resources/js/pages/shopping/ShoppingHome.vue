@@ -1,9 +1,6 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-4">
 
-    <!-- Location Bar -->
-    <LocationBar placeholder="쇼핑정보 검색..." :radius-options="['10mi','20mi','30mi','50mi','전국']" @search="onLocationSearch" @location-change="onLocationChange" />
-
     <!-- 헤더 -->
     <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-5 mb-4 text-white">
       <div class="flex items-center justify-between">
@@ -41,6 +38,9 @@
         {{ cat.icon }} {{ cat.label }}
       </button>
     </div>
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="쇼핑정보 검색..." :radius-options="['10mi','20mi','30mi','50mi','전국']" @search="onLocationSearch" @location-change="onLocationChange" />
 
     <!-- 마트 가로 스크롤 -->
     <div class="flex gap-3 overflow-x-auto pb-3 mb-5 scrollbar-hide">

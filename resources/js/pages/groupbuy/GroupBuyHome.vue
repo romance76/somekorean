@@ -1,9 +1,6 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-6">
 
-    <!-- Location Bar -->
-    <LocationBar placeholder="공동구매 검색..." default-radius="전국" @search="onLocationSearch" @location-change="onLocationChange" />
-
     <!-- 헤더 -->
     <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl px-6 py-6 mb-6 flex items-center justify-between">
       <div>
@@ -24,6 +21,9 @@
         {{ cat.icon }} {{ cat.label }}
       </button>
     </div>
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="공동구매 검색..." default-radius="전국" @search="onLocationSearch" @location-change="onLocationChange" />
 
     <!-- 목록 -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
