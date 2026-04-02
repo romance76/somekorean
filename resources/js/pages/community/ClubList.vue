@@ -27,7 +27,9 @@
     </div>
 
     <!-- Location Bar -->
-    <LocationBar placeholder="동호회 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
+    <div class="max-w-[1200px] mx-auto px-4 mt-2">
+      <LocationBar placeholder="동호회 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
+    </div>
     <!-- Content area -->
     <div class="max-w-[1200px] mx-auto px-4 py-4">
 

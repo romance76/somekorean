@@ -1,11 +1,12 @@
 <template>
-  <div class="max-w-[1200px] mx-auto px-4 py-6">
+  <div class="min-h-screen bg-gray-50 pb-16">
+    <div class="max-w-[1200px] mx-auto px-4 pt-4">
 
     <!-- 헤더 -->
-    <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl px-6 py-6 mb-6 flex items-center justify-between">
+    <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl px-6 py-5 mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-black mb-1">🛒 공동구매</h1>
-        <p class="text-white/75 text-sm">함께 사면 더 저렴하게! 한인 그룹 바이</p>
+        <p class="text-white/75 text-sm opacity-80 mt-0.5">함께 사면 더 저렴하게! 한인 그룹 바이</p>
       </div>
       <button v-if="auth.isLoggedIn" @click="showWrite = true"
         class="bg-white text-orange-600 font-black px-4 py-2 rounded-xl text-sm hover:bg-orange-50 transition">
@@ -23,7 +24,9 @@
     </div>
 
     <!-- Location Bar -->
-    <LocationBar placeholder="공동구매 검색..." default-radius="전국" @search="onLocationSearch" @location-change="onLocationChange" />
+    <div class="max-w-[1200px] mx-auto px-4 mt-2">
+      <LocationBar placeholder="공동구매 검색..." default-radius="전국" @search="onLocationSearch" @location-change="onLocationChange" />
+    </div>
 
     <!-- 목록 -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -195,6 +198,7 @@
         </div>
       </div>
     </Transition>
+  </div>
   </div>
 </template>
 

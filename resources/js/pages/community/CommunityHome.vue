@@ -1,11 +1,11 @@
 <template>
-  <div class="max-w-[1200px] mx-auto px-4 py-6">
+  <div class="max-w-[1200px] mx-auto px-4 pt-4">
 
     <!-- 상단 배너 -->
-    <div class="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl px-6 py-6 mb-8 shadow-lg">
+    <div class="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl px-6 py-5 mb-8 shadow-lg">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-white text-2xl font-black mb-1">💬 커뮤니티</h1>
+          <h1 class="text-white text-xl font-black mb-1">💬 커뮤니티</h1>
           <p class="text-red-100 text-sm">자유롭게 소통하는 한인 커뮤니티</p>
         </div>
         <router-link

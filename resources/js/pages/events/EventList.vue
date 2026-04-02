@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-20">
+  <div class="min-h-screen bg-gray-50 pb-16">
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl">
-        <div class="flex items-center justify-between px-6 py-6 gap-3">
+        <div class="flex items-center justify-between px-6 py-5 gap-3">
           <div>
             <h1 class="text-xl font-black">🎉 이벤트 & 모임</h1>
             <p class="text-blue-100 text-sm mt-0.5">한인 커뮤니티 행사와 모임</p>

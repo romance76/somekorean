@@ -2,11 +2,11 @@
   <div class="min-h-screen bg-gray-50 pb-16">
     <!-- Header -->
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
+      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl">
         <div class="flex items-center justify-between gap-2">
           <div>
             <h1 class="text-xl font-black">🏠 부동산</h1>
-            <p class="text-blue-100 text-sm mt-0.5">한인 부동산 매물 정보</p>
+            <p class="text-blue-100 text-sm mt-0.5 opacity-80">한인 부동산 매물 정보</p>
           </div>
           <router-link v-if="authStore.isLoggedIn" to="/realestate/write"
             class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50">+ 매물 등록</router-link>

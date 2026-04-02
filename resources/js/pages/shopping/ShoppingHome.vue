@@ -1,12 +1,13 @@
 <template>
-  <div class="max-w-[1200px] mx-auto px-4 py-4">
+  <div class="min-h-screen bg-gray-50 pb-16">
 
+    <div class="max-w-[1200px] mx-auto px-4 pt-4">
     <!-- 헤더 -->
-    <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-5 mb-4 text-white">
+    <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl px-6 py-5 mb-4 text-white">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-bold flex items-center gap-2">🛒 쇼핑 정보</h1>
-          <p class="text-orange-100 text-xs mt-1">한인 · 미국 마트 주간 세일 & 특가 정보</p>
+          <h1 class="text-xl font-black flex items-center gap-2">🛒 쇼핑 정보</h1>
+          <p class="text-orange-100 text-sm mt-0.5">한인 · 미국 마트 주간 세일 & 특가 정보</p>
         </div>
         <button @click="detectLocation" class="bg-white/20 hover:bg-white/30 rounded-xl px-3 py-2 text-sm flex items-center gap-1.5 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -40,7 +41,9 @@
     </div>
 
     <!-- Location Bar -->
-    <LocationBar placeholder="쇼핑정보 검색..." :radius-options="['10mi','20mi','30mi','50mi','전국']" @search="onLocationSearch" @location-change="onLocationChange" />
+    <div class="max-w-[1200px] mx-auto px-4 mt-2">
+      <LocationBar placeholder="쇼핑정보 검색..." :radius-options="['10mi','20mi','30mi','50mi','전국']" @search="onLocationSearch" @location-change="onLocationChange" />
+    </div>
 
     <!-- 마트 가로 스크롤 -->
     <div class="flex gap-3 overflow-x-auto pb-3 mb-5 scrollbar-hide">
@@ -227,6 +230,7 @@
             class="block mt-4 bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-xl font-medium transition">구매 페이지 바로가기 →</a>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

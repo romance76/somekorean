@@ -2,11 +2,11 @@
   <div class="min-h-screen bg-gray-50 pb-16">
 
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-6 rounded-2xl">
+      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl">
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-xl font-black">📋 한인 업소록</h1>
-            <p class="text-blue-100 text-sm mt-0.5">한인 비즈니스 정보 디렉토리</p>
+            <p class="text-blue-100 text-sm mt-0.5 opacity-80">한인 비즈니스 정보 디렉토리</p>
           </div>
           <router-link v-if="authStore.isLoggedIn" to="/directory/register"
             class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50">+ 업소 등록</router-link>
@@ -26,7 +26,9 @@
     </div>
 
     <!-- Location Bar -->
-    <LocationBar placeholder="업소록 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
+    <div class="max-w-[1200px] mx-auto px-4 mt-2">
+      <LocationBar placeholder="업소록 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
+    </div>
 
     <!-- Content area -->
     <div class="max-w-[1200px] mx-auto px-4 py-4">
