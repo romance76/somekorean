@@ -108,7 +108,7 @@
 
     <!-- Hidden YouTube iframe for audio -->
     <iframe
-      v-if="music.currentTrack?.youtubeId && !isShortsPage"
+      v-if="music.currentTrack?.youtubeId && !isShortsPage && !isMusicPage"
       :key="music.currentTrack.youtubeId"
       :src="ytSrc"
       class="absolute w-0 h-0 opacity-0 pointer-events-none"
@@ -129,7 +129,7 @@ const volume = ref(80)
 
 const isShortsPage = computed(() => route.path.startsWith('/shorts'))
 const isMusicPage = computed(() => route.path.startsWith('/music'))
-const hideUI = computed(() => isShortsPage.value)
+const hideUI = computed(() => isShortsPage.value || isMusicPage.value)
 
 const ytSrc = computed(() => {
   if (!music.currentTrack?.youtubeId) return ''
