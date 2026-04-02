@@ -252,8 +252,10 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { useMusicStore } from '@/stores/music'
 
 const authStore = useAuthStore()
+const musicStore = useMusicStore()
 const categories = ref([])
 const selectedCat = ref(null)
 const tracks = ref([])
@@ -332,6 +334,20 @@ function playTrack(track, index) {
   currentIndex.value = index
   isPlaying.value = true
   try { axios.post(`/api/music/tracks/${track.id}/play`) } catch (e) {}
+  // Sync to global music store for MiniPlayer
+  musicStore.play({
+    id: track.id,
+    title: track.title,
+    artist: track.artist || track.channel || "",
+    thumbnail: track.thumbnail,
+    youtubeId: track.youtube_id
+  }, currentPlaylist.value.map(t => ({
+    id: t.id,
+    title: t.title,
+    artist: t.artist || t.channel || "",
+    thumbnail: t.thumbnail,
+    youtubeId: t.youtube_id
+  })))
   nextTick(() => {
     if (ytApiReady) createPlayer(track.youtube_id)
     else pendingPlay = track.youtube_id
