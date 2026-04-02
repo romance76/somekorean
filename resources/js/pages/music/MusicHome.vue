@@ -9,10 +9,7 @@
             <h1 class="text-xl font-black">🎵 음악듣기</h1>
             <p class="text-sm opacity-80 mt-0.5">한인 커뮤니티 뮤직 스트리밍</p>
           </div>
-          <div class="flex gap-2">
-            <button @click="playAll" class="bg-white/20 backdrop-blur text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/30">▶ 전체재생</button>
-            <button @click="playShuffleAll" class="bg-white/20 backdrop-blur text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/30">🔀 셔플</button>
-          </div>
+
         </div>
       </div>
 
@@ -32,11 +29,20 @@
                 <span class="truncate">{{ cat.name }}</span>
               </button>
               <div class="border-t border-gray-700 my-2"></div>
-              <button @click="showMyPlaylists = true; selectedCat = null"
-                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2"
-                :class="showMyPlaylists ? 'bg-yellow-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'">
-                <span>⭐</span>
-                <span>내 뮤직함</span>
+              <h3 class="text-[10px] font-bold text-gray-500 uppercase px-2 mb-1">내 뮤직함</h3>
+              <div v-for="pl in playlists" :key="pl.id"
+                @click="loadPlaylist(pl)"
+                class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition flex items-center justify-between cursor-pointer"
+                :class="activePlaylist?.id === pl.id ? 'bg-yellow-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'">
+                <span class="flex items-center gap-2 truncate"><span>⭐</span><span class="truncate">{{ pl.name }}</span></span>
+                <span class="flex items-center gap-1">
+                  <span class="text-xs opacity-60">{{ pl.tracks_count || pl.tracks?.length || 0 }}</span>
+                  <span @click.stop="deletePlaylist(pl.id)" class="text-gray-600 hover:text-red-400 text-xs cursor-pointer ml-1">🗑</span>
+                </span>
+              </div>
+              <button v-if="authStore.isLoggedIn" @click="showCreatePlaylist = true"
+                class="w-full text-left px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-purple-400 transition">
+                + 새 뮤직함 만들기
               </button>
             </div>
           </div>
@@ -49,9 +55,13 @@
             <div class="p-4 border-b border-gray-700">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-white font-bold text-sm">
-                  {{ showMyPlaylists ? '내 뮤직함' : (selectedCat ? selectedCat.name : '전체') }}
+                  {{ activePlaylist ? activePlaylist.name : (selectedCat ? selectedCat.name : '전체') }}
                   <span class="text-gray-500 font-normal ml-1">{{ currentPlaylist.length }}곡</span>
                 </h3>
+                <div class="flex items-center gap-2">
+                  <button @click="playAll" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold transition">▶ 전체재생</button>
+                  <button @click="playShuffleAll" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold transition">🔀 셔플</button>
+                </div>
               </div>
               <!-- Search within category -->
               <div class="relative">
@@ -93,6 +103,11 @@
                     :class="isFavorite(track) ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400'">
                     {{ isFavorite(track) ? '★' : '☆' }}
                   </button>
+                  <!-- Delete from playlist -->
+                  <button v-if="activePlaylist" @click.stop="removeFromPlaylist(track)"
+                    class="text-gray-600 hover:text-red-400 text-sm flex-shrink-0 transition ml-1" title="삭제">
+                    ✕
+                  </button>
                 </div>
               </div>
             </div>
@@ -127,39 +142,9 @@
             </div>
           </div>
 
-          <!-- My Playlists -->
-          <div class="bg-gray-800 rounded-2xl p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-white font-bold text-sm">⭐ 내 뮤직함</h3>
-              <button v-if="authStore.isLoggedIn" @click="showCreatePlaylist = true" class="text-purple-400 hover:text-purple-300 text-xs font-semibold">+ 새 뮤직함</button>
-            </div>
-            <div v-if="!authStore.isLoggedIn" class="text-center py-4 text-gray-500 text-sm">로그인이 필요합니다</div>
-            <div v-else-if="playlists.length === 0" class="text-center py-4 text-gray-500 text-sm">뮤직함이 없습니다</div>
-            <div v-else class="space-y-2">
-              <div v-for="pl in playlists" :key="pl.id"
-                @click="loadPlaylist(pl)"
-                class="flex items-center justify-between p-3 bg-gray-700 rounded-xl cursor-pointer hover:bg-gray-600 transition"
-                :class="{ 'ring-2 ring-yellow-500': activePlaylist?.id === pl.id }">
-                <div>
-                  <p class="text-white text-sm font-medium">{{ pl.name }}</p>
-                  <p class="text-gray-400 text-xs">{{ pl.tracks?.length || 0 }}곡</p>
-                </div>
-                <button @click.stop="deletePlaylist(pl.id)" class="text-gray-600 hover:text-red-400 text-xs">🗑</button>
-              </div>
-            </div>
-          </div>
 
-          <!-- Favorite add target selector (modal-like) -->
-          <div v-if="showFavPicker" class="bg-gray-800 rounded-2xl p-4 border-2 border-yellow-500">
-            <h3 class="text-white font-bold text-sm mb-2">어디에 추가할까요?</h3>
-            <div class="space-y-2">
-              <button v-for="pl in playlists" :key="pl.id" @click="addToPlaylist(favTrack, pl)"
-                class="w-full text-left p-2 bg-gray-700 rounded-lg text-sm text-white hover:bg-gray-600">
-                ⭐ {{ pl.name }}
-              </button>
-              <button @click="showFavPicker = false" class="w-full p-2 bg-gray-700 rounded-lg text-sm text-gray-400 hover:bg-gray-600">취소</button>
-            </div>
-          </div>
+
+
         </div>
 
       </div>
@@ -175,6 +160,21 @@
           <button @click="showCreatePlaylist = false" class="flex-1 py-3 bg-gray-700 text-gray-300 rounded-xl text-sm">취소</button>
           <button @click="createPlaylist" class="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-semibold">만들기</button>
         </div>
+      </div>
+    </div>
+
+    <!-- YouTube 곡 추가 뮤직함 선택 -->
+    <div v-if="showYtPicker" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" @click.self="showYtPicker = false">
+      <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-sm">
+        <h3 class="text-lg font-bold text-white mb-2">어디에 추가할까요?</h3>
+        <p class="text-sm text-gray-400 mb-4 truncate">{{ pendingYtTrack?.title }}</p>
+        <div class="space-y-2">
+          <button v-for="pl in playlists" :key="pl.id" @click="doAddYt(pendingYtTrack, pl)"
+            class="w-full text-left p-3 bg-gray-700 rounded-xl text-sm text-white hover:bg-gray-600 transition">
+            ⭐ {{ pl.name }} <span class="text-gray-500">({{ pl.tracks_count || pl.tracks?.length || 0 }}곡)</span>
+          </button>
+        </div>
+        <button @click="showYtPicker = false" class="w-full mt-3 p-2 bg-gray-700 rounded-xl text-sm text-gray-400 hover:bg-gray-600">취소</button>
       </div>
     </div>
   </div>
@@ -306,6 +306,8 @@ async function loadPlaylists() {
 }
 
 async function loadPlaylist(pl) {
+  selectedCat.value = null
+  showMyPlaylists.value = true
   try {
     const { data } = await axios.get(`/api/music/playlists/${pl.id}`)
     activePlaylist.value = data
@@ -346,19 +348,54 @@ async function searchYouTube() {
   }
 }
 
+const pendingYtTrack = ref(null)
+const showYtPicker = ref(false)
+
 async function addYtToPlaylist(result) {
-  if (!activePlaylist.value) {
-    alert('먼저 뮤직함을 선택하거나 만들어주세요')
+  if (!authStore.isLoggedIn) { alert('로그인이 필요합니다'); return }
+
+  // No playlists? Create one automatically
+  if (playlists.value.length === 0) {
+    try {
+      await axios.post('/api/music/playlists', { name: '내 플레이리스트' })
+      await loadPlaylists()
+    } catch {}
+  }
+
+  // Only 1 playlist? Add directly
+  if (playlists.value.length === 1) {
+    await doAddYt(result, playlists.value[0])
     return
   }
+
+  // Multiple? Show picker
+  pendingYtTrack.value = result
+  showYtPicker.value = true
+}
+
+async function doAddYt(result, playlist) {
   try {
-    await axios.post(`/api/music/playlists/${activePlaylist.value.id}/tracks`, {
-      url: `https://www.youtube.com/watch?v=${result.id}`
+    await axios.post('/api/music/playlists/' + playlist.id + '/tracks', {
+      youtube_url: 'https://www.youtube.com/watch?v=' + result.id
     })
-    loadPlaylist(activePlaylist.value)
-    alert('추가되었습니다!')
+    showYtPicker.value = false
+    await loadPlaylists()
+    loadPlaylist(playlist)
+    alert('"' + playlist.name + '"에 추가되었습니다!')
   } catch (e) {
     alert(e.response?.data?.message || '추가 실패')
+  }
+}
+
+async function removeFromPlaylist(track) {
+  if (!activePlaylist.value) return
+  if (!confirm('이 곡을 삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/music/playlists/${activePlaylist.value.id}/tracks/${track.id}`)
+    await loadPlaylist(activePlaylist.value)
+    await loadPlaylists()
+  } catch (e) {
+    alert(e.response?.data?.message || '삭제 실패')
   }
 }
 
@@ -366,12 +403,13 @@ function isFavorite(track) {
   return favorites.value.includes(extractId(track))
 }
 
-function toggleFavorite(track) {
+async function toggleFavorite(track) {
   if (!authStore.isLoggedIn) { alert('로그인이 필요합니다'); return }
   if (playlists.value.length === 0) {
-    alert('먼저 뮤직함을 만들어주세요')
-    showCreatePlaylist.value = true
-    return
+    try {
+      await axios.post('/api/music/playlists', { name: '내 플레이리스트' })
+      await loadPlaylists()
+    } catch {}
   }
   if (playlists.value.length === 1) {
     addToPlaylist(track, playlists.value[0])
@@ -384,10 +422,11 @@ function toggleFavorite(track) {
 async function addToPlaylist(track, playlist) {
   try {
     await axios.post(`/api/music/playlists/${playlist.id}/tracks`, {
-      url: `https://www.youtube.com/watch?v=${extractId(track)}`
+      youtube_url: `https://www.youtube.com/watch?v=${extractId(track)}`
     })
     favorites.value.push(extractId(track))
     showFavPicker.value = false
+    await loadPlaylists()
     alert(`"${playlist.name}"에 추가되었습니다!`)
   } catch (e) {
     alert(e.response?.data?.message || '추가 실패')
