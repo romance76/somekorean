@@ -14,12 +14,7 @@
           {{ locationText }}
         </button>
       </div>
-      <!-- 거리 슬라이더 -->
-      <div v-if="userLat" class="flex gap-2 mt-3">
-        <button v-for="r in [10,20,30,50]" :key="r" @click="setRadius(r)"
-          :class="radius===r ? 'bg-white text-orange-600 font-bold' : 'bg-white/20 text-white'"
-          class="px-3 py-1 rounded-full text-xs transition">{{ r }}mi</button>
-      </div>
+
     </div>
 
     <!-- 위치 미설정 안내 -->

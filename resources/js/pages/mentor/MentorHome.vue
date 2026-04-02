@@ -1,16 +1,18 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-16">
-  <div class="max-w-[1200px] mx-auto px-4 py-6">
+  <div class="max-w-[1200px] mx-auto px-4 pt-4">
     <!-- 헤더 -->
-    <div class="bg-gradient-to-r from-teal-600 to-emerald-500 text-white rounded-2xl px-6 py-5 mb-6 flex items-center justify-between">
+    <div class="bg-gradient-to-r from-teal-600 to-emerald-500 text-white rounded-2xl px-6 py-5 mb-6">
+      <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-xl font-black mb-1">🤝 멘토링 매칭</h1>
-        <p class="text-white/75 text-sm">한인 선배에게 배우고 · 후배에게 경험을 나눠요</p>
+        <h1 class="text-xl font-black">🤝 멘토링 매칭</h1>
+        <p class="text-sm opacity-80 mt-0.5">한인 선배에게 배우고 · 후배에게 경험을 나눠요</p>
       </div>
       <button v-if="auth.isLoggedIn" @click="showRegister = true"
         class="bg-white text-teal-700 font-black px-4 py-2 rounded-xl text-sm hover:bg-teal-50 transition">
         🙋 멘토 등록
       </button>
+      </div>
     </div>
 
     <!-- 분야 필터 -->

@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-xl font-black">💝 소개팅 · Senior Dating</h1>
-            <p class="text-blue-100 text-sm mt-0.5">오늘의 인연을 만나보세요 — Find your special someone</p>
+            <p class="text-sm opacity-80 mt-0.5">오늘의 인연을 만나보세요 — Find your special someone</p>
           </div>
           <button @click="$router.push('/dashboard?tab=match')" class="bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
             내 프로필 ✏️
