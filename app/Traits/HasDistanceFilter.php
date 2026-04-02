@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
@@ -8,6 +7,10 @@ trait HasDistanceFilter
 {
     protected function applyDistanceFilter($query, $request, $latCol = "latitude", $lngCol = "longitude")
     {
+        if ($request->boolean("national")) {
+            return $query;
+        }
+
         $lat = $request->input("lat");
         $lng = $request->input("lng");
         $radius = $request->input("radius");

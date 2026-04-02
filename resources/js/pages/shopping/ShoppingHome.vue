@@ -1,5 +1,9 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-4">
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="쇼핑정보 검색..." :radius-options="['10mi','20mi','30mi','50mi','전국']" @search="onLocationSearch" @location-change="onLocationChange" />
+
     <!-- 헤더 -->
     <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-5 mb-4 text-white">
       <div class="flex items-center justify-between">
@@ -232,6 +236,7 @@ import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
+import LocationBar from '../../components/location/LocationBar.vue'
 
 const authStore = useAuthStore()
 const { user, isLoggedIn } = storeToRefs(authStore)
@@ -383,4 +388,16 @@ onMounted(async () => {
   try { const { data } = await axios.get('/api/shopping/categories'); categories.value = data } catch {}
   loadSpecial()
 })
+
+// LocationBar handlers
+function onLocationSearch(keyword) {
+  searchKeyword.value = keyword
+  loadStores()
+}
+
+function onLocationChange(location) {
+  console.log('Location changed:', location)
+  loadStores()
+}
+
 </script>

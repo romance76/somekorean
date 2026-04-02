@@ -1,5 +1,9 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-16">
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="동호회 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
+
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl">
         <div class="flex items-center justify-between px-6 py-5">
@@ -201,6 +205,7 @@
 import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+import LocationBar from '../../components/location/LocationBar.vue'
 
 const router = useRouter()
 const radius = ref(30);
@@ -344,6 +349,18 @@ async function fetchClubs() {
 onMounted(() => {
   fetchClubs();
 });
+
+// LocationBar handlers
+function onLocationSearch(keyword) {
+  search.value = keyword
+  fetchClubs()
+}
+
+function onLocationChange(location) {
+  console.log('Location changed:', location)
+  fetchClubs()
+}
+
 </script>
 
 <style scoped>

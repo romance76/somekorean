@@ -1,5 +1,9 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-6">
+
+    <!-- Location Bar -->
+    <LocationBar placeholder="공동구매 검색..." default-radius="전국" @search="onLocationSearch" @location-change="onLocationChange" />
+
     <!-- 헤더 -->
     <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl px-6 py-6 mb-6 flex items-center justify-between">
       <div>
@@ -198,6 +202,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
+import LocationBar from '../../components/location/LocationBar.vue'
 
 const auth = useAuthStore()
 
@@ -282,6 +287,18 @@ async function submit() {
   } catch (e) { alert(e?.response?.data?.message || '등록 실패') }
   finally { submitting.value = false }
 }
+
+// LocationBar handlers
+function onLocationSearch(keyword) {
+  searchKeyword.value = keyword
+  fetchItems()
+}
+
+function onLocationChange(location) {
+  console.log('Location changed:', location)
+  fetchItems()
+}
+
 </script>
 
 <style scoped>

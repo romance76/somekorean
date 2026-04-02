@@ -76,6 +76,7 @@ use App\Http\Controllers\API\CallController;
 use App\Http\Controllers\API\QaController;
 
 use App\Http\Controllers\API\RecipeController;
+use App\Http\Controllers\API\UserLocationController;
 
 use App\Http\Controllers\API\MusicController;
 
@@ -297,6 +298,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('auth/logout',  [AuthController::class, 'logout']);
 
     Route::post('auth/refresh', [AuthController::class, 'refresh']);
+    Route::get('user/location', [UserLocationController::class, 'get']);
 
     Route::get('auth/me',       [AuthController::class, 'me']);
     Route::delete('auth/account',  [AuthController::class, 'deleteAccount']);

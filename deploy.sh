@@ -19,7 +19,7 @@ fi
 
 composer install --no-dev --optimize-autoloader --no-interaction -q
 npm ci --silent 2>/dev/null || npm install --silent
-npm run build
+rm -rf public/build && npm run build
 
 # Ensure .vite manifest exists for Laravel
 mkdir -p public/build/.vite

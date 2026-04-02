@@ -23,6 +23,10 @@
         </button>
       </div>
     </div>
+    <!-- LocationBar -->
+    <div class="max-w-[1200px] mx-auto px-4 mt-2">
+      <LocationBar placeholder="구인구직 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
+    </div>
     <!-- Search bar -->
     <div class="max-w-[1200px] mx-auto px-4 mt-2">
       <div class="bg-white rounded-2xl shadow-sm p-3">
@@ -116,6 +120,7 @@ import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 
 import axios from 'axios';
+import LocationBar from '../../components/location/LocationBar.vue';
 
 const authStore = useAuthStore();
 const radius = ref(30);
@@ -174,6 +179,19 @@ async function load(page = 1) {
 
 function formatDate(d) {
   return new Date(d).toLocaleDateString('ko-KR');
+}
+
+
+function onLocationSearch({ keyword, city, radius }) {
+  search.value = keyword
+  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
+  if (radius !== '전국') userRadius.value = parseInt(radius)
+  load()
+}
+function onLocationChange({ city, radius }) {
+  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
+  userRadius.value = radius === '전국' ? 0 : parseInt(radius)
+  load()
 }
 
 onMounted(() => load());
