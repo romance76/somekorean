@@ -6,23 +6,33 @@ import en from '../i18n/en'
 const MESSAGES = { ko, en }
 
 export const useLangStore = defineStore('lang', () => {
-  const locale = ref(localStorage.getItem('lang') || 'ko')
+  const locale = ref(localStorage.getItem('sk_lang') || 'ko')
 
-  const t = computed(() => MESSAGES[locale.value] ?? MESSAGES.ko)
+  // Full translation object for current locale
+  const t = computed(() => MESSAGES[locale.value] || MESSAGES.ko)
 
-  function setLocale(lang) {
+  // Set locale and persist
+  function setLang(lang) {
     if (!MESSAGES[lang]) return
     locale.value = lang
-    localStorage.setItem('lang', lang)
+    localStorage.setItem('sk_lang', lang)
     document.documentElement.lang = lang
   }
 
+  // Toggle between ko and en
+  function toggle() {
+    setLang(locale.value === 'ko' ? 'en' : 'ko')
+  }
+
+  // Dot-notation key lookup: $t('nav.home') -> '홈'
   function $t(key) {
     const keys = key.split('.')
     let val = t.value
-    for (const k of keys) { val = val?.[k] }
+    for (const k of keys) {
+      val = val?.[k]
+    }
     return val ?? key
   }
 
-  return { locale, t, setLocale, $t }
+  return { locale, t, setLang, toggle, $t }
 })

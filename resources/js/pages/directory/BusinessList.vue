@@ -1,304 +1,174 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-16">
-
-    <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-xl font-black">📋 한인 업소록</h1>
-            <p class="text-blue-100 text-sm mt-0.5 opacity-80">한인 비즈니스 정보 디렉토리</p>
-          </div>
-          <router-link v-if="authStore.isLoggedIn" to="/directory/register"
-            class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50">+ 업소 등록</router-link>
-        </div>
-      </div>
-    </div>
-    <!-- Category tabs -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-3">
-      <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width:none">
-        <button v-for="cat in categories" :key="cat.value"
-          @click="category = cat.value; load(1)"
-          class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition"
-          :class="category === cat.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'">
-          {{ cat.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Location Bar -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-2">
-      <LocationBar placeholder="업소록 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
-    </div>
-
-    <!-- Content area -->
-    <div class="max-w-[1200px] mx-auto px-4 py-4">
-
-    <div v-if="loading" class="text-center py-16 text-gray-400">불러오는 중...</div>
-    <div v-else-if="businesses.length === 0" class="text-center py-16 text-gray-400">등록된 업소가 없습니다.</div>
-
-    <!-- Grid View -->
-    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <router-link v-for="biz in businesses" :key="biz.id" :to="`/directory/${biz.id}`" class="block">
-        <div class="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition">
-          <div class="h-40 bg-gradient-to-r from-blue-400 to-blue-500 relative">
-            <img v-if="getFirstPhoto(biz)" :src="getFirstPhoto(biz)" :alt="biz.name"
-              class="w-full h-full object-cover object-top" loading="lazy"
-              @error="$event.target.style.display='none'" />
-            <div v-else class="w-full h-full flex items-center justify-center text-white/60 text-4xl">
-              {{ biz.category?.charAt(0) || '📋' }}
-            </div>
-            <span v-if="biz.distance" class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-              📍 {{ Number(biz.distance).toFixed(1) }}mi
-            </span>
-          </div>
-          <div class="p-4">
-            <div class="flex items-center justify-between mb-1">
-              <span v-if="biz.is_sponsored" class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-bold">프리미엄</span>
-              <span v-else></span>
-              <span class="text-yellow-500 text-sm font-bold">{{ Number(biz.rating_avg).toFixed(1) }}</span>
-            </div>
-            <h3 class="font-bold text-gray-800 truncate">{{ biz.name }}</h3>
-            <p class="text-xs text-gray-500">{{ biz.category }} · 📍 {{ biz.region }}</p>
-            <p v-if="biz.description" class="text-sm text-gray-600 mt-2 line-clamp-2">{{ biz.description }}</p>
-          </div>
-        </div>
-      </router-link>
-    </div>
-
-    <!-- List View -->
-    <div v-else class="space-y-3">
-      <router-link v-for="biz in businesses" :key="biz.id" :to="`/directory/${biz.id}`"
-        class="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
+  <ListTemplate
+    title="한인 업소록"
+    emoji="📋"
+    subtitle="한인 비즈니스 정보 디렉토리"
+    :loading="loading"
+    :items="businesses"
+    :categories="categories"
+    :activeCategory="category"
+    :hasSearch="true"
+    :searchQuery="search"
+    searchPlaceholder="업소록 검색..."
+    :sortOptions="sortOptions"
+    :activeSort="sort"
+    :hasViewToggle="true"
+    :viewMode="viewMode"
+    :hasWrite="true"
+    writeTo="/directory/register"
+    :pagination="pagination"
+    :totalCount="pagination?.total || null"
+    @category-change="onCategoryChange"
+    @search="onSearch"
+    @sort-change="onSortChange"
+    @view-change="v => viewMode = v"
+    @page-change="load"
+  >
+    <template #item-card="{ item }">
+      <RouterLink :to="`/directory/${item.id}`"
+        class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md transition">
         <div class="flex items-start gap-3">
+          <!-- Logo/Image -->
           <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-400 to-blue-500">
-            <img v-if="getFirstPhoto(biz)" :src="getFirstPhoto(biz)" :alt="biz.name"
-              class="w-full h-full object-cover object-top"
-              loading="lazy" @error="$event.target.style.display='none'" />
-            <div v-else class="w-full h-full flex items-center justify-center text-white/60 text-xl">
-              {{ biz.category?.charAt(0) || '📋' }}
+            <img v-if="getFirstPhoto(item)" :src="getFirstPhoto(item)" :alt="item.name"
+              class="w-full h-full object-cover"
+              @error="e => { e.target.style.display='none' }" />
+            <div v-if="!getFirstPhoto(item)" class="w-full h-full flex items-center justify-center text-white/60 text-xl">
+              {{ item.category?.charAt(0) || '📋' }}
             </div>
           </div>
+          <!-- Info -->
           <div class="flex-1 min-w-0">
-            <div class="flex items-center space-x-2 mb-1">
-              <span v-if="biz.is_sponsored" class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">프리미엄</span>
-              <h3 class="font-semibold text-gray-800 truncate">{{ biz.name }}</h3>
+            <div class="flex items-center gap-2 mb-0.5">
+              <span v-if="item.is_sponsored" class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">프리미엄</span>
+              <h3 class="font-semibold text-gray-800 dark:text-white truncate">{{ item.name }}</h3>
             </div>
-            <div class="flex items-center space-x-3 text-xs text-gray-500 mb-1">
-              <span class="bg-gray-100 px-2 py-0.5 rounded">{{ biz.category }}</span>
-              <span v-if="biz.region">📍 {{ biz.region }}</span>
-              <span v-if="biz.distance" class="text-blue-500 font-medium">{{ Number(biz.distance).toFixed(1) }}mi</span>
+            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ item.category }}</span>
+              <span v-if="item.region">📍 {{ item.region }}</span>
+              <span v-if="item.distance" class="text-blue-500 font-medium">{{ Number(item.distance).toFixed(1) }}mi</span>
             </div>
-            <p v-if="biz.description" class="text-gray-500 text-xs truncate">{{ biz.description }}</p>
+            <p v-if="item.description" class="text-gray-500 dark:text-gray-400 text-xs truncate">{{ item.description }}</p>
           </div>
-          <div class="flex flex-col items-end ml-3 flex-shrink-0">
-            <div class="flex items-center space-x-1 text-sm">
+          <!-- Rating -->
+          <div class="flex flex-col items-end ml-2 flex-shrink-0">
+            <div class="flex items-center gap-1 text-sm">
               <span class="text-yellow-400">★</span>
-              <span class="font-medium text-gray-700">{{ Number(biz.rating_avg).toFixed(1) }}</span>
-              <span class="text-xs text-gray-400">({{ biz.review_count }})</span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">{{ Number(item.rating_avg || 0).toFixed(1) }}</span>
+              <span class="text-xs text-gray-400">({{ item.review_count || 0 }})</span>
             </div>
           </div>
         </div>
-      </router-link>
-    </div>
+      </RouterLink>
+    </template>
 
-    <div v-if="totalPages > 1" class="flex justify-center items-center gap-1 mt-6 flex-wrap">
-      <!-- Prev -->
-      <button @click="load(currentPage-1)" :disabled="currentPage===1"
-        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-        ‹ 이전
-      </button>
-      <!-- First page -->
-      <button v-if="pageList[0] > 1" @click="load(1)"
-        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 hover:bg-blue-50">1</button>
-      <span v-if="pageList[0] > 2" class="px-1 text-gray-400">…</span>
-      <!-- Page window -->
-      <button v-for="p in pageList" :key="p" @click="load(p)"
-        :class="['px-3 py-1.5 rounded-lg text-sm border transition', p === currentPage
-          ? 'bg-blue-600 text-white border-blue-600 font-semibold'
-          : 'bg-white text-gray-700 hover:bg-blue-50']">
-        {{ p }}
-      </button>
-      <!-- Last page -->
-      <span v-if="pageList[pageList.length-1] < totalPages-1" class="px-1 text-gray-400">…</span>
-      <button v-if="pageList[pageList.length-1] < totalPages" @click="load(totalPages)"
-        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 hover:bg-blue-50">{{ totalPages }}</button>
-      <!-- Next -->
-      <button @click="load(currentPage+1)" :disabled="currentPage===totalPages"
-        class="px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-        다음 ›
-      </button>
-      <span class="ml-2 text-xs text-gray-400">{{ currentPage }}/{{ totalPages }}페이지 · 총 {{ totalCount }}개</span>
-    </div>
-    </div><!-- /max-w-[1200px] -->
-  </div>
+    <template #grid-card="{ item }">
+      <RouterLink :to="`/directory/${item.id}`"
+        class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition">
+        <div class="h-36 bg-gradient-to-r from-blue-400 to-blue-500 relative">
+          <img v-if="getFirstPhoto(item)" :src="getFirstPhoto(item)" :alt="item.name"
+            class="w-full h-full object-cover" loading="lazy"
+            @error="e => { e.target.style.display='none' }" />
+          <div v-if="!getFirstPhoto(item)" class="w-full h-full flex items-center justify-center text-white/60 text-4xl">
+            {{ item.category?.charAt(0) || '📋' }}
+          </div>
+          <span v-if="item.distance" class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+            📍 {{ Number(item.distance).toFixed(1) }}mi
+          </span>
+        </div>
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-1">
+            <span v-if="item.is_sponsored" class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-bold">프리미엄</span>
+            <span v-else></span>
+            <span class="text-yellow-500 text-sm font-bold">★ {{ Number(item.rating_avg || 0).toFixed(1) }}</span>
+          </div>
+          <h3 class="font-bold text-gray-800 dark:text-white truncate">{{ item.name }}</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.category }} · {{ item.region }}</p>
+        </div>
+      </RouterLink>
+    </template>
+
+    <template #empty>
+      <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl">
+        <p class="text-4xl mb-3">📋</p>
+        <p class="text-gray-400 text-sm">등록된 업소가 없습니다</p>
+      </div>
+    </template>
+  </ListTemplate>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useAuthStore } from '../../stores/auth';
-import axios from 'axios';
-import LocationBar from '../../components/location/LocationBar.vue'
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import ListTemplate from '@/components/templates/ListTemplate.vue'
+import axios from 'axios'
 
-const authStore = useAuthStore();
-const radius = ref(30);
-const viewMode = ref('grid');
-const businesses = ref([]);
-
-const loading = ref(true);
-const search = ref('');
-const category = ref('');
-const region = ref('');
-const currentPage = ref(1);
-const totalPages = ref(1);
-const totalCount = ref(0);
-const selectedState = ref('');
-const userLat = ref(null);
-const userLng = ref(null);
-const userRadius = ref(30);
-
-function getUserLocation() {
-  const saved = localStorage.getItem('sk_user_location');
-  if (saved) {
-    const loc = JSON.parse(saved);
-    userLat.value = loc.lat;
-    userLng.value = loc.lng;
-    return;
-  }
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLat.value = pos.coords.latitude;
-        userLng.value = pos.coords.longitude;
-        localStorage.setItem('sk_user_location', JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude}));
-      },
-      () => {},
-      { timeout: 5000 }
-    );
-  }
-}
-
-function getFirstPhoto(biz) {
-  if (biz.photos && Array.isArray(biz.photos) && biz.photos.length > 0) {
-    return biz.photos[0];
-  }
-  if (biz.owner_photos && Array.isArray(biz.owner_photos) && biz.owner_photos.length > 0) {
-    return biz.owner_photos[0];
-  }
-  return null;
-}
-
-const stateButtons = [
-  { code: '', label: '전체' },
-  { code: 'CA', label: '🌴 CA', cities: ['Los Angeles','San Francisco','San Diego'] },
-  { code: 'NY', label: '🗽 NY', cities: ['New York','Flushing'] },
-  { code: 'TX', label: '🤠 TX', cities: ['Houston','Dallas'] },
-  { code: 'WA', label: '🌲 WA', cities: ['Seattle'] },
-  { code: 'IL', label: '🏙️ IL', cities: ['Chicago'] },
-  { code: 'GA', label: '🍑 GA', cities: ['Atlanta'] },
-  { code: 'DC', label: '🏛️ DC', cities: ['Washington'] },
-  { code: 'NV', label: '🎰 NV', cities: ['Las Vegas'] },
-  { code: 'FL', label: '🌊 FL', cities: ['Miami'] },
-  { code: 'MA', label: '🦞 MA', cities: ['Boston'] },
-  { code: 'HI', label: '🌺 HI', cities: ['Honolulu'] },
-  { code: 'CO', label: '⛰️ CO', cities: ['Denver'] },
-  { code: 'NJ', label: '🏘️ NJ', cities: ['Fort Lee'] },
-  { code: 'VA', label: '🌿 VA', cities: ['Annandale'] },
-  { code: 'OR', label: '🌧️ OR', cities: ['Portland'] },
-];
-
-function selectState(st) {
-  selectedState.value = st.code;
-  if (st.cities && st.cities.length === 1) {
-    region.value = st.cities[0];
-  } else if (st.code === '') {
-    region.value = '';
-  } else {
-    // Multiple cities - clear region to show all in state
-    region.value = '';
-  }
-  load(1);
-}
+const auth = useAuthStore()
+const businesses = ref([])
+const loading = ref(true)
+const category = ref('')
+const search = ref('')
+const sort = ref('rating')
+const viewMode = ref('grid')
+const pagination = ref(null)
 
 const categories = [
   { value: '', label: '전체' },
-  { value: '한식당', label: '🍽️ 식당' },
-  { value: '미용실', label: '💇 미용' },
-  { value: '의원/한의원', label: '🏥 의료' },
-  { value: '변호사', label: '⚖️ 법률' },
-  { value: '부동산', label: '🏠 부동산' },
+  { value: '음식점', label: '🍽️ 음식점' },
   { value: '한국마트', label: '🛒 마트' },
-  { value: '한국BBQ', label: '🥩 BBQ' },
-  { value: '스파/네일', label: '💅 스파' },
-  { value: '교회', label: '⛪ 교회' },
-  { value: '한국학교', label: '📚 교육' },
-];
+  { value: '미용실', label: '💇 미용실' },
+  { value: '의원/한의원', label: '🏥 병원' },
+  { value: '변호사', label: '⚖️ 법률' },
+  { value: '회계사', label: '📊 회계' },
+  { value: '부동산', label: '🏠 부동산' },
+  { value: '자동차', label: '🚗 자동차' },
+  { value: '기타', label: '기타' },
+]
 
-const regions = [
-  '', 'Los Angeles', 'New York', 'Chicago', 'Houston', 'Seattle',
-  'Atlanta', 'Dallas', 'San Francisco', 'Washington', 'Las Vegas',
-  'Boston', 'Philadelphia', 'Miami', 'San Diego', 'Denver',
-  'Annandale', 'Fort Lee', 'Flushing', 'Honolulu', 'Portland',
-  'Minneapolis', 'Detroit', 'Phoenix', 'Baltimore',
-];
+const sortOptions = [
+  { value: 'rating', label: '평점순' },
+  { value: 'distance', label: '거리순' },
+  { value: 'latest', label: '최신' },
+]
 
-// Smart pagination: show window of 5 pages around current
-const pageList = computed(() => {
-  const total = totalPages.value;
-  const cur = currentPage.value;
-  if (total <= 11) return Array.from({ length: total }, (_, i) => i + 1);
-  const delta = 4;
-  const start = Math.max(2, cur - delta);
-  const end = Math.min(total - 1, cur + delta);
-  const pages = [];
-  for (let i = start; i <= end; i++) pages.push(i);
-  return pages;
-});
+function onCategoryChange(val) { category.value = val; load(1) }
+function onSearch(val) { search.value = val; load(1) }
+function onSortChange(val) { sort.value = val; load(1) }
+
+function getFirstPhoto(biz) {
+  if (biz.photos?.length) return typeof biz.photos[0] === 'string' ? biz.photos[0] : biz.photos[0]?.url
+  if (biz.owner_photos?.length) return biz.owner_photos[0]
+  return null
+}
 
 async function load(page = 1) {
-  if (page < 1 || page > totalPages.value) return;
-  loading.value = true;
-  currentPage.value = page;
+  loading.value = true
   try {
-    const params = {
-      page,
-      search: search.value || undefined,
-      category: category.value || undefined,
-      region: region.value || undefined,
-      state: selectedState.value || undefined,
-      per_page: 24,
-      radius: radius.value || undefined,
-      lat: userLat.value || undefined,
-      lng: userLng.value || undefined,
-    };
-    const { data } = await axios.get('/api/businesses', { params });
-    businesses.value = data.data || [];
-    currentPage.value = data.current_page || page;
-    totalPages.value = data.last_page || 1;
-    totalCount.value = data.total || businesses.value.length;
-  } catch(e) { console.error(e) }
-  loading.value = false;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+    const params = { page, per_page: 24 }
+    if (search.value) params.search = search.value
+    if (category.value) params.category = category.value
+    if (sort.value) params.sort = sort.value
+
+    // Try to get user location
+    const savedLoc = localStorage.getItem('sk_user_location')
+    if (savedLoc) {
+      const loc = JSON.parse(savedLoc)
+      params.lat = loc.lat
+      params.lng = loc.lng
+    }
+
+    const { data } = await axios.get('/api/businesses', { params })
+    businesses.value = data.data || []
+    pagination.value = {
+      current_page: data.current_page || page,
+      last_page: data.last_page || 1,
+      total: data.total || businesses.value.length,
+    }
+  } catch {
+    businesses.value = []
+  }
+  loading.value = false
 }
 
-// Reload when radius changes
-watch(radius, () => load(1));
-
-// LocationBar handlers
-function onLocationSearch({ keyword, city, radius: r }) {
-  search.value = keyword
-  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
-  if (r && r !== '전국') userRadius.value = parseInt(r)
-  load()
-}
-
-function onLocationChange({ city, radius: r }) {
-  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
-  if (r !== undefined) userRadius.value = r === '전국' ? 0 : parseInt(r)
-  load()
-}
-
-onMounted(() => {
-  getUserLocation();
-  load();
-});
+onMounted(() => load())
 </script>

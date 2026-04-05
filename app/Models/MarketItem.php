@@ -1,26 +1,42 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MarketItem extends Model
 {
-    use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
-        'user_id', 'title', 'description', 'price', 'price_negotiable',
-        'images', 'category', 'item_type', 'region', 'condition', 'status',
-        'reservation_points', 'reservation_hours',
+        'user_id', 'title', 'content', 'price', 'images', 'category',
+        'condition', 'lat', 'lng', 'city', 'state',
+        'status', 'view_count', 'is_negotiable',
     ];
 
-    protected $casts = [
-        'images' => 'array',
-        'price_negotiable' => 'boolean',
-        'price' => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'images' => 'array',
+            'is_negotiable' => 'boolean',
+            'price' => 'integer',
+            'view_count' => 'integer',
+            'lat' => 'decimal:7',
+            'lng' => 'decimal:7',
+        ];
+    }
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function bookmarks() { return $this->morphMany(Bookmark::class, 'bookmarkable'); }
+    public function scopeNearby($query, float $lat, float $lng, float $radiusMiles = 25)
+    {
+        $haversine = "(3959 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat))))";
+        return $query->selectRaw("*, {$haversine} AS distance", [$lat, $lng, $lat])
+                     ->havingRaw("distance <= ?", [$radiusMiles])
+                     ->orderBy('distance');
+    }
+
+    public function user()         { return $this->belongsTo(User::class); }
     public function reservations() { return $this->hasMany(MarketReservation::class); }
+    public function comments()     { return $this->morphMany(Comment::class, 'commentable'); }
+    public function bookmarks()    { return $this->morphMany(Bookmark::class, 'bookmarkable'); }
 }

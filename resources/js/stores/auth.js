@@ -1,82 +1,107 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import axios from 'axios';
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import axios from 'axios'
 
 export const useAuthStore = defineStore('auth', () => {
-    const user  = ref(null);
-    const token = ref(null);
+  const user = ref(null)
+  const token = ref(null)
 
-    // 앱 초기화 완료 여부 (fetchMe 포함)
-    let _resolveInit;
-    const initPromise = new Promise(resolve => { _resolveInit = resolve; });
+  // Promise that resolves once initial auth check is complete
+  let _resolveInit
+  const initPromise = new Promise((resolve) => { _resolveInit = resolve })
 
-    const isLoggedIn = computed(() => !!token.value);
+  // ── Computed ──
+  const isLoggedIn = computed(() => !!token.value)
+  const isAdmin = computed(() => !!user.value?.is_admin)
 
-    function initialize() {
-        const savedToken = localStorage.getItem('sk_token');
-        const savedUser  = localStorage.getItem('sk_user');
-        if (savedToken && savedUser) {
-            token.value = savedToken;
-            try { user.value = JSON.parse(savedUser); } catch {}
-        }
+  // ── Initialize from localStorage ──
+  function initialize() {
+    const savedToken = localStorage.getItem('sk_token')
+    const savedUser = localStorage.getItem('sk_user')
+    if (savedToken) {
+      token.value = savedToken
+      axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`
+      if (savedUser) {
+        try { user.value = JSON.parse(savedUser) } catch { /* ignore */ }
+      }
     }
+  }
 
-    async function login(email, password) {
-        const { data } = await axios.post('/api/auth/login', { email, password });
-        setAuth(data.token, data.user);
-        return data;
+  // ── Auth Actions ──
+  async function login(email, password) {
+    const { data } = await axios.post('/api/auth/login', { email, password })
+    setAuth(data.token, data.user)
+    return data
+  }
+
+  async function register(form) {
+    const { data } = await axios.post('/api/auth/register', form)
+    setAuth(data.token, data.user)
+    return data
+  }
+
+  async function logout() {
+    try { await axios.post('/api/auth/logout') } catch { /* ignore */ }
+    clearAuth()
+  }
+
+  async function fetchUser() {
+    try {
+      const { data } = await axios.get('/api/auth/me')
+      user.value = data.user || data
+      localStorage.setItem('sk_user', JSON.stringify(user.value))
+    } catch {
+      clearAuth()
+    } finally {
+      _resolveInit()
     }
+  }
 
-    async function register(form) {
-        const { data } = await axios.post('/api/auth/register', form);
-        setAuth(data.token, data.user);
-        return data;
+  async function updateProfile(formData) {
+    const { data } = await axios.post('/api/profile/update', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    if (data.user) {
+      user.value = data.user
+      localStorage.setItem('sk_user', JSON.stringify(data.user))
     }
+    return data
+  }
 
-    async function logout() {
-        try { await axios.post('/api/auth/logout'); } catch {}
-        clearAuth();
-    }
+  // Refresh points/level after actions (posting, commenting, etc.)
+  async function refreshPoints() {
+    try {
+      const { data } = await axios.get('/api/points/balance')
+      if (user.value) {
+        user.value = { ...user.value, points: data.points, cash: data.cash, level: data.level }
+        localStorage.setItem('sk_user', JSON.stringify(user.value))
+      }
+    } catch { /* ignore */ }
+  }
 
-    async function fetchMe() {
-        try {
-            const { data } = await axios.get('/api/auth/me');
-            user.value = data.user;
-            localStorage.setItem('sk_user', JSON.stringify(data.user));
-        } catch {
-            clearAuth();
-        } finally {
-            _resolveInit();
-        }
-    }
+  // Resolve init immediately when no token exists
+  function resolveInit() { _resolveInit() }
 
-    // 포인트/레벨 실시간 갱신 (글쓰기, 댓글 후 호출)
-    async function refreshPoints() {
-        try {
-            const { data } = await axios.get('/api/points/balance');
-            if (user.value) {
-                user.value = { ...user.value, points: data.points, cash: data.cash, level: data.level };
-                localStorage.setItem('sk_user', JSON.stringify(user.value));
-            }
-        } catch {}
-    }
+  // ── Internal helpers ──
+  function setAuth(tok, usr) {
+    token.value = tok
+    user.value = usr
+    localStorage.setItem('sk_token', tok)
+    localStorage.setItem('sk_user', JSON.stringify(usr))
+    axios.defaults.headers.common['Authorization'] = `Bearer ${tok}`
+  }
 
-    // 토큰 없으면 즉시 resolve
-    function resolveInit() { _resolveInit(); }
+  function clearAuth() {
+    token.value = null
+    user.value = null
+    localStorage.removeItem('sk_token')
+    localStorage.removeItem('sk_user')
+    delete axios.defaults.headers.common['Authorization']
+  }
 
-    function setAuth(tok, usr) {
-        token.value = tok;
-        user.value  = usr;
-        localStorage.setItem('sk_token', tok);
-        localStorage.setItem('sk_user', JSON.stringify(usr));
-    }
-
-    function clearAuth() {
-        token.value = null;
-        user.value  = null;
-        localStorage.removeItem('sk_token');
-        localStorage.removeItem('sk_user');
-    }
-
-    return { user, token, isLoggedIn, initPromise, initialize, login, register, logout, fetchMe, resolveInit, refreshPoints };
-});
+  return {
+    user, token, isLoggedIn, isAdmin, initPromise,
+    initialize, login, register, logout,
+    fetchUser, updateProfile, refreshPoints, resolveInit,
+  }
+})

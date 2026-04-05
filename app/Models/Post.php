@@ -1,34 +1,46 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
-        'board_id', 'user_id', 'title', 'content', 'thumbnail',
-        'images', 'is_pinned', 'is_notice', 'is_anonymous', 'status',
+        'board_id', 'user_id', 'title', 'content', 'category', 'images',
+        'view_count', 'like_count', 'comment_count',
+        'is_pinned', 'is_hidden',
+        'lat', 'lng', 'city', 'state', 'zipcode',
     ];
 
-    protected $casts = [
-        'images' => 'array',
-        'is_pinned' => 'boolean',
-        'is_notice' => 'boolean',
-        'is_anonymous' => 'boolean',
-    ];
-
-    public function board() { return $this->belongsTo(Board::class); }
-    public function user() { return $this->belongsTo(User::class); }
-    public function comments() { return $this->hasMany(Comment::class); }
-    public function likes() { return $this->hasMany(PostLike::class); }
-    public function bookmarks() { return $this->morphMany(Bookmark::class, 'bookmarkable'); }
-    public function reports() { return $this->morphMany(Report::class, 'reportable'); }
-
-    public function isLikedBy(?User $user): bool {
-        if (!$user) return false;
-        return $this->likes()->where('user_id', $user->id)->exists();
+    protected function casts(): array
+    {
+        return [
+            'images' => 'array',
+            'is_pinned' => 'boolean',
+            'is_hidden' => 'boolean',
+            'view_count' => 'integer',
+            'like_count' => 'integer',
+            'comment_count' => 'integer',
+            'lat' => 'decimal:7',
+            'lng' => 'decimal:7',
+        ];
     }
+
+    public function scopeNearby($query, float $lat, float $lng, float $radiusMiles = 25)
+    {
+        $haversine = "(3959 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat))))";
+        return $query->selectRaw("*, {$haversine} AS distance", [$lat, $lng, $lat])
+                     ->havingRaw("distance <= ?", [$radiusMiles])
+                     ->orderBy('distance');
+    }
+
+    public function board()    { return $this->belongsTo(Board::class); }
+    public function user()     { return $this->belongsTo(User::class); }
+    public function comments() { return $this->morphMany(Comment::class, 'commentable'); }
+    public function likes()    { return $this->hasMany(PostLike::class); }
+    public function bookmarks(){ return $this->morphMany(Bookmark::class, 'bookmarkable'); }
 }

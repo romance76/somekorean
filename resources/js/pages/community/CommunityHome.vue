@@ -1,242 +1,189 @@
 <template>
-  <div class="max-w-[1200px] mx-auto px-4 pt-4">
-
-    <!-- 상단 배너 -->
-    <div class="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl px-6 py-5 mb-8 shadow-lg">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-white text-xl font-black mb-1">💬 커뮤니티</h1>
-          <p class="text-red-100 text-sm">자유롭게 소통하는 한인 커뮤니티</p>
-        </div>
-        <router-link
-          to="/community/write"
-          class="bg-white text-red-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-red-50 transition flex items-center gap-1.5 shadow"
-        >
-          ✏️ 새 글쓰기
-        </router-link>
-      </div>
-    </div>
-
-    <!-- 3컬럼 레이아웃 -->
-    <div class="flex gap-5">
-
-      <!-- 좌측: 카테고리 사이드바 -->
-      <aside class="hidden lg:block w-52 flex-shrink-0">
-        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-20">
-          <h3 class="text-sm font-bold text-gray-700 px-4 py-3 border-b border-gray-100">📂 카테고리</h3>
-          <ul>
-            <li>
-              <router-link
-                to="/community"
-                class="block w-full text-left px-4 py-2.5 text-sm transition"
-                :class="!currentSlug ? 'bg-red-50 text-red-600 font-semibold border-l-2 border-red-500' : 'text-gray-600 hover:bg-gray-50'"
-              >
-                전체
-              </router-link>
-            </li>
-            <li v-for="cat in categories" :key="cat.slug">
-              <router-link
-                :to="'/community/' + cat.slug" @click="markCategoryRead(cat.slug)"
-                class="block w-full text-left px-4 py-2.5 text-sm transition"
-                :class="currentSlug === cat.slug ? 'bg-red-50 text-red-600 font-semibold border-l-2 border-red-500' : 'text-gray-600 hover:bg-gray-50'"
-              >
-                {{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span> <span v-if="isNewCategory(cat)" class="text-[10px] bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1">N</span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-      </aside>
-
-      <!-- 중앙: 글 목록 -->
-      <main class="flex-1 min-w-0">
-        <!-- 모바일 카테고리 -->
-        <div class="lg:hidden mb-4">
-          <select v-model="mobileCategory" @change="onMobileCategory" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
-            <option value="">전체 카테고리</option>
-            <option v-for="cat in categories" :key="cat.slug" :value="cat.slug">{{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span></option>
-          </select>
-        </div>
-
-        <div v-if="loading" class="space-y-3">
-          <div v-for="i in 5" :key="i" class="bg-white rounded-xl border border-gray-100 p-4 animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
-          </div>
-        </div>
-
-        <div v-else-if="posts.length === 0" class="bg-white rounded-xl border border-gray-100 p-12 text-center">
-          <p class="text-gray-400 text-sm">아직 게시글이 없습니다.</p>
-        </div>
-
-        <div v-else class="space-y-3">
-          <div
-            v-for="post in posts"
-            :key="post.id"
-            @click="goToPost(post)"
-            class="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md hover:border-red-100 transition cursor-pointer"
-          >
-            <div class="flex items-start gap-3">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5">
-                  <span class="text-xs px-2 py-0.5 rounded-full font-medium"
-                    :style="{ background: getCategoryColor(post.category_slug) + '20', color: getCategoryColor(post.category_slug) }">
-                    {{ post.category_name || '일반' }}
-                  </span>
-                  <span v-if="post.is_pinned" class="text-xs text-orange-500 font-bold">📌 고정</span>
-                </div>
-                <h3 class="text-sm font-bold text-gray-800 truncate mb-1">{{ post.title }}</h3>
-                <p class="text-xs text-gray-400 line-clamp-1 mb-2">{{ stripHtml(post.content) }}</p>
-                <div class="flex items-center gap-3 text-xs text-gray-400">
-                  <span>{{ post.is_anonymous ? '🎭 익명' : (post.author_name || '알수없음') }}</span>
-                  <span>❤️ {{ post.likes_count || 0 }}</span>
-                  <span>💬 {{ post.comments_count || 0 }}</span>
-                  <span>👁 {{ post.views || 0 }}</span>
-                  <span>{{ timeAgo(post.created_at) }}</span>
-                </div>
-              </div>
+  <ListTemplate
+    :title="boardName"
+    :emoji="boardIcon"
+    :subtitle="boardDesc"
+    :loading="loading"
+    :items="posts"
+    :categories="categoryTabs"
+    :activeCategory="activeCategory"
+    :hasSearch="true"
+    :searchQuery="search"
+    :searchPlaceholder="locale === 'ko' ? '게시글 검색...' : 'Search posts...'"
+    :sortOptions="sortOptions"
+    :activeSort="sort"
+    :hasWrite="true"
+    :writeTo="'/community/write?board=' + (currentSlug || '')"
+    :pagination="pagination"
+    @category-change="onCategoryChange"
+    @search="onSearch"
+    @sort-change="onSortChange"
+    @page-change="onPageChange"
+  >
+    <template #item-card="{ item }">
+      <router-link :to="`/community/${item.board_slug || currentSlug || 'free'}/${item.id}`"
+        class="block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-700 transition">
+        <div class="flex items-start gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span v-if="item.category_name" class="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
+                {{ item.category_name }}
+              </span>
+              <span v-if="item.is_pinned" class="text-[11px] text-orange-500 font-bold">📌</span>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-white truncate mb-1">{{ item.title }}</h3>
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span>{{ item.is_anonymous ? '🎭 익명' : (item.user?.name || item.author_name || '알수없음') }}</span>
+              <span>❤️ {{ item.like_count || item.likes_count || 0 }}</span>
+              <span>💬 {{ item.comment_count || item.comments_count || 0 }}</span>
+              <span>👁 {{ item.view_count || item.views || 0 }}</span>
+              <span>{{ formatTimeAgo(item.created_at) }}</span>
             </div>
           </div>
         </div>
-      </main>
+      </router-link>
+    </template>
 
-      <!-- 우측: 인기글 사이드바 -->
-      <aside class="hidden xl:block w-64 flex-shrink-0">
-        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-20">
-          <h3 class="text-sm font-bold text-gray-700 px-4 py-3 border-b border-gray-100">🔥 인기글 TOP 10</h3>
-          <ul>
-            <li v-for="(item, idx) in popularPosts" :key="item.id">
-              <div
-                @click="goToPost(item)"
-                class="px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition flex gap-2.5 items-start"
-              >
-                <span class="text-sm font-extrabold leading-none min-w-[20px]"
-                  :class="idx < 3 ? 'text-red-500' : 'text-gray-400'">{{ idx + 1 }}</span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-gray-700 truncate">{{ item.title }}</p>
-                  <p class="text-[10px] text-gray-400 mt-0.5">👁 {{ item.views }} · 💬 {{ item.comments_count || 0 }}</p>
-                </div>
-              </div>
-            </li>
-          </ul>
-          <div v-if="popularPosts.length === 0" class="px-4 py-6 text-center text-xs text-gray-400">
-            인기글이 없습니다.
-          </div>
+    <template #empty>
+      <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl">
+        <p class="text-4xl mb-3">📭</p>
+        <p class="text-gray-400 text-sm">{{ locale === 'ko' ? '아직 게시글이 없습니다' : 'No posts yet' }}</p>
+        <router-link :to="'/community/write?board=' + (currentSlug || '')"
+          class="text-blue-500 text-sm mt-2 inline-block hover:underline">
+          {{ locale === 'ko' ? '첫 글을 작성해보세요!' : 'Write the first post!' }}
+        </router-link>
+      </div>
+    </template>
+
+    <template #sidebar>
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+          🔥 {{ locale === 'ko' ? '인기글' : 'Popular' }}
+        </h3>
+        <div v-if="popularPosts.length">
+          <router-link v-for="(p, idx) in popularPosts" :key="p.id"
+            :to="`/community/${p.board_slug || currentSlug || 'free'}/${p.id}`"
+            class="flex gap-2.5 items-start px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition border-b border-gray-50 dark:border-gray-700 last:border-0">
+            <span class="text-sm font-extrabold leading-none min-w-[20px]"
+              :class="idx < 3 ? 'text-red-500' : 'text-gray-400'">{{ idx + 1 }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{{ p.title }}</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">👁 {{ p.view_count || p.views || 0 }} · 💬 {{ p.comment_count || p.comments_count || 0 }}</p>
+            </div>
+          </router-link>
         </div>
-      </aside>
-    </div>
-  </div>
+        <div v-else class="px-4 py-8 text-center text-xs text-gray-400">
+          {{ locale === 'ko' ? '인기글이 없습니다' : 'No popular posts' }}
+        </div>
+      </div>
+    </template>
+  </ListTemplate>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useLangStore } from '../../stores/lang'
+import ListTemplate from '../../components/templates/ListTemplate.vue'
 import axios from 'axios'
 
+const route = useRoute()
 const router = useRouter()
+const langStore = useLangStore()
+const locale = computed(() => langStore.locale)
+
 const loading = ref(true)
 const posts = ref([])
 const popularPosts = ref([])
 const categories = ref([])
-const currentSlug = ref('')
-const mobileCategory = ref('')
+const boardInfo = ref(null)
+const search = ref('')
+const sort = ref('latest')
+const activeCategory = ref('')
+const pagination = ref(null)
 
-const categoryColors = {
-  free: '#3B82F6', anonymous: '#8B5CF6', life: '#10B981', food: '#F59E0B',
-  parenting: '#EC4899', health: '#06B6D4', finance: '#6366F1', immigration: '#EF4444',
-  travel: '#14B8A6', hobby: '#F97316', tech: '#2563EB', humor: '#A855F7',
-  news: '#DC2626', seniors: '#78716C', faith: '#7C3AED'
+const currentSlug = computed(() => route.params.slug || '')
+const boardName = computed(() => boardInfo.value?.name || (locale.value === 'ko' ? '커뮤니티' : 'Community'))
+const boardIcon = computed(() => boardInfo.value?.icon || '💬')
+const boardDesc = computed(() => boardInfo.value?.description || '')
+
+const sortOptions = computed(() => [
+  { value: 'latest', label: locale.value === 'ko' ? '최신순' : 'Latest' },
+  { value: 'popular', label: locale.value === 'ko' ? '인기순' : 'Popular' },
+])
+
+const categoryTabs = computed(() => {
+  const all = [{ value: '', label: locale.value === 'ko' ? '전체' : 'All' }]
+  return all.concat(categories.value.map(c => ({ value: c.slug || c.key || c.id, label: c.name })))
+})
+
+function onCategoryChange(val) { activeCategory.value = val; loadPosts(1) }
+function onSearch(val) { search.value = val; loadPosts(1) }
+function onSortChange(val) { sort.value = val; loadPosts(1) }
+function onPageChange(page) { loadPosts(page) }
+
+function formatTimeAgo(dt) {
+  if (!dt) return ''
+  const diff = (Date.now() - new Date(dt).getTime()) / 1000
+  if (diff < 60) return locale.value === 'ko' ? '방금 전' : 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}${locale.value === 'ko' ? '분 전' : 'm ago'}`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}${locale.value === 'ko' ? '시간 전' : 'h ago'}`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}${locale.value === 'ko' ? '일 전' : 'd ago'}`
+  return new Date(dt).toLocaleDateString('ko-KR')
 }
 
-function getCategoryColor(slug) {
-  return categoryColors[slug] || '#6B7280'
-}
-
-function getAuthHeaders() {
-  const token = localStorage.getItem('sk_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
-function stripHtml(html) {
-  if (!html) return ''
-  return html.replace(/<[^>]*>/g, '').substring(0, 100)
-}
-
-function timeAgo(dateStr) {
-  if (!dateStr) return ''
-  const now = new Date()
-  const date = new Date(dateStr)
-  const diff = Math.floor((now - date) / 1000)
-  if (diff < 60) return '방금 전'
-  if (diff < 3600) return Math.floor(diff / 60) + '분 전'
-  if (diff < 86400) return Math.floor(diff / 3600) + '시간 전'
-  if (diff < 172800) return '어제'
-  if (diff < 604800) return Math.floor(diff / 86400) + '일 전'
-  return date.toLocaleDateString('ko-KR')
-}
-
-function goToPost(post) {
-  router.push(`/community/${post.category_slug || 'free'}/${post.id}`)
-}
-
-function onMobileCategory() {
-  if (mobileCategory.value) {
-    router.push(`/community/${mobileCategory.value}`)
-  } else {
-    router.push('/community')
-  }
-}
-
-function isNewCategory(cat) {
-  if (!cat.latest_at) return false
-  const readKey = 'community_read_' + cat.slug
-  const lastRead = localStorage.getItem(readKey)
-  if (!lastRead) return true
-  return new Date(cat.latest_at) > new Date(lastRead)
-}
-
-function markCategoryRead(slug) {
-  localStorage.setItem('community_read_' + slug, new Date().toISOString())
-}
-
-async function fetchCategories() {
-  try {
-    const { data } = await axios.get('/api/community-v2/categories', { headers: getAuthHeaders() })
-    categories.value = data.data || data || []
-  } catch (e) {
-    console.error('카테고리 로딩 실패', e)
-  }
-}
-
-async function fetchPosts() {
+async function loadPosts(page = 1) {
   loading.value = true
   try {
-    const { data } = await axios.get('/api/community-v2/free/posts', {
-      params: { sort: 'latest', per_page: 20 },
-      headers: getAuthHeaders()
-    })
+    const params = { page, sort: sort.value, per_page: 20 }
+    if (activeCategory.value) params.category = activeCategory.value
+    if (search.value.trim()) params.search = search.value.trim()
+
+    const slug = currentSlug.value
+    const url = slug ? `/api/community-v2/${slug}/posts` : '/api/posts'
+    const { data } = await axios.get(url, { params })
+
     posts.value = data.data || data || []
-  } catch (e) {
-    console.error('글 목록 로딩 실패', e)
-  } finally {
-    loading.value = false
-  }
+    pagination.value = data.last_page > 1 ? { current_page: data.current_page, last_page: data.last_page, total: data.total } : null
+  } catch { posts.value = [] }
+  finally { loading.value = false }
 }
 
-async function fetchPopular() {
+async function loadCategories() {
   try {
-    const { data } = await axios.get('/api/community-v2/free/posts', {
-      params: { sort: 'popular', per_page: 10 },
-      headers: getAuthHeaders()
-    })
-    popularPosts.value = data.data || data || []
-  } catch (e) {
-    console.error('인기글 로딩 실패', e)
-  }
+    const { data } = await axios.get('/api/community-v2/categories')
+    categories.value = data.data || data || []
+  } catch { /* empty */ }
 }
+
+async function loadBoardInfo() {
+  if (!currentSlug.value) return
+  try {
+    const { data } = await axios.get(`/api/boards/${currentSlug.value}`)
+    boardInfo.value = data
+  } catch { /* empty */ }
+}
+
+async function loadPopular() {
+  try {
+    const slug = currentSlug.value || 'free'
+    const { data } = await axios.get(`/api/community-v2/${slug}/posts`, { params: { sort: 'popular', per_page: 10 } })
+    popularPosts.value = (data.data || data || []).slice(0, 10)
+  } catch { /* empty */ }
+}
+
+watch(() => route.params.slug, () => {
+  activeCategory.value = ''
+  search.value = ''
+  loadBoardInfo()
+  loadPosts(1)
+  loadPopular()
+})
 
 onMounted(() => {
-  fetchCategories()
-  fetchPosts()
-  fetchPopular()
+  loadCategories()
+  loadBoardInfo()
+  loadPosts(1)
+  loadPopular()
 })
 </script>

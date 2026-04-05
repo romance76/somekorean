@@ -2,29 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ElderCheckinLog extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'user_id', 'checkin_date', 'checked_at', 'status',
-        'alert_sent_at', 'guardian_notified',
+        'user_id', 'checked_in_at', 'lat', 'lng', 'status',
     ];
 
-    protected $casts = [
-        'checkin_date'      => 'date',
-        'checked_at'        => 'datetime',
-        'alert_sent_at'     => 'datetime',
-        'guardian_notified'  => 'boolean',
-    ];
-
-    public function user()
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'checked_in_at' => 'datetime',
+            'lat' => 'decimal:7',
+            'lng' => 'decimal:7',
+        ];
     }
 
-    public function elderSetting()
-    {
-        return $this->hasOne(ElderSetting::class, 'user_id', 'user_id');
-    }
+    public function user() { return $this->belongsTo(User::class); }
 }

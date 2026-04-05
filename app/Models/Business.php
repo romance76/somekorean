@@ -1,45 +1,49 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Business extends Model
 {
-    use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
-        'owner_id', 'owner_user_id', 'name', 'name_ko', 'name_en',
-        'category', 'description', 'address',
-        'lat', 'lng', 'latitude', 'longitude',
-        'phone', 'website', 'hours', 'photos',
-        'region', 'is_verified', 'is_sponsored', 'status',
-        'is_claimed', 'is_premium', 'premium_type', 'premium_expires_at',
-        'google_place_id',
-        'owner_description_ko', 'owner_description_en',
-        'owner_photos', 'menu_items',
-        'data_source', 'source_url',
-        'temp_closed', 'temp_closed_note',
-        'rating_avg', 'review_count',
+        'user_id', 'name', 'description', 'category', 'subcategory',
+        'phone', 'email', 'website', 'address', 'city', 'state', 'zipcode',
+        'lat', 'lng', 'images', 'logo', 'hours',
+        'rating', 'review_count', 'is_verified', 'is_claimed',
+        'owner_id', 'view_count',
     ];
 
-    protected $casts = [
-        'hours' => 'array',
-        'photos' => 'array',
-        'owner_photos' => 'array',
-        'menu_items' => 'array',
-        'is_verified' => 'boolean',
-        'is_sponsored' => 'boolean',
-        'is_claimed' => 'boolean',
-        'is_premium' => 'boolean',
-        'temp_closed' => 'boolean',
-        'premium_expires_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'images' => 'array',
+            'hours' => 'array',
+            'is_verified' => 'boolean',
+            'is_claimed' => 'boolean',
+            'rating' => 'decimal:2',
+            'review_count' => 'integer',
+            'view_count' => 'integer',
+            'lat' => 'decimal:7',
+            'lng' => 'decimal:7',
+        ];
+    }
 
-    public function owner() { return $this->belongsTo(User::class, 'owner_id'); }
-    public function ownerUser() { return $this->belongsTo(User::class, 'owner_user_id'); }
+    public function scopeNearby($query, float $lat, float $lng, float $radiusMiles = 25)
+    {
+        $haversine = "(3959 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat))))";
+        return $query->selectRaw("*, {$haversine} AS distance", [$lat, $lng, $lat])
+                     ->havingRaw("distance <= ?", [$radiusMiles])
+                     ->orderBy('distance');
+    }
+
+    public function user()    { return $this->belongsTo(User::class); }
+    public function owner()   { return $this->belongsTo(User::class, 'owner_id'); }
     public function reviews() { return $this->hasMany(BusinessReview::class); }
-    public function claims() { return $this->hasMany(BusinessClaim::class); }
-    public function stats() { return $this->hasMany(BusinessStat::class); }
-    public function events() { return $this->hasMany(BusinessEvent::class); }
+    public function claims()  { return $this->hasMany(BusinessClaim::class); }
+    public function comments(){ return $this->morphMany(Comment::class, 'commentable'); }
+    public function bookmarks(){ return $this->morphMany(Bookmark::class, 'bookmarkable'); }
 }

@@ -2,27 +2,26 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class IpBan extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'ip_address', 'cidr_range', 'fingerprint_hash',
-        'reason', 'banned_by', 'expires_at',
+        'ip_address', 'reason', 'banned_by', 'expires_at',
     ];
 
-    protected $casts = [
-        'expires_at' => 'datetime',
-    ];
-
-    public function bannedByUser()
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class, 'banned_by');
+        return [
+            'expires_at' => 'datetime',
+        ];
     }
 
-    /**
-     * 활성 밴 (영구 또는 만료 전)
-     */
+    public function bannedByUser() { return $this->belongsTo(User::class, 'banned_by'); }
+
     public function scopeActive($query)
     {
         return $query->where(function ($q) {

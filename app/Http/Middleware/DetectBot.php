@@ -10,60 +10,69 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DetectBot
 {
+    /**
+     * 봇 감지 및 레이트 리미팅 미들웨어
+     * - API 요청: IP당 분당 최대 60회
+     * - Honeypot: 'website_url' 히든 필드가 채워지면 차단
+     * - 초과 시 429 응답
+     */
     public function handle(Request $request, Closure $next): Response
     {
-        // 글쓰기 요청만 체크 (POST 메서드 + 특정 URL 패턴)
-        if ($request->isMethod('post') && $this->isWriteAction($request)) {
-            $ip = $request->ip();
-            $key = "write_rate:{$ip}";
+        $ip = $request->ip();
 
-            // 1분 내 5회 초과 체크
-            $count = Cache::get($key, 0);
-            if ($count >= 5) {
-                try {
-                    DB::table('ip_bans')->insertOrIgnore([
-                        'ip_address' => $ip,
-                        'reason'     => '자동 차단: 1분 내 글쓰기 5회 초과 (봇 의심)',
-                        'expires_at' => now()->addHour(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Exception $e) {
-                    // ip_bans 테이블 없으면 무시
-                }
-                return response()->json(['error' => '너무 많은 요청입니다. 잠시 후 다시 시도하세요.'], 429);
-            }
-            Cache::put($key, $count + 1, 60);
+        // 1) Honeypot 필드 체크 (모든 POST 요청)
+        if ($request->isMethod('post') && $request->filled('website_url')) {
+            $this->autoBanIp($ip, '자동 차단: Honeypot 필드 감지 (봇)', now()->addDay());
+            return response()->json([
+                'success' => false,
+                'message' => '요청을 처리할 수 없습니다.',
+            ], 403);
+        }
 
-            // Honeypot 필드 체크
-            if ($request->filled('website_url_confirm')) {
-                try {
-                    DB::table('ip_bans')->insertOrIgnore([
-                        'ip_address' => $ip,
-                        'reason'     => '자동 차단: Honeypot 필드 감지 (봇)',
-                        'expires_at' => now()->addDay(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Exception $e) {
-                    // ip_bans 테이블 없으면 무시
-                }
-                return response()->json(['error' => '요청을 처리할 수 없습니다.'], 403);
-            }
+        // 2) 레이트 리미팅: IP당 분당 60회
+        $rateLimitKey = "api_rate:{$ip}";
+        $currentCount = (int) Cache::get($rateLimitKey, 0);
+
+        if ($currentCount >= 60) {
+            return response()->json([
+                'success' => false,
+                'message' => '너무 많은 요청입니다. 잠시 후 다시 시도하세요.',
+                'retry_after' => 60,
+            ], 429);
+        }
+
+        // 카운트 증가 (1분 TTL)
+        if ($currentCount === 0) {
+            Cache::put($rateLimitKey, 1, 60);
+        } else {
+            Cache::increment($rateLimitKey);
         }
 
         return $next($request);
     }
 
-    private function isWriteAction(Request $request): bool
+    /**
+     * IP 자동 차단 (ip_bans 테이블에 삽입)
+     */
+    private function autoBanIp(string $ip, string $reason, $expiresAt = null): void
     {
-        $writePatterns = ['posts', 'comments', 'market', 'jobs', 'realestate', 'qa', 'recipes'];
-        $path = $request->path();
-        foreach ($writePatterns as $pattern) {
-            if (str_contains($path, $pattern)) {
-                return true;
-            }
+        try {
+            DB::table('ip_bans')->insertOrIgnore([
+                'ip_address' => $ip,
+                'reason'     => $reason,
+                'expires_at' => $expiresAt,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // 캐시도 즉시 갱신
+            Cache::put("ip_ban:{$ip}", [
+                'banned'     => true,
+                'reason'     => $reason,
+                'expires_at' => $expiresAt,
+            ], 300);
+        } catch (\Exception $e) {
+            // ip_bans 테이블이 없으면 무시
         }
-        return false;
     }
 }

@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
-use App\Models\User;
+use App\Models\PointLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -11,114 +12,106 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    // 포인트 구매 패키지
-    private $packages = [
-        ['id' => 'pkg_5',  'amount' => 500,  'points' => 1000,  'bonus' => 0,  'label' => '$5 - 1,000P'],
-        ['id' => 'pkg_10', 'amount' => 1000, 'points' => 2500,  'bonus' => 25, 'label' => '$10 - 2,500P (+25%)'],
-        ['id' => 'pkg_25', 'amount' => 2500, 'points' => 7000,  'bonus' => 40, 'label' => '$25 - 7,000P (+40%)'],
-        ['id' => 'pkg_50', 'amount' => 5000, 'points' => 16000, 'bonus' => 60, 'label' => '$50 - 16,000P (+60%)'],
-    ];
-
-    /**
-     * GET /api/payments/packages
-     * 구매 가능 패키지 목록
-     */
-    public function packages()
-    {
-        return response()->json($this->packages);
-    }
-
     /**
      * POST /api/payments/create-intent
-     * Stripe PaymentIntent 생성
+     * Create Stripe PaymentIntent for point purchase.
      */
     public function createIntent(Request $request)
     {
-        $packageId = $request->input('package_id');
-        $package = collect($this->packages)->firstWhere('id', $packageId);
-
-        if (!$package) {
-            return response()->json(['error' => 'Invalid package'], 400);
-        }
+        $request->validate([
+            'amount' => 'required|integer|min:500',
+            'points' => 'required|integer|min:100',
+        ]);
 
         $stripeSecret = config('services.stripe.secret');
         if (!$stripeSecret) {
-            return response()->json(['error' => 'Stripe is not configured'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Stripe가 설정되지 않았습니다.',
+            ], 500);
         }
 
-        $response = Http::asForm()->withBasicAuth($stripeSecret, '')
+        $response = Http::asForm()
+            ->withBasicAuth($stripeSecret, '')
             ->post('https://api.stripe.com/v1/payment_intents', [
-                'amount'               => $package['amount'],
+                'amount'               => $request->amount,
                 'currency'             => 'usd',
                 'metadata[user_id]'    => auth()->id(),
-                'metadata[package_id]' => $packageId,
-                'metadata[points]'     => $package['points'],
+                'metadata[points]'     => $request->points,
             ]);
 
         if (!$response->successful()) {
-            return response()->json(['error' => 'Failed to create payment intent', 'detail' => $response->json()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => '결제 인텐트 생성에 실패했습니다.',
+            ], 500);
         }
 
         return response()->json([
-            'clientSecret' => $response->json('client_secret'),
-            'amount'       => $package['amount'],
-            'points'       => $package['points'],
+            'success' => true,
+            'data'    => [
+                'client_secret' => $response->json('client_secret'),
+                'amount'        => $request->amount,
+                'points'        => $request->points,
+            ],
         ]);
     }
 
     /**
      * POST /api/payments/confirm
-     * 결제 확인 후 포인트 지급
+     * Confirm payment and add points.
      */
     public function confirm(Request $request)
     {
-        $paymentIntentId = $request->input('payment_intent_id');
-
-        if (!$paymentIntentId) {
-            return response()->json(['error' => 'payment_intent_id is required'], 400);
-        }
+        $request->validate([
+            'payment_intent_id' => 'required|string',
+        ]);
 
         $stripeSecret = config('services.stripe.secret');
+        $paymentIntentId = $request->payment_intent_id;
 
-        // Stripe에서 PaymentIntent 조회
-        $response = Http::asForm()->withBasicAuth($stripeSecret, '')
+        // Fetch PaymentIntent from Stripe
+        $response = Http::asForm()
+            ->withBasicAuth($stripeSecret, '')
             ->get("https://api.stripe.com/v1/payment_intents/{$paymentIntentId}");
 
         if (!$response->successful()) {
-            return response()->json(['error' => 'Failed to retrieve payment intent'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => '결제 정보를 조회할 수 없습니다.',
+            ], 500);
         }
 
         $pi = $response->json();
 
         if (($pi['status'] ?? '') !== 'succeeded') {
-            return response()->json(['error' => 'Payment not completed', 'status' => $pi['status'] ?? 'unknown'], 400);
+            return response()->json([
+                'success' => false,
+                'message' => '결제가 완료되지 않았습니다.',
+            ], 400);
         }
 
-        $userId    = $pi['metadata']['user_id'] ?? auth()->id();
-        $points    = (int)($pi['metadata']['points'] ?? 0);
-        $packageId = $pi['metadata']['package_id'] ?? 'unknown';
+        $userId = $pi['metadata']['user_id'] ?? auth()->id();
+        $points = (int) ($pi['metadata']['points'] ?? 0);
 
-        // 중복 처리 방지
-        $existing = Payment::where('stripe_payment_id', $paymentIntentId)->first();
-        if ($existing) {
-            return response()->json(['error' => 'Already processed'], 400);
+        // Prevent duplicate processing
+        $exists = Payment::where('stripe_payment_id', $paymentIntentId)->exists();
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => '이미 처리된 결제입니다.',
+            ], 400);
         }
 
-        // 트랜잭션으로 처리
-        DB::beginTransaction();
-        try {
-            // user_wallets 테이블 업데이트
-            DB::table('user_wallets')->where('user_id', $userId)->increment('coin_balance', $points);
+        return DB::transaction(function () use ($userId, $points, $pi, $paymentIntentId) {
+            $user = \App\Models\User::findOrFail($userId);
+            $user->increment('points_total', $points);
 
-            $newBalance = DB::table('user_wallets')->where('user_id', $userId)->value('coin_balance');
-
-            // Payment 기록
             Payment::create([
                 'user_id'           => $userId,
                 'transaction_id'    => Str::uuid(),
                 'type'              => 'point_purchase',
-                'item_name'         => $packageId,
-                'amount'            => $pi['amount'] / 100,
+                'amount'            => ($pi['amount'] ?? 0) / 100,
                 'currency'          => 'usd',
                 'payment_method'    => 'stripe',
                 'status'            => 'completed',
@@ -126,39 +119,23 @@ class PaymentController extends Controller
                 'paid_at'           => now(),
             ]);
 
-            // wallet_transactions 기록
-            DB::table('wallet_transactions')->insert([
+            PointLog::create([
                 'user_id'       => $userId,
                 'type'          => 'purchase',
-                'currency'      => 'coin',
+                'action'        => 'earn',
                 'amount'        => $points,
-                'balance_after' => $newBalance,
-                'description'   => "포인트 구매: {$points}P",
-                'created_at'    => now(),
-                'updated_at'    => now(),
+                'balance_after' => $user->fresh()->points_total,
+                'memo'          => "포인트 구매: {$points}P",
             ]);
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'points'  => $points,
-                'balance' => $newBalance,
+                'message' => "포인트 {$points}P가 충전되었습니다.",
+                'data'    => [
+                    'points'  => $points,
+                    'balance' => $user->fresh()->points_total,
+                ],
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Failed to process payment: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * GET /api/payments/history
-     * 결제 내역
-     */
-    public function history()
-    {
-        return Payment::where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        });
     }
 }

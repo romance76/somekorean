@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
@@ -7,43 +8,66 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    /**
+     * GET /api/notifications
+     * Paginated notifications for authenticated user.
+     */
     public function index(Request $request)
     {
-        $notifications = Notification::where('user_id', $request->user()->id)
-            ->latest()
-            ->limit(50)
-            ->get();
+        $notifications = Notification::where('user_id', auth()->id())
+            ->orderByDesc('created_at')
+            ->paginate(20);
 
-        $unread = $notifications->whereNull('read_at')->count();
-
-        return response()->json(['notifications' => $notifications, 'unread' => $unread]);
-    }
-
-    public function unreadCount(Request $request)
-    {
-        $count = Notification::where('user_id', $request->user()->id)
+        $unread = Notification::where('user_id', auth()->id())
             ->whereNull('read_at')
             ->count();
-        return response()->json(['count' => $count]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'notifications' => $notifications,
+                'unread_count'  => $unread,
+            ],
+        ]);
     }
 
-    public function markRead(Request $request, $id)
+    /**
+     * POST /api/notifications/read
+     * Mark all notifications as read.
+     */
+    public function markRead(Request $request)
     {
-        Notification::where('id', $id)
-            ->where('user_id', $request->user()->id)
-            ->update(['read_at' => now()]);
-        return response()->json(['ok' => true]);
-    }
-
-    public function markAllRead(Request $request)
-    {
-        Notification::where('user_id', $request->user()->id)
+        Notification::where('user_id', auth()->id())
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
-        return response()->json(['ok' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => '모든 알림을 읽음 처리했습니다.',
+        ]);
     }
 
-    // 헬퍼: 다른 컨트롤러에서 알림 생성 시 사용
+    /**
+     * POST /api/notifications/{id}/read
+     * Mark a single notification as read.
+     */
+    public function markOneRead($id)
+    {
+        $notification = Notification::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $notification->update(['read_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => '알림을 읽음 처리했습니다.',
+        ]);
+    }
+
+    /**
+     * Static helper: create a notification from other controllers.
+     */
     public static function send(int $userId, string $type, string $title, string $body, ?string $url = null, ?array $data = null): void
     {
         Notification::create([
@@ -52,7 +76,7 @@ class NotificationController extends Controller
             'title'   => $title,
             'body'    => $body,
             'url'     => $url,
-            'data'    => $data,
+            'data'    => $data ? json_encode($data) : null,
         ]);
     }
 }

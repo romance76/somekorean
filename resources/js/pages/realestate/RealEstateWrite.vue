@@ -1,152 +1,124 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-16">
-    <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <!-- Header -->
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl mb-4">
-        <h1 class="text-xl font-black">🏠 {{ isEdit ? '부동산 매물 수정' : '부동산 매물 등록' }}</h1>
-        <p class="text-blue-100 text-sm mt-0.5">매물 정보를 입력해 주세요</p>
+  <WriteTemplate
+    :title="isEdit ? '부동산 매물 수정' : '부동산 매물 등록'"
+    :loading="submitting"
+    :submitLabel="isEdit ? '매물 수정' : '매물 등록'"
+    :modelValue="form"
+    :hasImages="true"
+    :hasLocation="true"
+    titlePlaceholder="예: LA 한인타운 2BR 아파트 렌트"
+    contentPlaceholder="매물에 대한 상세 정보를 입력해 주세요"
+    @update:modelValue="form = $event"
+    @submit="submit"
+  >
+    <template #fields>
+      <!-- Type & Property Type -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">매물 유형 <span class="text-red-400">*</span></label>
+          <select v-model="form.type"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">선택</option>
+            <option>렌트</option>
+            <option>매매</option>
+            <option>룸메이트</option>
+            <option>상가</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">건물 유형</label>
+          <select v-model="form.property_type"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">선택</option>
+            <option>아파트</option>
+            <option>하우스</option>
+            <option>콘도</option>
+            <option>스튜디오</option>
+            <option>오피스</option>
+          </select>
+        </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm p-5 space-y-5">
-        <!-- 기본 정보 -->
-        <h2 class="font-bold text-gray-800 text-sm border-b pb-2">기본 정보</h2>
-
+      <!-- Price & Deposit -->
+      <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">제목 <span class="text-red-400">*</span></label>
-          <input v-model="form.title" type="text" placeholder="예: LA 한인타운 2BR 아파트 렌트" maxlength="200"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">가격 ($) <span class="text-red-400">*</span></label>
+          <input v-model="form.price" type="number" min="0" placeholder="월세 또는 매매가"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
         </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">매물 유형 <span class="text-red-400">*</span></label>
-            <select v-model="form.type" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400">
-              <option value="">선택</option>
-              <option>렌트</option>
-              <option>매매</option>
-              <option>룸메이트</option>
-              <option>상가</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">가격 ($) <span class="text-red-400">*</span></label>
-            <input v-model="form.price" type="number" min="0" placeholder="월세 또는 매매가"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
+        <div v-if="form.type === '렌트' || form.type === '룸메이트'">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">디파짓 ($)</label>
+          <input v-model="form.deposit" type="number" min="0" placeholder="보증금"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
         </div>
+      </div>
 
+      <!-- Bedrooms, Bathrooms, Sqft -->
+      <div class="grid grid-cols-3 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">주소 <span class="text-red-400">*</span></label>
-          <AddressInput v-model="form.addressObj" />
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">방 수</label>
+          <input v-model="form.bedrooms" type="number" min="0" max="20" placeholder="0"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
         </div>
-
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">방 수</label>
-            <input v-model="form.bedrooms" type="number" min="0" max="20" placeholder="0"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">욕실 수</label>
-            <input v-model="form.bathrooms" type="number" min="0" max="10" placeholder="0"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">면적 (sqft)</label>
-            <input v-model="form.sqft" type="number" min="0" placeholder="0"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-        </div>
-
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">상세 설명</label>
-          <textarea v-model="form.description" rows="6" placeholder="매물에 대한 상세 정보를 입력해 주세요"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 resize-none" />
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">욕실 수</label>
+          <input v-model="form.bathrooms" type="number" min="0" max="10" placeholder="0"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
         </div>
-
-        <!-- 사진 업로드 -->
-        <h2 class="font-bold text-gray-800 text-sm border-b pb-2 pt-2">📷 사진 업로드</h2>
-        <p class="text-xs text-gray-500">최대 10장 (처음 3장 무료, 추가 1장당 10P)</p>
-        <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
-          <div v-for="i in 10" :key="i" class="relative">
-            <div v-if="photosPreviews[i-1]" class="h-24 rounded-xl overflow-hidden relative group">
-              <img :src="photosPreviews[i-1]" class="w-full h-full object-cover" />
-              <button @click="removePhoto(i-1)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition">✕</button>
-            </div>
-            <label v-else-if="i <= 3" class="h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
-              <span class="text-2xl text-gray-400">+</span>
-              <span class="text-[10px] text-gray-400 mt-0.5">무료</span>
-              <input type="file" accept="image/*" class="hidden" @change="onPhotoSelect($event, i-1)" />
-            </label>
-            <label v-else class="h-24 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition bg-gray-50">
-              <span class="text-xl text-gray-300">+</span>
-              <span class="text-[10px] text-gray-400 mt-0.5">10P</span>
-              <input type="file" accept="image/*" class="hidden" @change="onPhotoSelect($event, i-1)" />
-            </label>
-          </div>
-        </div>
-
-        <!-- 추가 정보 -->
-        <h2 class="font-bold text-gray-800 text-sm border-b pb-2 pt-2">추가 정보</h2>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">디파짓 ($)</label>
-            <input v-model="form.deposit" type="number" min="0" placeholder="보증금"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">입주 가능일</label>
-            <input v-model="form.move_in_date" type="date"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-        </div>
-
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">반려동물</label>
-          <div class="flex gap-3">
-            <button v-for="p in petOptions" :key="p.value" @click="form.pet_policy = p.value"
-              class="flex-1 py-3 rounded-xl font-semibold text-sm transition"
-              :class="form.pet_policy === p.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">면적 (sqft)</label>
+          <input v-model="form.sqft" type="number" min="0" placeholder="0"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+      </div>
+
+      <!-- Move-in date & Pet policy -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">입주 가능일</label>
+          <input v-model="form.move_in_date" type="date"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">반려동물</label>
+          <div class="flex gap-2">
+            <button v-for="p in petOptions" :key="p.value" type="button" @click="form.pet_policy = p.value"
+              class="flex-1 py-2 rounded-lg font-semibold text-xs transition"
+              :class="form.pet_policy === p.value ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'">
               {{ p.label }}
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- 연락처 -->
-        <h2 class="font-bold text-gray-800 text-sm border-b pb-2 pt-2">📞 연락처</h2>
+      <!-- Contact info -->
+      <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">연락처</h3>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
+            <label class="block text-xs text-gray-500 mb-1">전화번호</label>
             <input v-model="form.phone" type="tel" placeholder="000-000-0000"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+              class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+            <label class="block text-xs text-gray-500 mb-1">이메일</label>
             <input v-model="form.email" type="email" placeholder="email@example.com"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+              class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
         </div>
-
-        <!-- 에러 / 버튼 -->
-        <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-xl">{{ error }}</div>
-        <div class="flex justify-end gap-3 pt-2">
-          <button @click="$router.back()" class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-600 rounded-xl text-sm hover:bg-gray-50">취소</button>
-          <button @click="submit" :disabled="submitting"
-            class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
-            {{ submitting ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '매물 수정' : '매물 등록') }}
-          </button>
-        </div>
       </div>
-    </div>
-  </div>
+
+      <!-- Error -->
+      <div v-if="error" class="text-red-600 text-sm bg-red-50 dark:bg-red-900/30 p-3 rounded-xl">{{ error }}</div>
+    </template>
+  </WriteTemplate>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import WriteTemplate from '@/components/templates/WriteTemplate.vue'
 import axios from 'axios'
-import AddressInput from '../../components/AddressInput.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -154,8 +126,6 @@ const submitting = ref(false)
 const error = ref('')
 const isEdit = ref(false)
 const editId = ref(null)
-const photosPreviews = ref([])
-const photosFiles = ref([])
 
 const petOptions = [
   { value: '가능', label: '🐶 가능' },
@@ -165,61 +135,48 @@ const petOptions = [
 
 const form = ref({
   title: '',
+  content: '',
   type: '',
+  property_type: '',
   price: '',
-  address: '',
-  addressObj: { address1: '', address2: '', city: '', state: '', zip: '', full: '' },
+  deposit: '',
   bedrooms: '',
   bathrooms: '',
   sqft: '',
-  description: '',
-  deposit: '',
   move_in_date: '',
   pet_policy: '협의',
   phone: '',
   email: '',
+  address: '',
 })
 
-function onPhotoSelect(e, idx) {
-  const file = e.target.files[0]
-  if (!file) return
-  if (file.size > 5 * 1024 * 1024) { alert('5MB 이하 이미지만 가능합니다'); return }
-  const reader = new FileReader()
-  reader.onload = ev => { photosPreviews.value[idx] = ev.target.result }
-  reader.readAsDataURL(file)
-  photosFiles.value[idx] = file
-}
-
-function removePhoto(idx) {
-  photosPreviews.value.splice(idx, 1)
-  photosFiles.value.splice(idx, 1)
-}
-
-async function submit() {
-  if (!form.value.title.trim()) { error.value = '제목을 입력하세요.'; return }
+async function submit({ files }) {
+  if (!form.value.title?.trim()) { error.value = '제목을 입력하세요.'; return }
   if (!form.value.type) { error.value = '매물 유형을 선택하세요.'; return }
-  if (!form.value.price && form.value.price !== 0) { error.value = '가격을 입력하세요.'; return }
-  if (!form.value.addressObj.address1?.trim()) { error.value = '주소를 입력하세요.'; return }
 
   submitting.value = true
   error.value = ''
   try {
     const fd = new FormData()
-    form.value.address = form.value.addressObj.full || '';
-    Object.entries(form.value).forEach(([k, v]) => { if (k === 'addressObj') return; if (v !== '' && v !== null) fd.append(k, v) })
-    photosFiles.value.forEach((file, i) => { if (file) fd.append(`photos[${i}]`, file) })
+    // description from content field
+    fd.append('description', form.value.content || '')
+    const fields = ['title', 'type', 'property_type', 'price', 'deposit', 'bedrooms', 'bathrooms', 'sqft', 'move_in_date', 'pet_policy', 'phone', 'email', 'address']
+    fields.forEach(k => { if (form.value[k] !== '' && form.value[k] != null) fd.append(k, form.value[k]) })
 
-    let data
+    if (files?.length) {
+      files.forEach((file, i) => fd.append(`photos[${i}]`, file))
+    }
+
     if (isEdit.value) {
-      fd.append('_method', 'PUT');
-      ({ data } = await axios.post(`/api/realestate/${editId.value}`, fd, {
+      fd.append('_method', 'PUT')
+      await axios.post(`/api/realestate/${editId.value}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
-      }))
+      })
       router.push(`/realestate/${editId.value}`)
     } else {
-      ({ data } = await axios.post('/api/realestate', fd, {
+      const { data } = await axios.post('/api/realestate', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
-      }))
+      })
       router.push(`/realestate/${data.listing?.id || data.id || ''}`)
     }
   } catch (e) {
@@ -237,19 +194,20 @@ onMounted(async () => {
     try {
       const { data } = await axios.get(`/api/realestate/${id}`)
       form.value.title = data.title || ''
+      form.value.content = data.description || ''
       form.value.type = data.type || ''
+      form.value.property_type = data.property_type || ''
       form.value.price = data.price ?? ''
       form.value.address = data.address || ''
       form.value.bedrooms = data.bedrooms ?? ''
       form.value.bathrooms = data.bathrooms ?? ''
       form.value.sqft = data.sqft ?? ''
-      form.value.description = data.description || ''
       form.value.deposit = data.deposit ?? ''
       form.value.move_in_date = data.move_in_date || ''
       form.value.pet_policy = data.pet_policy || '협의'
       form.value.phone = data.phone || ''
       form.value.email = data.email || ''
-    } catch (e) {
+    } catch {
       error.value = '기존 매물 정보를 불러올 수 없습니다.'
     }
   }

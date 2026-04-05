@@ -1,39 +1,49 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\Event;
 use App\Models\JobPost;
 use App\Models\MarketItem;
 use App\Models\Post;
-use App\Models\User;
+use App\Models\QaPost;
+use App\Models\RecipePost;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
+    /**
+     * GET /api/search
+     * Search across posts, jobs, market, businesses, events, qa, recipes.
+     */
     public function search(Request $request)
     {
-        $request->validate(['q' => 'required|string|min:2|max:100']);
+        $request->validate([
+            'q' => 'required|string|min:2|max:100',
+        ]);
 
         $q    = $request->q;
-        $type = $request->type ?? 'all'; // all | posts | jobs | market | businesses | users
+        $type = $request->type ?? 'all';
+        $limit = $type === 'all' ? 5 : 20;
 
         $result = [];
 
         if (in_array($type, ['all', 'posts'])) {
-            $result['posts'] = Post::with(['user:id,name,username,avatar', 'board:id,name,slug'])
+            $result['posts'] = Post::with(['user:id,name,nickname,avatar', 'board:id,name,slug'])
                 ->where('status', 'active')
                 ->where(function ($query) use ($q) {
                     $query->where('title', 'like', "%{$q}%")
                           ->orWhere('content', 'like', "%{$q}%");
                 })
                 ->orderByDesc('created_at')
-                ->limit($type === 'all' ? 5 : 20)
+                ->limit($limit)
                 ->get();
         }
 
         if (in_array($type, ['all', 'jobs'])) {
-            $result['jobs'] = JobPost::with('user:id,name,username')
+            $result['jobs'] = JobPost::with('user:id,name,nickname')
                 ->where('status', 'active')
                 ->where(function ($query) use ($q) {
                     $query->where('title', 'like', "%{$q}%")
@@ -41,19 +51,19 @@ class SearchController extends Controller
                           ->orWhere('company_name', 'like', "%{$q}%");
                 })
                 ->orderByDesc('created_at')
-                ->limit($type === 'all' ? 3 : 20)
+                ->limit($limit)
                 ->get();
         }
 
         if (in_array($type, ['all', 'market'])) {
-            $result['market'] = MarketItem::with('user:id,name,username')
+            $result['market'] = MarketItem::with('user:id,name,nickname')
                 ->where('status', 'active')
                 ->where(function ($query) use ($q) {
                     $query->where('title', 'like', "%{$q}%")
                           ->orWhere('description', 'like', "%{$q}%");
                 })
                 ->orderByDesc('created_at')
-                ->limit($type === 'all' ? 3 : 20)
+                ->limit($limit)
                 ->get();
         }
 
@@ -64,30 +74,53 @@ class SearchController extends Controller
                           ->orWhere('description', 'like', "%{$q}%")
                           ->orWhere('category', 'like', "%{$q}%");
                 })
-                ->orderByDesc('is_sponsored')
-                ->limit($type === 'all' ? 3 : 20)
+                ->orderByDesc('created_at')
+                ->limit($limit)
                 ->get();
         }
 
-        if (in_array($type, ['all', 'users'])) {
-            $result['users'] = User::where('status', 'active')
+        if (in_array($type, ['all', 'events'])) {
+            $result['events'] = Event::where('status', 'active')
                 ->where(function ($query) use ($q) {
-                    $query->where('name', 'like', "%{$q}%")
-                          ->orWhere('username', 'like', "%{$q}%");
+                    $query->where('title', 'like', "%{$q}%")
+                          ->orWhere('description', 'like', "%{$q}%");
                 })
-                ->select('id', 'name', 'username', 'avatar', 'level', 'region')
-                ->limit($type === 'all' ? 3 : 20)
-                ->get()
-                ->map(function ($u) {
-                    $u->avatar = $u->avatar ? asset('storage/' . $u->avatar) : null;
-                    return $u;
-                });
+                ->orderByDesc('created_at')
+                ->limit($limit)
+                ->get();
+        }
+
+        if (in_array($type, ['all', 'qa'])) {
+            $result['qa'] = QaPost::with('user:id,name,nickname')
+                ->where('status', 'active')
+                ->where(function ($query) use ($q) {
+                    $query->where('title', 'like', "%{$q}%")
+                          ->orWhere('content', 'like', "%{$q}%");
+                })
+                ->orderByDesc('created_at')
+                ->limit($limit)
+                ->get();
+        }
+
+        if (in_array($type, ['all', 'recipes'])) {
+            $result['recipes'] = RecipePost::with('user:id,name,nickname')
+                ->where('status', 'active')
+                ->where(function ($query) use ($q) {
+                    $query->where('title', 'like', "%{$q}%")
+                          ->orWhere('description', 'like', "%{$q}%");
+                })
+                ->orderByDesc('created_at')
+                ->limit($limit)
+                ->get();
         }
 
         return response()->json([
-            'query'  => $q,
-            'type'   => $type,
-            'result' => $result,
+            'success' => true,
+            'data'    => [
+                'query'   => $q,
+                'type'    => $type,
+                'results' => $result,
+            ],
         ]);
     }
 }

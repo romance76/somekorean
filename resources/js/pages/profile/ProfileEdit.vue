@@ -1,200 +1,166 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-20">
+  <div class="min-h-screen bg-gray-50 pb-24">
     <div class="max-w-3xl mx-auto px-4 py-6">
-      <h1 class="text-2xl font-bold text-gray-900 mb-6">⚙️ 프로필 설정</h1>
+      <h1 class="text-2xl font-black text-gray-900 mb-6">{{ $t('profile.settings') }}</h1>
 
-      <!-- 프로필 사진 -->
+      <!-- Avatar -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">프로필 사진</h2>
+        <h2 class="text-sm font-bold text-gray-800 mb-4">{{ $t('profile.avatar') }}</h2>
         <div class="flex items-center gap-4">
-          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-3xl text-white font-bold overflow-hidden">
-            <img v-if="form.avatar" :src="form.avatar" class="w-full h-full object-cover" />
+          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-3xl text-white font-black overflow-hidden shadow-md">
+            <img v-if="avatarPreview || form.avatar" :src="avatarPreview || form.avatar" class="w-full h-full object-cover"
+              @error="e => e.target.style.display='none'" />
             <span v-else>{{ (form.name || '?')[0] }}</span>
           </div>
           <div>
             <input type="file" ref="avatarInput" accept="image/*" class="hidden" @change="onAvatarChange" />
-            <button @click="$refs.avatarInput.click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">사진 변경</button>
-            <p class="text-xs text-gray-400 mt-1">JPG, PNG (최대 2MB)</p>
+            <button @click="$refs.avatarInput.click()"
+              class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition">
+              {{ $t('profile.change_photo') }}
+            </button>
+            <p class="text-xs text-gray-400 mt-1">JPG, PNG ({{ $t('profile.max_size') }} 2MB)</p>
           </div>
         </div>
       </div>
 
-      <!-- 기본 정보 -->
+      <!-- Basic Info -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">👤 기본 정보</h2>
+        <h2 class="text-sm font-bold text-gray-800 mb-4">{{ $t('profile.basic_info') }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">이름 <span class="text-red-500">*</span></label>
-            <input v-model="form.name" type="text" maxlength="50" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('auth.name') }} <span class="text-red-500">*</span></label>
+            <input v-model="form.name" type="text" maxlength="50"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">별명 (닉네임)</label>
-            <input v-model="form.nickname" type="text" maxlength="50" placeholder="커뮤니티에서 표시될 별명" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('auth.nickname') }}</label>
+            <input v-model="form.nickname" type="text" maxlength="50" :placeholder="$t('profile.nickname_placeholder')"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs text-gray-500 mb-1">자기소개</label>
-            <textarea v-model="form.bio" rows="3" maxlength="500" placeholder="간단한 자기소개를 작성해주세요" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"></textarea>
-            <p class="text-xs text-gray-400 text-right mt-1">{{ (form.bio||'').length }}/500</p>
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('profile.bio') }}</label>
+            <textarea v-model="form.bio" rows="3" maxlength="500" :placeholder="$t('profile.bio_placeholder')"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition resize-none" />
+            <p class="text-xs text-gray-400 text-right mt-1">{{ (form.bio || '').length }}/500</p>
           </div>
         </div>
       </div>
 
-      <!-- 연락처 -->
+      <!-- Contact -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">📞 연락처</h2>
+        <h2 class="text-sm font-bold text-gray-800 mb-4">{{ $t('profile.contact') }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">전화번호</label>
-            <input v-model="form.phone" type="tel" placeholder="010-1234-5678" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('auth.phone') }}</label>
+            <input v-model="form.phone" type="tel" placeholder="010-1234-5678"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">이메일</label>
-            <input v-model="form.email" type="email" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-500" readonly />
-            <p class="text-xs text-gray-400 mt-1">이메일은 변경할 수 없습니다</p>
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('auth.email') }}</label>
+            <input v-model="form.email" type="email" readonly
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed" />
+            <p class="text-xs text-gray-400 mt-1">{{ $t('profile.email_readonly') }}</p>
           </div>
         </div>
       </div>
 
-      <!-- 주소 -->
+      <!-- Address -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">📍 주소</h2>
+        <h2 class="text-sm font-bold text-gray-800 mb-4">{{ $t('profile.address') }}</h2>
         <div class="space-y-3">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">주소 1 (Address Line 1)</label>
-            <input v-model="form.address" type="text" placeholder="123 Main St" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">Address Line 1</label>
+            <input v-model="form.address" type="text" placeholder="123 Main St"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">주소 2 (Apt, Suite, Unit 등)</label>
-            <input v-model="form.address2" type="text" placeholder="Apt 4B" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">Address Line 2</label>
+            <input v-model="form.address2" type="text" placeholder="Apt 4B"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="col-span-2 sm:col-span-1">
-              <label class="block text-xs text-gray-500 mb-1">시티 (City)</label>
-              <input v-model="form.city" type="text" placeholder="Los Angeles" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">City</label>
+              <input v-model="form.city" type="text"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">스테이트</label>
-              <select v-model="form.state" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-                <option value="">선택</option>
-                <option v-for="s in usStates" :key="s.code" :value="s.code">{{ s.code }} - {{ s.name }}</option>
+              <label class="block text-xs font-medium text-gray-500 mb-1">State</label>
+              <select v-model="form.state"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition">
+                <option value="">{{ $t('common.select') }}</option>
+                <option v-for="s in usStates" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">우편번호</label>
-              <input v-model="form.zip_code" type="text" placeholder="90001" maxlength="10" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+              <label class="block text-xs font-medium text-gray-500 mb-1">ZIP Code</label>
+              <input v-model="form.zip_code" type="text" maxlength="10"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 소셜 계정 연동 -->
+      <!-- Language Preference -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">💬 소셜 계정 연동</h2>
-        <p class="text-xs text-gray-400 mb-4">친구에게 카카오톡/텔레그램으로 연락할 수 있도록 ID를 등록하세요</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">카카오톡 ID</label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-lg">📱</span>
-              <input v-model="form.kakao_id" type="text" placeholder="카카오톡 ID" maxlength="100"
-                class="w-full border border-gray-200 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none" />
-            </div>
-            <p class="text-xs text-gray-400 mt-1">카카오톡 > 설정 > 카카오계정에서 확인</p>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">텔레그램 ID</label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-lg">✈️</span>
-              <input v-model="form.telegram_id" type="text" placeholder="@username" maxlength="100"
-                class="w-full border border-gray-200 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-400 focus:border-transparent outline-none" />
-            </div>
-            <p class="text-xs text-gray-400 mt-1">텔레그램 > 설정 > 사용자 이름</p>
-          </div>
+        <h2 class="text-sm font-bold text-gray-800 mb-4">{{ $t('profile.preferences') }}</h2>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('profile.language') }}</label>
+          <select v-model="form.lang"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition">
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+          </select>
         </div>
       </div>
 
-      <!-- 설정 -->
+      <!-- Password Change -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">🔧 설정</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">언어 (Language)</label>
-            <select v-model="form.lang" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-              <option value="ko">한국어</option>
-              <option value="en">English</option>
-              <option value="both">한국어 + English</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">검색 범위 (거리)</label>
-            <select v-model="form.default_radius" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-              <option :value="5">5 마일</option>
-              <option :value="10">10 마일</option>
-              <option :value="15">15 마일</option>
-              <option :value="20">20 마일</option>
-              <option :value="30">30 마일</option>
-              <option :value="50">50 마일</option>
-              <option :value="100">100 마일</option>
-              <option :value="0">전국 (제한없음)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- 결제 정보 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">💳 결제 정보</h2>
-        <div v-if="form.payment_last4" class="flex items-center gap-3 bg-gray-50 rounded-lg px-4 py-3">
-          <span class="text-lg">💳</span>
-          <div>
-            <p class="text-sm font-medium text-gray-800">{{ form.payment_method || 'Card' }} •••• {{ form.payment_last4 }}</p>
-            <p class="text-xs text-gray-400">등록된 결제수단</p>
-          </div>
-        </div>
-        <div v-else class="text-center py-6">
-          <p class="text-sm text-gray-400 mb-2">등록된 결제수단이 없습니다</p>
-          <button class="text-blue-600 text-sm font-semibold hover:underline" disabled>결제수단 등록 (준비중)</button>
-        </div>
-      </div>
-
-      <!-- 비밀번호 변경 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-        <h2 class="text-sm font-bold text-gray-800 mb-4">🔒 비밀번호 변경</h2>
+        <h2 class="text-sm font-bold text-gray-800 mb-4">{{ $t('profile.change_password') }}</h2>
         <div class="space-y-3 max-w-md">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">현재 비밀번호</label>
-            <input v-model="pwForm.current_password" type="password" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('profile.current_password') }}</label>
+            <input v-model="pwForm.current_password" type="password"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">새 비밀번호</label>
-            <input v-model="pwForm.password" type="password" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('profile.new_password') }}</label>
+            <input v-model="pwForm.password" type="password"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">새 비밀번호 확인</label>
-            <input v-model="pwForm.password_confirmation" type="password" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('profile.new_password_confirm') }}</label>
+            <input v-model="pwForm.password_confirmation" type="password"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" />
           </div>
           <button @click="changePassword" :disabled="!pwForm.current_password || !pwForm.password"
-            class="bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-900 disabled:opacity-40 transition">
-            비밀번호 변경
+            class="bg-gray-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-900 disabled:opacity-40 transition">
+            {{ $t('profile.change_password') }}
           </button>
         </div>
       </div>
 
-      <!-- 저장 버튼 (고정) -->
+      <!-- Fixed Save Bar -->
       <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
         <div class="max-w-3xl mx-auto flex gap-3">
-          <router-link to="/dashboard" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold text-center hover:bg-gray-200 transition">취소</router-link>
+          <router-link to="/dashboard"
+            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold text-center hover:bg-gray-200 transition">
+            {{ $t('common.cancel') }}
+          </router-link>
           <button @click="saveProfile" :disabled="saving"
-            class="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
-            {{ saving ? '저장 중...' : '💾 저장하기' }}
+            class="flex-1 bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 transition">
+            {{ saving ? $t('common.saving') : $t('common.save') }}
           </button>
         </div>
       </div>
 
-      <!-- 저장 성공 토스트 -->
-      <div v-if="showToast" class="fixed top-20 right-4 bg-green-500 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold z-50 animate-bounce">
-        ✅ 프로필이 저장되었습니다!
-      </div>
+      <!-- Toast -->
+      <transition name="fade">
+        <div v-if="showToast"
+          class="fixed top-20 right-4 bg-green-500 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold z-50">
+          {{ $t('profile.saved') }}
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -202,76 +168,56 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
+import { useLangStore } from '../../stores/lang'
 import axios from 'axios'
 
 const authStore = useAuthStore()
+const { $t } = useLangStore()
 const saving = ref(false)
 const showToast = ref(false)
 const avatarInput = ref(null)
+const avatarPreview = ref('')
 
 const form = ref({
   name: '', nickname: '', bio: '', phone: '', email: '',
   address: '', address2: '', city: '', state: '', zip_code: '',
-  lang: 'ko', default_radius: 30, avatar: '',
-  payment_method: '', payment_last4: '',
-  kakao_id: '', telegram_id: '',
+  lang: 'ko', avatar: '',
 })
 
 const pwForm = ref({ current_password: '', password: '', password_confirmation: '' })
 
 const usStates = [
-  { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
-  { code: 'AR', name: 'Arkansas' }, { code: 'CA', name: 'California' }, { code: 'CO', name: 'Colorado' },
-  { code: 'CT', name: 'Connecticut' }, { code: 'DE', name: 'Delaware' }, { code: 'FL', name: 'Florida' },
-  { code: 'GA', name: 'Georgia' }, { code: 'HI', name: 'Hawaii' }, { code: 'ID', name: 'Idaho' },
-  { code: 'IL', name: 'Illinois' }, { code: 'IN', name: 'Indiana' }, { code: 'IA', name: 'Iowa' },
-  { code: 'KS', name: 'Kansas' }, { code: 'KY', name: 'Kentucky' }, { code: 'LA', name: 'Louisiana' },
-  { code: 'ME', name: 'Maine' }, { code: 'MD', name: 'Maryland' }, { code: 'MA', name: 'Massachusetts' },
-  { code: 'MI', name: 'Michigan' }, { code: 'MN', name: 'Minnesota' }, { code: 'MS', name: 'Mississippi' },
-  { code: 'MO', name: 'Missouri' }, { code: 'MT', name: 'Montana' }, { code: 'NE', name: 'Nebraska' },
-  { code: 'NV', name: 'Nevada' }, { code: 'NH', name: 'New Hampshire' }, { code: 'NJ', name: 'New Jersey' },
-  { code: 'NM', name: 'New Mexico' }, { code: 'NY', name: 'New York' }, { code: 'NC', name: 'North Carolina' },
-  { code: 'ND', name: 'North Dakota' }, { code: 'OH', name: 'Ohio' }, { code: 'OK', name: 'Oklahoma' },
-  { code: 'OR', name: 'Oregon' }, { code: 'PA', name: 'Pennsylvania' }, { code: 'RI', name: 'Rhode Island' },
-  { code: 'SC', name: 'South Carolina' }, { code: 'SD', name: 'South Dakota' }, { code: 'TN', name: 'Tennessee' },
-  { code: 'TX', name: 'Texas' }, { code: 'UT', name: 'Utah' }, { code: 'VT', name: 'Vermont' },
-  { code: 'VA', name: 'Virginia' }, { code: 'WA', name: 'Washington' }, { code: 'WV', name: 'West Virginia' },
-  { code: 'WI', name: 'Wisconsin' }, { code: 'WY', name: 'Wyoming' }, { code: 'DC', name: 'Washington DC' },
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
 ]
-
-function getAuthHeaders() {
-  const token = localStorage.getItem('sk_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 async function loadProfile() {
   try {
-    const { data } = await axios.get('/api/auth/me', { headers: getAuthHeaders() })
+    const { data } = await axios.get('/api/auth/me')
     const u = data.user || data
     form.value = {
       name: u.name || '', nickname: u.nickname || '', bio: u.bio || '',
       phone: u.phone || '', email: u.email || '',
       address: u.address || '', address2: u.address2 || '',
       city: u.city || '', state: u.state || '', zip_code: u.zip_code || '',
-      lang: u.lang || 'ko', default_radius: u.default_radius || 30,
-      avatar: u.avatar || '',
-      payment_method: u.payment_method || '', payment_last4: u.payment_last4 || '',
-      kakao_id: u.kakao_id || '', telegram_id: u.telegram_id || '',
+      lang: u.lang || 'ko', avatar: u.avatar || '',
     }
   } catch (e) {
-    console.error('프로필 로딩 실패', e)
+    console.error('Profile load failed', e)
   }
 }
 
 async function saveProfile() {
   saving.value = true
   try {
-    await axios.put('/api/profile', form.value, { headers: getAuthHeaders() })
+    await axios.put('/api/profile', form.value)
     showToast.value = true
-    setTimeout(() => showToast.value = false, 3000)
-    authStore.fetchMe()
+    setTimeout(() => (showToast.value = false), 3000)
+    authStore.fetchUser()
   } catch (e) {
-    alert(e.response?.data?.message || '저장 실패')
+    alert(e.response?.data?.message || $t('common.save_failed'))
   } finally {
     saving.value = false
   }
@@ -279,30 +225,41 @@ async function saveProfile() {
 
 async function changePassword() {
   try {
-    await axios.post('/api/profile/password', pwForm.value, { headers: getAuthHeaders() })
-    alert('비밀번호가 변경되었습니다!')
+    await axios.post('/api/profile/password', pwForm.value)
+    alert($t('profile.password_changed'))
     pwForm.value = { current_password: '', password: '', password_confirmation: '' }
   } catch (e) {
-    alert(e.response?.data?.message || '비밀번호 변경 실패')
+    alert(e.response?.data?.message || $t('profile.password_change_failed'))
   }
 }
 
 async function onAvatarChange(e) {
   const file = e.target.files[0]
   if (!file) return
-  if (file.size > 2 * 1024 * 1024) { alert('파일 크기는 2MB 이하여야 합니다'); return }
+  if (file.size > 2 * 1024 * 1024) {
+    alert($t('profile.file_too_large'))
+    return
+  }
+  // Preview
+  avatarPreview.value = URL.createObjectURL(file)
   const fd = new FormData()
   fd.append('avatar', file)
   try {
     const { data } = await axios.post('/api/profile/avatar', fd, {
-      headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' },
     })
     form.value.avatar = data.avatar_url || data.avatar || ''
-    authStore.fetchMe()
-  } catch (e) {
-    alert('업로드 실패')
+    authStore.fetchUser()
+  } catch {
+    alert($t('profile.upload_failed'))
+    avatarPreview.value = ''
   }
 }
 
-onMounted(() => loadProfile())
+onMounted(loadProfile)
 </script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

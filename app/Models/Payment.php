@@ -1,23 +1,26 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'user_id', 'transaction_id', 'type', 'item_name',
-        'amount', 'currency', 'payment_method', 'card_brand',
-        'card_last4', 'status', 'stripe_payment_id', 'memo', 'paid_at',
+        'user_id', 'stripe_payment_id', 'amount', 'currency',
+        'points_purchased', 'status',
     ];
 
-    protected $casts = [
-        'amount'  => 'decimal:2',
-        'paid_at' => 'datetime',
-    ];
-
-    public function user()
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'amount' => 'decimal:2',
+            'points_purchased' => 'integer',
+        ];
     }
+
+    public function user() { return $this->belongsTo(User::class); }
 }

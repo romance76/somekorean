@@ -2,45 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Club extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'creator_id',
-        'name',
-        'category',
-        'description',
-        'region',
-        'cover_image',
-        'is_approval',
-        'member_count',
-        'is_online',
-        'zip_code',
-        'address',
-        'latitude',
-        'longitude',
+        'user_id', 'name', 'description', 'category', 'image',
+        'type', 'zipcode', 'member_count', 'is_active',
     ];
 
-    protected $casts = [
-        'is_approval' => 'boolean',
-        'is_online' => 'boolean',
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
-    ];
-
-    public function creator()
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class, 'creator_id');
+        return [
+            'is_active' => 'boolean',
+            'member_count' => 'integer',
+        ];
     }
 
-    public function members()
-    {
-        return $this->hasMany(ClubMember::class);
-    }
-
-    public function approvedMembers()
-    {
-        return $this->hasMany(ClubMember::class)->where('status', 'approved');
-    }
+    public function user()    { return $this->belongsTo(User::class); }
+    public function members() { return $this->hasMany(ClubMember::class); }
+    public function posts()   { return $this->hasMany(ClubPost::class); }
 }

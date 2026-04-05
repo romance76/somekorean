@@ -2,19 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ChatMessage extends Model
 {
-    protected $fillable = ['chat_room_id', 'user_id', 'message', 'type', 'file_url', 'file_name', 'file_type'];
+    use HasFactory;
 
-    public function user()
+    protected $fillable = [
+        'chat_room_id', 'user_id', 'content', 'type', 'file_url', 'is_read',
+    ];
+
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'is_read' => 'boolean',
+        ];
     }
 
-    public function room()
-    {
-        return $this->belongsTo(ChatRoom::class, 'chat_room_id');
-    }
+    public function chatRoom() { return $this->belongsTo(ChatRoom::class); }
+    public function user()     { return $this->belongsTo(User::class); }
 }

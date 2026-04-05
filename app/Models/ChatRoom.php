@@ -2,32 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ChatRoom extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'name', 'slug', 'type', 'region', 'theme',
-        'description', 'icon', 'is_open', 'max_members',
-        'member_count', 'created_by',
+        'name', 'type', 'created_by',
     ];
 
-    protected $casts = [
-        'is_open' => 'boolean',
-    ];
-
-    public function messages()
-    {
-        return $this->hasMany(ChatMessage::class);
-    }
-
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function latestMessages()
-    {
-        return $this->hasMany(ChatMessage::class)->latest()->limit(50);
-    }
+    public function creator()  { return $this->belongsTo(User::class, 'created_by'); }
+    public function users()    { return $this->belongsToMany(User::class, 'chat_room_users')->withPivot('last_read_at')->withTimestamps(); }
+    public function messages() { return $this->hasMany(ChatMessage::class); }
 }

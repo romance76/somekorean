@@ -19,7 +19,11 @@
       "Bash(ls /c/Users/Admin/Desktop/somekorean/*.py)",
       "Bash(npx vite:*)",
       "Bash(npm run:*)",
-      "Bash(ls /c/Users/Admin/Desktop/somekorean/server_files/*.json)"
+      "Bash(ls /c/Users/Admin/Desktop/somekorean/server_files/*.json)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ssh root@68.183.60.70 \"cd /var/www/somekorean && git fetch origin && git reset --hard origin/main && COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload -o 2>&1 | tail -2 && php8.2 artisan migrate --force && php8.2 artisan db:seed --class=NewsCategorySeeder --force && php8.2 artisan db:seed --class=NewsDummySeeder --force && npm run build 2>&1 | tail -5 && php8.2 artisan cache:clear && echo ''DEPLOY OK''\")"
     ]
   }
 }

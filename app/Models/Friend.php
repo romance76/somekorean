@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Friend extends Model
 {
-    protected $fillable = ['requester_id', 'recipient_id', 'status'];
+    use HasFactory;
 
-    public function requester()
-    {
-        return $this->belongsTo(User::class, 'requester_id');
-    }
+    protected $fillable = [
+        'user_id', 'friend_id', 'status',
+    ];
 
-    public function recipient()
-    {
-        return $this->belongsTo(User::class, 'recipient_id');
-    }
+    public function user()   { return $this->belongsTo(User::class); }
+    public function friend() { return $this->belongsTo(User::class, 'friend_id'); }
 }

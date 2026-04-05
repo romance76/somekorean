@@ -1,35 +1,30 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ShoppingDeal extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'store_id','title','description','image_url',
-        'url','source','price',
-        'original_price','sale_price','discount_percent',
-        'category','store','unit',
-        'source_url','valid_from','valid_until',
-        'view_count','is_featured','is_active',
-        'expires_at','published_at',
+        'store_id', 'title', 'description', 'image_url',
+        'original_price', 'sale_price', 'discount_percent',
+        'url', 'is_active', 'expires_at',
     ];
 
-    protected $casts = [
-        'is_featured' => 'boolean',
-        'is_active'   => 'boolean',
-        'valid_from'  => 'date',
-        'valid_until' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'original_price' => 'decimal:2',
+            'sale_price' => 'decimal:2',
+            'discount_percent' => 'integer',
+            'is_active' => 'boolean',
+            'expires_at' => 'datetime',
+        ];
+    }
 
     public function store() { return $this->belongsTo(ShoppingStore::class, 'store_id'); }
-
-    public function getDiscountRateAttribute(): ?int
-    {
-        if ($this->discount_percent) return $this->discount_percent;
-        if ($this->original_price && $this->sale_price && $this->original_price > 0) {
-            return (int) round((1 - $this->sale_price / $this->original_price) * 100);
-        }
-        return null;
-    }
 }

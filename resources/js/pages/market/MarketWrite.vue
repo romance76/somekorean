@@ -1,269 +1,134 @@
 <template>
-  <div class="max-w-[1200px] mx-auto px-4 py-6">
-    <h1 class="text-xl font-bold text-gray-800 mb-5">{{ isEdit ? '물품 수정' : '물품 등록' }}</h1>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <div class="space-y-5">
-        <!-- 제목 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">제목 *</label>
-          <input v-model="form.title" type="text" placeholder="물품명을 입력하세요" maxlength="200"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
-        </div>
-
-        <!-- 가격 (눈에 띄게) -->
-        <div class="bg-red-50 border border-red-100 rounded-xl p-4">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <div class="flex-1">
-              <label class="block text-sm font-bold text-red-700 mb-1">가격 ($) *</label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-red-600 font-bold text-lg">$</span>
-                <input v-model="form.price" type="number" min="0" placeholder="0"
-                  class="w-full border border-red-200 rounded-lg pl-8 pr-3 py-3 text-lg font-bold text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white" />
-              </div>
-            </div>
-            <div class="flex items-center pt-6">
-              <input v-model="form.price_negotiable" type="checkbox" id="nego" class="rounded text-red-600 w-4 h-4" />
-              <label for="nego" class="text-sm text-red-600 font-medium ml-2">가격 협의 가능</label>
+  <WriteTemplate
+    :title="isEdit ? (locale === 'ko' ? '물품 수정' : 'Edit Item') : (locale === 'ko' ? '물품 등록' : 'Sell Item')"
+    :mode="isEdit ? 'edit' : 'create'"
+    :loading="submitting"
+    :submitLabel="isEdit ? (locale === 'ko' ? '물품 수정' : 'Update') : (locale === 'ko' ? '물품 등록' : 'Submit')"
+    :titlePlaceholder="locale === 'ko' ? '물품명을 입력하세요' : 'Item name'"
+    :contentPlaceholder="locale === 'ko' ? '물품 상태, 구매 시기, 하자 유무 등을 자세히 입력해주세요' : 'Item details, condition, purchase date...'"
+    v-model="form"
+    :hasImages="true"
+    :hasLocation="true"
+    @submit="onSubmit"
+  >
+    <template #fields>
+      <!-- Price -->
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700 rounded-xl p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div class="flex-1">
+            <label class="block text-sm font-bold text-blue-700 dark:text-blue-300 mb-1">{{ locale === 'ko' ? '가격 ($)' : 'Price ($)' }} *</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 font-bold text-lg">$</span>
+              <input v-model="form.price" type="number" min="0" placeholder="0"
+                class="w-full border border-blue-200 dark:border-blue-600 rounded-lg pl-8 pr-3 py-3 text-lg font-bold text-blue-700 dark:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700" />
             </div>
           </div>
-        </div>
-
-        <!-- 카테고리 / 상태 -->
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
-            <select v-model="form.category" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-              <option value="">선택</option>
-              <option>전자제품</option><option>의류/잡화</option><option>가구/인테리어</option>
-              <option>식품</option><option>도서</option><option>유아동</option><option>기타</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">상품 상태</label>
-            <select v-model="form.condition" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-              <option value="">선택</option>
-              <option value="새것">새것</option>
-              <option value="거의 새것">거의 새것</option>
-              <option value="사용감 있음">사용감 있음</option>
-              <option value="많이 사용">많이 사용</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 지역 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">지역</label>
-          <select v-model="form.region" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-            <option value="">선택</option>
-            <option>Atlanta</option><option>New York</option><option>Los Angeles</option>
-            <option>Dallas</option><option>Chicago</option><option>Seattle</option>
-          </select>
-        </div>
-
-        <!-- 사진 업로드 (6장: 1장 무료 + 5장 유료) -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">사진 첨부</label>
-          <p class="text-xs text-gray-500 mb-3">첫 번째 사진은 무료, 추가 사진은 각 10포인트가 차감됩니다.</p>
-          <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
-            <div v-for="i in 6" :key="i" class="relative">
-              <div v-if="photos[i-1]" class="h-24 rounded-xl overflow-hidden relative group">
-                <img :src="photos[i-1].preview" class="w-full h-full object-cover" />
-                <button @click="removePhoto(i-1)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-                <span v-if="i === 1" class="absolute bottom-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">기본</span>
-                <span v-else class="absolute bottom-1 left-1 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">10P</span>
-              </div>
-              <label v-else class="h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors"
-                :class="i === 1 ? 'border-green-300 hover:border-green-400 hover:bg-green-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'">
-                <span class="text-2xl" :class="i === 1 ? 'text-green-400' : 'text-gray-400'">+</span>
-                <span class="text-[10px] mt-1 font-medium" :class="i === 1 ? 'text-green-500' : 'text-orange-500'">
-                  {{ i === 1 ? '기본 (무료)' : '추가 (10P)' }}
-                </span>
-                <input type="file" accept="image/*" class="hidden" @change="addPhoto($event, i-1)" />
-              </label>
-            </div>
-          </div>
-          <p v-if="additionalPhotoCount > 0" class="text-xs text-orange-600 mt-2 font-medium">
-            추가 사진 {{ additionalPhotoCount }}장 = {{ additionalPhotoCount * 10 }}P 차감 예정
-          </p>
-        </div>
-
-        <!-- 주소 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">거래 장소</label>
-          <AddressInput v-model="form.addressObj" />
-        </div>
-
-        <!-- 외부 링크 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">외부 링크</label>
-          <input v-model="form.external_link" type="url" placeholder="https:// 외부 판매 링크"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
-        </div>
-
-        <!-- 찜 보증금 설정 -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <label class="block text-sm font-bold text-amber-800 mb-2">찜 보증금 / 유효시간 설정</label>
-          <p class="text-xs text-amber-600 mb-3">구매자가 물품을 찜할 때 보증금을 설정할 수 있습니다. 노쇼 방지 효과가 있습니다.</p>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-600 mb-1">보증금 (포인트)</label>
-              <input v-model="form.reservation_points" type="number" min="0" max="1000" step="10" placeholder="0"
-                class="w-full border border-amber-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white" />
-              <p class="text-[10px] text-gray-400 mt-1">0~1000P (0이면 보증금 없음)</p>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-600 mb-1">찜 유효시간</label>
-              <select v-model="form.reservation_hours"
-                class="w-full border border-amber-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
-                <option :value="6">6시간</option>
-                <option :value="12">12시간</option>
-                <option :value="24">24시간</option>
-                <option :value="48">48시간</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- 상세 설명 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">상세 설명</label>
-          <textarea v-model="form.description" rows="8" placeholder="물품 상태, 구매 시기, 하자 유무 등을 자세히 입력해주세요"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"></textarea>
-        </div>
-
-        <!-- 연락처 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">연락처 정보</label>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">전화번호</label>
-              <input v-model="form.contact_phone" type="tel" placeholder="000-000-0000"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">선호 연락 방법</label>
-              <select v-model="form.preferred_contact" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-                <option value="">선택</option>
-                <option value="전화">전화</option>
-                <option value="문자">문자</option>
-                <option value="쪽지">쪽지</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- 에러 -->
-        <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{{ error }}</div>
-
-        <!-- 버튼 -->
-        <div class="flex justify-end gap-3">
-          <button @click="$router.back()" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">취소</button>
-          <button @click="submit" :disabled="loading" class="w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
-            {{ loading ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '물품 수정' : '물품 등록') }}
-          </button>
+          <label class="flex items-center gap-2 cursor-pointer sm:pt-6">
+            <input v-model="form.price_negotiable" type="checkbox" class="rounded text-blue-600 w-4 h-4" />
+            <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">{{ locale === 'ko' ? '가격 협의 가능' : 'Negotiable' }}</span>
+          </label>
         </div>
       </div>
-    </div>
-  </div>
+
+      <!-- Category / Condition -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ locale === 'ko' ? '카테고리' : 'Category' }}</label>
+          <select v-model="form.category"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">{{ locale === 'ko' ? '선택' : 'Select' }}</option>
+            <option v-for="cat in ['전자제품','의류/잡화','가구/인테리어','식품','도서','유아동','기타']" :key="cat" :value="cat">{{ cat }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ locale === 'ko' ? '상품 상태' : 'Condition' }}</label>
+          <select v-model="form.condition"
+            class="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">{{ locale === 'ko' ? '선택' : 'Select' }}</option>
+            <option value="새것">{{ locale === 'ko' ? '새것' : 'New' }}</option>
+            <option value="거의 새것">{{ locale === 'ko' ? '거의 새것' : 'Like New' }}</option>
+            <option value="사용감 있음">{{ locale === 'ko' ? '사용감 있음' : 'Used - Good' }}</option>
+            <option value="많이 사용">{{ locale === 'ko' ? '많이 사용' : 'Used - Fair' }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div v-if="error" class="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">{{ error }}</div>
+    </template>
+  </WriteTemplate>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
-import AddressInput from '../../components/AddressInput.vue';
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useLangStore } from '../../stores/lang'
+import WriteTemplate from '../../components/templates/WriteTemplate.vue'
+import axios from 'axios'
 
-const route = useRoute();
-const router = useRouter();
-const loading = ref(false);
-const error = ref('');
-const isEdit = ref(false);
-const editId = ref(null);
+const route = useRoute()
+const router = useRouter()
+const langStore = useLangStore()
+const locale = computed(() => langStore.locale)
+
+const submitting = ref(false)
+const error = ref('')
+const isEdit = ref(false)
+const editId = ref(null)
 
 const form = ref({
-  title: '', category: '', condition: '', price: '', region: '',
-  description: '', price_negotiable: false, item_type: 'sell',
-  address: '', external_link: '', contact_phone: '', preferred_contact: '',
-  reservation_points: 0, reservation_hours: 24,
-  addressObj: { address1: '', address2: '', city: '', state: '', zip: '', full: '' }
-});
+  title: '',
+  content: '',
+  price: '',
+  price_negotiable: false,
+  category: '',
+  condition: '',
+})
 
-// Photos (6 slots: 1 free + 5 paid)
-const photos = reactive([]);
-const additionalPhotoCount = computed(() => {
-  return photos.filter((p, i) => p && i > 0).length;
-});
+async function onSubmit({ files }) {
+  if (!form.value.title?.trim()) { error.value = locale.value === 'ko' ? '제목을 입력하세요' : 'Enter title'; return }
+  if (form.value.price === '' && form.value.price !== 0) { error.value = locale.value === 'ko' ? '가격을 입력하세요' : 'Enter price'; return }
 
-function addPhoto(event, index) {
-  const file = event.target.files[0];
-  if (!file) return;
-  photos[index] = { file, preview: URL.createObjectURL(file) };
-}
-function removePhoto(index) {
-  if (photos[index]?.preview) URL.revokeObjectURL(photos[index].preview);
-  photos[index] = null;
-}
-
-async function submit() {
-  if (!form.value.title.trim()) { error.value = '제목을 입력하세요.'; return; }
-  if (!form.value.price && form.value.price !== 0) { error.value = '가격을 입력하세요.'; return; }
-  loading.value = true; error.value = '';
+  submitting.value = true
+  error.value = ''
   try {
-    const fd = new FormData();
-    form.value.address = form.value.addressObj.full || '';
-    Object.keys(form.value).forEach(key => {
-      if (key === 'addressObj') return;
-      const val = form.value[key];
-      if (val !== null && val !== '') {
-        fd.append(key, typeof val === 'boolean' ? (val ? '1' : '0') : val);
-      }
-    });
-    photos.forEach((photo) => {
-      if (photo?.file) fd.append('photos[]', photo.file);
-    });
+    const fd = new FormData()
+    fd.append('title', form.value.title)
+    fd.append('description', form.value.content || '')
+    fd.append('price', form.value.price || 0)
+    fd.append('price_negotiable', form.value.price_negotiable ? '1' : '0')
+    if (form.value.category) fd.append('category', form.value.category)
+    if (form.value.condition) fd.append('condition', form.value.condition)
+    if (form.value.address) fd.append('address', form.value.address)
+    if (files?.length) files.forEach(f => fd.append('photos[]', f))
 
-    let data;
     if (isEdit.value) {
-      fd.append('_method', 'PUT');
-      ({ data } = await axios.post(`/api/market/${editId.value}`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      }));
-      router.push(`/market/${editId.value}`);
+      fd.append('_method', 'PUT')
+      await axios.post(`/api/market/${editId.value}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      router.push(`/market/${editId.value}`)
     } else {
-      ({ data } = await axios.post('/api/market', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      }));
-      router.push(`/market/${data.item?.id || data.id}`);
+      const { data } = await axios.post('/api/market', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      router.push(`/market/${data.item?.id || data.id}`)
     }
-  } catch(e) {
-    error.value = e.response?.data?.message || '오류가 발생했습니다.';
-  } finally { loading.value = false; }
+  } catch (e) {
+    error.value = e.response?.data?.message || (locale.value === 'ko' ? '오류가 발생했습니다' : 'An error occurred')
+  } finally { submitting.value = false }
 }
 
 onMounted(async () => {
-  const id = route.query.edit;
+  const id = route.query.edit
   if (id) {
-    isEdit.value = true;
-    editId.value = id;
+    isEdit.value = true
+    editId.value = id
     try {
-      const { data } = await axios.get(`/api/market/${id}`);
-      form.value.title = data.title || '';
-      form.value.category = data.category || '';
-      form.value.condition = data.condition || '';
-      form.value.price = data.price ?? '';
-      form.value.region = data.region || '';
-      form.value.description = data.description || '';
-      form.value.price_negotiable = !!data.price_negotiable;
-      form.value.item_type = data.item_type || 'sell';
-      form.value.address = data.address || '';
-      form.value.external_link = data.external_link || '';
-      form.value.contact_phone = data.contact_phone || '';
-      form.value.preferred_contact = data.preferred_contact || '';
-      form.value.reservation_points = data.reservation_points ?? 0;
-      form.value.reservation_hours = data.reservation_hours ?? 24;
-    } catch (e) {
-      error.value = '기존 물품 정보를 불러올 수 없습니다.';
-    }
+      const { data } = await axios.get(`/api/market/${id}`)
+      form.value.title = data.title || ''
+      form.value.content = data.description || ''
+      form.value.price = data.price ?? ''
+      form.value.price_negotiable = !!data.price_negotiable
+      form.value.category = data.category || ''
+      form.value.condition = data.condition || ''
+    } catch { error.value = locale.value === 'ko' ? '기존 물품을 불러올 수 없습니다' : 'Could not load item' }
   }
-});
+})
 </script>

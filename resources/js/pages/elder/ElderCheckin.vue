@@ -3,7 +3,10 @@
     <!-- Header -->
     <div class="bg-white shadow-sm px-4 py-4">
       <router-link to="/elder" class="text-blue-500 text-lg font-medium flex items-center gap-1">
-        <span class="text-xl">&larr;</span> 돌아가기
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        {{ $t('common.back') }}
       </router-link>
     </div>
 
@@ -15,92 +18,48 @@
 
       <!-- Already checked in -->
       <div v-if="alreadyChecked" class="text-center mb-8">
-        <div class="text-7xl mb-4">&#x1F389;</div>
-        <p class="text-2xl font-bold text-green-600 mb-2">오늘 체크인 완료!</p>
-        <p class="text-lg text-gray-500">{{ formatTime(lastCheckinAt) }}에 체크인했어요</p>
+        <div class="text-7xl mb-4">🎉</div>
+        <p class="text-2xl font-bold text-green-600 mb-2">{{ $t('elder.checkin_complete') }}</p>
+        <p class="text-lg text-gray-500">{{ lastCheckinTime }} {{ $t('elder.checked_at') }}</p>
         <div v-if="streakDays > 1" class="mt-4 bg-orange-50 rounded-2xl px-6 py-3 inline-block">
-          <span class="text-xl font-bold text-orange-600">연속 {{ streakDays }}일 체크인 중!</span>
-        </div>
-        <div class="mt-4 bg-blue-50 rounded-2xl px-6 py-3 inline-block">
-          <span class="text-lg text-blue-600">포인트 5점이 적립되었어요</span>
+          <span class="text-xl font-bold text-orange-600">{{ $t('elder.streak') }} {{ streakDays }}{{ $t('elder.days') }}!</span>
         </div>
       </div>
 
-      <!-- Checkin success animation -->
+      <!-- Just checked in success -->
       <div v-else-if="justCheckedIn" class="text-center mb-8">
-        <div class="text-7xl mb-4 animate-bounce">&#x1F389;</div>
-        <p class="text-2xl font-bold text-green-600 mb-2">체크인 완료!</p>
-        <p class="text-lg text-gray-500">포인트 5점이 적립되었어요</p>
-        <div v-if="streakDays > 1" class="mt-4 bg-orange-50 rounded-2xl px-6 py-3 inline-block">
-          <span class="text-xl font-bold text-orange-600">연속 {{ streakDays }}일 체크인 중!</span>
-        </div>
+        <div class="text-7xl mb-4 animate-bounce">✅</div>
+        <p class="text-2xl font-bold text-green-600 mb-2">{{ $t('elder.checkin_success') }}</p>
+        <p class="text-lg text-gray-500">+5P {{ $t('elder.points_earned') }}</p>
       </div>
 
-      <!-- Checkin button -->
-      <div v-else class="text-center">
-        <button
-          @click="doCheckin"
-          :disabled="checkinLoading"
-          class="w-72 h-24 bg-green-500 hover:bg-green-600 disabled:bg-green-300 active:scale-95 text-white font-bold text-2xl rounded-2xl shadow-lg transition transform"
-        >
-          {{ checkinLoading ? '처리 중...' : '괜찮아요!' }}
+      <!-- Checkin Button -->
+      <div v-else class="text-center w-full">
+        <button @click="doCheckin" :disabled="checking"
+          class="w-48 h-48 mx-auto rounded-full bg-green-500 hover:bg-green-600 active:scale-95 text-white flex flex-col items-center justify-center shadow-2xl transition-all disabled:opacity-50">
+          <span class="text-5xl mb-2">👋</span>
+          <span class="text-2xl font-black">{{ checking ? $t('common.processing') : $t('elder.checkin') }}</span>
         </button>
-        <p class="mt-4 text-lg text-gray-400">버튼을 누르면 보호자에게 알림이 갑니다</p>
+        <p class="text-lg text-gray-400 mt-6">{{ $t('elder.tap_to_checkin') }}</p>
       </div>
-    </div>
 
-    <!-- 7-Day Calendar View -->
-    <div class="max-w-lg mx-auto w-full px-6 pb-6">
-      <div class="bg-white rounded-2xl shadow-md p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-gray-800">최근 7일 기록</h2>
-          <span v-if="streakDays > 0" class="text-orange-500 font-bold text-lg">
-            연속 {{ streakDays }}일
-          </span>
-        </div>
-
-        <!-- 7-Day Mini Calendar -->
-        <div class="grid grid-cols-7 gap-2 text-center mb-4">
-          <div
-            v-for="day in calendarWeek"
-            :key="day.date"
-            class="flex flex-col items-center"
-          >
-            <span class="text-base text-gray-400 mb-1">{{ day.dayLabel }}</span>
-            <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
-              :class="{
-                'bg-green-100 text-green-700': day.checked,
-                'bg-red-100 text-red-600': !day.checked && !day.isFuture && !day.isToday,
-                'bg-blue-100 text-blue-600 ring-2 ring-blue-400': day.isToday && !day.checked,
-                'bg-green-500 text-white ring-2 ring-green-400': day.isToday && day.checked,
-                'bg-gray-50 text-gray-300': day.isFuture,
-              }"
-            >
-              {{ day.dayNum }}
-            </div>
-            <span class="text-sm mt-1">
-              <template v-if="day.checked">&#x2705;</template>
-              <template v-else-if="day.isFuture">&#x2B1C;</template>
-              <template v-else-if="day.isToday">&#x2753;</template>
-              <template v-else>&#x274C;</template>
-            </span>
+      <!-- Calendar View -->
+      <div class="w-full mt-8 bg-white rounded-2xl shadow-md p-5">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 text-center">{{ $t('elder.checkin_history') }}</h2>
+        <div class="grid grid-cols-7 gap-1 text-center">
+          <div v-for="day in ['일','월','화','수','목','금','토']" :key="day" class="text-xs font-bold text-gray-400 py-1">{{ day }}</div>
+          <div v-for="(day, idx) in calendarDays" :key="idx"
+            class="aspect-square flex items-center justify-center rounded-lg text-sm font-medium"
+            :class="dayClass(day)">
+            {{ day?.date || '' }}
           </div>
         </div>
+      </div>
 
-        <!-- Detail List -->
-        <div class="space-y-2">
-          <div
-            v-for="day in recentDays"
-            :key="day.date"
-            class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3"
-          >
-            <span class="text-lg text-gray-700">{{ day.label }}</span>
-            <span v-if="day.checked" class="text-green-600 font-bold text-lg">{{ day.time }}</span>
-            <span v-else-if="day.isFuture" class="text-gray-300 text-lg">예정</span>
-            <span v-else class="text-red-500 font-bold text-lg">미응답</span>
-          </div>
-        </div>
+      <!-- Streak Display -->
+      <div v-if="streakDays > 0" class="w-full mt-4 bg-orange-50 rounded-2xl p-5 text-center">
+        <p class="text-3xl font-black text-orange-600">🔥 {{ streakDays }}</p>
+        <p class="text-lg text-orange-700 mt-1">{{ $t('elder.consecutive_days') }}</p>
       </div>
     </div>
   </div>
@@ -108,164 +67,86 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../../stores/auth'
+import { useLangStore } from '../../stores/lang'
 import axios from 'axios'
 
-const token = localStorage.getItem('sk_token')
-const headers = { Authorization: `Bearer ${token}` }
+const auth = useAuthStore()
+const { $t } = useLangStore()
 
 const alreadyChecked = ref(false)
 const justCheckedIn = ref(false)
-const checkinLoading = ref(false)
-const lastCheckinAt = ref(null)
+const checking = ref(false)
 const streakDays = ref(0)
-const checkinHistory = ref([])
-const loading = ref(true)
+const lastCheckinTime = ref('')
+const checkinDates = ref([])
+
+const todayDate = computed(() =>
+  new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
+)
 
 const greetingEmoji = computed(() => {
   const h = new Date().getHours()
-  if (h < 12) return '&#x1F44B;'
-  if (h < 18) return '&#x2600;&#xFE0F;'
-  return '&#x1F319;'
+  if (h < 12) return '🌅'
+  if (h < 18) return '☀️'
+  return '🌙'
 })
 
 const greetingText = computed(() => {
   const h = new Date().getHours()
-  if (h < 12) return '좋은 아침이에요!'
-  if (h < 18) return '좋은 오후에요!'
-  return '좋은 저녁이에요!'
+  const name = auth.user?.name || $t('elder.member')
+  if (h < 12) return `${$t('elder.good_morning')}, ${name}${$t('elder.greeting_suffix')}`
+  if (h < 18) return `${$t('elder.good_afternoon')}, ${name}${$t('elder.greeting_suffix')}`
+  return `${$t('elder.good_evening')}, ${name}${$t('elder.greeting_suffix')}`
 })
 
-const todayDate = computed(() => {
-  const d = new Date()
-  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
-})
-
-// 7-day mini calendar
-const calendarWeek = computed(() => {
+const calendarDays = computed(() => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const dayLabels = ['일','월','화','수','목','금','토']
-  const checkedMap = {}
-  checkinHistory.value.forEach(h => {
-    const dateStr = new Date(h.checked_at || h.created_at).toISOString().slice(0, 10)
-    checkedMap[dateStr] = true
-  })
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().slice(0, 10)
-    const isToday = i === 0
-    days.push({
-      date: dateStr,
-      dayNum: d.getDate(),
-      dayLabel: dayLabels[d.getDay()],
-      checked: !!checkedMap[dateStr],
-      isToday,
-      isFuture: false,
-    })
+  for (let i = 0; i < firstDay; i++) days.push(null)
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    days.push({ date: d, checked: checkinDates.value.includes(dateStr), isToday: d === now.getDate() })
   }
   return days
 })
 
-const recentDays = computed(() => {
-  const days = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const checkedMap = {}
-  checkinHistory.value.forEach(h => {
-    const dateStr = new Date(h.checked_at || h.created_at).toISOString().slice(0, 10)
-    const timeStr = new Date(h.checked_at || h.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-    checkedMap[dateStr] = timeStr
-  })
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().slice(0, 10)
-    const label = i === 0 ? '오늘' : i === 1 ? '어제' : d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })
-    days.push({
-      date: dateStr,
-      label,
-      checked: !!checkedMap[dateStr],
-      time: checkedMap[dateStr] || '',
-      isFuture: false,
-    })
-  }
-  return days
-})
-
-function formatTime(dt) {
-  if (!dt) return ''
-  return new Date(dt).toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+function dayClass(day) {
+  if (!day) return ''
+  if (day.checked) return 'bg-green-500 text-white'
+  if (day.isToday) return 'bg-blue-100 text-blue-600 font-bold'
+  return 'text-gray-600'
 }
 
-async function loadData() {
+async function loadStatus() {
   try {
-    const [settingsRes, historyRes] = await Promise.all([
-      axios.get('/api/elder/settings', { headers }),
-      axios.get('/api/elder/checkin-history', { headers }),
-    ])
-
-    const s = settingsRes.data.settings || settingsRes.data
-    lastCheckinAt.value = s.last_checkin_at
-    if (s.last_checkin_at) {
-      const today = new Date().toISOString().slice(0, 10)
-      const last = new Date(s.last_checkin_at).toISOString().slice(0, 10)
-      if (today === last) alreadyChecked.value = true
-    }
-
-    checkinHistory.value = historyRes.data.data || historyRes.data.logs || historyRes.data || []
-    calculateStreak()
-  } catch (e) {
-    console.error('Failed to load data', e)
-  } finally {
-    loading.value = false
-  }
-}
-
-function calculateStreak() {
-  const checkedDates = new Set(
-    checkinHistory.value.map(h => new Date(h.checked_at || h.created_at).toISOString().slice(0, 10))
-  )
-  let streak = 0
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().slice(0, 10)
-    if (checkedDates.has(dateStr)) {
-      streak++
-    } else if (i > 0) {
-      break
-    }
-  }
-  streakDays.value = streak
+    const { data } = await axios.get('/api/elder/checkin/status')
+    alreadyChecked.value = data.checked_in_today || false
+    streakDays.value = data.streak || 0
+    lastCheckinTime.value = data.last_checkin ? new Date(data.last_checkin).toLocaleTimeString('ko-KR') : ''
+    checkinDates.value = data.dates || []
+  } catch { /* ignore */ }
 }
 
 async function doCheckin() {
-  checkinLoading.value = true
+  checking.value = true
   try {
-    await axios.post('/api/elder/checkin', {}, { headers })
+    const { data } = await axios.post('/api/elder/checkin')
     justCheckedIn.value = true
-    lastCheckinAt.value = new Date().toISOString()
-
-    // Reload history for streak
-    try {
-      const { data } = await axios.get('/api/elder/checkin-history', { headers })
-      checkinHistory.value = data.data || data.logs || data || []
-    } catch (_) {}
-    calculateStreak()
+    streakDays.value = data.streak || streakDays.value + 1
+    auth.refreshPoints()
+    setTimeout(() => { alreadyChecked.value = true }, 2000)
   } catch (e) {
-    if (e.response?.status === 409 || e.response?.data?.message?.includes('already')) {
-      alreadyChecked.value = true
-    } else {
-      alert('체크인에 실패했습니다. 다시 시도해주세요.')
-    }
+    if (e.response?.status === 409) alreadyChecked.value = true
+    else alert(e.response?.data?.message || $t('elder.checkin_failed'))
   } finally {
-    checkinLoading.value = false
+    checking.value = false
   }
 }
 
-onMounted(loadData)
+onMounted(loadStatus)
 </script>

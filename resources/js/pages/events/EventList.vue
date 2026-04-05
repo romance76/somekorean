@@ -1,159 +1,127 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-16">
-    <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl">
-        <div class="flex items-center justify-between px-6 py-5 gap-3">
-          <div>
-            <h1 class="text-xl font-black">🎉 이벤트 & 모임</h1>
-            <p class="text-blue-100 text-sm mt-0.5">한인 커뮤니티 행사와 모임</p>
-          </div>
-          <button @click="$router.push('/events/create')" v-if="auth.isLoggedIn"
-            class="sm:self-auto bg-white text-blue-600 text-sm px-4 py-2 rounded-lg font-bold hover:bg-blue-50">+ 등록</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Category tabs -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-3">
-      <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width:none">
-        <button v-for="cat in categories" :key="cat.value"
-          @click="selectedCat = cat.value; load()"
-          class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition"
-          :class="selectedCat === cat.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'">
-          {{ cat.label }}
-        </button>
-      </div>
-    </div>
-    <!-- LocationBar -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-2">
-      <LocationBar placeholder="이벤트 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
-    </div>
-    <!-- Content area -->
-    <div class="max-w-[1200px] mx-auto px-4 py-4 space-y-3">
-      <div v-if="loading" class="text-center py-8 text-gray-400">불러오는 중...</div>
-      <div
-        v-for="event in events"
-        :key="event.id"
-        class="bg-white rounded-xl shadow p-4 cursor-pointer hover:shadow-md transition"
-        @click="$router.push(`/events/${event.id}`)"
-      >
+  <ListTemplate
+    title="이벤트 & 모임"
+    emoji="🎉"
+    subtitle="한인 커뮤니티 행사와 모임"
+    :loading="loading"
+    :items="events"
+    :categories="categoryTabs"
+    :activeCategory="selectedCat"
+    :hasSearch="true"
+    :searchQuery="search"
+    searchPlaceholder="이벤트 검색..."
+    :sortOptions="dateFilters"
+    :activeSort="dateFilter"
+    :hasWrite="true"
+    writeTo="/events/create"
+    :pagination="pagination"
+    :totalCount="pagination?.total || null"
+    @category-change="onCategoryChange"
+    @search="onSearch"
+    @sort-change="onDateFilterChange"
+    @page-change="load"
+  >
+    <template #item-card="{ item }">
+      <div @click="$router.push(`/events/${item.id}`)"
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 cursor-pointer hover:shadow-md transition">
         <div class="flex items-start gap-3">
-          <div class="bg-blue-100 rounded-xl p-3 text-center min-w-12">
-            <p class="text-xs text-blue-600 font-bold">{{ formatMonth(event.event_date) }}</p>
-            <p class="text-xl font-black text-blue-700">{{ formatDay(event.event_date) }}</p>
+          <!-- Date badge -->
+          <div class="bg-blue-100 dark:bg-blue-900/40 rounded-xl p-3 text-center min-w-[3rem] flex-shrink-0">
+            <p class="text-xs text-blue-600 dark:text-blue-400 font-bold">{{ formatMonth(item.event_date) }}</p>
+            <p class="text-xl font-black text-blue-700 dark:text-blue-300">{{ formatDay(item.event_date) }}</p>
           </div>
+          <!-- Info -->
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">{{ categoryLabel(event.category) }}</span>
-              <span v-if="event.is_online" class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">온라인</span>
-              <span v-if="event.price == 0" class="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded-full">무료</span>
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">
+                {{ categoryLabel(item.category) }}
+              </span>
+              <span v-if="item.is_online" class="text-xs bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full">온라인</span>
+              <span v-if="!item.price || item.price == 0" class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full">무료</span>
             </div>
-            <h3 class="font-bold text-gray-800 truncate">{{ event.title }}</h3>
-            <p class="text-gray-500 text-sm truncate mt-0.5">📍 {{ event.location || event.region }}</p>
-            <p class="text-gray-400 text-xs mt-1">주최: {{ event.user?.name || event.organizer_name || '커뮤니티' }}</p>
+            <h3 class="font-bold text-gray-800 dark:text-white truncate">{{ item.title }}</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-sm truncate mt-0.5">📍 {{ item.location || item.region || '온라인' }}</p>
+            <p class="text-gray-400 text-xs mt-1">주최: {{ item.user?.name || item.organizer_name || '커뮤니티' }}</p>
           </div>
-          <div class="text-right">
-            <p v-if="event.price > 0" class="font-bold text-blue-600 text-sm">${{ event.price }}</p>
+          <!-- Price + Attendees -->
+          <div class="text-right flex-shrink-0">
+            <p v-if="item.price > 0" class="font-bold text-blue-600 dark:text-blue-400 text-sm">${{ item.price }}</p>
             <p v-else class="font-bold text-green-500 text-sm">무료</p>
-            <p class="text-xs text-gray-400 mt-1">{{ event.attendee_count }}명 참가</p>
+            <p class="text-xs text-gray-400 mt-1">{{ item.attendee_count || 0 }}명 참가</p>
           </div>
         </div>
       </div>
-      <div v-if="!loading && events.length === 0" class="text-center py-12">
+    </template>
+
+    <template #empty>
+      <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl">
         <p class="text-4xl mb-3">📅</p>
-        <p class="text-gray-400">이벤트가 없습니다</p>
+        <p class="text-gray-400 text-sm">이벤트가 없습니다</p>
       </div>
-    </div><!-- /max-w-[1200px] -->
-  </div>
+    </template>
+  </ListTemplate>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '../../stores/auth'
+import { useAuthStore } from '@/stores/auth'
+import ListTemplate from '@/components/templates/ListTemplate.vue'
 import axios from 'axios'
-import LocationBar from '../../components/location/LocationBar.vue'
 
 const auth = useAuthStore()
-const events      = ref([])
-const loading     = ref(true)
+const events = ref([])
+const loading = ref(true)
 const selectedCat = ref('')
-const radius      = ref(30)
-const search      = ref('')
+const search = ref('')
+const dateFilter = ref('')
+const pagination = ref(null)
 
-const categories = [
-  { value:'', label:'전체' },
-  { value:'meetup', label:'모임' },
-  { value:'food', label:'음식' },
-  { value:'culture', label:'문화' },
-  { value:'sports', label:'스포츠' },
-  { value:'education', label:'교육' },
-  { value:'business', label:'비즈니스' },
+const categoryTabs = [
+  { value: '', label: '전체' },
+  { value: 'culture', label: '문화' },
+  { value: 'education', label: '교육' },
+  { value: 'meetup', label: '네트워킹' },
+  { value: 'religion', label: '종교' },
+  { value: 'sports', label: '스포츠' },
+  { value: 'food', label: '음식' },
+  { value: 'business', label: '비즈니스' },
 ]
 
-const catLabels = { general:'일반', meetup:'모임', food:'음식', culture:'문화', sports:'스포츠', education:'교육', business:'비즈니스' }
-const categoryLabel = (c) => catLabels[c] || c
-const formatMonth   = (d) => d ? new Date(d).toLocaleDateString('en-US', { month:'short' }) : ''
-const formatDay     = (d) => d ? new Date(d).getDate() : ''
+const dateFilters = [
+  { value: '', label: '전체' },
+  { value: 'upcoming', label: '다가오는' },
+  { value: 'this_week', label: '이번주' },
+  { value: 'this_month', label: '이번달' },
+]
 
-async function load() {
+const catLabels = { general: '일반', meetup: '모임', food: '음식', culture: '문화', sports: '스포츠', education: '교육', business: '비즈니스', religion: '종교' }
+function categoryLabel(c) { return catLabels[c] || c || '일반' }
+function formatMonth(d) { return d ? new Date(d).toLocaleDateString('en-US', { month: 'short' }) : '' }
+function formatDay(d) { return d ? new Date(d).getDate() : '' }
+
+function onCategoryChange(val) { selectedCat.value = val; load(1) }
+function onSearch(val) { search.value = val; load(1) }
+function onDateFilterChange(val) { dateFilter.value = val; load(1) }
+
+async function load(page = 1) {
   loading.value = true
   try {
-    const params = {}
+    const params = { page }
     if (selectedCat.value) params.category = selectedCat.value
     if (search.value) params.search = search.value
-    if (userLat.value) params.lat = userLat.value
-    if (userLng.value) params.lng = userLng.value
-    if (userRadius.value) params.radius = userRadius.value
+    if (dateFilter.value) params.date_filter = dateFilter.value
     const { data } = await axios.get('/api/events', { params })
     events.value = data.data || data || []
-  } catch (e) {
-    console.error('이벤트 로드 실패:', e.response?.status, e.message)
+    pagination.value = data.data ? {
+      current_page: data.current_page,
+      last_page: data.last_page,
+      total: data.total,
+    } : null
+  } catch {
     events.value = []
   }
-  finally { loading.value = false }
+  loading.value = false
 }
 
-
-const userLat = ref(null);
-const userLng = ref(null);
-const userRadius = ref(30);
-
-function getUserLocation() {
-  const saved = localStorage.getItem('sk_user_location');
-  if (saved) {
-    const loc = JSON.parse(saved);
-    userLat.value = loc.lat;
-    userLng.value = loc.lng;
-    return;
-  }
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLat.value = pos.coords.latitude;
-        userLng.value = pos.coords.longitude;
-        localStorage.setItem('sk_user_location', JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude}));
-      },
-      () => {},
-      { timeout: 5000 }
-    );
-  }
-}
-
-
-function onLocationSearch({ keyword, city, radius }) {
-  search.value = keyword
-  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
-  if (radius !== '전국') userRadius.value = parseInt(radius)
-  load()
-}
-function onLocationChange({ city, radius }) {
-  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
-  userRadius.value = radius === '전국' ? 0 : parseInt(radius)
-  load()
-}
-
-onMounted(() => {
-  getUserLocation()
-  load()
-})
+onMounted(() => load())
 </script>

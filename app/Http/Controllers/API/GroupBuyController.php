@@ -11,25 +11,56 @@ use Illuminate\Support\Facades\Storage;
 
 class GroupBuyController extends Controller
 {
+    /**
+     * GET /api/groupbuy
+     * List with status filter, distance, pagination
+     */
     public function index(Request $request)
     {
-        $q = GroupBuy::with('user:id,name,username,avatar')
+        $query = GroupBuy::with('user:id,name,username,avatar')
             ->withCount('participants')
             ->where('status', '!=', 'cancelled');
 
-        if ($request->category && $request->category !== 'all') {
-            $q->where('category', $request->category);
-        }
-        if ($request->status) {
-            $q->where('status', $request->status);
-        }
-        if ($request->search) {
-            $q->where('title', 'like', "%{$request->search}%");
+        // Category filter
+        if ($request->filled('category') && $request->category !== 'all') {
+            $query->where('category', $request->category);
         }
 
-        return response()->json($q->latest()->paginate(20));
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Search
+        if ($request->filled('search')) {
+            $query->where('title', 'like', "%{$request->search}%");
+        }
+
+        // Distance filter (Haversine)
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+        $radius = $request->input('radius');
+
+        if ($lat && $lng && $radius && (float) $radius > 0) {
+            $query->selectRaw(
+                "*, (3959 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance",
+                [(float) $lat, (float) $lng, (float) $lat]
+            )->having('distance', '<', (float) $radius)
+              ->orderBy('distance');
+        } else {
+            $query->latest();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $query->paginate(20),
+        ]);
     }
 
+    /**
+     * GET /api/groupbuy/{id}
+     * Single group buy with participants
+     */
     public function show($id)
     {
         $gb = GroupBuy::with([
@@ -37,9 +68,16 @@ class GroupBuyController extends Controller
             'participants.user:id,name,username,avatar',
         ])->withCount('participants')->findOrFail($id);
 
-        return response()->json($gb);
+        return response()->json([
+            'success' => true,
+            'data'    => $gb,
+        ]);
     }
 
+    /**
+     * POST /api/groupbuy
+     * Create group buy
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -51,6 +89,8 @@ class GroupBuyController extends Controller
             'category'         => 'required|string',
             'deadline'         => 'required|date|after:now',
             'product_url'      => 'nullable|url',
+            'images'           => 'nullable|array|max:5',
+            'images.*'         => 'image|max:5120',
         ]);
 
         $images = [];
@@ -75,60 +115,94 @@ class GroupBuyController extends Controller
             'status'           => 'open',
         ]);
 
-        // 작성자 자동 참여
-        GroupBuyParticipant::create(['group_buy_id' => $gb->id, 'user_id' => Auth::id(), 'quantity' => 1]);
+        // Creator auto-joins
+        GroupBuyParticipant::create([
+            'group_buy_id' => $gb->id,
+            'user_id'      => Auth::id(),
+            'quantity'     => 1,
+        ]);
 
-        return response()->json($gb->load('user:id,name,username,avatar'), 201);
+        return response()->json([
+            'success' => true,
+            'message' => '공동구매가 등록되었습니다.',
+            'data'    => $gb->load('user:id,name,username,avatar'),
+        ], 201);
     }
 
+    /**
+     * POST /api/groupbuy/{id}/join
+     * Join group buy, increment current_participants (check max)
+     */
     public function join(Request $request, $id)
     {
         $gb = GroupBuy::findOrFail($id);
 
         if ($gb->status !== 'open') {
-            return response()->json(['message' => '모집이 종료된 공동구매입니다.'], 422);
-        }
-        if ($gb->max_participants && $gb->participants()->count() >= $gb->max_participants) {
-            return response()->json(['message' => '최대 인원이 초과되었습니다.'], 422);
+            return response()->json(['success' => false, 'message' => '모집이 종료된 공동구매입니다.'], 422);
         }
 
-        [$participant, $created] = [
-            GroupBuyParticipant::firstOrCreate(
-                ['group_buy_id' => $gb->id, 'user_id' => Auth::id()],
-                ['quantity' => $request->quantity ?? 1]
-            ),
-            !GroupBuyParticipant::where(['group_buy_id' => $gb->id, 'user_id' => Auth::id()])->whereNull('created_at')->exists()
-        ];
+        $currentCount = $gb->participants()->count();
 
-        // 포인트 적립: 신규 참여시만
+        if ($gb->max_participants && $currentCount >= $gb->max_participants) {
+            return response()->json(['success' => false, 'message' => '최대 인원이 초과되었습니다.'], 422);
+        }
+
+        $participant = GroupBuyParticipant::firstOrCreate(
+            ['group_buy_id' => $gb->id, 'user_id' => Auth::id()],
+            ['quantity' => $request->input('quantity', 1)]
+        );
+
+        // Points for new participants only
         if ($participant->wasRecentlyCreated) {
             Auth::user()->addPoints(2, 'groupbuy_join', 'earn', $gb->id, '공동구매 참여');
         }
 
-        // 최소 인원 달성 시 상태 변경
+        // Auto-complete if minimum reached
         $count = $gb->participants()->count();
         if ($count >= $gb->min_participants && $gb->status === 'open') {
             $gb->update(['status' => 'completed']);
         }
 
-        return response()->json(['joined' => true, 'participants_count' => $count]);
+        return response()->json([
+            'success' => true,
+            'data'    => ['joined' => true, 'participants_count' => $count],
+        ]);
     }
 
+    /**
+     * POST /api/groupbuy/{id}/leave
+     */
     public function leave($id)
     {
         $gb = GroupBuy::findOrFail($id);
-        if ($gb->user_id === Auth::id()) {
-            return response()->json(['message' => '작성자는 나갈 수 없습니다.'], 422);
-        }
-        GroupBuyParticipant::where('group_buy_id', $id)->where('user_id', Auth::id())->delete();
 
-        return response()->json(['joined' => false]);
+        if ($gb->user_id === Auth::id()) {
+            return response()->json(['success' => false, 'message' => '작성자는 나갈 수 없습니다.'], 422);
+        }
+
+        GroupBuyParticipant::where('group_buy_id', $id)
+            ->where('user_id', Auth::id())
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'data'    => ['joined' => false],
+        ]);
     }
 
+    /**
+     * DELETE /api/groupbuy/{id}
+     */
     public function destroy($id)
     {
-        $gb = GroupBuy::where('user_id', Auth::id())->findOrFail($id);
+        $gb = GroupBuy::findOrFail($id);
+
+        if ($gb->user_id !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['success' => false, 'message' => '삭제 권한이 없습니다.'], 403);
+        }
+
         $gb->update(['status' => 'cancelled']);
-        return response()->json(['cancelled' => true]);
+
+        return response()->json(['success' => true, 'message' => '공동구매가 취소되었습니다.']);
     }
 }

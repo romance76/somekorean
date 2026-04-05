@@ -1,12 +1,18 @@
 <?php
+
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-class BusinessClaim extends Model {
+
+class BusinessClaim extends Model
+{
+    use HasFactory;
+
     protected $fillable = [
-        'business_id','user_id','status','email_token','email_verified_at',
-        'document_urls','admin_note','reviewed_by','reviewed_at'
+        'business_id', 'user_id', 'document_url', 'status', 'notes',
     ];
-    protected $casts = ['document_urls'=>'array','email_verified_at'=>'datetime','reviewed_at'=>'datetime'];
+
     public function business() { return $this->belongsTo(Business::class); }
-    public function user() { return $this->belongsTo(User::class); }
+    public function user()     { return $this->belongsTo(User::class); }
 }

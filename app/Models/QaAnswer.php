@@ -1,34 +1,26 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QaAnswer extends Model
 {
-    use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
-        'question_id', 'user_id', 'content',
-        'is_accepted', 'like_count',
+        'qa_post_id', 'user_id', 'content', 'like_count', 'is_best',
     ];
 
-    protected $casts = [
-        'is_accepted' => 'boolean',
-    ];
-
-    public function question()
+    protected function casts(): array
     {
-        return $this->belongsTo(QaQuestion::class, 'question_id');
+        return [
+            'like_count' => 'integer',
+            'is_best' => 'boolean',
+        ];
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function likes()
-    {
-        return $this->hasMany(QaAnswerLike::class, 'answer_id');
-    }
+    public function qaPost() { return $this->belongsTo(QaPost::class); }
+    public function user()   { return $this->belongsTo(User::class); }
 }

@@ -1,210 +1,232 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-16">
-    <!-- Header -->
-    <div class="max-w-[1200px] mx-auto px-4 pt-4">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl">
-        <div class="flex items-center justify-between gap-2">
-          <div>
-            <h1 class="text-xl font-black">🏠 부동산</h1>
-            <p class="text-blue-100 text-sm mt-0.5 opacity-80">한인 부동산 매물 정보</p>
+  <ListTemplate
+    title="부동산"
+    emoji="🏠"
+    subtitle="한인 부동산 매물 정보"
+    :loading="loading"
+    :items="items"
+    :categories="typeTabs"
+    :activeCategory="filters.type"
+    :hasSearch="true"
+    :searchQuery="filters.search"
+    searchPlaceholder="매물 검색..."
+    :sortOptions="sortOptions"
+    :activeSort="filters.sort"
+    :hasViewToggle="true"
+    :viewMode="viewMode"
+    :hasWrite="true"
+    writeTo="/realestate/write"
+    :pagination="pagination"
+    :totalCount="pagination?.total || null"
+    @category-change="onTypeChange"
+    @search="onSearch"
+    @sort-change="onSortChange"
+    @view-change="v => viewMode = v"
+    @page-change="load"
+  >
+    <!-- Extra filters -->
+    <template #header-right>
+      <div class="flex items-center gap-2">
+        <!-- Property type filter -->
+        <select v-model="filters.property_type" @change="load(1)"
+          class="text-xs border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">건물유형</option>
+          <option v-for="pt in propertyTypes" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
+        </select>
+        <!-- Bedrooms filter -->
+        <select v-model="filters.bedrooms" @change="load(1)"
+          class="text-xs border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">방 수</option>
+          <option value="0">스튜디오</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4+</option>
+        </select>
+      </div>
+    </template>
+
+    <!-- Card -->
+    <template #item-card="{ item }">
+      <RouterLink :to="`/realestate/${item.id}`"
+        class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition group">
+        <div class="flex" :class="viewMode === 'grid' ? 'flex-col' : 'flex-row'">
+          <!-- Image -->
+          <div :class="viewMode === 'grid' ? 'h-48 w-full' : 'w-32 sm:w-44 flex-shrink-0'"
+            class="bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+            <img v-if="getPhoto(item)" :src="getPhoto(item)"
+              class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+              @error="onImgError($event, '🏠')" />
+            <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-50 dark:from-blue-900 dark:to-sky-900">
+              <span class="text-4xl">🏠</span>
+            </div>
+            <!-- Type badge -->
+            <span class="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full"
+              :class="typeBadgeClass(item.type)">
+              {{ item.type }}
+            </span>
           </div>
-          <router-link v-if="authStore.isLoggedIn" to="/realestate/write"
-            class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50">+ 매물 등록</router-link>
+
+          <!-- Info -->
+          <div class="p-4 flex-1 min-w-0">
+            <h3 class="font-bold text-gray-800 dark:text-white text-sm mb-1 truncate">{{ item.title }}</h3>
+            <p class="text-blue-600 dark:text-blue-400 font-black text-lg">
+              {{ formatPrice(item.price) }}
+              <span v-if="(item.type === '렌트' || item.type === '룸메이트') && item.price" class="text-sm font-medium text-gray-400">/월</span>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              {{ item.address || item.region || '주소 미입력' }}
+            </p>
+            <div class="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
+              <span v-if="item.bedrooms != null">🛏️ {{ item.bedrooms }}방</span>
+              <span v-if="item.bathrooms != null">🚿 {{ item.bathrooms }}욕실</span>
+              <span v-if="item.sqft">📐 {{ Number(item.sqft).toLocaleString() }}sqft</span>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ formatDate(item.created_at) }}</p>
+          </div>
         </div>
-      </div>
-    </div>
+      </RouterLink>
+    </template>
 
-    <!-- Category tabs -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-3">
-      <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width:none">
-        <button v-for="cat in categories" :key="cat.value"
-          @click="category = cat.value; load(1)"
-          class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition"
-          :class="category === cat.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'">
-          {{ cat.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- LocationBar -->
-    <div class="max-w-[1200px] mx-auto px-4 mt-2">
-      <LocationBar placeholder="부동산 검색..." @search="onLocationSearch" @location-change="onLocationChange" />
-    </div>
-
-    <!-- Content -->
-    <div class="max-w-[1200px] mx-auto px-4 py-4">
-      <div v-if="loading" class="text-center py-16 text-gray-400">불러오는 중...</div>
-      <div v-else-if="items.length === 0" class="text-center py-16 text-gray-400">등록된 매물이 없습니다.</div>
-      <template v-else>
-        <!-- Grid View -->
-        <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <router-link v-for="item in items" :key="item.id" :to="`/realestate/${item.id}`"
-            class="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition group">
-            <div class="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-              <img v-if="item.photos?.[0]" :src="item.photos[0]" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-              <span v-else class="text-5xl text-gray-300">🏠</span>
-              <span class="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full"
-                :class="item.type === '매매' ? 'bg-red-500 text-white' : item.type === '렌트' ? 'bg-blue-500 text-white' : item.type === '룸메이트' ? 'bg-green-500 text-white' : 'bg-orange-500 text-white'">
-                {{ item.type }}
-              </span>
-            </div>
-            <div class="p-4">
-              <h3 class="font-bold text-gray-800 mb-1 truncate">{{ item.title }}</h3>
-              <p class="text-blue-600 font-black text-lg">{{ item.price ? '$' + Number(item.price).toLocaleString() : '가격문의' }}
-                <span v-if="item.type === '렌트' && item.price" class="text-sm font-medium text-gray-400">/월</span>
-              </p>
-              <p class="text-xs text-gray-500 mt-1 truncate">📍 {{ item.address }}</p>
-              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                <span v-if="item.bedrooms">🛏️ {{ item.bedrooms }}방</span>
-                <span v-if="item.bathrooms">🚿 {{ item.bathrooms }}욕실</span>
-                <span v-if="item.sqft">📐 {{ Number(item.sqft).toLocaleString() }}sqft</span>
-              </div>
-              <div class="flex items-center justify-between mt-2 text-xs text-gray-400">
-                <span>{{ item.region }}</span>
-                <span>{{ formatDate(item.created_at) }}</span>
-              </div>
-            </div>
-          </router-link>
+    <!-- Grid card override -->
+    <template #grid-card="{ item }">
+      <RouterLink :to="`/realestate/${item.id}`"
+        class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition group">
+        <div class="h-48 bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+          <img v-if="getPhoto(item)" :src="getPhoto(item)"
+            class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+            @error="onImgError($event, '🏠')" />
+          <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-50">
+            <span class="text-5xl">🏠</span>
+          </div>
+          <span class="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full"
+            :class="typeBadgeClass(item.type)">
+            {{ item.type }}
+          </span>
         </div>
-
-        <!-- List View -->
-        <div v-else class="space-y-3">
-          <router-link v-for="item in items" :key="item.id" :to="`/realestate/${item.id}`"
-            class="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition flex group">
-            <div class="w-28 sm:w-40 md:w-56 flex-shrink-0 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-              <img v-if="item.photos?.[0]" :src="item.photos[0]" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-              <span v-else class="text-4xl text-gray-300">🏠</span>
-              <span class="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full"
-                :class="item.type === '매매' ? 'bg-red-500 text-white' : item.type === '렌트' ? 'bg-blue-500 text-white' : item.type === '룸메이트' ? 'bg-green-500 text-white' : 'bg-orange-500 text-white'">
-                {{ item.type }}
-              </span>
-            </div>
-            <div class="flex-1 p-4 min-w-0">
-              <h3 class="font-bold text-gray-800 mb-1 truncate">{{ item.title }}</h3>
-              <p class="text-blue-600 font-black text-lg">{{ item.price ? '$' + Number(item.price).toLocaleString() : '가격문의' }}
-                <span v-if="item.type === '렌트' && item.price" class="text-sm font-medium text-gray-400">/월</span>
-              </p>
-              <p class="text-xs text-gray-500 mt-1 truncate">📍 {{ item.address }}</p>
-              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                <span v-if="item.bedrooms">🛏️ {{ item.bedrooms }}방</span>
-                <span v-if="item.bathrooms">🚿 {{ item.bathrooms }}욕실</span>
-                <span v-if="item.sqft">📐 {{ Number(item.sqft).toLocaleString() }}sqft</span>
-              </div>
-              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                <span>{{ item.region }}</span>
-                <span>{{ formatDate(item.created_at) }}</span>
-              </div>
-            </div>
-          </router-link>
+        <div class="p-4">
+          <h3 class="font-bold text-gray-800 dark:text-white text-sm mb-1 truncate">{{ item.title }}</h3>
+          <p class="text-blue-600 font-black text-lg">
+            {{ formatPrice(item.price) }}
+            <span v-if="(item.type === '렌트' || item.type === '룸메이트') && item.price" class="text-sm font-medium text-gray-400">/월</span>
+          </p>
+          <p class="text-xs text-gray-500 mt-1 truncate">📍 {{ item.address || item.region }}</p>
+          <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
+            <span v-if="item.bedrooms != null">🛏️ {{ item.bedrooms }}방</span>
+            <span v-if="item.bathrooms != null">🚿 {{ item.bathrooms }}욕실</span>
+            <span v-if="item.sqft">📐 {{ Number(item.sqft).toLocaleString() }}sqft</span>
+          </div>
         </div>
-      </template>
+      </RouterLink>
+    </template>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex justify-center space-x-1 mt-5">
-        <button v-for="p in totalPages" :key="p" @click="load(p)"
-          class="w-8 h-8 rounded-lg text-sm font-bold transition"
-          :class="page === p ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'">
-          {{ p }}
-        </button>
+    <template #empty>
+      <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl">
+        <p class="text-4xl mb-3">🏠</p>
+        <p class="text-gray-400 text-sm">등록된 매물이 없습니다</p>
       </div>
-    </div>
-  </div>
+    </template>
+  </ListTemplate>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useAuthStore } from '../../stores/auth'
+import { ref, reactive, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import ListTemplate from '@/components/templates/ListTemplate.vue'
 import axios from 'axios'
-import LocationBar from '../../components/location/LocationBar.vue'
 
-const authStore = useAuthStore()
+const auth = useAuthStore()
 
-const categories = [
+const loading = ref(true)
+const items = ref([])
+const viewMode = ref('grid')
+const pagination = ref(null)
+
+const filters = reactive({
+  type: '',
+  search: '',
+  sort: 'latest',
+  property_type: '',
+  bedrooms: '',
+})
+
+const typeTabs = [
   { value: '', label: '전체' },
   { value: '렌트', label: '렌트' },
   { value: '매매', label: '매매' },
   { value: '룸메이트', label: '룸메이트' },
-  { value: '상가', label: '상가' },
 ]
 
-const regions = [
-  'Los Angeles', 'New York', 'Atlanta', 'Chicago', 'Seattle',
-  'Dallas', 'Houston', 'San Francisco', 'Boston', 'Miami',
-  'Washington DC', 'Las Vegas', 'Phoenix', 'San Diego', 'Denver',
-  'Portland', 'Nashville', 'Austin', 'New Jersey', 'Virginia',
+const propertyTypes = [
+  { value: '아파트', label: '아파트' },
+  { value: '하우스', label: '하우스' },
+  { value: '콘도', label: '콘도' },
+  { value: '스튜디오', label: '스튜디오' },
+  { value: '오피스', label: '오피스' },
 ]
 
-const category = ref('')
-const search = ref('')
-const region = ref('')
-const radius = ref(30)
-const viewMode = ref('grid')
+const sortOptions = [
+  { value: 'latest', label: '최신순' },
+  { value: 'price_asc', label: '가격낮은순' },
+  { value: 'price_desc', label: '가격높은순' },
+]
 
-const userLat = ref(null);
-const userLng = ref(null);
-const userRadius = ref(30);
+function onTypeChange(val) { filters.type = val; load(1) }
+function onSearch(val) { filters.search = val; load(1) }
+function onSortChange(val) { filters.sort = val; load(1) }
 
-function getUserLocation() {
-  const saved = localStorage.getItem('sk_user_location');
-  if (saved) {
-    const loc = JSON.parse(saved);
-    userLat.value = loc.lat;
-    userLng.value = loc.lng;
-    return;
-  }
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLat.value = pos.coords.latitude;
-        userLng.value = pos.coords.longitude;
-        localStorage.setItem('sk_user_location', JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude}));
-      },
-      () => {},
-      { timeout: 5000 }
-    );
-  }
-}
-const loading = ref(true)
-const items = ref([])
-const page = ref(1)
-const totalPages = ref(1)
-
-async function load(p = 1) {
+async function load(page = 1) {
   loading.value = true
-  page.value = p
   try {
-    const { data } = await axios.get('/api/realestate', {
-      params: {
-        page: p,
-        search: search.value,
-        type: category.value,
-        region: region.value,
-        lat: userLat.value,
-        lng: userLng.value,
-        radius: radius.value,
-      }
-    })
-    items.value = data.data || data
-    totalPages.value = data.last_page || 1
-  } catch {}
+    const params = { page }
+    if (filters.search) params.search = filters.search
+    if (filters.type) params.type = filters.type
+    if (filters.sort) params.sort = filters.sort
+    if (filters.property_type) params.property_type = filters.property_type
+    if (filters.bedrooms) params.bedrooms = filters.bedrooms
+
+    const { data } = await axios.get('/api/realestate', { params })
+    items.value = data.data || data || []
+    pagination.value = data.data ? {
+      current_page: data.current_page,
+      last_page: data.last_page,
+      total: data.total,
+    } : null
+  } catch {
+    items.value = []
+  }
   loading.value = false
 }
 
+function getPhoto(item) {
+  return item.photos?.[0] || null
+}
+
+function typeBadgeClass(type) {
+  if (type === '매매') return 'bg-red-500 text-white'
+  if (type === '렌트') return 'bg-blue-500 text-white'
+  if (type === '룸메이트') return 'bg-green-500 text-white'
+  return 'bg-orange-500 text-white'
+}
+
+function formatPrice(price) {
+  if (!price) return '가격문의'
+  return '$' + Number(price).toLocaleString()
+}
+
 function formatDate(d) {
+  if (!d) return ''
   return new Date(d).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
-
-function onLocationSearch({ keyword, city, radius }) {
-  search.value = keyword
-  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
-  if (radius !== '전국') userRadius.value = parseInt(radius)
-  load()
-}
-function onLocationChange({ city, radius }) {
-  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
-  userRadius.value = radius === '전국' ? 0 : parseInt(radius)
-  load()
+function onImgError(e, emoji) {
+  e.target.style.display = 'none'
+  const parent = e.target.parentElement
+  if (parent) {
+    parent.classList.add('bg-gradient-to-br', 'from-blue-100', 'to-sky-50')
+    parent.innerHTML = `<div class="flex items-center justify-center h-full text-5xl">${emoji}</div>`
+  }
 }
 
 onMounted(() => load())

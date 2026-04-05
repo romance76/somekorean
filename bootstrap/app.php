@@ -15,9 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // 미들웨어 별칭 등록
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'auth' => \App\Http\Middleware\Authenticate::class,
+            'admin'        => \App\Http\Middleware\AdminMiddleware::class,
+            'check.ip.ban' => \App\Http\Middleware\CheckIpBan::class,
+            'detect.bot'   => \App\Http\Middleware\DetectBot::class,
+            'auth'         => \App\Http\Middleware\Authenticate::class,
         ]);
 
         // IP 차단 + 봇 감지 미들웨어를 API 전체에 적용
@@ -29,7 +32,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                return response()->json(['message' => '인증이 필요합니다.'], 401);
+                return response()->json([
+                    'success' => false,
+                    'message' => '인증이 필요합니다.',
+                ], 401);
             }
         });
     })->create();

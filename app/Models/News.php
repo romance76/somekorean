@@ -2,45 +2,28 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class News extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'title',
-        'summary',
-        'content',
-        'url',
-        'source',
-        'category',
-        'image_url',
-        'published_at',
-        'category_id',
-        'main_category_id',
-        'is_featured',
-        'is_digest',
-        'view_count',
-        'like_count',
+        'title', 'content', 'summary', 'source', 'source_url',
+        'image_url', 'category_id', 'subcategory',
+        'view_count', 'published_at',
     ];
 
-    protected $casts = [
-        'published_at' => 'datetime',
-        'is_featured'  => 'boolean',
-        'is_digest'    => 'boolean',
-        'view_count'   => 'integer',
-        'like_count'   => 'integer',
-    ];
-
-    /** 서브 카테고리 */
-    public function subCategory(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(NewsCategory::class, 'category_id');
+        return [
+            'published_at' => 'datetime',
+            'view_count' => 'integer',
+        ];
     }
 
-    /** 메인 카테고리 */
-    public function mainCategory(): BelongsTo
-    {
-        return $this->belongsTo(NewsCategory::class, 'main_category_id');
-    }
+    public function category()  { return $this->belongsTo(NewsCategory::class, 'category_id'); }
+    public function comments()  { return $this->morphMany(Comment::class, 'commentable'); }
+    public function bookmarks() { return $this->morphMany(Bookmark::class, 'bookmarkable'); }
 }

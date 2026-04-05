@@ -1,24 +1,26 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BusinessReview extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'business_id', 'user_id', 'rating', 'content', 'photos',
-        'visit_date', 'sub_ratings', 'is_visible', 'report_count',
-        'owner_reply', 'owner_replied_at',
+        'business_id', 'user_id', 'rating', 'content', 'images',
     ];
 
-    protected $casts = [
-        'photos' => 'array',
-        'sub_ratings' => 'array',
-        'is_visible' => 'boolean',
-        'visit_date' => 'date',
-        'owner_replied_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'images' => 'array',
+            'rating' => 'integer',
+        ];
+    }
 
     public function business() { return $this->belongsTo(Business::class); }
-    public function user() { return $this->belongsTo(User::class); }
+    public function user()     { return $this->belongsTo(User::class); }
 }

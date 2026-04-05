@@ -15,7 +15,14 @@ use Illuminate\Support\Facades\DB;
 
 class ElderController extends Controller
 {
-    // ─── 1. settings ─────────────────────────────────────────────
+    // =========================================================================
+    // USER ENDPOINTS
+    // =========================================================================
+
+    /**
+     * GET /api/elder/settings
+     * Get elder settings for current user
+     */
     public function settings()
     {
         try {
@@ -26,19 +33,28 @@ class ElderController extends Controller
 
             $logs = ElderCheckinLog::where('user_id', Auth::id())
                 ->where('checkin_date', '>=', now()->subDays(7))
-                ->orderBy('checkin_date', 'desc')
+                ->orderByDesc('checkin_date')
                 ->get();
 
             return response()->json([
-                'settings' => $settings,
-                'recent_logs' => $logs,
+                'success' => true,
+                'data'    => [
+                    'settings'    => $settings,
+                    'recent_logs' => $logs,
+                ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '설정을 불러오는 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => '설정을 불러오는 중 오류가 발생했습니다.',
+            ], 500);
         }
     }
 
-    // ─── 2. updateSettings ───────────────────────────────────────
+    /**
+     * PUT /api/elder/settings
+     * Update settings (guardian, intervals, medications, sos contacts)
+     */
     public function updateSettings(Request $request)
     {
         try {
@@ -61,14 +77,23 @@ class ElderController extends Controller
                 $data
             );
 
-            return response()->json($settings);
+            return response()->json([
+                'success' => true,
+                'data'    => $settings,
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '설정 업데이트 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => '설정 업데이트 중 오류가 발생했습니다.',
+            ], 500);
         }
     }
 
-    // ─── 3. checkin ──────────────────────────────────────────────
-    public function checkin()
+    /**
+     * POST /api/elder/checkin
+     * Record check-in with location
+     */
+    public function checkin(Request $request)
     {
         try {
             $user = Auth::user();
@@ -80,20 +105,23 @@ class ElderController extends Controller
             $now = now();
             $today = $now->toDateString();
 
-            // Update or create today's checkin log
             $log = ElderCheckinLog::updateOrCreate(
                 ['user_id' => $user->id, 'checkin_date' => $today],
-                ['checked_at' => $now, 'status' => 'checked']
+                [
+                    'checked_at' => $now,
+                    'status'     => 'checked',
+                    'latitude'   => $request->input('lat') ?? $request->input('latitude'),
+                    'longitude'  => $request->input('lng') ?? $request->input('longitude'),
+                ]
             );
 
-            // Reset missed count & update settings
             $settings->update([
                 'last_checkin_at' => $now,
-                'alert_sent'     => false,
-                'missed_count'   => 0,
+                'alert_sent'      => false,
+                'missed_count'    => 0,
             ]);
 
-            // Award points if first check-in today
+            // Points for first check-in today
             $pointsEarned = 0;
             if ($log->wasRecentlyCreated || $log->wasChanged()) {
                 $pointsEarned = 5;
@@ -101,17 +129,23 @@ class ElderController extends Controller
             }
 
             return response()->json([
+                'success'       => true,
                 'message'       => '체크인 완료!',
-                'points_earned' => $pointsEarned,
-                'checked_at'    => $now,
-                'log'           => $log,
+                'data'          => [
+                    'points_earned' => $pointsEarned,
+                    'checked_at'    => $now,
+                    'log'           => $log,
+                ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '체크인 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '체크인 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 4. sos ──────────────────────────────────────────────────
+    /**
+     * POST /api/elder/sos
+     * Send SOS alert, notify contacts
+     */
     public function sos(Request $request)
     {
         try {
@@ -123,46 +157,35 @@ class ElderController extends Controller
 
             $settings->update(['last_sos_at' => now()]);
 
+            $lat = $request->input('latitude') ?? $request->input('lat');
+            $lng = $request->input('longitude') ?? $request->input('lng');
+
             // Create SOS alert record
             $sosId = DB::table('elder_sos_alerts')->insertGetId([
                 'user_id'    => $user->id,
-                'latitude'   => $request->input('latitude') ?? $request->input('lat'),
-                'longitude'  => $request->input('longitude') ?? $request->input('lng'),
+                'latitude'   => $lat,
+                'longitude'  => $lng,
                 'address'    => $request->input('address'),
                 'status'     => 'active',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Also create legacy SOS log for backward compatibility
-            $sosLog = ElderSosLog::create([
+            // Legacy SOS log
+            ElderSosLog::create([
                 'user_id' => $user->id,
-                'lat'     => $request->input('latitude') ?? $request->input('lat'),
-                'lng'     => $request->input('longitude') ?? $request->input('lng'),
+                'lat'     => $lat,
+                'lng'     => $lng,
                 'status'  => 'triggered',
             ]);
 
-            // Update today's checkin log status
+            // Update today's checkin log
             ElderCheckinLog::updateOrCreate(
                 ['user_id' => $user->id, 'checkin_date' => now()->toDateString()],
                 ['status' => 'sos']
             );
 
-            // Notify all guardians
-            $guardianIds = collect();
-
-            // Primary guardian
-            if ($settings->guardian_user_id) {
-                $guardianIds->push($settings->guardian_user_id);
-            }
-
-            // Also check elder_settings for any guardians watching this senior
-            $additionalGuardians = DB::table('elder_settings')
-                ->where('guardian_user_id', '!=', null)
-                ->where('user_id', '!=', $user->id)
-                ->pluck('guardian_user_id');
-
-            // Primary guardian notification
+            // Notify guardian
             if ($settings->guardian_user_id) {
                 Notification::create([
                     'user_id' => $settings->guardian_user_id,
@@ -172,30 +195,28 @@ class ElderController extends Controller
                     'data'    => json_encode([
                         'sos_id'  => $sosId,
                         'user_id' => $user->id,
-                        'lat'     => $request->input('latitude') ?? $request->input('lat'),
-                        'lng'     => $request->input('longitude') ?? $request->input('lng'),
+                        'lat'     => $lat,
+                        'lng'     => $lng,
                     ]),
-                    'url'     => '/elder/guardian?sos=' . $sosId,
+                    'url' => '/elder/guardian?sos=' . $sosId,
                 ]);
-            }
 
-            // 보호자에게 소켓/푸시 알림
-            if ($settings->guardian_user_id) {
+                // Push notification via socket server
                 try {
                     \Illuminate\Support\Facades\Http::post('http://127.0.0.1:3001/send-notification', [
                         'userId' => (string) $settings->guardian_user_id,
-                        'event' => 'elder:sos-alert',
-                        'data' => [
-                            'title' => '긴급 SOS',
-                            'message' => ($user->nickname ?? $user->name) . '님이 SOS를 발동했습니다!',
-                            'body' => ($user->nickname ?? $user->name) . '님이 SOS를 발동했습니다!',
-                            'url' => '/elder/guardian',
-                            'elderId' => $user->id,
+                        'event'  => 'elder:sos-alert',
+                        'data'   => [
+                            'title'     => '긴급 SOS',
+                            'message'   => ($user->nickname ?? $user->name) . '님이 SOS를 발동했습니다!',
+                            'body'      => ($user->nickname ?? $user->name) . '님이 SOS를 발동했습니다!',
+                            'url'       => '/elder/guardian',
+                            'elderId'   => $user->id,
                             'elderName' => $user->nickname ?? $user->name,
-                            'lat' => $request->input('latitude') ?? $request->input('lat'),
-                            'lng' => $request->input('longitude') ?? $request->input('lng'),
-                            'address' => $request->input('address'),
-                        ]
+                            'lat'       => $lat,
+                            'lng'       => $lng,
+                            'address'   => $request->input('address'),
+                        ],
                     ]);
                 } catch (\Exception $e) {
                     \Log::error('SOS push notification failed: ' . $e->getMessage());
@@ -203,61 +224,63 @@ class ElderController extends Controller
             }
 
             $guardianPhone = $settings->guardian_phone;
-            $guardianName  = $settings->guardian_name ?? '보호자';
 
             return response()->json([
                 'success'       => true,
                 'message'       => 'SOS 신호가 발송되었습니다.',
-                'sos_id'        => $sosId,
-                'guardian_name' => $guardianName,
-                'sent_to'       => $guardianPhone
-                    ? substr($guardianPhone, 0, 3) . '****' . substr($guardianPhone, -4)
-                    : null,
+                'data'          => [
+                    'sos_id'        => $sosId,
+                    'guardian_name' => $settings->guardian_name ?? '보호자',
+                    'sent_to'       => $guardianPhone
+                        ? substr($guardianPhone, 0, 3) . '****' . substr($guardianPhone, -4)
+                        : null,
+                ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'SOS 발송 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'SOS 발송 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 5. guardianView ─────────────────────────────────────────
-    public function guardianView($userId)
+    /**
+     * GET /api/elder/guardian/{userId}
+     * List wards for guardian (guardian dashboard)
+     */
+    public function guardianWards($userId)
     {
         try {
-            $user     = User::findOrFail($userId);
+            $user = User::findOrFail($userId);
             $settings = ElderSetting::where('user_id', $userId)->first();
 
             if (!$settings || !$settings->elder_mode) {
-                return response()->json(['message' => '해당 회원의 노인 안심 모드가 활성화되지 않았습니다.'], 404);
+                return response()->json(['success' => false, 'message' => '노인 안심 모드가 활성화되지 않았습니다.'], 404);
             }
 
-            // Verify caller is the guardian
+            // Verify guardian access
             $caller = Auth::user();
-            $isGuardian = ($settings->guardian_user_id === $caller->id) || $caller->is_admin;
-            if (!$isGuardian) {
-                return response()->json(['message' => '보호자 권한이 없습니다.'], 403);
+            if ($settings->guardian_user_id !== $caller->id && !$caller->is_admin) {
+                return response()->json(['success' => false, 'message' => '보호자 권한이 없습니다.'], 403);
             }
 
             $checkinLogs = ElderCheckinLog::where('user_id', $userId)
                 ->where('checkin_date', '>=', now()->subDays(30))
-                ->orderBy('checkin_date', 'desc')
+                ->orderByDesc('checkin_date')
                 ->get();
 
             $sosLogs = ElderSosLog::where('user_id', $userId)
-                ->orderBy('created_at', 'desc')
+                ->orderByDesc('created_at')
                 ->limit(20)
                 ->get();
 
-            // Health records (last 30 days)
             $healthRecords = DB::table('elder_health_records')
                 ->where('user_id', $userId)
                 ->where('recorded_at', '>=', now()->subDays(30))
-                ->orderBy('recorded_at', 'desc')
+                ->orderByDesc('recorded_at')
                 ->get();
 
             // Medication info
             $medications = json_decode($settings->medication_times ?? '[]', true);
             if (!is_array($medications)) $medications = [];
-            $medicationTotal = count($medications);
+
             $medicationTaken = DB::table('elder_medication_logs')
                 ->where('user_id', $userId)
                 ->whereDate('taken_at', now()->toDateString())
@@ -270,7 +293,10 @@ class ElderController extends Controller
                 ->exists();
 
             // Calculate streak
-            $checkedDates = $checkinLogs->where('status', 'checked')->pluck('checkin_date')->map(fn($d) => $d->format('Y-m-d'))->toArray();
+            $checkedDates = $checkinLogs->where('status', 'checked')
+                ->pluck('checkin_date')
+                ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
+                ->toArray();
             $streak = 0;
             $today = now()->startOfDay();
             for ($i = 0; $i < 365; $i++) {
@@ -282,53 +308,44 @@ class ElderController extends Controller
                 }
             }
 
-            $overdue = false;
+            // Overdue check
+            $overdue = true;
             if ($settings->last_checkin_at) {
-                $hoursAgo = $settings->last_checkin_at->diffInHours(now());
-                $overdue  = $hoursAgo > $settings->checkin_interval;
-            } else {
-                $overdue = true;
+                $overdue = $settings->last_checkin_at->diffInHours(now()) > $settings->checkin_interval;
             }
 
-            // Recent notifications for this elder
-            $recentNotifications = Notification::where('user_id', $caller->id)
-                ->where(function ($q) use ($userId) {
-                    $q->where('url', 'like', "%/elder/guardian/{$userId}%")
-                      ->orWhere('url', 'like', '%/elder/guardian%');
-                })
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
-
             return response()->json([
-                'user'              => ['id' => $user->id, 'name' => $user->name, 'nickname' => $user->nickname],
-                'settings'          => $settings->only(['checkin_interval', 'checkin_time', 'checkin_enabled', 'last_checkin_at', 'last_sos_at', 'missed_count']),
-                'is_overdue'        => $overdue,
-                'alert_sent'        => $settings->alert_sent,
-                'checkin_logs'      => $checkinLogs,
-                'checkin_history'   => $checkinLogs,
-                'sos_logs'          => $sosLogs,
-                'sos_history'       => $sosLogs,
-                'health_records'    => $healthRecords,
-                'today_checked'     => $todayChecked,
-                'last_checkin_at'   => $settings->last_checkin_at,
-                'streak'            => $streak,
-                'medication_taken'  => $medicationTaken,
-                'medication_total'  => $medicationTotal,
-                'notifications'     => $recentNotifications,
+                'success' => true,
+                'data'    => [
+                    'user'             => ['id' => $user->id, 'name' => $user->name, 'nickname' => $user->nickname],
+                    'settings'         => $settings->only(['checkin_interval', 'checkin_time', 'checkin_enabled', 'last_checkin_at', 'last_sos_at', 'missed_count']),
+                    'is_overdue'       => $overdue,
+                    'alert_sent'       => $settings->alert_sent,
+                    'checkin_logs'     => $checkinLogs,
+                    'sos_logs'         => $sosLogs,
+                    'health_records'   => $healthRecords,
+                    'today_checked'    => $todayChecked,
+                    'last_checkin_at'  => $settings->last_checkin_at,
+                    'streak'           => $streak,
+                    'medication_taken' => $medicationTaken,
+                    'medication_total' => count($medications),
+                ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '보호자 대시보드 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '보호자 대시보드 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 6. checkinHistory ───────────────────────────────────────
+    /**
+     * GET /api/elder/checkin-history
+     * Paginated check-in logs
+     */
     public function checkinHistory(Request $request)
     {
         try {
             $month = $request->input('month', now()->format('Y-m'));
             $start = Carbon::parse($month . '-01')->startOfMonth();
-            $end   = Carbon::parse($month . '-01')->endOfMonth();
+            $end = Carbon::parse($month . '-01')->endOfMonth();
 
             $logs = ElderCheckinLog::where('user_id', Auth::id())
                 ->whereBetween('checkin_date', [$start, $end])
@@ -336,46 +353,53 @@ class ElderController extends Controller
                 ->get();
 
             return response()->json([
-                'month' => $month,
-                'logs'  => $logs,
-                'stats' => [
-                    'total'   => $logs->count(),
-                    'checked' => $logs->where('status', 'checked')->count(),
-                    'missed'  => $logs->where('status', 'missed')->count(),
-                    'sos'     => $logs->where('status', 'sos')->count(),
+                'success' => true,
+                'data'    => [
+                    'month' => $month,
+                    'logs'  => $logs,
+                    'stats' => [
+                        'total'   => $logs->count(),
+                        'checked' => $logs->where('status', 'checked')->count(),
+                        'missed'  => $logs->where('status', 'missed')->count(),
+                        'sos'     => $logs->where('status', 'sos')->count(),
+                    ],
                 ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '체크인 기록 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '체크인 기록 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 7. sosHistory ───────────────────────────────────────────
+    /**
+     * GET /api/elder/sos-history
+     */
     public function sosHistory()
     {
         try {
             $logs = ElderSosLog::where('user_id', Auth::id())
-                ->orderBy('created_at', 'desc')
+                ->orderByDesc('created_at')
                 ->paginate(20);
 
-            return response()->json($logs);
+            return response()->json(['success' => true, 'data' => $logs]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'SOS 기록 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'SOS 기록 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 8. resolveSos ───────────────────────────────────────────
+    /**
+     * POST /api/elder/sos/{id}/resolve
+     */
     public function resolveSos(Request $request, $id)
     {
         try {
             $sosLog = ElderSosLog::findOrFail($id);
 
-            // Verify caller is guardian or admin
-            $caller   = Auth::user();
+            $caller = Auth::user();
             $settings = ElderSetting::where('user_id', $sosLog->user_id)->first();
             $isGuardian = $settings && $settings->guardian_user_id === $caller->id;
+
             if (!$isGuardian && !$caller->is_admin && $sosLog->user_id !== $caller->id) {
-                return response()->json(['message' => '권한이 없습니다.'], 403);
+                return response()->json(['success' => false, 'message' => '권한이 없습니다.'], 403);
             }
 
             $status = $request->input('status', 'resolved');
@@ -390,7 +414,6 @@ class ElderController extends Controller
                 'note'        => $request->input('note'),
             ]);
 
-            // Notify the elder user
             if ($sosLog->user_id !== $caller->id) {
                 Notification::create([
                     'user_id' => $sosLog->user_id,
@@ -403,51 +426,18 @@ class ElderController extends Controller
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'SOS가 해제되었습니다.',
-                'sos_log' => $sosLog->fresh(),
+                'data'    => $sosLog->fresh(),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'SOS 해제 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'SOS 해제 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 9. guardianSearch ───────────────────────────────────────
-    public function guardianSearch(Request $request)
-    {
-        try {
-            $query = $request->input('q', '');
-            if (strlen($query) < 2) {
-                return response()->json(['message' => '2글자 이상 입력해주세요.'], 422);
-            }
-
-            $users = User::where(function ($q) use ($query) {
-                $q->where('email', 'like', "%{$query}%")
-                  ->orWhere('nickname', 'like', "%{$query}%")
-                  ->orWhere('name', 'like', "%{$query}%");
-            })
-            ->where('id', '!=', Auth::id())
-            ->select('id', 'name', 'nickname', 'email')
-            ->limit(10)
-            ->get();
-
-            // Mask email for privacy
-            $users->transform(function ($user) {
-                $email = $user->email;
-                $parts = explode('@', $email);
-                if (strlen($parts[0]) > 2) {
-                    $parts[0] = substr($parts[0], 0, 2) . str_repeat('*', strlen($parts[0]) - 2);
-                }
-                $user->email = implode('@', $parts);
-                return $user;
-            });
-
-            return response()->json($users);
-        } catch (\Exception $e) {
-            return response()->json(['message' => '보호자 검색 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    // ─── 10. linkGuardian ────────────────────────────────────────
+    /**
+     * POST /api/elder/link-guardian
+     */
     public function linkGuardian(Request $request)
     {
         try {
@@ -456,7 +446,7 @@ class ElderController extends Controller
             ]);
 
             if ($data['guardian_user_id'] == Auth::id()) {
-                return response()->json(['message' => '본인을 보호자로 지정할 수 없습니다.'], 422);
+                return response()->json(['success' => false, 'message' => '본인을 보호자로 지정할 수 없습니다.'], 422);
             }
 
             $settings = ElderSetting::firstOrCreate(
@@ -470,7 +460,6 @@ class ElderController extends Controller
                 'guardian_name'    => $settings->guardian_name ?: ($guardian->nickname ?? $guardian->name),
             ]);
 
-            // Notify the guardian
             Notification::create([
                 'user_id' => $guardian->id,
                 'type'    => 'elder_sos',
@@ -481,21 +470,62 @@ class ElderController extends Controller
             ]);
 
             return response()->json([
+                'success'  => true,
                 'message'  => '보호자가 연결되었습니다.',
-                'guardian' => [
-                    'id'       => $guardian->id,
-                    'name'     => $guardian->name,
-                    'nickname' => $guardian->nickname,
+                'data'     => [
+                    'guardian' => [
+                        'id'       => $guardian->id,
+                        'name'     => $guardian->name,
+                        'nickname' => $guardian->nickname,
+                    ],
                 ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '보호자 연결 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '보호자 연결 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── Health Records ─────────────────────────────────────────
+    /**
+     * GET /api/elder/guardian-search
+     */
+    public function guardianSearch(Request $request)
+    {
+        $query = $request->input('q', '');
+        if (strlen($query) < 2) {
+            return response()->json(['success' => false, 'message' => '2글자 이상 입력해주세요.'], 422);
+        }
 
-    // POST /api/elder/health-record - 건강 기록 저장
+        $users = User::where(function ($q) use ($query) {
+            $q->where('email', 'like', "%{$query}%")
+              ->orWhere('nickname', 'like', "%{$query}%")
+              ->orWhere('name', 'like', "%{$query}%");
+        })
+        ->where('id', '!=', Auth::id())
+        ->select('id', 'name', 'nickname', 'email')
+        ->limit(10)
+        ->get();
+
+        // Mask email for privacy
+        $users->transform(function ($user) {
+            $email = $user->email;
+            $parts = explode('@', $email);
+            if (strlen($parts[0]) > 2) {
+                $parts[0] = substr($parts[0], 0, 2) . str_repeat('*', strlen($parts[0]) - 2);
+            }
+            $user->email = implode('@', $parts);
+            return $user;
+        });
+
+        return response()->json(['success' => true, 'data' => $users]);
+    }
+
+    // =========================================================================
+    // HEALTH RECORDS
+    // =========================================================================
+
+    /**
+     * POST /api/elder/health-record
+     */
     public function storeHealthRecord(Request $request)
     {
         try {
@@ -518,39 +548,44 @@ class ElderController extends Controller
 
             return response()->json(['success' => true, 'message' => '건강 기록이 저장되었습니다.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => '건강 기록 저장 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '건강 기록 저장 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // GET /api/elder/health-records - 건강 기록 목록
+    /**
+     * GET /api/elder/health-records
+     */
     public function healthRecords(Request $request)
     {
         try {
             $userId = $request->input('user_id', Auth::id());
 
-            // If requesting another user's records, verify guardian access
             if ($userId != Auth::id()) {
                 $settings = ElderSetting::where('user_id', $userId)->first();
                 $caller = Auth::user();
                 if (!$settings || ($settings->guardian_user_id !== $caller->id && !$caller->is_admin)) {
-                    return response()->json(['message' => '권한이 없습니다.'], 403);
+                    return response()->json(['success' => false, 'message' => '권한이 없습니다.'], 403);
                 }
             }
 
             $records = DB::table('elder_health_records')
                 ->where('user_id', $userId)
-                ->orderBy('recorded_at', 'desc')
+                ->orderByDesc('recorded_at')
                 ->paginate(30);
 
-            return response()->json($records);
+            return response()->json(['success' => true, 'data' => $records]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '건강 기록 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '건강 기록 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── Medications ─────────────────────────────────────────────
+    // =========================================================================
+    // MEDICATIONS
+    // =========================================================================
 
-    // POST /api/elder/medications - 복약 알림 설정
+    /**
+     * POST /api/elder/medications
+     */
     public function setMedication(Request $request)
     {
         try {
@@ -577,13 +612,15 @@ class ElderController extends Controller
 
             $settings->update(['medication_times' => json_encode($medications)]);
 
-            return response()->json(['success' => true, 'medications' => $medications]);
+            return response()->json(['success' => true, 'data' => ['medications' => $medications]]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '복약 알림 설정 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '복약 알림 설정 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // GET /api/elder/medications - 복약 알림 목록 + 오늘 복약 기록
+    /**
+     * GET /api/elder/medications
+     */
     public function getMedications()
     {
         try {
@@ -600,15 +637,20 @@ class ElderController extends Controller
                 ->get();
 
             return response()->json([
-                'medications' => $medications,
-                'today_logs'  => $todayLogs,
+                'success' => true,
+                'data'    => [
+                    'medications' => $medications,
+                    'today_logs'  => $todayLogs,
+                ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '복약 알림 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '복약 알림 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // POST /api/elder/medications/{id}/taken - 복약 완료
+    /**
+     * POST /api/elder/medications/{id}/taken
+     */
     public function medicationTaken($id)
     {
         try {
@@ -621,46 +663,48 @@ class ElderController extends Controller
 
             return response()->json(['success' => true, 'message' => '복약 완료가 기록되었습니다.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => '복약 완료 처리 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '복약 완료 처리 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // DELETE /api/elder/medications/{id} - 복약 알림 삭제
+    /**
+     * DELETE /api/elder/medications/{id}
+     */
     public function deleteMedication($id)
     {
         try {
             $settings = ElderSetting::where('user_id', Auth::id())->first();
             if (!$settings) {
-                return response()->json(['message' => '설정을 찾을 수 없습니다.'], 404);
+                return response()->json(['success' => false, 'message' => '설정을 찾을 수 없습니다.'], 404);
             }
 
             $medications = json_decode($settings->medication_times ?? '[]', true);
             if (!is_array($medications)) $medications = [];
 
             $medications = array_values(array_filter($medications, fn($m) => ($m['id'] ?? '') !== $id));
-
             $settings->update(['medication_times' => json_encode($medications)]);
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '복약 알림 삭제 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '복약 알림 삭제 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // ADMIN METHODS
-    // ═══════════════════════════════════════════════════════════════
+    // =========================================================================
+    // ADMIN ENDPOINTS
+    // =========================================================================
 
-    // ─── 11. adminMonitor ────────────────────────────────────────
+    /**
+     * GET /api/admin/elder/monitor
+     */
     public function adminMonitor(Request $request)
     {
         try {
             $today = now()->toDateString();
 
             $query = ElderSetting::where('elder_mode', true)
-                ->with(['user:id,name,nickname,email']);
+                ->with('user:id,name,nickname,email');
 
-            // Search
             if ($search = $request->input('search')) {
                 $query->whereHas('user', function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -669,12 +713,11 @@ class ElderController extends Controller
                 });
             }
 
-            $elders = $query->orderBy('missed_count', 'desc')->paginate(30);
+            $elders = $query->orderByDesc('missed_count')->paginate(30);
 
-            // Today's checkin stats
             $todayLogs = ElderCheckinLog::where('checkin_date', $today)->get();
             $stats = [
-                'total_elders' => ElderSetting::where('elder_mode', true)->count(),
+                'total_elders'  => ElderSetting::where('elder_mode', true)->count(),
                 'checked_today' => $todayLogs->where('status', 'checked')->count(),
                 'pending_today' => $todayLogs->where('status', 'pending')->count(),
                 'missed_today'  => $todayLogs->where('status', 'missed')->count(),
@@ -683,15 +726,17 @@ class ElderController extends Controller
             ];
 
             return response()->json([
-                'elders' => $elders,
-                'stats'  => $stats,
+                'success' => true,
+                'data'    => ['elders' => $elders, 'stats' => $stats],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '관리자 모니터링 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '모니터링 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 12. adminDetail ─────────────────────────────────────────
+    /**
+     * GET /api/admin/elder/{id}
+     */
     public function adminDetail($id)
     {
         try {
@@ -700,59 +745,60 @@ class ElderController extends Controller
 
             $checkinLogs = ElderCheckinLog::where('user_id', $id)
                 ->where('checkin_date', '>=', now()->subDays(30))
-                ->orderBy('checkin_date', 'desc')
+                ->orderByDesc('checkin_date')
                 ->get();
 
             $sosLogs = ElderSosLog::where('user_id', $id)
-                ->orderBy('created_at', 'desc')
+                ->orderByDesc('created_at')
                 ->limit(20)
                 ->get();
 
             return response()->json([
-                'user'         => $user->only(['id', 'name', 'nickname', 'email', 'phone']),
-                'settings'     => $settings,
-                'checkin_logs' => $checkinLogs,
-                'sos_logs'     => $sosLogs,
-                'guardian'     => $settings->guardian_user_id
-                    ? User::find($settings->guardian_user_id)?->only(['id', 'name', 'nickname', 'email'])
-                    : null,
+                'success' => true,
+                'data'    => [
+                    'user'         => $user->only(['id', 'name', 'nickname', 'email', 'phone']),
+                    'settings'     => $settings,
+                    'checkin_logs' => $checkinLogs,
+                    'sos_logs'     => $sosLogs,
+                    'guardian'     => $settings->guardian_user_id
+                        ? User::find($settings->guardian_user_id)?->only(['id', 'name', 'nickname', 'email'])
+                        : null,
+                ],
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => '상세 정보 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '상세 정보 조회 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 13. adminResetCheckin ────────────────────────────────────
+    /**
+     * POST /api/admin/elder/{id}/reset-checkin
+     */
     public function adminResetCheckin($id)
     {
         try {
             $settings = ElderSetting::where('user_id', $id)->firstOrFail();
+            $settings->update(['missed_count' => 0, 'alert_sent' => false]);
 
-            $settings->update([
-                'missed_count' => 0,
-                'alert_sent'   => false,
-            ]);
-
-            // Mark today's log as pending
             ElderCheckinLog::updateOrCreate(
                 ['user_id' => $id, 'checkin_date' => now()->toDateString()],
                 ['status' => 'pending', 'checked_at' => null, 'guardian_notified' => false]
             );
 
-            return response()->json(['message' => '체크인이 리셋되었습니다.']);
+            return response()->json(['success' => true, 'message' => '체크인이 리셋되었습니다.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => '체크인 리셋 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '체크인 리셋 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 14. adminSendAlert ──────────────────────────────────────
+    /**
+     * POST /api/admin/elder/{id}/send-alert
+     */
     public function adminSendAlert($id)
     {
         try {
             $settings = ElderSetting::where('user_id', $id)->firstOrFail();
             $user = User::findOrFail($id);
 
-            // Notify guardian
             if ($settings->guardian_user_id) {
                 Notification::create([
                     'user_id' => $settings->guardian_user_id,
@@ -764,7 +810,6 @@ class ElderController extends Controller
                 ]);
             }
 
-            // Notify the elder user too
             Notification::create([
                 'user_id' => $id,
                 'type'    => 'elder_checkin_missed',
@@ -776,45 +821,49 @@ class ElderController extends Controller
 
             $settings->update(['alert_sent' => true]);
 
-            return response()->json(['message' => '알림이 발송되었습니다.']);
+            return response()->json(['success' => true, 'message' => '알림이 발송되었습니다.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => '알림 발송 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '알림 발송 중 오류가 발생했습니다.'], 500);
         }
     }
 
-    // ─── 15. adminSettings ───────────────────────────────────────
+    /**
+     * GET /api/admin/elder/settings
+     */
     public function adminSettings()
     {
         try {
-            // Global elder service settings stored in a config or settings table
-            // For now, return defaults; can be expanded with a settings table
             $settings = DB::table('site_settings')
                 ->where('group', 'elder')
                 ->pluck('value', 'key')
                 ->toArray();
 
             $defaults = [
-                'default_checkin_time'  => '09:00',
-                'alert_delay_minutes'   => '30',
-                'second_alert_minutes'  => '60',
-                'auto_call_enabled'     => '0',
-                'service_enabled'       => '1',
+                'default_checkin_time' => '09:00',
+                'alert_delay_minutes'  => '30',
+                'second_alert_minutes' => '60',
+                'auto_call_enabled'    => '0',
+                'service_enabled'      => '1',
             ];
 
-            return response()->json(array_merge($defaults, $settings));
+            return response()->json(['success' => true, 'data' => array_merge($defaults, $settings)]);
         } catch (\Exception $e) {
-            // If site_settings table doesn't exist, return defaults
             return response()->json([
-                'default_checkin_time'  => '09:00',
-                'alert_delay_minutes'   => '30',
-                'second_alert_minutes'  => '60',
-                'auto_call_enabled'     => '0',
-                'service_enabled'       => '1',
+                'success' => true,
+                'data'    => [
+                    'default_checkin_time' => '09:00',
+                    'alert_delay_minutes'  => '30',
+                    'second_alert_minutes' => '60',
+                    'auto_call_enabled'    => '0',
+                    'service_enabled'      => '1',
+                ],
             ]);
         }
     }
 
-    // ─── 16. adminSaveSettings ───────────────────────────────────
+    /**
+     * POST /api/admin/elder/settings
+     */
     public function adminSaveSettings(Request $request)
     {
         try {
@@ -829,9 +878,9 @@ class ElderController extends Controller
                 }
             }
 
-            return response()->json(['message' => '설정이 저장되었습니다.']);
+            return response()->json(['success' => true, 'message' => '설정이 저장되었습니다.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => '설정 저장 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => '설정 저장 중 오류가 발생했습니다.'], 500);
         }
     }
 }

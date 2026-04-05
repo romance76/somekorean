@@ -1,124 +1,212 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\Post;
+use App\Models\PostLike;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
+    /**
+     * GET /api/posts
+     */
     public function index(Request $request)
     {
-        $query = Post::with(["user:id,name,username,avatar,level", "board:id,name,slug"])
-            ->where("status", "active");
+        $query = Post::with(['user:id,name,nickname,avatar,level', 'board:id,name,slug'])
+            ->where('status', 'active');
 
-        if ($request->board) {
-            $board = Board::where("slug", $request->board)->first();
-            if ($board) $query->where("board_id", $board->id);
-        }
+        // Filter by board
         if ($request->board_id) {
-            $query->where("board_id", $request->board_id);
+            $query->where('board_id', $request->board_id);
+        } elseif ($request->board) {
+            $board = Board::where('slug', $request->board)->first();
+            if ($board) {
+                $query->where('board_id', $board->id);
+            }
         }
-        if ($request->exclude_id) {
-            $query->where("id", "!=", $request->exclude_id);
+
+        // Filter by category
+        if ($request->category) {
+            $query->where('category', $request->category);
         }
+
+        // Search
         if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where("title", "like", "%".$request->search."%")
-                  ->orWhere("content", "like", "%".$request->search."%");
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
             });
         }
 
-        if ($request->sort === "views") {
-            $query->orderByDesc("view_count");
-        } else {
-            $query->orderByDesc("is_pinned")->orderByDesc("created_at");
+        // Distance filter
+        if ($request->lat && $request->lng) {
+            $lat = (float) $request->lat;
+            $lng = (float) $request->lng;
+            $radius = (float) ($request->radius ?? 30);
+            $query->selectRaw("posts.*, (3959 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance", [$lat, $lng, $lat])
+                  ->having('distance', '<=', $radius)
+                  ->orderBy('distance');
         }
 
-        $perPage = min((int)($request->per_page ?? 20), 50);
-        $posts = $query->paginate($perPage);
+        // Sort
+        if ($request->sort === 'views') {
+            $query->orderByDesc('view_count');
+        } else {
+            $query->orderByDesc('is_pinned')->orderByDesc('created_at');
+        }
 
-        return response()->json($posts);
+        $perPage = min((int) ($request->per_page ?? 20), 50);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $query->paginate($perPage),
+        ]);
     }
 
+    /**
+     * GET /api/posts/{id}
+     */
+    public function show($id)
+    {
+        $post = Post::with([
+            'user:id,name,nickname,avatar,level',
+            'board:id,name,slug',
+        ])->findOrFail($id);
+
+        if ($post->status !== 'active') {
+            return response()->json(['success' => false, 'message' => '삭제된 게시글입니다.'], 404);
+        }
+
+        $post->increment('view_count');
+
+        $data = $post->toArray();
+
+        // Check if current user liked
+        if (auth()->check()) {
+            $data['is_liked'] = PostLike::where('user_id', auth()->id())
+                ->where('post_id', $post->id)
+                ->exists();
+        } else {
+            $data['is_liked'] = false;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * POST /api/posts
+     */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            "board_id" => "required|exists:boards,id",
-            "title"    => "required|string|max:200",
-            "content"  => "required|string",
+        $request->validate([
+            'board_id' => 'required|exists:boards,id',
+            'title'    => 'required|string|max:200',
+            'content'  => 'required|string',
+            'images'   => 'nullable|array|max:5',
+            'images.*' => 'image|max:5120',
         ]);
-        if ($validator->fails()) return response()->json(["errors" => $validator->errors()], 422);
+
+        $images = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $images[] = $image->store('posts', 'public');
+            }
+        }
 
         $post = Post::create([
-            "board_id"     => $request->board_id,
-            "user_id"      => Auth::id(),
-            "title"        => $request->title,
-            "content"      => $request->content,
-            "is_anonymous" => $request->is_anonymous ?? false,
+            'board_id'     => $request->board_id,
+            'user_id'      => auth()->id(),
+            'title'        => $request->title,
+            'content'      => $request->content,
+            'images'       => !empty($images) ? json_encode($images) : null,
+            'is_anonymous' => $request->is_anonymous ?? false,
         ]);
 
-        Auth::user()->addPoints(30, "post_write", "earn", $post->id, "게시글 작성");
-
-        return response()->json(["message" => "게시글이 등록되었습니다.", "post" => $post->load("user", "board")], 201);
+        return response()->json([
+            'success' => true,
+            'message' => '게시글이 등록되었습니다.',
+            'data'    => $post->load(['user:id,name,nickname,avatar', 'board:id,name,slug']),
+        ], 201);
     }
 
-    public function show(Post $post)
+    /**
+     * PUT /api/posts/{id}
+     */
+    public function update(Request $request, $id)
     {
-        if ($post->status !== "active") abort(404);
-        $post->increment("view_count");
-        $post->load(["user:id,name,username,avatar,level", "board:id,name,slug", "comments.user:id,name,username,avatar"]);
-        $post->is_liked = $post->isLikedBy(Auth::user());
-        return response()->json($post);
+        $post = Post::findOrFail($id);
+
+        if ($post->user_id !== auth()->id() && !auth()->user()->is_admin) {
+            return response()->json(['success' => false, 'message' => '수정 권한이 없습니다.'], 403);
+        }
+
+        $request->validate([
+            'title'   => 'sometimes|string|max:200',
+            'content' => 'sometimes|string',
+        ]);
+
+        $post->update($request->only(['title', 'content']));
+
+        return response()->json([
+            'success' => true,
+            'message' => '수정되었습니다.',
+            'data'    => $post->fresh(),
+        ]);
     }
 
-    public function update(Request $request, Post $post)
+    /**
+     * DELETE /api/posts/{id}
+     */
+    public function destroy($id)
     {
-        if ($post->user_id !== Auth::id() && !Auth::user()->is_admin) abort(403);
-        $post->update($request->only(["title", "content"]));
-        return response()->json(["message" => "수정되었습니다.", "post" => $post]);
-    }
+        $post = Post::findOrFail($id);
 
-    public function destroy(Post $post)
-    {
-        if ($post->user_id !== Auth::id() && !Auth::user()->is_admin) abort(403);
-        $post->update(["status" => "deleted"]);
+        if ($post->user_id !== auth()->id() && !auth()->user()->is_admin) {
+            return response()->json(['success' => false, 'message' => '삭제 권한이 없습니다.'], 403);
+        }
+
+        $post->update(['status' => 'deleted']);
         $post->delete();
-        return response()->json(["message" => "삭제되었습니다."]);
+
+        return response()->json([
+            'success' => true,
+            'message' => '삭제되었습니다.',
+        ]);
     }
 
-    public function like(Post $post)
+    /**
+     * POST /api/posts/{id}/like
+     */
+    public function toggleLike($id)
     {
-        $user = Auth::user();
-        $existing = $post->likes()->where("user_id", $user->id)->first();
+        $post = Post::findOrFail($id);
+        $userId = auth()->id();
+
+        $existing = PostLike::where('user_id', $userId)->where('post_id', $post->id)->first();
+
         if ($existing) {
             $existing->delete();
-            $post->decrement("like_count");
-            return response()->json(["liked" => false, "like_count" => $post->like_count]);
+            $post->decrement('like_count');
+            return response()->json([
+                'success' => true,
+                'data'    => ['liked' => false, 'like_count' => $post->fresh()->like_count],
+            ]);
         }
-        $post->likes()->create(["user_id" => $user->id]);
-        $post->increment("like_count");
-        // 게시글 작성자에게 좋아요 알림 (자신의 글에는 알림 없음)
-        if ($post->user_id && $post->user_id !== $user->id) {
-            try {
-                \Illuminate\Support\Facades\DB::table('notifications')->insert([
-                    'user_id'    => $post->user_id,
-                    'type'       => 'like',
-                    'title'      => $user->name . '님이 회원님의 글을 좋아합니다',
-                    'body'       => mb_substr($post->title, 0, 50),
-                    'data'       => json_encode(['post_id' => $post->id]),
-                    'url'        => '/community/post/' . $post->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (\Exception $e) {}
-        }
-        if ($post->user_id !== $user->id) {
-            $post->user->addPoints(10, "like_received", "earn", $post->id, "추천 받음");
-        }
-        return response()->json(["liked" => true, "like_count" => $post->fresh()->like_count]);
+
+        PostLike::create(['user_id' => $userId, 'post_id' => $post->id]);
+        $post->increment('like_count');
+
+        return response()->json([
+            'success' => true,
+            'data'    => ['liked' => true, 'like_count' => $post->fresh()->like_count],
+        ]);
     }
 }

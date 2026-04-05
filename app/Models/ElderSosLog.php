@@ -2,29 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ElderSosLog extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'user_id', 'lat', 'lng', 'status',
-        'guardian_notified', 'resolved_at', 'resolved_by', 'note',
+        'user_id', 'lat', 'lng', 'message',
+        'contacts_notified', 'resolved_at',
     ];
 
-    protected $casts = [
-        'lat'                => 'decimal:7',
-        'lng'                => 'decimal:7',
-        'guardian_notified'  => 'boolean',
-        'resolved_at'       => 'datetime',
-    ];
-
-    public function user()
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'contacts_notified' => 'array',
+            'resolved_at' => 'datetime',
+            'lat' => 'decimal:7',
+            'lng' => 'decimal:7',
+        ];
     }
 
-    public function resolver()
-    {
-        return $this->belongsTo(User::class, 'resolved_by');
-    }
+    public function user() { return $this->belongsTo(User::class); }
 }

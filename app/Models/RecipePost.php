@@ -1,29 +1,40 @@
 <?php
+
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RecipePost extends Model {
-    protected $table = 'recipe_posts';
-    protected $fillable = ['category_id', 'user_id', 'title', 'title_ko', 'intro', 'intro_ko', 'difficulty', 'cook_time', 'calories', 'servings', 'ingredients', 'ingredients_ko', 'steps', 'steps_ko', 'tips', 'tips_ko', 'tags', 'image_url', 'image_credit', 'view_count', 'like_count', 'bookmark_count', 'source', 'source_url', 'is_hidden'];
-    protected $casts = ['ingredients' => 'array', 'ingredients_ko' => 'array', 'steps' => 'array', 'steps_ko' => 'array', 'tips' => 'array', 'tips_ko' => 'array', 'tags' => 'array', 'is_hidden' => 'boolean'];
+class RecipePost extends Model
+{
+    use HasFactory;
 
-    // 한글 우선 표시 접근자
-    public function getDisplayTitleAttribute(): string {
-        return $this->title_ko ?: $this->title;
+    protected $fillable = [
+        'user_id', 'title', 'title_ko', 'content', 'content_ko',
+        'ingredients', 'ingredients_ko', 'steps', 'steps_ko',
+        'category_id', 'images', 'servings', 'prep_time', 'cook_time',
+        'difficulty', 'view_count', 'like_count', 'comment_count',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'ingredients' => 'array',
+            'ingredients_ko' => 'array',
+            'steps' => 'array',
+            'steps_ko' => 'array',
+            'images' => 'array',
+            'servings' => 'integer',
+            'prep_time' => 'integer',
+            'cook_time' => 'integer',
+            'view_count' => 'integer',
+            'like_count' => 'integer',
+            'comment_count' => 'integer',
+        ];
     }
-    public function getDisplayIntroAttribute(): ?string {
-        return $this->intro_ko ?: $this->intro;
-    }
-    public function getDisplayIngredientsAttribute(): ?array {
-        return $this->ingredients_ko ?: $this->ingredients;
-    }
-    public function getDisplayStepsAttribute(): ?array {
-        return $this->steps_ko ?: $this->steps;
-    }
-    public function getDisplayTipsAttribute(): ?array {
-        return $this->tips_ko ?: $this->tips;
-    }
-    public function category() { return $this->belongsTo(RecipeCategory::class, 'category_id'); }
-    public function user() { return $this->belongsTo(User::class); }
-    public function comments() { return $this->hasMany(RecipeComment::class, 'recipe_id'); }
+
+    public function user()      { return $this->belongsTo(User::class); }
+    public function category()  { return $this->belongsTo(RecipeCategory::class, 'category_id'); }
+    public function comments()  { return $this->morphMany(Comment::class, 'commentable'); }
+    public function bookmarks() { return $this->morphMany(Bookmark::class, 'bookmarkable'); }
 }

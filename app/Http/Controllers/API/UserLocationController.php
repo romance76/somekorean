@@ -1,45 +1,40 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class UserLocationController extends Controller
 {
-    public function get(Request $request)
+    /**
+     * PUT /api/user/location
+     * Update user's lat/lng/city/state/zipcode.
+     */
+    public function update(Request $request)
     {
-        $user = $request->user();
-        
-        if ($user->zip_code) {
-            try {
-                $response = Http::timeout(3)->get("https://api.zippopotam.us/us/{$user->zip_code}");
-                if ($response->ok()) {
-                    $place = $response->json()["places"][0];
-                    return response()->json([
-                        "zip_code" => $user->zip_code,
-                        "city" => [
-                            "name"  => $place["place name"],
-                            "state" => $place["state abbreviation"],
-                            "lat"   => (float) $place["latitude"],
-                            "lng"   => (float) $place["longitude"],
-                        ]
-                    ]);
-                }
-            } catch (\Exception $e) {}
-        }
+        $request->validate([
+            'lat'      => 'nullable|numeric|between:-90,90',
+            'lng'      => 'nullable|numeric|between:-180,180',
+            'city'     => 'nullable|string|max:100',
+            'state'    => 'nullable|string|max:50',
+            'zip_code' => 'nullable|string|max:20',
+        ]);
 
-        if ($user->city) {
-            return response()->json([
-                "city" => [
-                    "name"  => $user->city,
-                    "state" => $user->state,
-                    "lat"   => (float) $user->lat,
-                    "lng"   => (float) $user->lng,
-                ]
-            ]);
-        }
+        $user = auth()->user();
 
-        return response()->json(["city" => null]);
+        $user->update($request->only(['lat', 'lng', 'city', 'state', 'zip_code']));
+
+        return response()->json([
+            'success' => true,
+            'message' => '위치 정보가 업데이트되었습니다.',
+            'data'    => [
+                'lat'      => $user->lat,
+                'lng'      => $user->lng,
+                'city'     => $user->city,
+                'state'    => $user->state,
+                'zip_code' => $user->zip_code,
+            ],
+        ]);
     }
 }
