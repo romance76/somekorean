@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SomeKorean 디자인 비교</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+* { font-family: 'Noto Sans KR', sans-serif; }
+.tab-btn.active { background: #2563eb; color: white; }
+.design { display: none; }
+.design.active { display: block; }
+</style>
+</head>
+<body class="bg-gray-100">
+
+<!-- Selector -->
+<div class="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b-4 border-blue-600">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
+    <span class="font-black text-lg">🎨 디자인 비교</span>
+    <button onclick="show(1)" id="tab1" class="tab-btn active px-4 py-2 rounded-lg font-bold text-sm transition">A. 카카오 스타일</button>
+    <button onclick="show(2)" id="tab2" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-gray-100 transition">B. 네이버 카페 스타일</button>
+    <button onclick="show(3)" id="tab3" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-gray-100 transition">C. 레딧 다크 스타일</button>
+  </div>
+</div>
+
+<div class="pt-16">
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- DESIGN A: 카카오 커뮤니티 스타일 (노란+갈색 톤) -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="design1" class="design active">
+
+  <!-- Nav -->
+  <nav class="bg-white shadow-sm sticky top-14 z-40">
+    <div class="max-w-5xl mx-auto px-4 flex items-center h-14">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-sm font-black text-yellow-900">SK</div>
+        <span class="font-black text-gray-800">SomeKorean</span>
+      </div>
+      <div class="flex-1 max-w-md mx-6">
+        <div class="bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-400 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          검색어를 입력하세요
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-sm">
+        <span class="text-gray-500">로그인</span>
+        <span class="bg-yellow-400 text-yellow-900 font-bold px-4 py-1.5 rounded-full text-xs">회원가입</span>
+        <span class="text-xs text-gray-400 border rounded px-2 py-1">EN</span>
+      </div>
+    </div>
+    <div class="border-t max-w-5xl mx-auto px-4 flex gap-1 h-10 items-center overflow-x-auto text-xs font-semibold">
+      <a class="text-yellow-700 bg-yellow-50 px-3 py-1 rounded-full">커뮤니티</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">Q&A</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">구인구직</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">중고장터</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">업소록</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">부동산</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">뉴스</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">이벤트</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">게임</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">레시피</a>
+      <a class="text-gray-500 hover:text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-50">숏츠</a>
+    </div>
+  </nav>
+
+  <div class="max-w-5xl mx-auto px-4 py-5">
+    <!-- Hero -->
+    <div class="bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 rounded-2xl p-8 text-center mb-5 shadow-lg">
+      <h1 class="text-3xl font-black text-yellow-900">🇰🇷 미국 한인 커뮤니티</h1>
+      <p class="text-yellow-800 mt-2">한인들의 일상을 함께하는 올인원 플랫폼</p>
+      <div class="mt-4 bg-white/80 rounded-xl max-w-lg mx-auto flex items-center px-4 py-2.5 shadow">
+        <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="text-gray-400 text-sm">업소, 구인, 장터를 검색하세요...</span>
+      </div>
+    </div>
+
+    <!-- Quick Menu -->
+    <div class="grid grid-cols-6 gap-3 mb-5">
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition cursor-pointer group">
+        <div class="text-2xl mb-1">💬</div>
+        <div class="text-xs font-bold text-gray-700 group-hover:text-yellow-700">커뮤니티</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition cursor-pointer group">
+        <div class="text-2xl mb-1">💼</div>
+        <div class="text-xs font-bold text-gray-700 group-hover:text-yellow-700">구인구직</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition cursor-pointer group">
+        <div class="text-2xl mb-1">🛒</div>
+        <div class="text-xs font-bold text-gray-700 group-hover:text-yellow-700">중고장터</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition cursor-pointer group">
+        <div class="text-2xl mb-1">🏪</div>
+        <div class="text-xs font-bold text-gray-700 group-hover:text-yellow-700">업소록</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition cursor-pointer group">
+        <div class="text-2xl mb-1">🏠</div>
+        <div class="text-xs font-bold text-gray-700 group-hover:text-yellow-700">부동산</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition cursor-pointer group">
+        <div class="text-2xl mb-1">🎮</div>
+        <div class="text-xs font-bold text-gray-700 group-hover:text-yellow-700">게임</div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="grid grid-cols-3 gap-4">
+      <!-- 최신 게시글 -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden col-span-2">
+        <div class="flex items-center justify-between px-4 py-3 bg-yellow-50 border-b">
+          <h3 class="font-bold text-sm text-yellow-900">💬 최신 게시글</h3>
+          <span class="text-xs text-yellow-700 font-semibold">더보기 →</span>
+        </div>
+        <div class="divide-y">
+          <div class="px-4 py-3 hover:bg-yellow-50/50 cursor-pointer flex justify-between items-center">
+            <div>
+              <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold mr-2">자유</span>
+              <span class="text-sm text-gray-800">자녀 SAT 준비 어떻게 하시나요?</span>
+            </div>
+            <span class="text-xs text-gray-400">84 조회</span>
+          </div>
+          <div class="px-4 py-3 hover:bg-yellow-50/50 cursor-pointer flex justify-between items-center">
+            <div>
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold mr-2">정보</span>
+              <span class="text-sm text-gray-800">중고차 구매 시 주의사항 총정리</span>
+            </div>
+            <span class="text-xs text-gray-400">211 조회</span>
+          </div>
+          <div class="px-4 py-3 hover:bg-yellow-50/50 cursor-pointer flex justify-between items-center">
+            <div>
+              <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold mr-2">꿀팁</span>
+              <span class="text-sm text-gray-800">LA 한인 맛집 리스트 2026 업데이트</span>
+            </div>
+            <span class="text-xs text-gray-400">156 조회</span>
+          </div>
+          <div class="px-4 py-3 hover:bg-yellow-50/50 cursor-pointer flex justify-between items-center">
+            <div>
+              <span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold mr-2">이민</span>
+              <span class="text-sm text-gray-800">영주권 인터뷰 후기 공유합니다</span>
+            </div>
+            <span class="text-xs text-gray-400">320 조회</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사이드바 -->
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-bold text-sm text-gray-800 mb-3">🔥 인기 구인</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-gray-700 truncate">제과점 베이커 모집</span><span class="text-xs text-yellow-600 font-bold">$18/h</span></div>
+            <div class="flex justify-between"><span class="text-gray-700 truncate">모바일 앱 개발자</span><span class="text-xs text-yellow-600 font-bold">$120K</span></div>
+            <div class="flex justify-between"><span class="text-gray-700 truncate">네일 테크니션</span><span class="text-xs text-yellow-600 font-bold">$22/h</span></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-bold text-sm text-gray-800 mb-3">🛍️ 중고장터</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-2xl">📱</div>
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-2xl">🪑</div>
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-2xl">👕</div>
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-2xl">🚗</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-center py-8 text-xs text-gray-400">Design A: 카카오 커뮤니티 스타일 — 노란/앰버 톤, 따뜻하고 친근함</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- DESIGN B: 네이버 카페 스타일 (초록+하양 톤) -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="design2" class="design">
+
+  <!-- Nav -->
+  <nav class="bg-white border-b sticky top-14 z-40">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="flex items-center h-14">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-green-500 rounded flex items-center justify-center text-white text-xs font-black">SK</div>
+          <div>
+            <div class="font-black text-gray-900 text-sm leading-none">SomeKorean</div>
+            <div class="text-[10px] text-green-600">미국 한인 커뮤니티</div>
+          </div>
+        </div>
+        <div class="flex-1 max-w-lg mx-6">
+          <div class="flex border-2 border-green-500 rounded-lg overflow-hidden">
+            <input class="flex-1 px-3 py-1.5 text-sm outline-none" placeholder="검색어를 입력하세요">
+            <button class="bg-green-500 px-4 text-white">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 text-sm">
+          <span class="text-gray-600 text-xs">로그인</span>
+          <span class="bg-green-500 text-white font-bold px-4 py-1.5 rounded text-xs">회원가입</span>
+        </div>
+      </div>
+      <!-- 메뉴 바 -->
+      <div class="flex gap-0 border-t text-xs font-semibold -mb-px">
+        <a class="border-b-2 border-green-500 text-green-600 px-4 py-2.5">홈</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">커뮤니티</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">Q&A</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">구인구직</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">중고장터</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">업소록</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">부동산</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">뉴스</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">이벤트</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">게임</a>
+        <a class="text-gray-500 hover:text-green-600 px-4 py-2.5 border-b-2 border-transparent">레시피</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="bg-gray-50 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-5">
+      <!-- 배너 -->
+      <div class="bg-gradient-to-r from-green-600 to-emerald-500 rounded-xl p-6 text-white mb-5 flex items-center justify-between">
+        <div>
+          <div class="text-xs bg-white/20 inline-block px-2 py-0.5 rounded mb-2">🇰🇷 미국 한인 No.1</div>
+          <h2 class="text-2xl font-black">함께 만들어가는 한인 커뮤니티</h2>
+          <p class="text-green-100 text-sm mt-1">201명의 회원이 활동 중입니다</p>
+        </div>
+        <div class="text-6xl opacity-50">🤝</div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+        <!-- 왼쪽 사이드 -->
+        <div class="col-span-3 space-y-3">
+          <div class="bg-white rounded-lg shadow-sm">
+            <div class="px-3 py-2.5 border-b font-bold text-sm text-gray-800">📋 게시판</div>
+            <div class="py-1">
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50 hover:text-green-700">자유게시판</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50 hover:text-green-700">정보공유</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50 hover:text-green-700">생활꿀팁</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50 hover:text-green-700">맛집후기</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50 hover:text-green-700">이민생활</a>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm">
+            <div class="px-3 py-2.5 border-b font-bold text-sm text-gray-800">⚡ 서비스</div>
+            <div class="py-1">
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50">💼 구인구직</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50">🛒 중고장터</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50">🏪 업소록</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50">🏠 부동산</a>
+              <a class="block px-3 py-1.5 text-sm text-gray-600 hover:bg-green-50">🎮 게임</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="col-span-6 space-y-3">
+          <div class="bg-white rounded-lg shadow-sm">
+            <div class="flex border-b text-xs font-semibold">
+              <span class="text-green-600 border-b-2 border-green-500 px-4 py-2.5">전체글</span>
+              <span class="text-gray-400 px-4 py-2.5">인기글</span>
+              <span class="text-gray-400 px-4 py-2.5">공지</span>
+            </div>
+            <table class="w-full text-sm">
+              <tbody>
+                <tr class="border-b hover:bg-gray-50 cursor-pointer">
+                  <td class="px-3 py-2.5"><span class="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">자유</span></td>
+                  <td class="py-2.5 text-gray-800">자녀 SAT 준비 어떻게 하시나요? <span class="text-xs text-green-500 font-bold">[9]</span></td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">임민수</td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">84</td>
+                </tr>
+                <tr class="border-b hover:bg-gray-50 cursor-pointer">
+                  <td class="px-3 py-2.5"><span class="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded">정보</span></td>
+                  <td class="py-2.5 text-gray-800">중고차 구매 시 주의사항 <span class="text-xs text-green-500 font-bold">[22]</span></td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">강현우</td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">211</td>
+                </tr>
+                <tr class="border-b hover:bg-gray-50 cursor-pointer">
+                  <td class="px-3 py-2.5"><span class="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">맛집</span></td>
+                  <td class="py-2.5 text-gray-800">LA 한인타운 맛집 리스트 2026 <span class="text-xs text-green-500 font-bold">[15]</span></td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">Sarah Lee</td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">156</td>
+                </tr>
+                <tr class="hover:bg-gray-50 cursor-pointer">
+                  <td class="px-3 py-2.5"><span class="text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">이민</span></td>
+                  <td class="py-2.5 text-gray-800">영주권 인터뷰 후기 공유합니다 <span class="text-xs text-green-500 font-bold">[31]</span></td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">James Kim</td>
+                  <td class="px-3 py-2.5 text-xs text-gray-400 text-right">320</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 오른쪽 사이드 -->
+        <div class="col-span-3 space-y-3">
+          <div class="bg-white rounded-lg shadow-sm p-3">
+            <div class="font-bold text-xs text-gray-800 mb-2">🔥 실시간 인기</div>
+            <div class="space-y-1.5 text-xs text-gray-600">
+              <div class="flex gap-2"><span class="text-green-600 font-bold">1</span>H1B 비자 최신 정보</div>
+              <div class="flex gap-2"><span class="text-green-600 font-bold">2</span>시민권 인터뷰 준비</div>
+              <div class="flex gap-2"><span class="text-green-600 font-bold">3</span>한인마트 세일 정보</div>
+              <div class="flex gap-2"><span class="text-gray-400 font-bold">4</span>자동차 보험 비교</div>
+              <div class="flex gap-2"><span class="text-gray-400 font-bold">5</span>자녀 학교 선택 고민</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm p-3">
+            <div class="font-bold text-xs text-gray-800 mb-2">💼 최신 구인</div>
+            <div class="space-y-2 text-xs">
+              <div><span class="text-gray-800">제과점 베이커</span><br><span class="text-gray-400">카페 봄 · $18/h</span></div>
+              <div><span class="text-gray-800">앱 개발자</span><br><span class="text-gray-400">Hana Tech · $120K</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-center py-8 text-xs text-gray-400 bg-gray-50">Design B: 네이버 카페 스타일 — 초록+하양, 정보 중심 테이블 레이아웃</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- DESIGN C: 레딧 다크 스타일 -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="design3" class="design">
+
+  <nav class="bg-zinc-900 border-b border-zinc-700 sticky top-14 z-40">
+    <div class="max-w-6xl mx-auto px-4 flex items-center h-12">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-black">SK</div>
+        <span class="font-black text-white text-sm">SomeKorean</span>
+      </div>
+      <div class="flex-1 max-w-md mx-6">
+        <div class="bg-zinc-800 rounded-full px-4 py-1.5 text-sm text-zinc-400 border border-zinc-700 hover:border-zinc-500 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Search SomeKorean
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-zinc-400 text-xs">로그인</span>
+        <span class="bg-orange-500 text-white font-bold px-4 py-1 rounded-full text-xs">회원가입</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="bg-zinc-950 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-4">
+      <!-- 서비스 태그 -->
+      <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">🔥 인기</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">💬 커뮤니티</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">💼 구인</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">🛒 장터</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">🏪 업소록</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">🏠 부동산</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">🎮 게임</span>
+        <span class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-zinc-700 hover:border-orange-500 cursor-pointer">📰 뉴스</span>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+        <!-- 메인 피드 -->
+        <div class="col-span-8 space-y-3">
+          <!-- 카드 1 -->
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-600 transition p-4 cursor-pointer">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">자</div>
+              <span class="text-xs text-zinc-400">r/자유게시판 · 임민수 · 3시간 전</span>
+            </div>
+            <h3 class="text-white font-bold mb-1">자녀 SAT 준비 어떻게 하시나요?</h3>
+            <p class="text-zinc-400 text-sm line-clamp-2">처음에는 정말 어려웠는데 시간이 지나면서 점점 나아지더라고요. 특히 주변 한인 분들의 도움이 많이 되었습니다...</p>
+            <div class="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+              <span class="flex items-center gap-1 hover:text-orange-400">▲ 26</span>
+              <span class="flex items-center gap-1 hover:text-zinc-300">💬 9 댓글</span>
+              <span class="flex items-center gap-1 hover:text-zinc-300">↗ 공유</span>
+              <span class="flex items-center gap-1 hover:text-zinc-300">⭐ 저장</span>
+            </div>
+          </div>
+
+          <!-- 카드 2 -->
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-600 transition p-4 cursor-pointer">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">정</div>
+              <span class="text-xs text-zinc-400">r/정보공유 · 강현우 · 5시간 전</span>
+            </div>
+            <h3 class="text-white font-bold mb-1">중고차 구매 시 주의사항 총정리</h3>
+            <p class="text-zinc-400 text-sm line-clamp-2">한인 커뮤니티 관련 질문드립니다. 검색해 봤는데 정확한 답을 찾기가 어렵네요...</p>
+            <div class="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+              <span class="flex items-center gap-1 hover:text-orange-400">▲ 45</span>
+              <span class="flex items-center gap-1 hover:text-zinc-300">💬 22 댓글</span>
+              <span class="flex items-center gap-1 hover:text-zinc-300">↗ 공유</span>
+            </div>
+          </div>
+
+          <!-- 카드 3 -->
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-600 transition p-4 cursor-pointer">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">구</div>
+              <span class="text-xs text-zinc-400">r/구인구직 · 카페 봄 · 1일 전</span>
+              <span class="bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-full font-bold">채용중</span>
+            </div>
+            <h3 class="text-white font-bold mb-1">제과점 베이커 모집 — Washington, DC</h3>
+            <div class="flex gap-3 mt-2 text-xs">
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded">💰 $15~$20/h</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded">🕐 풀타임</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded">📍 Washington, DC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 사이드바 -->
+        <div class="col-span-4 space-y-3">
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <div class="bg-gradient-to-r from-orange-500 to-red-500 p-4 text-white">
+              <h3 class="font-black">SomeKorean</h3>
+              <p class="text-xs text-orange-100 mt-1">미국 한인 커뮤니티</p>
+            </div>
+            <div class="p-4 space-y-3">
+              <div class="flex justify-between text-sm"><span class="text-zinc-400">회원</span><span class="text-white font-bold">201명</span></div>
+              <div class="flex justify-between text-sm"><span class="text-zinc-400">오늘 게시글</span><span class="text-white font-bold">47개</span></div>
+              <button class="w-full bg-orange-500 text-white font-bold py-2 rounded-full text-sm hover:bg-orange-600 transition">가입하기</button>
+            </div>
+          </div>
+
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+            <h4 class="font-bold text-sm text-white mb-3">🔥 인기 키워드</h4>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs">#이민</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs">#영주권</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs">#맛집</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs">#구인</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs">#중고차</span>
+              <span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs">#부동산</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-center py-8 text-xs text-zinc-500 bg-zinc-950">Design C: 레딧 다크 스타일 — 다크 모드, 카드 피드, 모던한 느낌</div>
+</div>
+
+</div>
+
+<script>
+function show(n) {
+  document.querySelectorAll('.design').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('bg-gray-100'); });
+  document.getElementById('design' + n).classList.add('active');
+  const tab = document.getElementById('tab' + n);
+  tab.classList.add('active');
+  tab.classList.remove('bg-gray-100');
+}
+</script>
+</body>
+</html>
