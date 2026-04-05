@@ -14,12 +14,21 @@ class EventController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Event::whereIn('status', ['active', 'published'])
+        $query = Event::whereNotIn('status', ['cancelled', 'draft'])
             ->with('user:id,name,username,avatar')
             ->latest('event_date');
 
         if ($request->region)   $query->where('region', $request->region);
         if ($request->category) $query->where('category', $request->category);
+
+        if ($request->search) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('title', 'like', "%{$s}%")
+                  ->orWhere('description', 'like', "%{$s}%")
+                  ->orWhere('location', 'like', "%{$s}%");
+            });
+        }
 
         return response()->json($query->paginate(20));
     }
@@ -112,7 +121,7 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($id);
 
-        if (!in_array($event->status, ['active', 'published'])) {
+        if (in_array($event->status, ['cancelled', 'draft'])) {
             return response()->json(['message' => '참가할 수 없는 이벤트입니다.'], 422);
         }
 

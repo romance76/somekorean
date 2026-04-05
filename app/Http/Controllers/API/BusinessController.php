@@ -11,13 +11,23 @@ class BusinessController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Business::where('status', 'active')
-            ->orderByDesc('is_sponsored')
-            ->orderByDesc('rating_avg');
+        $query = Business::where('status', 'active');
 
-        if ($request->category) $query->where('category', $request->category);
-        if ($request->region)   $query->where('region', 'like', '%'.$request->region.'%');
-        if ($request->state) {
+        // Category filter - exact match or LIKE for partial matches
+        if ($request->category) {
+            $query->where(function ($q) use ($request) {
+                $q->where('category', $request->category)
+                  ->orWhere('category', 'like', '%'.$request->category.'%');
+            });
+        }
+
+        // Region filter
+        if ($request->region) {
+            $query->where('region', 'like', '%'.$request->region.'%');
+        }
+
+        // State filter - match region to cities in the state
+        if ($request->state && !$request->region) {
             $stateCities = [
                 'CA'=>['Los Angeles','LA','San Francisco','San Diego'],
                 'NY'=>['New York','NY','Flushing'], 'TX'=>['Houston','Dallas'],
@@ -29,9 +39,53 @@ class BusinessController extends Controller
                 'MD'=>['Baltimore'], 'PA'=>['Philadelphia'],
             ];
             $s = strtoupper($request->state);
-            if (isset($stateCities[$s])) $query->whereIn('region', $stateCities[$s]);
+            if (isset($stateCities[$s])) {
+                $query->where(function ($q) use ($stateCities, $s) {
+                    foreach ($stateCities[$s] as $city) {
+                        $q->orWhere('region', 'like', '%'.$city.'%');
+                    }
+                });
+            }
         }
-        if ($request->search)   $query->where('name', 'like', '%'.$request->search.'%');
+
+        // Search filter - search name, name_ko, name_en, description
+        if ($request->search) {
+            $keyword = $request->search;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', '%'.$keyword.'%')
+                  ->orWhere('name_ko', 'like', '%'.$keyword.'%')
+                  ->orWhere('name_en', 'like', '%'.$keyword.'%')
+                  ->orWhere('description', 'like', '%'.$keyword.'%');
+            });
+        }
+
+        // Distance filter using Haversine formula
+        $userLat = $request->input('lat');
+        $userLng = $request->input('lng');
+        $radius  = $request->input('radius'); // in miles, 0 = all
+
+        if ($userLat && $userLng && $radius && $radius > 0) {
+            $lat = (float) $userLat;
+            $lng = (float) $userLng;
+            $r   = (float) $radius;
+
+            // Haversine formula for distance in miles
+            $haversine = "(3959 * acos(
+                cos(radians({$lat}))
+                * cos(radians(COALESCE(lat, latitude, 0)))
+                * cos(radians(COALESCE(lng, longitude, 0)) - radians({$lng}))
+                + sin(radians({$lat}))
+                * sin(radians(COALESCE(lat, latitude, 0)))
+            ))";
+
+            $query->selectRaw("*, {$haversine} AS distance")
+                  ->havingRaw("distance <= ?", [$r])
+                  ->orderBy('distance');
+        }
+
+        // Default ordering: sponsored first, then by rating
+        $query->orderByDesc('is_sponsored')
+              ->orderByDesc('rating_avg');
 
         $perPage = min((int)($request->per_page ?? 20), 50);
         return response()->json($query->paginate($perPage));

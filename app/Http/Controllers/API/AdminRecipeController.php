@@ -60,8 +60,8 @@ class AdminRecipeController extends Controller {
     public function update(Request $r, $id) {
         $recipe = RecipePost::findOrFail($id);
         $recipe->update($r->only([
-            'title','intro','difficulty','cook_time','calories','servings',
-            'ingredients','steps','tips','tags','image_url','image_credit','is_hidden',
+            'title','title_ko','intro','intro_ko','difficulty','cook_time','calories','servings',
+            'ingredients','ingredients_ko','steps','steps_ko','tips','tips_ko','tags','image_url','image_credit','is_hidden',
             'category_id'
         ]));
         return response()->json($recipe->load('category:id,name,key','user:id,name,username'));

@@ -10,11 +10,16 @@ use Illuminate\Support\Facades\DB;
 
 class RecipeController extends Controller {
     public function categories() {
-        return response()->json(RecipeCategory::where('is_active', true)->orderBy('sort_order')->get());
+        $cats = RecipeCategory::where('is_active', true)->orderBy('sort_order')->get();
+        $cats->transform(function ($cat) {
+            if ($cat->name_ko) $cat->name = $cat->name_ko;
+            return $cat;
+        });
+        return response()->json($cats);
     }
 
     public function index(Request $request) {
-        $query = RecipePost::with('user:id,name,username', 'category:id,name,key,icon')
+        $query = RecipePost::with('user:id,name,username', 'category:id,name,name_ko,key,icon')
             ->where('is_hidden', false)
             ->orderByDesc('created_at');
         if ($request->category) $query->whereHas('category', fn($q) => $q->where('key', $request->category));
@@ -23,8 +28,9 @@ class RecipeController extends Controller {
             $s = $request->search;
             $query->where(function($q) use ($s) {
                 $q->where('title', 'like', "%$s%")
+                  ->orWhere('title_ko', 'like', "%$s%")
                   ->orWhere('intro', 'like', "%$s%")
-                  ->orWhereJsonContains('ingredients', $s)
+                  ->orWhere('intro_ko', 'like', "%$s%")
                   ->orWhereJsonContains('tags', $s);
             });
         }
@@ -32,13 +38,25 @@ class RecipeController extends Controller {
     }
 
     public function show($id) {
-        $recipe = RecipePost::with(['user:id,name,username,avatar', 'category:id,name,key,icon',
+        $recipe = RecipePost::with(['user:id,name,username,avatar', 'category:id,name,name_ko,key,icon',
             'comments' => fn($q) => $q->with('user:id,name,username,avatar')->latest()->limit(20),
         ])->findOrFail($id);
         $recipe->increment('view_count');
         $isLiked = Auth::check() ? DB::table('content_likes')->where('user_id', Auth::id())->where('likeable_type', 'recipe')->where('likeable_id', $id)->exists() : false;
         $isBookmarked = Auth::check() ? DB::table('content_likes')->where('user_id', Auth::id())->where('likeable_type', 'recipe_bookmark')->where('likeable_id', $id)->exists() : false;
-        return response()->json(array_merge($recipe->toArray(), ['is_liked' => $isLiked, 'is_bookmarked' => $isBookmarked]));
+
+        if ($recipe->category && $recipe->category->name_ko) {
+            $recipe->category->name = $recipe->category->name_ko;
+        }
+
+        $data = $recipe->toArray();
+        $data['display_title'] = $recipe->title_ko ?: $recipe->title;
+        $data['display_intro'] = $recipe->intro_ko ?: $recipe->intro;
+        $data['display_ingredients'] = $recipe->ingredients_ko ?: $recipe->ingredients;
+        $data['display_steps'] = $recipe->steps_ko ?: $recipe->steps;
+        $data['display_tips'] = $recipe->tips_ko ?: $recipe->tips;
+
+        return response()->json(array_merge($data, ['is_liked' => $isLiked, 'is_bookmarked' => $isBookmarked]));
     }
 
     public function store(Request $request) {
@@ -84,6 +102,6 @@ class RecipeController extends Controller {
     }
 
     public function popular() {
-        return response()->json(RecipePost::where('is_hidden', false)->orderByDesc('like_count')->limit(10)->get(['id','title','image_url','difficulty','cook_time','like_count']));
+        return response()->json(RecipePost::where('is_hidden', false)->orderByDesc('like_count')->limit(10)->get(['id','title','title_ko','image_url','difficulty','cook_time','like_count']));
     }
 }

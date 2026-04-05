@@ -77,14 +77,24 @@
     <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <router-link v-for="biz in businesses" :key="biz.id" :to="`/directory/${biz.id}`" class="block">
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition">
-          <div class="h-24 bg-gradient-to-r from-blue-400 to-blue-500"></div>
+          <div class="h-40 bg-gradient-to-r from-blue-400 to-blue-500 relative">
+            <img v-if="getFirstPhoto(biz)" :src="getFirstPhoto(biz)" :alt="biz.name"
+              class="w-full h-full object-cover object-top" loading="lazy"
+              @error="$event.target.style.display='none'" />
+            <div v-else class="w-full h-full flex items-center justify-center text-white/60 text-4xl">
+              {{ biz.category?.charAt(0) || '📋' }}
+            </div>
+            <span v-if="biz.distance" class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+              📍 {{ Number(biz.distance).toFixed(1) }}mi
+            </span>
+          </div>
           <div class="p-4">
             <div class="flex items-center justify-between mb-1">
               <span v-if="biz.is_sponsored" class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-bold">프리미엄</span>
               <span v-else></span>
-              <span class="text-yellow-500 text-sm font-bold">⭐ {{ Number(biz.rating_avg).toFixed(1) }}</span>
+              <span class="text-yellow-500 text-sm font-bold">{{ Number(biz.rating_avg).toFixed(1) }}</span>
             </div>
-            <h3 class="font-bold text-gray-800">{{ biz.name }}</h3>
+            <h3 class="font-bold text-gray-800 truncate">{{ biz.name }}</h3>
             <p class="text-xs text-gray-500">{{ biz.category }} · 📍 {{ biz.region }}</p>
             <p v-if="biz.description" class="text-sm text-gray-600 mt-2 line-clamp-2">{{ biz.description }}</p>
           </div>
@@ -96,7 +106,15 @@
     <div v-else class="space-y-3">
       <router-link v-for="biz in businesses" :key="biz.id" :to="`/directory/${biz.id}`"
         class="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition">
-        <div class="flex items-start justify-between">
+        <div class="flex items-start gap-3">
+          <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-400 to-blue-500">
+            <img v-if="getFirstPhoto(biz)" :src="getFirstPhoto(biz)" :alt="biz.name"
+              class="w-full h-full object-cover object-top"
+              loading="lazy" @error="$event.target.style.display='none'" />
+            <div v-else class="w-full h-full flex items-center justify-center text-white/60 text-xl">
+              {{ biz.category?.charAt(0) || '📋' }}
+            </div>
+          </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center space-x-2 mb-1">
               <span v-if="biz.is_sponsored" class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">프리미엄</span>
@@ -105,6 +123,7 @@
             <div class="flex items-center space-x-3 text-xs text-gray-500 mb-1">
               <span class="bg-gray-100 px-2 py-0.5 rounded">{{ biz.category }}</span>
               <span v-if="biz.region">📍 {{ biz.region }}</span>
+              <span v-if="biz.distance" class="text-blue-500 font-medium">{{ Number(biz.distance).toFixed(1) }}mi</span>
             </div>
             <p v-if="biz.description" class="text-gray-500 text-xs truncate">{{ biz.description }}</p>
           </div>
@@ -152,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import axios from 'axios';
 
@@ -168,6 +187,31 @@ const currentPage = ref(1);
 const totalPages = ref(1);
 const totalCount = ref(0);
 const selectedState = ref('');
+const userLat = ref(null);
+const userLng = ref(null);
+
+// Get user location for distance filtering
+function getUserLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLat.value = pos.coords.latitude;
+        userLng.value = pos.coords.longitude;
+      },
+      () => { /* silently fail - distance filter will just be ignored */ }
+    );
+  }
+}
+
+function getFirstPhoto(biz) {
+  if (biz.photos && Array.isArray(biz.photos) && biz.photos.length > 0) {
+    return biz.photos[0];
+  }
+  if (biz.owner_photos && Array.isArray(biz.owner_photos) && biz.owner_photos.length > 0) {
+    return biz.owner_photos[0];
+  }
+  return null;
+}
 
 const stateButtons = [
   { code: '', label: '전체' },
@@ -248,6 +292,9 @@ async function load(page = 1) {
       region: region.value || undefined,
       state: selectedState.value || undefined,
       per_page: 24,
+      radius: radius.value || undefined,
+      lat: userLat.value || undefined,
+      lng: userLng.value || undefined,
     };
     const { data } = await axios.get('/api/businesses', { params });
     businesses.value = data.data || [];
@@ -259,5 +306,11 @@ async function load(page = 1) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-onMounted(() => load());
+// Reload when radius changes
+watch(radius, () => load(1));
+
+onMounted(() => {
+  getUserLocation();
+  load();
+});
 </script>

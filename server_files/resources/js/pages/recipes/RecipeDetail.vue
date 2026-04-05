@@ -11,7 +11,7 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
           <!-- 대표 이미지 -->
           <div v-if="recipe.image_url" class="relative">
-            <img :src="recipe.image_url" :alt="recipe.title" class="w-full object-cover" style="max-height: clamp(200px, 50vw, 420px)" />
+            <img :src="recipe.image_url" :alt="recipe.display_title || recipe.title_ko || recipe.title" class="w-full object-cover" style="max-height: clamp(200px, 50vw, 420px)" />
             <div v-if="recipe.image_credit" class="absolute bottom-2 right-3 text-xs text-white bg-black/40 px-2 py-0.5 rounded">
               {{ recipe.image_credit }}
             </div>
@@ -28,8 +28,8 @@
               </span>
               <span :class="difficultyClass(recipe.difficulty)" class="text-xs px-2.5 py-1 rounded-full font-medium">{{ recipe.difficulty }}</span>
             </div>
-            <h1 class="text-xl font-black text-gray-900 mb-2">{{ recipe.title }}</h1>
-            <p v-if="recipe.intro" class="text-gray-600 text-sm leading-relaxed mb-4">{{ recipe.intro }}</p>
+            <h1 class="text-xl font-black text-gray-900 mb-2">{{ recipe.display_title || recipe.title_ko || recipe.title }}</h1>
+            <p v-if="recipe.display_intro || recipe.intro_ko || recipe.intro" class="text-gray-600 text-sm leading-relaxed mb-4">{{ recipe.display_intro || recipe.intro_ko || recipe.intro }}</p>
 
             <!-- 정보 태그 -->
             <div class="flex flex-wrap gap-2 sm:gap-3 mb-4 text-sm">
@@ -70,7 +70,7 @@
             재료 ({{ recipe.servings }}인분)
           </h2>
           <ul class="space-y-2">
-            <li v-for="(ing, i) in recipe.ingredients" :key="i"
+            <li v-for="(ing, i) in (recipe.display_ingredients || recipe.ingredients_ko || recipe.ingredients)" :key="i"
               class="flex items-center gap-2 text-sm py-2 border-b border-gray-50 last:border-0">
               <span class="w-2 h-2 rounded-full bg-orange-300 flex-shrink-0"></span>
               <span class="flex-1 text-gray-700">{{ typeof ing === 'object' ? ing.name : ing }}</span>
@@ -86,20 +86,20 @@
             조리 순서
           </h2>
           <ol class="space-y-4">
-            <li v-for="(step, i) in recipe.steps" :key="i" class="flex gap-4">
+            <li v-for="(step, i) in (recipe.display_steps || recipe.steps_ko || recipe.steps)" :key="i" class="flex gap-4">
               <div class="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
                 {{ i + 1 }}
               </div>
-              <p class="text-gray-700 text-sm leading-relaxed pt-0.5">{{ typeof step === 'object' ? step.description : step }}</p>
+              <p class="text-gray-700 text-sm leading-relaxed pt-0.5">{{ typeof step === 'object' ? (step.description || step.text) : step }}</p>
             </li>
           </ol>
         </div>
 
         <!-- 팁 -->
-        <div v-if="recipe.tips?.length" class="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-4">
+        <div v-if="(recipe.display_tips || recipe.tips_ko || recipe.tips)?.length" class="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-4">
           <h2 class="font-bold text-amber-800 mb-3">💡 요리 팁</h2>
           <ul class="space-y-2">
-            <li v-for="(tip, i) in recipe.tips" :key="i" class="text-sm text-amber-700 flex gap-2">
+            <li v-for="(tip, i) in (recipe.display_tips || recipe.tips_ko || recipe.tips)" :key="i" class="text-sm text-amber-700 flex gap-2">
               <span class="text-amber-400 flex-shrink-0">•</span>
               <span>{{ tip }}</span>
             </li>

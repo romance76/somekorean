@@ -11,11 +11,17 @@ use Illuminate\Support\Facades\Storage;
 
 class RecipeController extends Controller {
     public function categories() {
-        return response()->json(RecipeCategory::where('is_active', true)->orderBy('sort_order')->get());
+        $cats = RecipeCategory::where('is_active', true)->orderBy('sort_order')->get();
+        // 한글 이름이 있으면 name에 덮어쓰기
+        $cats->transform(function ($cat) {
+            if ($cat->name_ko) $cat->name = $cat->name_ko;
+            return $cat;
+        });
+        return response()->json($cats);
     }
 
     public function index(Request $request) {
-        $query = RecipePost::with('user:id,nickname,username,avatar', 'category:id,name,key,icon')
+        $query = RecipePost::with('user:id,nickname,username,avatar', 'category:id,name,name_ko,key,icon')
             ->where('is_hidden', false);
 
         if ($request->sort === 'popular') {
@@ -32,7 +38,9 @@ class RecipeController extends Controller {
             $s = $request->search;
             $query->where(function($q) use ($s) {
                 $q->where('title', 'like', "%$s%")
+                  ->orWhere('title_ko', 'like', "%$s%")
                   ->orWhere('intro', 'like', "%$s%")
+                  ->orWhere('intro_ko', 'like', "%$s%")
                   ->orWhereJsonContains('tags', $s);
             });
         }
@@ -42,7 +50,7 @@ class RecipeController extends Controller {
     }
 
     public function show($id) {
-        $recipe = RecipePost::with(['user:id,nickname,username,avatar', 'category:id,name,key,icon',
+        $recipe = RecipePost::with(['user:id,nickname,username,avatar', 'category:id,name,name_ko,key,icon',
             'comments' => fn($q) => $q->with('user:id,nickname,username,avatar')->latest()->limit(20),
         ])->findOrFail($id);
         $recipe->increment('view_count');
@@ -51,12 +59,25 @@ class RecipeController extends Controller {
         $related = RecipePost::where('category_id', $recipe->category_id)
             ->where('id', '!=', $id)
             ->where('is_hidden', false)
-            ->where('source', 'user')
             ->inRandomOrder()->limit(6)
-            ->get(['id','title','image_url','difficulty','cook_time','like_count','view_count','category_id']);
+            ->get(['id','title','title_ko','image_url','difficulty','cook_time','like_count','view_count','category_id']);
         $avgRating = DB::table('recipe_comments')
-            ->where('recipe_id', $id)->where('is_hidden', false)->whereNotNull('rating')->avg('rating');
-        return response()->json(array_merge($recipe->toArray(), [
+            ->where('recipe_id', $id)->whereNotNull('rating')->avg('rating');
+
+        // 한글 카테고리명 치환
+        if ($recipe->category && $recipe->category->name_ko) {
+            $recipe->category->name = $recipe->category->name_ko;
+        }
+
+        $data = $recipe->toArray();
+        // 한글 우선 필드 추가
+        $data['display_title'] = $recipe->title_ko ?: $recipe->title;
+        $data['display_intro'] = $recipe->intro_ko ?: $recipe->intro;
+        $data['display_ingredients'] = $recipe->ingredients_ko ?: $recipe->ingredients;
+        $data['display_steps'] = $recipe->steps_ko ?: $recipe->steps;
+        $data['display_tips'] = $recipe->tips_ko ?: $recipe->tips;
+
+        return response()->json(array_merge($data, [
             'is_liked' => $isLiked, 'is_bookmarked' => $isBookmarked,
             'related' => $related,
             'avg_rating' => $avgRating ? round($avgRating, 1) : null,
@@ -157,7 +178,7 @@ class RecipeController extends Controller {
     }
 
     public function popular() {
-        return response()->json(RecipePost::where('is_hidden', false)->where('source','user')->orderByDesc('like_count')->limit(10)->get(['id','title','image_url','difficulty','cook_time','like_count']));
+        return response()->json(RecipePost::where('is_hidden', false)->orderByDesc('like_count')->limit(10)->get(['id','title','title_ko','image_url','difficulty','cook_time','like_count']));
     }
 
     public function myRecipes(Request $request) {

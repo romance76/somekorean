@@ -41,7 +41,7 @@
           class="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition group">
           <!-- 이미지 -->
           <div class="relative bg-gray-100 overflow-hidden" style="aspect-ratio:4/3">
-            <img v-if="recipe.image_url" :src="recipe.image_url" :alt="recipe.title"
+            <img v-if="recipe.image_url" :src="recipe.image_url" :alt="recipe.title_ko || recipe.title"
               class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
               @error="recipe.image_url = null" />
             <div v-else class="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-br from-orange-100 to-amber-50">🍽️</div>
@@ -51,7 +51,7 @@
             </span>
           </div>
           <div class="p-3">
-            <h3 class="font-semibold text-gray-800 text-sm leading-snug line-clamp-2 mb-2">{{ recipe.title }}</h3>
+            <h3 class="font-semibold text-gray-800 text-sm leading-snug line-clamp-2 mb-2">{{ recipe.title_ko || recipe.title }}</h3>
             <div class="flex items-center justify-between text-xs text-gray-400">
               <span>⏱ {{ recipe.cook_time }}</span>
               <span>❤️ {{ recipe.like_count || 0 }}</span>
