@@ -511,7 +511,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 // ─── Tabs ────────────────────────────────────────────────
 const activeTab = ref('rides')
@@ -527,92 +528,10 @@ const tabs = computed(() => [
 ])
 
 // ─── Dummy Rides ─────────────────────────────────────────
-const rides = ref([
-  {
-    id: 1001, from: '1234 Olympic Blvd, LA', to: '5678 Wilshire Blvd, LA',
-    passenger: '김미래', passenger_phone: '213-555-0011',
-    driver: '이철수', driver_phone: '213-555-1001',
-    fare: 24.50, payment_status: 'paid', status: 'completed', created_at: '2026-03-20',
-    payment_method: '카드결제',
-    timeline: [
-      { time: '2026-03-20 09:00', desc: '라이드 요청' },
-      { time: '2026-03-20 09:05', desc: '관리자 승인' },
-      { time: '2026-03-20 09:10', desc: '드라이버 배정 (이철수)' },
-      { time: '2026-03-20 09:30', desc: '라이드 완료' },
-    ],
-  },
-  {
-    id: 1002, from: '9000 Koreatown Ave, LA', to: '1000 Hollywood Blvd, LA',
-    passenger: '박준혁', passenger_phone: '213-555-0022',
-    driver: '최강호', driver_phone: '213-555-1002',
-    fare: 38.00, payment_status: 'paid', status: 'completed', created_at: '2026-03-21',
-    payment_method: '카드결제',
-    timeline: [
-      { time: '2026-03-21 14:00', desc: '라이드 요청' },
-      { time: '2026-03-21 14:08', desc: '관리자 승인' },
-      { time: '2026-03-21 15:00', desc: '라이드 완료' },
-    ],
-  },
-  {
-    id: 1003, from: '4500 Vermont Ave, LA', to: '2200 Western Ave, LA',
-    passenger: '이소연', passenger_phone: '213-555-0033',
-    driver: '이철수', driver_phone: '213-555-1001',
-    fare: 18.00, payment_status: 'paid', status: 'in_progress', created_at: '2026-03-25',
-    payment_method: '카드결제',
-    timeline: [
-      { time: '2026-03-25 10:00', desc: '라이드 요청' },
-      { time: '2026-03-25 10:05', desc: '관리자 승인' },
-      { time: '2026-03-25 10:20', desc: '라이드 시작' },
-    ],
-  },
-  {
-    id: 1004, from: '3300 Normandie Ave, LA', to: '8800 Sunset Blvd, LA',
-    passenger: '한수정', passenger_phone: '213-555-0044',
-    driver: null, driver_phone: null,
-    fare: 52.00, payment_status: 'pending', status: 'pending', created_at: '2026-03-27',
-    payment_method: '카드결제',
-    timeline: [{ time: '2026-03-27 08:30', desc: '라이드 요청' }],
-  },
-  {
-    id: 1005, from: '6700 Crenshaw Blvd, LA', to: 'LAX Terminal B',
-    passenger: '최영철', passenger_phone: '213-555-0055',
-    driver: null, driver_phone: null,
-    fare: 65.00, payment_status: 'pending', status: 'pending', created_at: '2026-03-28',
-    payment_method: '카드결제',
-    timeline: [{ time: '2026-03-28 06:00', desc: '라이드 요청' }],
-  },
-  {
-    id: 1006, from: '1100 S Grand Ave, LA', to: '4400 Figueroa St, LA',
-    passenger: '윤지민', passenger_phone: '213-555-0066',
-    driver: '최강호', driver_phone: '213-555-1002',
-    fare: 21.50, payment_status: 'paid', status: 'approved', created_at: '2026-03-28',
-    payment_method: '카드결제',
-    timeline: [
-      { time: '2026-03-28 11:00', desc: '라이드 요청' },
-      { time: '2026-03-28 11:10', desc: '관리자 승인' },
-      { time: '2026-03-28 11:15', desc: '드라이버 배정 (최강호)' },
-    ],
-  },
-  {
-    id: 1007, from: 'Koreatown Plaza, LA', to: 'Santa Monica Pier',
-    passenger: '정대한', passenger_phone: '213-555-0077',
-    driver: null, driver_phone: null,
-    fare: 47.00, payment_status: 'refunded', status: 'cancelled', created_at: '2026-03-22',
-    payment_method: '카드결제',
-    timeline: [
-      { time: '2026-03-22 13:00', desc: '라이드 요청' },
-      { time: '2026-03-22 14:00', desc: '고객 취소' },
-    ],
-  },
-])
+const rides = ref([])
 
 // ─── Dummy Drivers ───────────────────────────────────────
-const drivers = ref([
-  { id: 1, name: '이철수', phone: '213-555-1001', email: 'cheolsu@gmail.com', vehicle: 'Toyota Camry 2023', plate: '8ABC123', license: 'DL98765432', status: 'active', completed: 15, rating: 4.8, ach_bank: 'Wells Fargo', ach_account: '****4567', ach_routing: '121000248', payout_pending: 416.00, approved_at: '2025-06-01' },
-  { id: 2, name: '최강호', phone: '213-555-1002', email: 'kangho@gmail.com', vehicle: 'Honda Civic 2024', plate: '9DEF456', license: 'DL87654321', status: 'active', completed: 22, rating: 4.9, ach_bank: 'Bank of America', ach_account: '****7890', ach_routing: '026009593', payout_pending: 624.00, approved_at: '2025-07-15' },
-  { id: 3, name: '한드라이브', phone: '213-555-1003', email: 'drive@gmail.com', vehicle: 'Hyundai Sonata 2025', plate: '7GHI789', license: 'DL76543210', status: 'pending_approval', completed: 0, rating: 0, ach_bank: 'Chase', ach_account: '****2345', ach_routing: '021000021', payout_pending: 0, applied_at: '2026-03-27' },
-  { id: 4, name: '박라이드', phone: '213-555-1004', email: 'ride@gmail.com', vehicle: 'Kia EV6 2024', plate: '6JKL012', license: 'DL65432109', status: 'pending_approval', completed: 0, rating: 0, payout_pending: 0, applied_at: '2026-03-28' },
-])
+const drivers = ref([])
 
 // ─── Payout History ──────────────────────────────────────
 const payoutHistory = ref([
@@ -791,6 +710,35 @@ const showToast = (type, message) => {
   toast.value = { show: true, message, type }
   setTimeout(() => { toast.value.show = false }, 3000)
 }
+
+
+
+const ridesTotal = ref(0)
+const driversTotal = ref(0)
+const ridesLoading = ref(false)
+
+async function loadRides() {
+  ridesLoading.value = true
+  try {
+    const { data } = await axios.get('/api/admin/rides')
+    rides.value = Array.isArray(data) ? data : (data.data || [])
+    ridesTotal.value = data.total || rides.value.length
+  } catch(e) { console.error(e) } finally { ridesLoading.value = false }
+}
+
+async function loadDrivers() {
+  try {
+    const { data } = await axios.get('/api/admin/drivers')
+    drivers.value = Array.isArray(data) ? data : (data.data || [])
+    driversTotal.value = data.total || drivers.value.length
+  } catch(e) {}
+}
+
+onMounted(() => {
+  loadRides()
+  loadDrivers()
+})
+
 </script>
 
 <style scoped>

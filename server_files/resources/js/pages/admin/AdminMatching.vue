@@ -533,6 +533,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import axios from 'axios'
 
 // ── 탭 ──────────────────────────────────────────────────────────────
 const tabs = [
@@ -694,14 +695,7 @@ function confirmReject(id) {
 }
 
 // ── 프로필 관리 더미 데이터 ───────────────────────────────────────────
-const profiles = ref([
-  { id: 1, nickname: '별빛청년',  age: 28, gender: '남성', region: '뉴욕',   photoCount: 4, completion: 90, active: true  },
-  { id: 2, nickname: '봄날소녀',  age: 25, gender: '여성', region: 'LA',     photoCount: 5, completion: 95, active: true  },
-  { id: 3, nickname: '산하남자',  age: 31, gender: '남성', region: '시카고', photoCount: 2, completion: 65, active: true  },
-  { id: 4, nickname: '하늘여인',  age: 27, gender: '여성', region: '시애틀', photoCount: 3, completion: 75, active: false },
-  { id: 5, nickname: '달빛청년',  age: 33, gender: '남성', region: '뉴욕',   photoCount: 4, completion: 85, active: true  },
-  { id: 6, nickname: '새벽소녀',  age: 29, gender: '여성', region: 'LA',     photoCount: 6, completion: 100, active: true },
-])
+const profiles = ref([])
 
 const profileFilter = ref({ gender: '', ageGroup: '', region: '' })
 
@@ -774,4 +768,19 @@ function saveSettings() {
   settingsSaved.value = true
   setTimeout(() => { settingsSaved.value = false }, 3000)
 }
+
+async function loadMatchingData() {
+  try {
+    const [statsRes, profilesRes] = await Promise.all([
+      axios.get('/api/admin/matching/stats'),
+      axios.get('/api/admin/matching/profiles'),
+    ])
+    Object.assign(stats, statsRes.data)
+    if (profilesRes.data.data) profiles.value = profilesRes.data.data
+    else if (Array.isArray(profilesRes.data)) profiles.value = profilesRes.data
+  } catch(e) {}
+}
+
+onMounted(loadMatchingData)
+
 </script>

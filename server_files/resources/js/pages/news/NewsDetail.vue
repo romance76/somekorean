@@ -5,11 +5,43 @@
       <div v-if="loading" class="text-center py-20 text-gray-400">불러오는 중...</div>
 
       <template v-else-if="news">
+        <!-- 브레드크럼 -->
+        <div class="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+          <button @click="router.push('/news')" class="hover:text-[#D00000] transition">뉴스</button>
+          <span class="text-gray-300">/</span>
+          <template v-if="news.main_category_obj">
+            <button @click="router.push('/news')" class="hover:text-[#D00000] transition">{{ news.main_category_obj.name }}</button>
+            <span class="text-gray-300">/</span>
+          </template>
+          <template v-else-if="news.category">
+            <span class="text-gray-400">{{ news.category }}</span>
+            <span class="text-gray-300">/</span>
+          </template>
+          <template v-if="news.sub_category">
+            <span class="text-gray-700 font-medium">{{ news.sub_category.name }}</span>
+          </template>
+          <template v-else-if="news.category">
+            <span class="text-gray-700 font-medium">{{ news.category }}</span>
+          </template>
+        </div>
+
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-4 rounded-2xl mb-4">
-          <div class="flex items-center gap-2 mb-2">
-            <button @click="router.push('/news')" class="text-blue-200 text-sm hover:text-white transition">&larr; 뉴스 목록</button>
-            <span class="bg-white/20 text-xs px-3 py-1 rounded-full">{{ news.category || '뉴스' }}</span>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <button @click="router.push('/news')" class="text-blue-200 text-sm hover:text-white transition">&larr; 뉴스 목록</button>
+              <span class="bg-white/20 text-xs px-3 py-1 rounded-full">{{ news.sub_category?.name || news.category || '뉴스' }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="shareNews" class="flex items-center gap-1 text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                공유
+              </button>
+              <button @click="bookmarked = !bookmarked" :class="bookmarked ? 'bg-yellow-400/30' : 'bg-white/10 hover:bg-white/20'" class="flex items-center gap-1 text-xs text-white/80 hover:text-white px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" :fill="bookmarked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                북마크
+              </button>
+            </div>
           </div>
           <h1 class="text-lg sm:text-xl font-black leading-tight">{{ news.title }}</h1>
           <div class="flex items-center gap-2 mt-2 text-sm text-blue-100">
@@ -71,14 +103,52 @@
                   <span>저장</span>
                 </button>
               </div>
-              <button @click="shareNews"
-                class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-gray-50 text-gray-500 hover:bg-gray-100 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-                <span>공유</span>
-              </button>
+
+            </div>
+
+            <!-- 이전/다음 기사 -->
+            <div v-if="news.prev || news.next" class="bg-white rounded-2xl shadow-sm p-4 mb-4">
+              <div class="flex flex-col gap-2">
+                <button
+                  v-if="news.prev"
+                  @click="router.push('/news/' + news.prev.id)"
+                  class="flex items-start gap-2 text-left group hover:text-[#D00000] transition"
+                >
+                  <span class="text-gray-400 text-xs mt-0.5 flex-shrink-0">&#8249; 이전</span>
+                  <span class="text-sm text-gray-700 group-hover:text-[#D00000] line-clamp-1">{{ news.prev.title }}</span>
+                </button>
+                <div v-if="news.prev && news.next" class="border-t border-gray-100"></div>
+                <button
+                  v-if="news.next"
+                  @click="router.push('/news/' + news.next.id)"
+                  class="flex items-start gap-2 text-left group hover:text-[#D00000] transition"
+                >
+                  <span class="text-gray-400 text-xs mt-0.5 flex-shrink-0">다음 &#8250;</span>
+                  <span class="text-sm text-gray-700 group-hover:text-[#D00000] line-clamp-1">{{ news.next.title }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 관련 뉴스 (모바일) -->
+            <div v-if="news.related && news.related.length" class="bg-white rounded-2xl shadow-sm p-4 mb-4 lg:hidden">
+              <h3 class="font-bold text-gray-800 text-sm mb-3">관련 뉴스</h3>
+              <div class="space-y-3">
+                <div
+                  v-for="r in news.related"
+                  :key="r.id"
+                  @click="router.push('/news/' + r.id)"
+                  class="flex gap-3 cursor-pointer group"
+                >
+                  <div class="flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden bg-gray-100">
+                    <img v-if="r.image_url" :src="r.image_url" class="w-full h-full object-cover" @error="r.image_url = null" />
+                    <div v-else class="w-full h-full flex items-center justify-center text-xl">📰</div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-700 group-hover:text-[#D00000] line-clamp-2 leading-snug">{{ r.title }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ r.source }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Comments -->
@@ -127,7 +197,7 @@
             <div class="bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden">
               <!-- 헤더 -->
               <h3 class="flex-shrink-0 font-bold text-gray-800 text-sm px-4 py-3 border-b border-gray-100">
-                {{ news.category || '관련' }} 뉴스
+                {{ news.sub_category?.name || news.category || '관련' }} 뉴스
               </h3>
 
               <!-- 뉴스 목록 -->
@@ -489,15 +559,21 @@ const _legacy = [
   { id:10, category:'교육', title:'SAT 2026 개편 — 디지털 시험 전환 후 첫 전국 결과 분석', summary:'디지털 SAT 전환 이후 첫 전국 결과가 공개됐다. 한인 학생들의 평균 점수 변화와 대비 전략을 분석한다.', source:'교육뉴스코리아', date:'3일 전', icon:'📝', iconBg:'#fef9c3' },
 ]
 
-async function loadRelated(category) {
+async function loadRelated(category, relatedFromApi = []) {
   const toItem = n => ({
     ...n,
     icon:   categoryIcons[n.category] || '📰',
     iconBg: categoryBgs[n.category]   || '#f3f4f6',
     date:   timeAgo(n.published_at || n.created_at),
   })
+
+  // API에서 이미 related 데이터가 있으면 우선 사용
+  if (relatedFromApi.length > 0) {
+    relatedAll.value = relatedFromApi.map(toItem)
+    return
+  }
+
   try {
-    // 1차: 같은 카테고리 최대 50개
     const [catRes, allRes] = await Promise.allSettled([
       axios.get('/api/news', { params: { category, limit: 50 } }),
       axios.get('/api/news', { params: { limit: 50 } }),
@@ -509,7 +585,6 @@ async function loadRelated(category) {
       ? (allRes.value.data.data || allRes.value.data).filter(n => n.id != route.params.id)
       : []
 
-    // 같은 카테고리가 5개 이상이면 그것만, 아니면 전체로 채움
     const merged = catItems.length >= 5
       ? catItems
       : [...catItems, ...allItems.filter(n => !catItems.find(c => c.id === n.id))]

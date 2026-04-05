@@ -5,12 +5,32 @@
       <div v-if="loading" class="text-center py-20 text-gray-400">불러오는 중...</div>
 
       <template v-else-if="news">
+        <!-- 브레드크럼 -->
+        <div class="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+          <button @click="router.push('/news')" class="hover:text-[#D00000] transition">뉴스</button>
+          <span class="text-gray-300">/</span>
+          <template v-if="news.main_category_obj">
+            <button @click="router.push('/news')" class="hover:text-[#D00000] transition">{{ news.main_category_obj.name }}</button>
+            <span class="text-gray-300">/</span>
+          </template>
+          <template v-else-if="news.category">
+            <span class="text-gray-400">{{ news.category }}</span>
+            <span class="text-gray-300">/</span>
+          </template>
+          <template v-if="news.sub_category">
+            <span class="text-gray-700 font-medium">{{ news.sub_category.name }}</span>
+          </template>
+          <template v-else-if="news.category">
+            <span class="text-gray-700 font-medium">{{ news.category }}</span>
+          </template>
+        </div>
+
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-4 rounded-2xl mb-4">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
               <button @click="router.push('/news')" class="text-blue-200 text-sm hover:text-white transition">&larr; 뉴스 목록</button>
-              <span class="bg-white/20 text-xs px-3 py-1 rounded-full">{{ news.category || '뉴스' }}</span>
+              <span class="bg-white/20 text-xs px-3 py-1 rounded-full">{{ news.sub_category?.name || news.category || '뉴스' }}</span>
             </div>
             <div class="flex items-center gap-2">
               <button @click="shareNews" class="flex items-center gap-1 text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">

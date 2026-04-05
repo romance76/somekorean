@@ -218,6 +218,90 @@
         </div>
       </div>
 
+      <!-- ========================= TAB: 메뉴 관리 ========================= -->
+      <div v-if="activeTab === 'menus'">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="text-base font-semibold text-gray-800">네비게이션 메뉴 관리</h2>
+            <p class="text-xs text-gray-400 mt-0.5">순서, 표시여부, 로그인/관리자 권한을 한 곳에서 설정하세요</p>
+          </div>
+          <button @click="saveMenus" :disabled="menuSaving"
+            class="btn-primary">
+            {{ menuSaving ? '저장 중...' : '💾 저장' }}
+          </button>
+        </div>
+
+        <!-- 통계 -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="bg-blue-50 rounded-xl p-4 text-center">
+            <div class="text-2xl font-black text-blue-600">{{ menuList.filter(m => m.enabled).length }}</div>
+            <div class="text-xs text-blue-400">활성 메뉴</div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4 text-center">
+            <div class="text-2xl font-black text-gray-500">{{ menuList.filter(m => !m.enabled).length }}</div>
+            <div class="text-xs text-gray-400">비활성 메뉴</div>
+          </div>
+          <div class="bg-red-50 rounded-xl p-4 text-center">
+            <div class="text-2xl font-black text-red-500">{{ menuList.filter(m => m.login_required).length }}</div>
+            <div class="text-xs text-red-400">로그인 필요</div>
+          </div>
+        </div>
+
+        <!-- 헤더 행 -->
+        <div class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 font-medium border-b border-gray-100 mb-2">
+          <span class="w-6 text-center">#</span>
+          <span class="w-7"></span>
+          <span class="flex-1">메뉴</span>
+          <span class="w-14 hidden sm:inline"></span>
+          <span class="w-16 text-center">순서</span>
+          <span class="w-16 text-center">로그인</span>
+          <span class="w-16 text-center">관리자</span>
+          <span class="w-12 text-center">표시</span>
+        </div>
+
+        <div class="space-y-2">
+          <div v-for="(item, idx) in menuList" :key="item.key"
+            class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-blue-200 transition">
+            <span class="w-6 text-center text-xs font-bold text-gray-300">{{ idx + 1 }}</span>
+            <span class="text-xl w-7 text-center flex-shrink-0">{{ item.icon }}</span>
+            <span class="flex-1 text-sm font-semibold text-gray-800">{{ item.label }}</span>
+            <span class="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded hidden sm:inline">{{ item.key }}</span>
+            <!-- Up/Down -->
+            <div class="flex gap-1">
+              <button @click="moveMenu(idx, -1)" :disabled="idx === 0"
+                class="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-20 transition text-xs">▲</button>
+              <button @click="moveMenu(idx, 1)" :disabled="idx === menuList.length - 1"
+                class="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-20 transition text-xs">▼</button>
+            </div>
+            <!-- Login required -->
+            <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer" title="로그인 필요">
+              <input type="checkbox" v-model="item.login_required" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <span class="hidden lg:inline">로그인</span>
+            </label>
+            <!-- Admin only -->
+            <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer" title="관리자만">
+              <input type="checkbox" v-model="item.admin_only" class="rounded border-gray-300 text-red-600 focus:ring-red-500" />
+              <span class="hidden lg:inline">관리자</span>
+            </label>
+            <!-- Enable toggle -->
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="item.enabled" class="sr-only peer" />
+              <div class="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-between items-center">
+          <button @click="resetMenuOrder"
+            class="btn-secondary text-xs">
+            🔄 기본 순서로 리셋
+          </button>
+          <button @click="saveMenus" :disabled="menuSaving" class="btn-primary">
+            {{ menuSaving ? '저장 중...' : '💾 메뉴 설정 저장' }}
+          </button>
+        </div>
+      </div>
+
       <!-- ========================= TAB 3: 푸터 편집 ========================= -->
       <div v-show="activeTab === 'footer'">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
@@ -742,11 +826,73 @@
         </div>
       </div>
     </div>
+
+    <!-- API 키 관리 -->
+    <div v-if="activeTab === 'api'" class="space-y-6">
+      <div class="bg-white rounded-xl border p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold">🔑 API 키 관리</h3>
+          <button @click="showAddApiKey = true" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700">+ 새 API 키</button>
+        </div>
+        
+        <div class="space-y-3">
+          <div v-for="key in apiKeys" :key="key.id" class="border rounded-xl p-4 flex items-center justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-gray-800">{{ key.name }}</span>
+                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ key.service }}</span>
+                <span :class="key.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="text-xs px-2 py-0.5 rounded-full">{{ key.is_active ? '활성' : '비활성' }}</span>
+              </div>
+              <p v-if="key.description" class="text-xs text-gray-500 mt-1">{{ key.description }}</p>
+              <div class="flex items-center gap-2 mt-2">
+                <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">{{ key.showFull ? key.fullKey : key.masked_key }}</code>
+                <button @click="toggleReveal(key)" class="text-xs text-blue-600 hover:underline">{{ key.showFull ? '숨기기' : '보기' }}</button>
+                <button @click="copyKey(key)" class="text-xs text-gray-500 hover:underline">복사</button>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button @click="toggleApiKeyActive(key)" :class="key.is_active ? 'text-orange-600' : 'text-green-600'" class="text-xs hover:underline">{{ key.is_active ? '비활성화' : '활성화' }}</button>
+              <button @click="deleteApiKey(key.id)" class="text-xs text-red-600 hover:underline">삭제</button>
+            </div>
+          </div>
+          <div v-if="!apiKeys.length" class="text-center py-8 text-gray-400 text-sm">등록된 API 키가 없습니다</div>
+        </div>
+      </div>
+
+      <!-- 새 API 키 추가 모달 -->
+      <div v-if="showAddApiKey" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showAddApiKey = false">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+          <h3 class="font-bold text-lg mb-4">🔑 새 API 키 등록</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">서비스 이름</label>
+              <input v-model="newApiKey.name" placeholder="예: YouTube Data API v3" class="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">서비스 코드</label>
+              <input v-model="newApiKey.service" placeholder="예: youtube, stripe, openai" class="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">API 키</label>
+              <input v-model="newApiKey.api_key" placeholder="키 입력..." class="w-full border rounded-lg px-3 py-2 text-sm font-mono" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">설명 (선택)</label>
+              <input v-model="newApiKey.description" placeholder="용도 설명" class="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button @click="showAddApiKey = false" class="flex-1 py-2 bg-gray-100 rounded-lg text-sm font-semibold">취소</button>
+              <button @click="saveApiKey" class="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">등록</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 // ─── Sub-component: Toggle Row ────────────────────────────────────────────────
@@ -786,9 +932,11 @@ const lastLoaded = ref('—')
 const tabs = [
   { key: 'company', label: '회사 정보' },
   { key: 'site', label: '사이트 설정' },
+  { key: 'menus', label: '메뉴 관리' },
   { key: 'footer', label: '푸터 편집' },
   { key: 'terms', label: '약관 관리' },
   { key: 'notifications', label: '결제/알림 설정' },
+  { key: 'api', label: '🔑 API 키 관리' },
 ]
 
 const termsTabs = [
@@ -1044,7 +1192,7 @@ async function saveNotifications() {
 async function savePayment() {
   saving.value = true
   try {
-    await axios.post('/api/admin/settings/payment', {
+    await axios.post('/api/admin/settings/payment-gateway', {
       min_amount: payment.min_amount,
       currency: payment.currency,
     })
@@ -1158,7 +1306,144 @@ async function generateVapidKeys() {
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
+// ─── Menu Management ─────────────────────────────────────────────────────────
+const menuList = ref([])
+const menuSaving = ref(false)
+
+const allMenuDefs = [
+  { key: 'qa',        label: 'Q&A',         icon: '❓' },
+  { key: 'community', label: '커뮤니티', icon: '💬' },
+  { key: 'jobs',      label: '구인구직', icon: '💼' },
+  { key: 'market',    label: '중고장터', icon: '🛍️' },
+  { key: 'realestate',label: '부동산',   icon: '🏠' },
+  { key: 'clubs',     label: '동호회',   icon: '👥' },
+  { key: 'directory', label: '업소록',   icon: '🏪' },
+  { key: 'news',      label: '뉴스',     icon: '📰' },
+  { key: 'recipes',   label: '레시피',   icon: '🍳' },
+  { key: 'shopping',  label: '쇼핑정보', icon: '🛒' },
+  { key: 'groupbuy',  label: '공동구매', icon: '🤝' },
+  { key: 'mentor',    label: '멘토링',   icon: '🎓' },
+  { key: 'chat',      label: '체팅',     icon: '💬' },
+  { key: 'games',     label: '게임',     icon: '🀄' },
+  { key: 'shorts',    label: '쇼츠',     icon: '📱' },
+  { key: 'ride',      label: '알바라이드', icon: '🚗' },
+  { key: 'elder',     label: '안심서비스', icon: '💙' },
+  { key: 'events',    label: '이벤트',   icon: '🎉' },
+  { key: 'ai',        label: 'AI검색',   icon: '🤖' },
+  { key: 'friends',   label: '친구',     icon: '👫' },
+  { key: 'match',     label: '매칭',     icon: '💝' },
+  { key: 'music',     label: '음악듣기', icon: '🎵' },
+]
+
+async function loadMenus() {
+  try {
+    const { data } = await axios.get('/api/admin/settings/menus')
+    const saved = Array.isArray(data) ? data : []
+    if (saved.length > 0) {
+      const ordered = []
+      saved.forEach(m => {
+        const def = allMenuDefs.find(d => d.key === m.key)
+        if (def) ordered.push({ ...def, enabled: m.enabled !== false, login_required: m.login_required || false, admin_only: m.admin_only || false, order: m.order ?? 999 })
+      })
+      allMenuDefs.forEach(def => {
+        if (!ordered.find(m => m.key === def.key)) {
+          ordered.push({ ...def, enabled: true, login_required: false, admin_only: false, order: 999 })
+        }
+      })
+      menuList.value = ordered.sort((a, b) => a.order - b.order)
+    } else {
+      menuList.value = allMenuDefs.map((d, i) => ({ ...d, enabled: true, login_required: false, admin_only: false, order: i }))
+    }
+  } catch {
+    menuList.value = allMenuDefs.map((d, i) => ({ ...d, enabled: true, login_required: false, admin_only: false, order: i }))
+  }
+}
+
+function moveMenu(idx, dir) {
+  const newIdx = idx + dir
+  if (newIdx < 0 || newIdx >= menuList.value.length) return
+  const list = [...menuList.value]
+  const [item] = list.splice(idx, 1)
+  list.splice(newIdx, 0, item)
+  menuList.value = list
+}
+
+function resetMenuOrder() {
+  menuList.value = allMenuDefs.map((d, i) => ({ ...d, enabled: true, login_required: false, admin_only: false, order: i }))
+}
+
+async function saveMenus() {
+  menuSaving.value = true
+  try {
+    const menus = menuList.value.map((item, i) => ({
+      key: item.key,
+      enabled: item.enabled,
+      order: i,
+      login_required: item.login_required || false,
+      admin_only: item.admin_only || false,
+    }))
+    await axios.post('/api/admin/settings/menus/batch', { menus })
+    showToast('메뉴 설정이 저장되었습니다.')
+  } catch {
+    showToast('저장 실패', 'error')
+  } finally {
+    menuSaving.value = false
+  }
+}
+
+// ─── API 키 관리 ──────────────────────────────────────────────────────────────
+const apiKeys = ref([])
+const showAddApiKey = ref(false)
+const newApiKey = ref({ name: '', service: '', api_key: '', description: '' })
+
+async function loadApiKeys() {
+  try {
+    const { data } = await axios.get('/api/admin/api-keys')
+    apiKeys.value = (data || []).map(k => ({ ...k, showFull: false, fullKey: '' }))
+  } catch {}
+}
+
+async function saveApiKey() {
+  try {
+    await axios.post('/api/admin/api-keys', newApiKey.value)
+    showAddApiKey.value = false
+    newApiKey.value = { name: '', service: '', api_key: '', description: '' }
+    loadApiKeys()
+  } catch (e) { alert(e.response?.data?.message || '등록 실패') }
+}
+
+async function deleteApiKey(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return
+  await axios.delete('/api/admin/api-keys/' + id)
+  loadApiKeys()
+}
+
+async function toggleApiKeyActive(key) {
+  await axios.put('/api/admin/api-keys/' + key.id, { is_active: !key.is_active })
+  loadApiKeys()
+}
+
+async function toggleReveal(key) {
+  if (!key.showFull) {
+    const { data } = await axios.get('/api/admin/api-keys/' + key.id + '/reveal')
+    key.fullKey = data.api_key
+  }
+  key.showFull = !key.showFull
+}
+
+function copyKey(key) {
+  const text = key.showFull ? key.fullKey : key.masked_key
+  navigator.clipboard.writeText(key.fullKey || text)
+  alert('복사되었습니다!')
+}
+
 onMounted(loadSettings)
+onMounted(loadMenus)
+
+watch(() => activeTab.value, (tab) => {
+  if (tab === 'api') loadApiKeys()
+})
+
 </script>
 
 <style scoped>

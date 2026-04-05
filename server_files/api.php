@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\API\ApiKeyController;
 use App\Http\Controllers\API\AuthController;
 
 use App\Http\Controllers\API\PostController;
@@ -76,6 +76,7 @@ use App\Http\Controllers\API\CallController;
 use App\Http\Controllers\API\QaController;
 
 use App\Http\Controllers\API\RecipeController;
+use App\Http\Controllers\API\UserLocationController;
 
 use App\Http\Controllers\API\MusicController;
 
@@ -129,6 +130,7 @@ Route::get('market',                [MarketController::class,  'index']);
 Route::get('market/{item}',         [MarketController::class,  'show']);
 Route::get('realestate',             [RealEstateController::class, 'index']);
 Route::get('realestate/{id}',         [RealEstateController::class, 'show']);
+Route::get("realestate/{id}/comments", [RealEstateController::class, "getComments"]);
 
 Route::get('businesses',            [BusinessController::class,'index']);
 
@@ -296,8 +298,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('auth/logout',  [AuthController::class, 'logout']);
 
     Route::post('auth/refresh', [AuthController::class, 'refresh']);
+    Route::get('user/location', [UserLocationController::class, 'get']);
 
     Route::get('auth/me',       [AuthController::class, 'me']);
+    Route::get('user/me',        [AuthController::class, 'me']);
     Route::delete('auth/account',  [AuthController::class, 'deleteAccount']);
 
 
@@ -311,6 +315,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('wallet/daily-bonus',     [App\Http\Controllers\API\WalletController::class, 'dailyBonus']);
 
     Route::post('wallet/convert',         [App\Http\Controllers\API\WalletController::class, 'convert']);
+
+    Route::get('user/stars',              [App\Http\Controllers\API\WalletController::class, 'stars']);
+
+    Route::post('games/earn-stars',       [App\Http\Controllers\API\WalletController::class, 'earnStars']);
 
 
 
@@ -351,6 +359,8 @@ Route::middleware('auth:api')->group(function () {
     Route::put('comments/{comment}',     [CommentController::class, 'update']);
 
     Route::delete('comments/{comment}',  [CommentController::class, 'destroy']);
+
+    Route::post('comments/{comment}/accept', [CommentController::class, 'accept']);
 
 
 
@@ -550,6 +560,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('clubs/{id}/members',                   [ClubController::class, 'getMembers']);
     Route::get('clubs/{id}/members/pending',            [ClubController::class, 'getPendingMembers']);
     Route::delete('clubs/{id}/members/{userId}',        [ClubController::class, 'kickMember']);
+    Route::put('clubs/{id}/members/{userId}',           [ClubController::class, 'changeRole']);
     Route::post('clubs/{id}/members/{userId}/approve',  [ClubController::class, 'approveMember']);
     Route::post('clubs/{id}/members/{userId}/reject',   [ClubController::class, 'rejectMember']);
     Route::post('clubs/{id}/transfer/{userId}',         [ClubController::class, 'transferOwner']);
@@ -969,6 +980,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('elder/{id}',                     [ElderController::class, 'adminDetail']);
         Route::post('elder/{id}/reset-checkin',      [ElderController::class, 'adminResetCheckin']);
         Route::post('elder/{id}/send-alert',         [ElderController::class, 'adminSendAlert']);
+        Route::post('elder/sos/{id}/resolve',        [ElderController::class, 'resolveSos']);
+        Route::post('elder/sos/{id}/false-alarm',    [ElderController::class, 'resolveSos']);
 
 
 
@@ -986,7 +999,27 @@ Route::middleware('auth:api')->group(function () {
 
         Route::post('settings/payment-gateway',      [AdminSettingsController::class, 'savePaymentGateway']);
 
+        Route::get('settings/payment-gateway',       [AdminSettingsController::class, 'getPaymentGateway']);
+
+        Route::post('settings/payment-gateway/test', [AdminSettingsController::class, 'testPaymentGateway']);
+
+        Route::post('settings/payment',              [AdminSettingsController::class, 'savePayment']);
+
+        Route::post('settings/seo',                  [AdminSettingsController::class, 'saveSeo']);
+
+        Route::post('settings/generate-vapid',       [AdminSettingsController::class, 'generateVapid']);
+
         Route::post('settings/notifications',        [AdminSettingsController::class, 'saveNotifications']);
+
+        Route::get('settings/payments',              [AdminSettingsController::class, 'getPaymentsList']);
+
+        Route::post('settings/payments/{id}/refund', [AdminSettingsController::class, 'refundPayment']);
+
+        Route::get('settings/invoices',              [AdminSettingsController::class, 'getInvoices']);
+
+        Route::post('settings/invoices',             [AdminSettingsController::class, 'createInvoice']);
+
+        Route::get('settings/payments/analytics',    [AdminSettingsController::class, 'getPaymentAnalytics']);
 
         Route::get('settings/menus',                 [AdminSettingsController::class, 'getMenus']);
 
@@ -1024,6 +1057,14 @@ Route::middleware('auth:api')->group(function () {
 
         Route::post('users/{id}/adjust-points',      [AdminSettingsController::class, 'adjustPoints']);
 
+        Route::put('users/{id}/profile',             [AdminSettingsController::class, 'updateUserProfile']);
+
+        Route::post('users/{id}/send-password-reset',[AdminSettingsController::class, 'sendPasswordReset']);
+
+        Route::post('users/{id}/set-password',       [AdminSettingsController::class, 'setPassword']);
+
+        Route::post('users/{id}/force-logout',       [AdminSettingsController::class, 'forceLogout']);
+
         Route::post('users/bulk-action',             [AdminSettingsController::class, 'bulkAction']);
 
 
@@ -1035,6 +1076,10 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('clubs/{id}',                  [AdminController::class, 'deleteClub']);
 
         Route::get('events',                         [AdminController::class, 'getEvents']);
+
+        Route::post('events',                        [AdminController::class, 'createEvent']);
+
+        Route::put('events/{id}',                    [AdminController::class, 'updateEvent']);
 
         Route::delete('events/{id}',                 [AdminController::class, 'deleteEvent']);
 
@@ -1173,6 +1218,12 @@ Route::middleware('auth:api')->group(function () {
         Route::post('businesses/import', [AdminBusinessController::class, 'bulkImport']);
 
         Route::get('businesses/crawl-status', [AdminBusinessController::class, 'crawlStatus']);
+        // API 키 관리
+        Route::get("api-keys", [ApiKeyController::class, "index"]);
+        Route::post("api-keys", [ApiKeyController::class, "store"]);
+        Route::put("api-keys/{id}", [ApiKeyController::class, "update"]);
+        Route::delete("api-keys/{id}", [ApiKeyController::class, "destroy"]);
+        Route::get("api-keys/{id}/reveal", [ApiKeyController::class, "reveal"]);
 
     });
 

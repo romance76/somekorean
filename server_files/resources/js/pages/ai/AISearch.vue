@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-6">
     <!-- 헤더 -->
-    <div class="bg-gradient-to-r from-violet-600 to-blue-600 text-white rounded-2xl px-6 py-8 mb-6 text-center">
+    <div class="bg-gradient-to-r from-violet-600 to-blue-600 text-white rounded-2xl px-6 py-6 mb-6 text-center">
       <div class="text-4xl mb-3">🤖</div>
       <h1 class="text-2xl font-black mb-2">AI 통합검색</h1>
       <p class="text-white/75 text-sm">자연어로 검색하세요 — AI가 게시글·업소·구인 전체에서 찾아드립니다</p>
@@ -74,7 +74,7 @@
           <span class="text-xs font-normal text-gray-400">{{ results.posts.length }}건</span>
         </h2>
         <div class="space-y-2">
-          <RouterLink v-for="p in results.posts" :key="p.id" :to="`/community/posts/${p.id}`"
+          <RouterLink v-for="p in results.posts" :key="p.id" :to="`/community/${p.board_slug || 'free'}/${p.id}`"
             class="bg-white rounded-xl px-4 py-3 flex justify-between items-start hover:shadow-md transition cursor-pointer block">
             <div>
               <p class="font-semibold text-gray-800 text-sm mb-1">{{ p.title }}</p>
@@ -92,7 +92,7 @@
           <span class="text-xs font-normal text-gray-400">{{ results.businesses.length }}건</span>
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <RouterLink v-for="b in results.businesses" :key="b.id" :to="`/businesses/${b.id}`"
+          <RouterLink v-for="b in results.businesses" :key="b.id" :to="`/directory/${b.id}`"
             class="bg-white rounded-xl p-4 hover:shadow-md transition cursor-pointer block">
             <p class="font-bold text-gray-800 text-sm">{{ b.name }}</p>
             <p class="text-xs text-gray-500 mt-1">{{ b.category }} · {{ b.city }}</p>

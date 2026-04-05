@@ -7,10 +7,12 @@ use App\Models\Bookmark;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HasDistanceFilter;
 use Illuminate\Support\Facades\DB;
 
 class MarketController extends Controller
 {
+    use HasDistanceFilter;
     public function index(Request $request)
     {
         $query = MarketItem::with('user:id,name,username,avatar')
@@ -26,6 +28,7 @@ class MarketController extends Controller
             });
         }
 
+        $this->applyDistanceFilter($query, $request, "latitude", "longitude");
         return response()->json($query->orderByDesc('created_at')->paginate(20));
     }
 
@@ -80,9 +83,17 @@ class MarketController extends Controller
 
     public function update(Request $request, MarketItem $item)
     {
-        if ($item->user_id !== Auth::id()) abort(403);
+        if ($item->user_id !== Auth::id() && !Auth::user()->is_admin) abort(403);
         $item->update($request->only(['title','description','price','price_negotiable','status','region','condition']));
         return response()->json(['message' => '수정되었습니다.', 'item' => $item]);
+    }
+
+    public function sold(Request $request, $id)
+    {
+        $item = MarketItem::findOrFail($id);
+        if ($item->user_id !== Auth::id() && !Auth::user()->is_admin) abort(403);
+        $item->update(['status' => 'sold']);
+        return response()->json(['message' => '거래완료 처리되었습니다.', 'item' => $item]);
     }
 
     public function destroy(MarketItem $item)
@@ -164,7 +175,7 @@ class MarketController extends Controller
         // 포인트 지급
         $todayCount = Comment::where('user_id', Auth::id())->whereDate('created_at', today())->count();
         if ($todayCount <= 10) {
-            Auth::user()->addPoints(5, 'comment', 'earn', $comment->id, '댓글 작성');
+            Auth::user()->addPoints(5, 'comment_write', 'earn', $comment->id, '댓글 작성');
         }
 
         return response()->json([

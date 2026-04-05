@@ -104,7 +104,7 @@
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
           <h3 class="font-bold text-gray-800 text-sm">👥 최근 가입 회원</h3>
-          <RouterLink to="/admin/users" class="text-xs text-blue-600 hover:text-blue-700">전체 보기 →</RouterLink>
+          <RouterLink to="/admin/members" class="text-xs text-blue-600 hover:text-blue-700">전체 보기 →</RouterLink>
         </div>
         <div class="divide-y divide-gray-50">
           <div v-for="user in recentUsers" :key="user.id" class="px-5 py-3 flex items-center gap-3">
@@ -157,7 +157,7 @@ const mainCards = computed(() => [
 ])
 
 const quickLinks = computed(() => [
-  { to: '/admin/users',    icon: '👥', label: '회원 관리',    count: (stats.value.users ?? 0) + '명' },
+  { to: '/admin/members',  icon: '👥', label: '회원 관리',    count: (stats.value.users ?? 0) + '명' },
   { to: '/admin/content',  icon: '🚨', label: '신고 처리',    count: (stats.value.reports ?? 0) + '건 대기' },
   { to: '/admin/elder',    icon: '💙', label: '노인 모니터링', count: (stats.value.elder_users ?? 0) + '명 등록' },
   { to: '/admin/business', icon: '🏪', label: '업소록',       count: (stats.value.businesses ?? 0) + '개' },

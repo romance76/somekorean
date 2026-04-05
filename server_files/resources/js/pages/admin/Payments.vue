@@ -799,7 +799,7 @@ const visiblePages = computed(() => {
 
 async function fetchPayments() {
   try {
-    const { data } = await axios.get('/api/admin/settings/payments', { params: filters })
+    const { data } = await axios.get('/api/admin/payments', { params: filters })
     payments.value = data.data && data.data.length ? data.data : dummyPayments
   } catch {
     payments.value = dummyPayments
@@ -822,7 +822,7 @@ async function processRefund() {
   if (!refundTarget.value) return
   refundLoading.value = true
   try {
-    await axios.post(`/api/admin/settings/payments/${refundTarget.value.id}/refund`)
+    await axios.post(`/api/admin/payments/${refundTarget.value.id}/refund`)
     refundTarget.value.status = 'refunded'
   } catch {
     refundTarget.value.status = 'refunded'
@@ -1097,7 +1097,7 @@ const typeBarColors = [
 
 async function fetchAnalytics() {
   try {
-    const { data } = await axios.get('/api/admin/settings/payments/analytics')
+    const { data } = await axios.get('/api/admin/payments/analytics')
     if (data.data && data.data.totalRevenue) {
       Object.assign(analytics, data.data)
     } else {

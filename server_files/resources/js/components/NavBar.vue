@@ -1,7 +1,7 @@
 <template>
   <nav class="bg-white shadow-sm sticky top-0 z-50">
     <!-- Row 1: Logo + Search + User Actions -->
-    <div class="max-w-[1200px] mx-auto px-3 sm:px-4 flex items-center h-12 gap-2 sm:gap-3 overflow-hidden">
+    <div class="max-w-[1200px] mx-auto px-4 flex items-center h-12 gap-3">
       <RouterLink to="/" class="flex-shrink-0">
         <img src="/images/logo.jpg" alt="SomeKorean" class="h-8" />
       </RouterLink>
@@ -20,7 +20,7 @@
       </form>
 
       <!-- Right Side -->
-      <div class="ml-auto flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+      <div class="ml-auto flex items-center gap-1.5 flex-shrink-0">
         <template v-if="auth.isLoggedIn">
           <!-- 알림 -->
           <RouterLink to="/notifications" class="relative p-1.5 text-gray-500 hover:text-blue-600">
@@ -58,13 +58,12 @@
         </template>
         <!-- 언어 스위처 -->
         <button @click="toggleLang"
-          class="flex items-center gap-0.5 text-xs font-bold px-1.5 sm:px-2.5 py-1 rounded-lg border transition ml-0.5 sm:ml-1 flex-shrink-0"
+          class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition ml-1 flex-shrink-0"
           :class="langStore.locale === 'en' ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-blue-300'">
-          <span>{{ langStore.locale === 'ko' ? '🇺🇸' : '🇰🇷' }}</span>
-          <span class="hidden sm:inline">{{ langStore.locale === 'ko' ? 'EN' : '한' }}</span>
+          {{ langStore.locale === 'ko' ? '🇺🇸 EN' : '🇰🇷 한' }}
         </button>
         <!-- 햄버거 (mobile only) -->
-        <button @click="mobileMenuOpen = true" class="md:hidden p-1.5 text-gray-600 hover:text-blue-600 flex-shrink-0">
+        <button @click="mobileMenuOpen = true" class="md:hidden p-1.5 text-gray-600 hover:text-blue-600 ml-0.5">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
@@ -76,7 +75,7 @@
     <div class="border-t border-gray-100 bg-gray-50/80 hidden md:block">
       <div class="max-w-[1200px] mx-auto px-4 flex items-center h-9 overflow-x-auto scrollbar-hide gap-0.5">
         <RouterLink v-for="item in visibleDesktopNav" :key="item.key"
-          :to="item.to" class="nav-link" :class="item.extraClass || ''">
+          :to="item.to" class="nav-link" :class="[item.extraClass || '', isActive(item.to) ? 'router-link-active' : '']">
           {{ item.label }}
         </RouterLink>
       </div>
@@ -90,7 +89,7 @@
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="mobileMenuOpen = false"></div>
           <!-- Panel (slide from right) -->
           <Transition name="drawer-slide" appear>
-            <div v-if="mobileMenuOpen" class="absolute right-0 top-0 h-full w-[280px] max-w-[90vw] bg-white shadow-2xl flex flex-col">
+            <div v-if="mobileMenuOpen" class="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl flex flex-col">
               <!-- Header -->
               <div class="flex items-center justify-between px-4 h-12 bg-blue-600 text-white flex-shrink-0">
                 <span class="font-bold text-sm">🇰🇷 SomeKorean</span>
@@ -173,13 +172,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useLangStore } from '../stores/lang'
 import { useSiteStore } from '../stores/site'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 
 const auth         = useAuthStore()
 const langStore    = useLangStore()
 const siteStore    = useSiteStore()
 const router       = useRouter()
+const route        = useRoute()
 const unreadNotifs = ref(0)
 const searchQ      = ref('')
 const mobileMenuOpen = ref(false)
@@ -214,6 +214,12 @@ function mobileSearch() {
   searchQ.value = ''
 }
 
+function isActive(path) {
+  const current = route.path
+  if (path === '/') return current === '/'
+  return current === path || current.startsWith(path + '/')
+}
+
 // 전체 메뉴 목록 (key = 관리자 menu_settings의 key와 일치)
 const allNavItems = computed(() => {
   const ko = langStore.locale === 'ko'
@@ -238,6 +244,7 @@ const allNavItems = computed(() => {
     { key: 'shopping',   to: '/shopping',   icon: '🛒', label: t('nav.shopping'), color: 'text-green-700 hover:text-green-800', extraClass: 'font-semibold text-green-600' },
     { key: 'groupbuy',   to: '/groupbuy',   icon: '🤝', label: t('nav.groupbuy'), color: 'text-orange-600 hover:text-orange-700', extraClass: 'font-semibold text-orange-500' },
     { key: 'mentor',     to: '/mentor',     icon: '🎓', label: t('nav.mentor'),   color: 'text-teal-600 hover:text-teal-700',   extraClass: 'font-semibold text-teal-600' },
+    { key: 'music',     to: '/music',     icon: '🎵', label: ko ? '음악듣기' : 'Music' },
     { key: 'ai',         to: '/ai',         icon: '🤖', label: t('nav.aiSearch'), color: 'text-violet-600 hover:text-violet-700', extraClass: 'font-semibold text-violet-600' },
     { key: 'points',     to: '/points',     icon: '⭐', label: ko ? '포인트' : 'Points' },
     { key: 'messages',   to: '/messages',   icon: '✉️', label: ko ? '메시지' : 'Messages' },
@@ -246,7 +253,9 @@ const allNavItems = computed(() => {
 
 // 관리자 설정에서 enabled인 메뉴만 필터
 const visibleNavItems = computed(() =>
-  allNavItems.value.filter(item => siteStore.isEnabled(item.key))
+  allNavItems.value
+    .filter(item => siteStore.isEnabled(item.key))
+    .sort((a, b) => siteStore.getOrder(a.key) - siteStore.getOrder(b.key))
 )
 
 // 데스크탑 네비 (points, messages는 상단 아이콘으로 표시하므로 제외)

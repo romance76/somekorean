@@ -505,6 +505,28 @@ class AdminController extends Controller
         return response()->json($events);
     }
 
+    public function createEvent(Request $req)
+    {
+        $event = Event::create([
+            'title'       => $req->title,
+            'description' => $req->description ?? '',
+            'location'    => $req->location ?? '',
+            'event_date'  => $req->event_date ?? $req->date ?? now(),
+            'category'    => $req->category ?? '기타',
+            'image_url'   => $req->image_url ?? null,
+            'user_id'     => $req->user()->id ?? 1,
+            'max_attendees' => $req->max_attendees ?? null,
+        ]);
+        return response()->json($event, 201);
+    }
+
+    public function updateEvent(Request $req, $id)
+    {
+        $event = Event::findOrFail($id);
+        $event->update($req->only(['title', 'description', 'location', 'event_date', 'date', 'category', 'image_url', 'max_attendees']));
+        return response()->json($event);
+    }
+
     public function deleteEvent($id)
     {
         Event::destroy($id);
@@ -512,6 +534,14 @@ class AdminController extends Controller
     }
 
     // ─── 숏츠 관리 ───────────────────────────────────────────
+    public function blindShort($id) {
+        $short = DB::table('shorts')->where('id', $id)->first();
+        if (!$short) return response()->json(['error' => 'Not found'], 404);
+        $newActive = $short->is_active ? 0 : 1;
+        DB::table('shorts')->where('id', $id)->update(['is_active' => $newActive, 'updated_at' => now()]);
+        return response()->json(['is_active' => $newActive, 'message' => $newActive ? '활성화됨' : '숨김 처리됨']);
+    }
+
     public function getShorts(Request $req)
     {
         try {
@@ -521,6 +551,14 @@ class AdminController extends Controller
                 ->orderByDesc('shorts.created_at');
             if ($req->search) {
                 $q->where('shorts.title', 'like', "%{$req->search}%");
+            }
+            if ($req->platform) {
+                $q->where('shorts.platform', $req->platform);
+            }
+            if ($req->status === 'active') {
+                $q->where('shorts.is_active', 1);
+            } elseif ($req->status === 'hidden') {
+                $q->where('shorts.is_active', 0);
             }
             return response()->json($q->paginate(15));
         } catch (\Exception $e) {
@@ -535,6 +573,7 @@ class AdminController extends Controller
         } catch (\Exception $e) {}
         return response()->json(['message' => 'Deleted']);
     }
+
 
     // ─── 드라이버 관리 ───────────────────────────────────────
     public function getDrivers(Request $req)
@@ -754,4 +793,101 @@ class AdminController extends Controller
         DB::table('shopping_deals')->where('id', $id)->delete();
         return response()->json(['success' => true]);
     }
+
+    // ── 뉴스 관리 ──────────────────────────────────────────────────────
+    public function newsStats() {
+        $total = \DB::table('news')->count();
+        $today = \DB::table('news')->whereDate('published_at', today())->count();
+        $sources = \DB::table('news')->distinct()->pluck('source')->count();
+        $totalLikes = \DB::table('content_likes')->where('likeable_type', 'App\Models\News')->count();
+        return response()->json([
+            'totalNews' => $total,
+            'todayNews' => $today,
+            'feedCount' => $sources,
+            'totalLikes' => $totalLikes,
+        ]);
+    }
+
+    public function newsList(Request $request) {
+        $q = \DB::table('news');
+        if ($request->search) {
+            $q->where('title', 'like', '%'.$request->search.'%');
+        }
+        if ($request->category) {
+            $q->where('category', $request->category);
+        }
+        if ($request->source) {
+            $q->where('source', $request->source);
+        }
+        $q->orderByDesc('published_at');
+        return response()->json($q->paginate(20));
+    }
+
+    public function deleteNews($id) {
+        \DB::table('news')->where('id', $id)->delete();
+        return response()->json(['ok' => true]);
+    }
+
+    // ── 매칭 관리 ──────────────────────────────────────────────────────
+    public function matchingStats() {
+        return response()->json([
+            'totalProfiles' => \DB::table('match_profiles')->count(),
+            'totalLikes'    => \DB::table('match_likes')->count(),
+            'verified'      => \DB::table('match_profiles')->where('verified', 1)->count(),
+            'visible'       => \DB::table('match_profiles')->where('visibility', 'public')->count(),
+        ]);
+    }
+
+    public function matchingProfiles(Request $request) {
+        $q = \DB::table('match_profiles as mp')
+            ->leftJoin('users as u', 'mp.user_id', '=', 'u.id')
+            ->select('mp.*', 'u.username', 'u.email');
+        if ($request->search) {
+            $q->where('mp.nickname', 'like', '%'.$request->search.'%');
+        }
+        $q->orderByDesc('mp.created_at');
+        return response()->json($q->paginate(20));
+    }
+
+    public function deleteMatchProfile($id) {
+        \DB::table('match_profiles')->where('id', $id)->delete();
+        \DB::table('match_likes')->where('from_user_id', $id)->orWhere('to_user_id', $id)->delete();
+        return response()->json(['ok' => true]);
+    }
+
+    // ── 친구 관리 ──────────────────────────────────────────────────────
+    public function friendsStats() {
+        return response()->json([
+            'total'   => \DB::table('friends')->count(),
+            'today'   => \DB::table('friends')->whereDate('created_at', today())->count(),
+            'blocked' => \DB::table('user_blocks')->count(),
+        ]);
+    }
+
+
+    public function mentorRequests() {
+        return response()->json(
+            \DB::table('mentor_requests as mr')
+                ->leftJoin('users as u', 'mr.mentee_id', '=', 'u.id')
+                ->leftJoin('mentors as m', 'mr.mentor_id', '=', 'm.id')
+                ->select('mr.*', 'u.username as mentee_name', 'm.nickname as mentor_name')
+                ->orderByDesc('mr.created_at')
+                ->paginate(20)
+        );
+    }
+
+    public function approveMentorRequest($id) {
+        \DB::table('mentor_requests')->where('id', $id)->update(['status' => 'accepted', 'responded_at' => now()]);
+        return response()->json(['ok' => true]);
+    }
+
+    public function rejectMentorRequest($id) {
+        \DB::table('mentor_requests')->where('id', $id)->update(['status' => 'rejected', 'responded_at' => now()]);
+        return response()->json(['ok' => true]);
+    }
+
+    public function saveMentorSettings(Request $request) {
+        return response()->json(['ok' => true]);
+    }
+
 }

@@ -273,7 +273,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 const tabs = [
   { key: 'rss', label: 'RSS 피드 관리' },
@@ -282,7 +283,7 @@ const tabs = [
 ]
 const activeTab = ref('rss')
 
-const stats = ref({ totalNews: 835, todayNews: 42, feedCount: 4, totalLikes: 12840 })
+const stats = ref({ totalNews: 0, todayNews: 0, feedCount: 0, totalLikes: 0 })
 
 // ─── RSS 피드 ─────────────────────────────────────
 const feeds = ref([
@@ -298,16 +299,9 @@ const testLoading = ref(false)
 const previewArticles = ref([])
 
 // ─── 뉴스 더미 데이터 ─────────────────────────────
-const newsList = ref([
-  { id: 1, title: '트럼프, 한국 자동차 관세 25% 부과 발표…현대·기아 주가 급락', source: '미주한국일보', category: 'economy', category_label: '경제', published_at: '2026-03-28T08:00:00', views: 4820, likes: 132, url: '#' },
-  { id: 2, title: 'LA 코리아타운 새 한식 거리 조성 계획 발표', source: '연합뉴스', category: 'society', category_label: '사회', published_at: '2026-03-28T07:30:00', views: 2310, likes: 89, url: '#' },
-  { id: 3, title: '미 의회, 한인 커뮤니티 지원 법안 발의', source: '중앙일보', category: 'politics', category_label: '정치', published_at: '2026-03-27T15:00:00', views: 1840, likes: 67, url: '#' },
-  { id: 4, title: 'K-팝 그룹 새 앨범, 빌보드 1위 등극', source: '연합뉴스', category: 'culture', category_label: '문화', published_at: '2026-03-27T12:00:00', views: 9230, likes: 445, url: '#' },
-  { id: 5, title: '삼성, 미 텍사스 반도체 공장 추가 투자 확정', source: 'VOA 한국어', category: 'tech', category_label: 'IT/기술', published_at: '2026-03-27T10:00:00', views: 3560, likes: 98, url: '#' },
-  { id: 6, title: '미 프로야구 개막, 한국계 선수들 활약 기대', source: '미주한국일보', category: 'sports', category_label: '스포츠', published_at: '2026-03-27T09:00:00', views: 2890, likes: 156, url: '#' },
-  { id: 7, title: '한국, OECD 교육 지표 아시아 1위 유지', source: '연합뉴스', category: 'society', category_label: '사회', published_at: '2026-03-26T14:00:00', views: 1240, likes: 45, url: '#' },
-  { id: 8, title: '달러/원 환율 1,350원대 돌파, 한인 송금 영향은', source: '중앙일보', category: 'economy', category_label: '경제', published_at: '2026-03-26T11:00:00', views: 5670, likes: 201, url: '#' },
-])
+const newsList = ref([])
+const newsTotal = ref(0)
+const newsPage = ref(1)
 
 // ─── 상태 ─────────────────────────────────────────
 const newsSearch = ref('')
@@ -401,12 +395,11 @@ function deleteFeed(feed) {
   showToast('피드가 삭제되었습니다', 'success')
 }
 
-function deleteNews(news) {
-  if (!confirm(`"${news.title.slice(0, 20)}..." 뉴스를 삭제하시겠습니까?`)) return
-  const idx = newsList.value.findIndex(n => n.id === news.id)
-  if (idx !== -1) newsList.value.splice(idx, 1)
-  stats.value.totalNews--
-  showToast('뉴스가 삭제되었습니다', 'success')
+async function deleteNews(news) {
+  if (!confirm('삭제하시겠습니까?')) return
+  await axios.delete(`/api/admin/news/${news.id}`)
+  await loadNews()
+  showToast('삭제되었습니다', 'success')
 }
 
 function publishNews() {
@@ -437,4 +430,30 @@ function showToast(message, type = 'success') {
   toast.value = { show: true, message, type }
   setTimeout(() => { toast.value.show = false }, 2500)
 }
+
+async function loadStats() {
+  try {
+    const { data } = await axios.get('/api/admin/news/stats')
+    stats.value = data
+  } catch(e) {}
+}
+
+async function loadNews() {
+  try {
+    const params = {}
+    if (newsSearch.value) params.search = newsSearch.value
+    if (newsCategory.value) params.category = newsCategory.value
+    if (newsSource.value) params.source = newsSource.value
+    params.page = newsPage.value
+    const { data } = await axios.get('/api/admin/news', { params })
+    newsList.value = data.data || data
+    newsTotal.value = data.total || 0
+  } catch(e) {}
+}
+
+onMounted(() => {
+  loadStats()
+  loadNews()
+})
+
 </script>

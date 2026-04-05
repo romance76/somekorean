@@ -37,7 +37,17 @@ class QAController extends Controller
 
     public function categories()
     {
-        return response()->json($this->categories);
+        $counts = \App\Models\QaQuestion::selectRaw('category_slug, COUNT(*) as cnt')
+            ->whereNull('deleted_at')
+            ->groupBy('category_slug')
+            ->pluck('cnt', 'category_slug');
+        
+        $result = collect($this->categories)->map(function($cat) use ($counts) {
+            $cat['count'] = $counts[$cat['slug']] ?? 0;
+            return $cat;
+        });
+        
+        return response()->json($result->values());
     }
 
     public function allQuestions()

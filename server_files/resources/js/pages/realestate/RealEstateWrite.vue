@@ -3,7 +3,7 @@
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <!-- Header -->
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl mb-4">
-        <h1 class="text-xl font-black">🏠 부동산 매물 등록</h1>
+        <h1 class="text-xl font-black">🏠 {{ isEdit ? '부동산 매물 수정' : '부동산 매물 등록' }}</h1>
         <p class="text-blue-100 text-sm mt-0.5">매물 정보를 입력해 주세요</p>
       </div>
 
@@ -17,7 +17,7 @@
             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">매물 유형 <span class="text-red-400">*</span></label>
             <select v-model="form.type" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400">
@@ -40,7 +40,7 @@
           <AddressInput v-model="form.addressObj" />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">방 수</label>
             <input v-model="form.bedrooms" type="number" min="0" max="20" placeholder="0"
@@ -67,18 +67,18 @@
         <!-- 사진 업로드 -->
         <h2 class="font-bold text-gray-800 text-sm border-b pb-2 pt-2">📷 사진 업로드</h2>
         <p class="text-xs text-gray-500">최대 10장 (처음 3장 무료, 추가 1장당 10P)</p>
-        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+        <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
           <div v-for="i in 10" :key="i" class="relative">
-            <div v-if="photosPreviews[i-1]" class="h-20 sm:h-24 rounded-xl overflow-hidden relative group">
+            <div v-if="photosPreviews[i-1]" class="h-24 rounded-xl overflow-hidden relative group">
               <img :src="photosPreviews[i-1]" class="w-full h-full object-cover" />
               <button @click="removePhoto(i-1)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition">✕</button>
             </div>
-            <label v-else-if="i <= 3" class="h-20 sm:h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
+            <label v-else-if="i <= 3" class="h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
               <span class="text-2xl text-gray-400">+</span>
               <span class="text-[10px] text-gray-400 mt-0.5">무료</span>
               <input type="file" accept="image/*" class="hidden" @change="onPhotoSelect($event, i-1)" />
             </label>
-            <label v-else class="h-20 sm:h-24 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition bg-gray-50">
+            <label v-else class="h-24 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition bg-gray-50">
               <span class="text-xl text-gray-300">+</span>
               <span class="text-[10px] text-gray-400 mt-0.5">10P</span>
               <input type="file" accept="image/*" class="hidden" @change="onPhotoSelect($event, i-1)" />
@@ -89,7 +89,7 @@
         <!-- 추가 정보 -->
         <h2 class="font-bold text-gray-800 text-sm border-b pb-2 pt-2">추가 정보</h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">디파짓 ($)</label>
             <input v-model="form.deposit" type="number" min="0" placeholder="보증금"
@@ -115,7 +115,7 @@
 
         <!-- 연락처 -->
         <h2 class="font-bold text-gray-800 text-sm border-b pb-2 pt-2">📞 연락처</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
             <input v-model="form.phone" type="tel" placeholder="000-000-0000"
@@ -130,11 +130,11 @@
 
         <!-- 에러 / 버튼 -->
         <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-xl">{{ error }}</div>
-        <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+        <div class="flex justify-end gap-3 pt-2">
           <button @click="$router.back()" class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-600 rounded-xl text-sm hover:bg-gray-50">취소</button>
           <button @click="submit" :disabled="submitting"
             class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
-            {{ submitting ? '등록 중...' : '매물 등록' }}
+            {{ submitting ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '매물 수정' : '매물 등록') }}
           </button>
         </div>
       </div>
@@ -143,14 +143,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import AddressInput from '../../components/AddressInput.vue'
 
+const route = useRoute()
 const router = useRouter()
 const submitting = ref(false)
 const error = ref('')
+const isEdit = ref(false)
+const editId = ref(null)
 const photosPreviews = ref([])
 const photosFiles = ref([])
 
@@ -206,14 +209,49 @@ async function submit() {
     Object.entries(form.value).forEach(([k, v]) => { if (k === 'addressObj') return; if (v !== '' && v !== null) fd.append(k, v) })
     photosFiles.value.forEach((file, i) => { if (file) fd.append(`photos[${i}]`, file) })
 
-    const { data } = await axios.post('/api/realestate', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    router.push(`/realestate/${data.listing?.id || data.id || ''}`)
+    let data
+    if (isEdit.value) {
+      fd.append('_method', 'PUT');
+      ({ data } = await axios.post(`/api/realestate/${editId.value}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }))
+      router.push(`/realestate/${editId.value}`)
+    } else {
+      ({ data } = await axios.post('/api/realestate', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }))
+      router.push(`/realestate/${data.listing?.id || data.id || ''}`)
+    }
   } catch (e) {
     error.value = e.response?.data?.message || '등록 실패. 다시 시도해 주세요.'
   } finally {
     submitting.value = false
   }
 }
+
+onMounted(async () => {
+  const id = route.query.edit
+  if (id) {
+    isEdit.value = true
+    editId.value = id
+    try {
+      const { data } = await axios.get(`/api/realestate/${id}`)
+      form.value.title = data.title || ''
+      form.value.type = data.type || ''
+      form.value.price = data.price ?? ''
+      form.value.address = data.address || ''
+      form.value.bedrooms = data.bedrooms ?? ''
+      form.value.bathrooms = data.bathrooms ?? ''
+      form.value.sqft = data.sqft ?? ''
+      form.value.description = data.description || ''
+      form.value.deposit = data.deposit ?? ''
+      form.value.move_in_date = data.move_in_date || ''
+      form.value.pet_policy = data.pet_policy || '협의'
+      form.value.phone = data.phone || ''
+      form.value.email = data.email || ''
+    } catch (e) {
+      error.value = '기존 매물 정보를 불러올 수 없습니다.'
+    }
+  }
+})
 </script>

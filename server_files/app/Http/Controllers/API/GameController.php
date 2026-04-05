@@ -95,7 +95,7 @@ class GameController extends Controller
     // ── API: 방 생성 ──────────────────────────────────────────────────────────
     public function create(Request $request)
     {
-        $request->validate(['bet_points'=>'integer|min:0|max:10000','max_players'=>'integer|in:2,3']);
+        $request->validate(['bet_points'=>'integer|min:0|max:10000','max_players'=>'integer|in:2']);
         $user = $request->user();
 
         $room = GameRoom::create([
@@ -103,7 +103,7 @@ class GameController extends Controller
             'type'        => 'go_stop',
             'status'      => 'waiting',
             'min_players' => 2,
-            'max_players' => $request->input('max_players', 3),
+            'max_players' => 2,
             'bet_points'  => $request->input('bet_points', 100),
             'created_by'  => $user->id,
         ]);

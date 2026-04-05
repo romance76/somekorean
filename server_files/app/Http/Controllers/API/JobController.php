@@ -7,10 +7,12 @@ use App\Models\Bookmark;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HasDistanceFilter;
 use Illuminate\Support\Facades\DB;
 
 class JobController extends Controller
 {
+    use HasDistanceFilter;
     public function index(Request $request)
     {
         $query = JobPost::with('user:id,name,username')
@@ -27,6 +29,7 @@ class JobController extends Controller
             });
         }
 
+        $this->applyDistanceFilter($query, $request, "latitude", "longitude");
         return response()->json($query->paginate(20));
     }
 
@@ -156,12 +159,21 @@ class JobController extends Controller
         // 포인트 지급
         $todayCount = Comment::where('user_id', Auth::id())->whereDate('created_at', today())->count();
         if ($todayCount <= 10) {
-            Auth::user()->addPoints(5, 'comment', 'earn', $comment->id, '댓글 작성');
+            Auth::user()->addPoints(5, 'comment_write', 'earn', $comment->id, '댓글 작성');
         }
 
         return response()->json([
             'message' => '댓글이 등록되었습니다.',
             'comment' => $comment->load('user:id,name,username,avatar'),
         ], 201);
+    }
+
+    public function update(Request $request, JobPost $job)
+    {
+        if ($job->user_id !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '수정 권한이 없습니다.'], 403);
+        }
+        $job->update($request->only(['title','content','company_name','contact_email','contact_phone','region','address','job_type','salary_range','deadline']));
+        return response()->json(['message' => '수정되었습니다.', 'job' => $job]);
     }
 }

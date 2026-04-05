@@ -11,7 +11,16 @@
           ← 목록으로
         </button>
 
-        <!-- 질문 카드 -->
+        <DetailPageHeader
+        :title="post?.title || '질문'"
+        back-label="← Q&A 목록"
+        back-to="/community"
+        :category="post?.category"
+        gradient-from="from-violet-600"
+        gradient-to="to-violet-500"
+        :meta="post ? { author: post.author?.name || '익명', date: post.created_at ? new Date(post.created_at).toLocaleDateString('ko-KR') : '', views: post.view_count + ' 조회' } : null"
+      />
+      <!-- 질문 카드 -->
         <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
           <div class="flex items-center gap-2 mb-3">
             <span v-if="post.category" class="text-xs px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 font-semibold">
@@ -25,9 +34,9 @@
           <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mb-4">{{ post.content }}</p>
           <div class="flex items-center gap-3 text-xs text-gray-400 pt-3 border-t border-gray-100">
             <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-sm">
-              {{ (post.user?.name || '?').charAt(0) }}
+              {{ displayName(post.user).charAt(0) }}
             </div>
-            <span class="font-medium text-gray-600">{{ post.user?.name }}</span>
+            <span class="font-medium text-gray-600">{{ displayName(post.user) }}</span>
             <span v-if="post.region" class="text-blue-500">📍 {{ post.region }}</span>
             <span>{{ timeAgo(post.created_at) }}</span>
             <span>조회 {{ post.view_count }}</span>
@@ -43,9 +52,9 @@
           <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mb-3">{{ post.best_answer.content }}</p>
           <div class="flex items-center gap-2 text-xs text-gray-500">
             <div class="w-6 h-6 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-700 font-bold text-xs">
-              {{ (post.best_answer.user?.name || '?').charAt(0) }}
+              {{ displayName(post.best_answer.user).charAt(0) }}
             </div>
-            <span>{{ post.best_answer.user?.name }}</span>
+            <span>{{ displayName(post.best_answer.user) }}</span>
             <span>{{ timeAgo(post.best_answer.created_at) }}</span>
           </div>
         </div>
@@ -59,9 +68,9 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2 text-xs text-gray-400">
                 <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                  {{ (ans.user?.name || '?').charAt(0) }}
+                  {{ displayName(ans.user).charAt(0) }}
                 </div>
-                <span>{{ ans.user?.name }}</span>
+                <span>{{ displayName(ans.user) }}</span>
                 <span>{{ timeAgo(ans.created_at) }}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -99,17 +108,27 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
+import DetailPageHeader from '../../components/DetailPageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const post = ref(null)
+
+const canEdit = computed(() => {
+  return auth.user && (post.value?.user_id === auth.user.id || auth.user.is_admin)
+})
 const loading = ref(true)
 const newAnswer = ref('')
 const submitting = ref(false)
 
 const isPostOwner = computed(() => auth.user && post.value && auth.user.id === post.value.user_id)
 const nonBestAnswers = computed(() => (post.value?.answers || []).filter(a => !a.is_best))
+
+function displayName(user) {
+  if (!user) return '익명'
+  return user.nickname || user.username || '익명'
+}
 
 function statusLabel(s) { return { open: '미답변', solved: '해결됨', closed: '마감' }[s] || s }
 function statusBadgeClass(s) {

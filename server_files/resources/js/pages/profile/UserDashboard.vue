@@ -24,7 +24,7 @@
             <p class="text-blue-200 text-sm">@{{ auth.user?.username }}</p>
             <div class="flex items-center gap-2 mt-1">
               <span class="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-medium">{{ auth.user?.level || '씨앗' }}</span>
-              <span class="text-yellow-300 text-xs font-bold">{{ (auth.user?.points_total ?? 0).toLocaleString() }}P</span>
+              <span class="text-yellow-300 text-xs font-bold">{{ (auth.user?.points ?? 0).toLocaleString() }}P</span>
             </div>
           </div>
         </div>
@@ -52,7 +52,7 @@
           <div class="text-xs text-gray-500">숏츠</div>
         </div>
         <div>
-          <div class="text-xl font-black text-purple-600">{{ (auth.user?.points_total ?? 0).toLocaleString() }}</div>
+          <div class="text-xl font-black text-purple-600">{{ (auth.user?.points ?? 0).toLocaleString() }}</div>
           <div class="text-xs text-gray-500">포인트</div>
         </div>
         <div>
@@ -77,41 +77,111 @@
 
       <!-- ── 프로필 탭 ── -->
       <div v-if="activeTab === 'profile'" class="space-y-4">
+        <!-- 기본 정보 -->
         <div class="bg-white rounded-2xl shadow-sm p-5 space-y-4">
-          <h2 class="font-bold text-gray-800 text-sm">기본 정보</h2>
-
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">이름 <span class="text-red-400">*</span></label>
-            <input v-model="profileForm.name" type="text" maxlength="50"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+          <h2 class="font-bold text-gray-800 text-sm">👤 기본 정보</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">이름 <span class="text-red-400">*</span></label>
+              <input v-model="profileForm.name" type="text" maxlength="50"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">별명 (닉네임)</label>
+              <input v-model="profileForm.nickname" type="text" maxlength="50" placeholder="커뮤니티에서 표시될 별명"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">자기소개</label>
-            <textarea v-model="profileForm.bio" rows="3" maxlength="300" placeholder="간단히 소개해 주세요"
+            <textarea v-model="profileForm.bio" rows="3" maxlength="500" placeholder="간단히 소개해 주세요"
               class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 resize-none" />
           </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">지역</label>
-            <select v-model="profileForm.region"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400">
-              <option value="">선택하세요</option>
-              <option v-for="r in regions" :key="r" :value="r">{{ r }}</option>
-            </select>
-          </div>
+        </div>
 
+        <!-- 연락처 -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 space-y-4">
+          <h2 class="font-bold text-gray-800 text-sm">📞 연락처</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">전화번호</label>
+              <input v-model="profileForm.phone" type="tel" placeholder="213-555-1234"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">이메일</label>
+              <input :value="auth.user?.email" type="email" readonly
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 주소 -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 space-y-4">
+          <h2 class="font-bold text-gray-800 text-sm">📍 주소</h2>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">주소 1 (Address Line 1)</label>
+            <input v-model="profileForm.address" type="text" placeholder="123 Main St"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">주소 2 (Apt, Suite 등)</label>
+            <input v-model="profileForm.address2" type="text" placeholder="Apt 4B"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">시티 (City)</label>
+              <input v-model="profileForm.city" type="text" placeholder="Los Angeles"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">스테이트</label>
+              <select v-model="profileForm.state"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-blue-400">
+                <option value="">선택</option>
+                <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option>
+                <option value="AR">AR</option><option value="CA">CA</option><option value="CO">CO</option>
+                <option value="CT">CT</option><option value="DE">DE</option><option value="FL">FL</option>
+                <option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option>
+                <option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+                <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option>
+                <option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option>
+                <option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option>
+                <option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+                <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option>
+                <option value="NM">NM</option><option value="NY">NY</option><option value="NC">NC</option>
+                <option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option>
+                <option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option>
+                <option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option>
+                <option value="TX">TX</option><option value="UT">UT</option><option value="VT">VT</option>
+                <option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option>
+                <option value="WI">WI</option><option value="WY">WY</option><option value="DC">DC</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">우편번호</label>
+              <input v-model="profileForm.zip_code" type="text" placeholder="90001" maxlength="10"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 저장 버튼 -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 space-y-4">
           <div v-if="profileMsg" class="text-sm rounded-xl p-3" :class="profileMsg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'">
             {{ profileMsg.text }}
           </div>
           <button @click="saveProfile" :disabled="profileSaving"
             class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition">
-            {{ profileSaving ? '저장 중...' : '프로필 저장' }}
+            {{ profileSaving ? '저장 중...' : '💾 프로필 저장' }}
           </button>
         </div>
 
         <!-- 비밀번호 변경 -->
         <div class="bg-white rounded-2xl shadow-sm p-5 space-y-3">
           <h2 class="font-bold text-gray-800 text-sm">비밀번호 변경</h2>
-          <input v-model="pwForm.current" type="password" placeholder="현재 비밀번호"
+          <input v-model="pwForm.current_password" type="password" placeholder="현재 비밀번호"
             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
           <input v-model="pwForm.password" type="password" placeholder="새 비밀번호 (8자 이상)"
             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
@@ -275,7 +345,7 @@
           <div v-else-if="!myPosts.length" class="text-center py-4 text-gray-400 text-sm">게시글이 없습니다</div>
           <div v-else class="space-y-2">
             <router-link v-for="post in myPosts.slice(0,5)" :key="post.id"
-              :to="`/community/post/${post.id}`"
+              :to="`/community/${post.board?.slug || 'general'}/${post.id}`"
               class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition">
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-gray-800 truncate font-medium">{{ post.title }}</p>
@@ -306,7 +376,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
             <p class="text-blue-100 text-xs mb-1">보유 포인트</p>
-            <p class="text-3xl font-black">{{ (auth.user?.points_total ?? 0).toLocaleString() }}</p>
+            <p class="text-3xl font-black">{{ (auth.user?.points ?? 0).toLocaleString() }}</p>
             <p class="text-blue-200 text-xs">P</p>
           </div>
           <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white">
@@ -664,11 +734,11 @@ async function onAvatarSelect(e) {
 }
 
 // ── 프로필 ────────────────────────────────────────────────────────────────────
-const profileForm = ref({ name: '', bio: '', region: '' })
+const profileForm = ref({ name: '', nickname: '', bio: '', phone: '', address: '', address2: '', city: '', state: '', zip_code: '', region: '', lang: 'ko', default_radius: 30 })
 const profileSaving = ref(false)
 const profileMsg    = ref(null)
 
-const pwForm = ref({ current: '', password: '', password_confirmation: '' })
+const pwForm = ref({ current_password: '', password: '', password_confirmation: '' })
 const pwSaving = ref(false)
 const pwMsg    = ref(null)
 
@@ -695,7 +765,7 @@ async function changePassword() {
   try {
     await axios.post('/api/profile/password', pwForm.value)
     pwMsg.value = { ok: true, text: '✅ 비밀번호가 변경되었습니다!' }
-    pwForm.value = { current: '', password: '', password_confirmation: '' }
+    pwForm.value = { current_password: '', password: '', password_confirmation: '' }
   } catch (e) {
     pwMsg.value = { ok: false, text: e.response?.data?.message || '변경 실패' }
   } finally {
@@ -810,8 +880,9 @@ async function doCheckin() {
   checkingIn.value = true
   try {
     const { data } = await axios.post('/api/points/checkin')
+      auth.fetchMe()
     checkedIn.value = true
-    auth.user = { ...auth.user, points_total: (auth.user?.points_total ?? 0) + (data.points ?? 10) }
+    auth.user = { ...auth.user, points: (auth.user?.points ?? 0) + (data.points ?? 10) }
     pointLogs.value.unshift({ type: 'earn', amount: data.points ?? 10, description: '출석 체크', created_at: new Date().toISOString() })
   } catch (e) {
     if (e.response?.status === 409) checkedIn.value = true
@@ -895,7 +966,7 @@ async function loadClubMembers(clubId) {
 
 async function loadClubPending(clubId) {
   try {
-    const { data } = await axios.get(`/api/clubs/${clubId}/requests`)
+    const { data } = await axios.get(`/api/clubs/${clubId}/members/pending`)
     clubPendingRequests.value[clubId] = data.data || data || []
   } catch { clubPendingRequests.value[clubId] = [] }
 }
@@ -928,7 +999,7 @@ async function kickMember(clubId, memberId) {
 
 async function approveRequest(clubId, requestId) {
   try {
-    await axios.post(`/api/clubs/${clubId}/requests/${requestId}/approve`)
+    await axios.post(`/api/clubs/${clubId}/members/${requestId}/approve`)
     clubPendingRequests.value[clubId] = (clubPendingRequests.value[clubId] || []).filter(r => r.id !== requestId)
     loadClubMembers(clubId)
   } catch { alert('승인 실패') }
@@ -936,7 +1007,7 @@ async function approveRequest(clubId, requestId) {
 
 async function rejectRequest(clubId, requestId) {
   try {
-    await axios.post(`/api/clubs/${clubId}/requests/${requestId}/reject`)
+    await axios.post(`/api/clubs/${clubId}/members/${requestId}/reject`)
     clubPendingRequests.value[clubId] = (clubPendingRequests.value[clubId] || []).filter(r => r.id !== requestId)
   } catch { alert('거절 실패') }
 }
@@ -987,7 +1058,7 @@ watch(activeTab, (tab) => {
 // ── 초기화 ────────────────────────────────────────────────────────────────────
 onMounted(async () => {
   const u = auth.user
-  profileForm.value = { name: u?.name || '', bio: u?.bio || '', region: u?.region || '' }
+  profileForm.value = { name: u?.name || '', nickname: u?.nickname || '', bio: u?.bio || '', phone: u?.phone || '', address: u?.address || '', address2: u?.address2 || '', city: u?.city || '', state: u?.state || '', zip_code: u?.zip_code || '', region: u?.region || '', lang: u?.lang || 'ko', default_radius: u?.default_radius || 30 }
 
   // 매칭 프로필 로드
   try {

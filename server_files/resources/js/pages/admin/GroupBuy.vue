@@ -521,7 +521,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 // ─── Tabs ────────────────────────────────────────────────
 const activeTab = ref('groupbuys')
@@ -536,67 +537,10 @@ const tabs = computed(() => [
 ])
 
 // ─── Dummy Companies ─────────────────────────────────────
-const companies = ref([
-  { id: 1, company_name: 'H마트 LA점', business_no: '91-1234567', owner: '김마트', phone: '213-380-0100', email: 'hmart@example.com', ach_bank: 'Wells Fargo', ach_account: '****8901', ach_routing: '121000248', status: 'approved', approved_at: '2025-05-01', groupbuys_count: 3 },
-  { id: 2, company_name: '서울 식품', business_no: '92-2345678', owner: '이서울', phone: '213-555-2001', email: 'seoul@example.com', ach_bank: 'Bank of America', ach_account: '****2345', ach_routing: '026009593', status: 'approved', approved_at: '2025-07-15', groupbuys_count: 1 },
-  { id: 3, company_name: 'K-푸드 직수입', business_no: '93-3456789', owner: '박직수', phone: '213-555-3001', email: 'kfood@example.com', status: 'pending', applied_at: '2026-03-25', groupbuys_count: 0 },
-  { id: 4, company_name: '한인 농산물', business_no: '94-4567890', owner: '최농산', phone: '213-555-4001', email: 'farm@example.com', status: 'pending', applied_at: '2026-03-27', groupbuys_count: 0 },
-])
+const companies = ref([])
 
 // ─── Dummy Groupbuys ─────────────────────────────────────
-const groupbuys = ref([
-  {
-    id: 2001, title: '제주 갈치 10kg 특가', company_name: 'H마트 LA점', business_no: '91-1234567', owner: '김마트', company_phone: '213-380-0100',
-    category: '해산물', price: 89.99, participants: 42, max_participants: 50,
-    deadline: '2026-04-10', status: 'active', description: '제주도 직송 신선 갈치 10kg 공동구매. 냉동 보관, 당일 도착 보장.',
-    ach_bank: 'Wells Fargo', ach_account: '****8901', ach_routing: '121000248',
-    participant_list: [
-      { name: '김철수', phone: '213-100-0001', joined_at: '2026-03-15', paid: true },
-      { name: '이영희', phone: '213-100-0002', joined_at: '2026-03-16', paid: true },
-      { name: '박민준', phone: '213-100-0003', joined_at: '2026-03-17', paid: false },
-    ],
-  },
-  {
-    id: 2002, title: '국내산 한우 불고기 세트', company_name: 'H마트 LA점', business_no: '91-1234567', owner: '김마트', company_phone: '213-380-0100',
-    category: '식품', price: 149.99, participants: 28, max_participants: 40,
-    deadline: '2026-04-05', status: 'active', description: '1++ 등급 한우 불고기 세트 2kg. 마블링 최상급.',
-    ach_bank: 'Wells Fargo', ach_account: '****8901', ach_routing: '121000248',
-    participant_list: [
-      { name: '정다은', phone: '213-200-0001', joined_at: '2026-03-10', paid: true },
-      { name: '최준혁', phone: '213-200-0002', joined_at: '2026-03-11', paid: true },
-    ],
-  },
-  {
-    id: 2003, title: '제철 딸기 10판 묶음', company_name: '서울 식품', business_no: '92-2345678', owner: '이서울', company_phone: '213-555-2001',
-    category: '농산물', price: 65.00, participants: 15, max_participants: 30,
-    deadline: '2026-03-31', status: 'closed', description: '국내 제철 딸기 10판. 빠른 배송.',
-    ach_bank: 'Bank of America', ach_account: '****2345', ach_routing: '026009593',
-    participant_list: [
-      { name: '윤소희', phone: '213-300-0001', joined_at: '2026-03-01', paid: true },
-      { name: '한지수', phone: '213-300-0002', joined_at: '2026-03-02', paid: true },
-    ],
-  },
-  {
-    id: 2004, title: '프리미엄 김치 세트 5종', company_name: 'H마트 LA점', business_no: '91-1234567', owner: '김마트', company_phone: '213-380-0100',
-    category: '가공식품', price: 75.00, participants: 60, max_participants: 60,
-    deadline: '2026-03-25', status: 'completed', description: '전통 방식으로 담근 프리미엄 김치 5종 세트.',
-    ach_bank: 'Wells Fargo', ach_account: '****8901', ach_routing: '121000248',
-    participant_list: [],
-  },
-  {
-    id: 2005, title: '유기농 쌀 20kg', company_name: '서울 식품', business_no: '92-2345678', owner: '이서울', company_phone: '213-555-2001',
-    category: '농산물', price: 55.00, participants: 0, max_participants: 50,
-    deadline: '2026-04-15', status: 'pending', description: '인증 유기농 쌀 20kg. 국내산 100%.',
-    participant_list: [],
-  },
-  {
-    id: 2006, title: '한국 라면 박스 10종 세트', company_name: 'H마트 LA점', business_no: '91-1234567', owner: '김마트', company_phone: '213-380-0100',
-    category: '가공식품', price: 42.00, participants: 0, max_participants: 100,
-    deadline: '2026-04-20', status: 'pending', description: '신라면, 짜파게티, 불닭볶음면 등 인기 라면 10종 박스 세트.',
-    ach_bank: 'Wells Fargo', ach_account: '****8901', ach_routing: '121000248',
-    participant_list: [],
-  },
-])
+const groupbuys = ref([])
 
 // ─── Payout History ──────────────────────────────────────
 const gbPayoutHistory = ref([
@@ -754,6 +698,34 @@ const showToast = (type, message) => {
   toast.value = { show: true, message, type }
   setTimeout(() => { toast.value.show = false }, 3000)
 }
+
+const gbTotal = ref(0)
+const gbLoading = ref(false)
+
+async function loadGroupBuys() {
+  gbLoading.value = true
+  try {
+    const { data } = await axios.get('/api/admin/groupbuys')
+    groupbuys.value = Array.isArray(data) ? data : (data.data || [])
+    gbTotal.value = data.total || groupbuys.value.length
+  } catch(e) {} finally { gbLoading.value = false }
+}
+
+async function approveGroupBuy(gb) {
+  await axios.post(`/api/admin/groupbuys/${gb.id}/approve`)
+  gb.status = 'active'
+}
+
+async function deleteGroupBuy(gb) {
+  if (!confirm('삭제하시겠습니까?')) return
+  await axios.delete(`/api/admin/groupbuys/${gb.id}`)
+  groupbuys.value = groupbuys.value.filter(g => g.id !== gb.id)
+}
+
+onMounted(() => {
+  loadGroupBuys()
+})
+
 </script>
 
 <style scoped>

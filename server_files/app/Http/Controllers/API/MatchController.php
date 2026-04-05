@@ -126,4 +126,12 @@ class MatchController extends Controller
 
         return response()->json($matches);
     }
+
+    // 사진 업로드
+    public function uploadPhoto(Request $request)
+    {
+        $request->validate(['photo' => 'required|image|max:5120']);
+        $path = $request->file('photo')->store('match-photos', 'public');
+        return response()->json(['url' => '/storage/' . $path]);
+    }
 }

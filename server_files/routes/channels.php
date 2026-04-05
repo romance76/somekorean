@@ -10,3 +10,8 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('chat.{roomId}', function ($user, $roomId) {
     return auth()->check();
 });
+
+// WebRTC private call channel
+Broadcast::channel('call.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});

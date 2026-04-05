@@ -3,7 +3,8 @@
     <div class="max-w-6xl mx-auto">
 
       <!-- Header -->
-      <div class="text-center mb-6">
+      <div class="relative text-center mb-6">
+        <button @click="$router.push('/games')" class="absolute left-0 top-1 text-white/60 hover:text-white text-sm bg-white/10 px-3 py-1.5 rounded-lg transition">← 목록</button>
         <h1 class="text-4xl font-bold tracking-widest text-yellow-300 drop-shadow-lg">🎯 빙고 게임</h1>
         <p class="text-purple-300 mt-1 text-sm">한인 커뮤니티 빙고 · 혼자서 컴퓨터와 대결!</p>
       </div>

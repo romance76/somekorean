@@ -164,53 +164,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
-const stats = reactive({
-  total: 5,
-  today: 1,
-  blocked: 1,
-})
+const stats = reactive({ total: 0, today: 0, blocked: 0 })
 
 // ─── Dummy Data ──────────────────────────────────────────────────────────────
-const friends = ref([
-  {
-    id: 1,
-    user1: { name: '김민준', username: 'minjun_kim' },
-    user2: { name: '이서연', username: 'seoyeon_lee' },
-    created_at: '2026-03-20',
-    status: 'friends',
-  },
-  {
-    id: 2,
-    user1: { name: '박지호', username: 'jiho_park' },
-    user2: { name: '최유진', username: 'yujin_choi' },
-    created_at: '2026-03-22',
-    status: 'friends',
-  },
-  {
-    id: 3,
-    user1: { name: '한소희', username: 'sohee_han' },
-    user2: { name: '정도현', username: 'dohyun_jung' },
-    created_at: '2026-03-25',
-    status: 'friends',
-  },
-  {
-    id: 4,
-    user1: { name: '오승준', username: 'seungjun_oh' },
-    user2: { name: '윤아름', username: 'areum_yoon' },
-    created_at: '2026-03-28',
-    status: 'friends',
-  },
-  {
-    id: 5,
-    user1: { name: '강태양', username: 'taeyang_kang' },
-    user2: { name: '신예원', username: 'yewon_shin' },
-    created_at: '2026-03-15',
-    status: 'blocked',
-  },
-])
+const friends = ref([])
 
 // ─── Filter ──────────────────────────────────────────────────────────────────
 const search = ref('')
@@ -243,4 +204,14 @@ function confirmDelete() {
   deleteModal.show = false
   deleteModal.id = null
 }
+
+async function loadFriendsData() {
+  try {
+    const { data } = await axios.get('/api/admin/friends/stats')
+    Object.assign(stats, data)
+  } catch(e) {}
+}
+
+onMounted(loadFriendsData)
+
 </script>

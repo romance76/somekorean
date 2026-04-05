@@ -10,6 +10,38 @@ use Illuminate\Support\Facades\DB;
 
 class ShortController extends Controller
 {
+
+    // ★ 전체 숏츠 목록 (셔플용, 최대 500)
+    public function index(Request $request)
+    {
+        $perPage = min((int) $request->query("per_page", 500), 500);
+        $user    = Auth::user();
+
+        $shorts = Short::with("user:id,username,avatar")
+            ->where("is_active", true)
+            ->when($request->input("sort") === "random", fn($q) => $q->inRandomOrder(), fn($q) => $q->latest())
+            ->limit($perPage)
+            ->when(request('search'), fn($q, $s) => $q->where('title', 'LIKE', '%'.$s.'%'))->get()
+            ->map(function ($s) use ($user) {
+                $s->liked = $user
+                    ? ShortLike::where("user_id", $user->id)->where("short_id", $s->id)->exists()
+                    : false;
+                return $s;
+            });
+
+        return response()->json(["data" => $shorts, "total" => $shorts->count()]);
+    }
+
+    /**
+     * Get a single short by ID.
+     */
+    public function show($id)
+    {
+        $short = Short::findOrFail($id);
+        return response()->json($short);
+    }
+
+
     // 피드 (로그인 시 개인화, 비로그인 시 인기순)
     public function feed(Request $request)
     {
@@ -60,6 +92,14 @@ class ShortController extends Controller
             'description' => 'nullable|string|max:300',
             'tags'        => 'nullable|array|max:5',
         ]);
+        // YouTube URLs must be Shorts (vertical) only
+        $url = $request->url;
+        if (preg_match('/youtube\.com|youtu\.be/i', $url)) {
+            if (!preg_match('/youtube\.com\/shorts\//i', $url)) {
+                return response()->json(['message' => '세로형 YouTube Shorts URL만 등록 가능합니다. (youtube.com/shorts/...)'], 422);
+            }
+        }
+
 
         $parsed = $this->parseEmbed($request->url);
 

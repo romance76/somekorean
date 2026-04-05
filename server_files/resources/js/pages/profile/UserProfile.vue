@@ -70,7 +70,7 @@
         <div v-if="posts.length === 0" class="text-center py-8 text-gray-400 text-sm">게시글이 없습니다.</div>
         <ul v-else>
           <li v-for="post in posts" :key="post.id" class="px-5 py-3 border-b border-gray-50 last:border-0">
-            <router-link :to="`/community/post/${post.id}`" class="flex items-center justify-between hover:text-red-600">
+            <router-link :to="`/community/${post.board?.slug || 'general'}/${post.id}`" class="flex items-center justify-between hover:text-red-600">
               <span class="text-sm text-gray-800 truncate flex-1">{{ post.title }}</span>
               <span class="text-xs text-gray-400 ml-3 flex-shrink-0">{{ formatDate(post.created_at) }}</span>
             </router-link>

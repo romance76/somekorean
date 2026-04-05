@@ -7,10 +7,12 @@ use App\Models\RecipeComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class RecipeController extends Controller {
     public function categories() {
         $cats = RecipeCategory::where('is_active', true)->orderBy('sort_order')->get();
+        // 한글 이름이 있으면 name에 덮어쓰기
         $cats->transform(function ($cat) {
             if ($cat->name_ko) $cat->name = $cat->name_ko;
             return $cat;
@@ -19,9 +21,17 @@ class RecipeController extends Controller {
     }
 
     public function index(Request $request) {
-        $query = RecipePost::with('user:id,name,username', 'category:id,name,name_ko,key,icon')
-            ->where('is_hidden', false)
-            ->orderByDesc('created_at');
+        $query = RecipePost::with('user:id,nickname,username,avatar', 'category:id,name,name_ko,key,icon')
+            ->where('is_hidden', false);
+
+        if ($request->sort === 'popular') {
+            $query->orderByDesc('like_count');
+        } elseif ($request->sort === 'views') {
+            $query->orderByDesc('view_count');
+        } else {
+            $query->orderByDesc('created_at');
+        }
+
         if ($request->category) $query->whereHas('category', fn($q) => $q->where('key', $request->category));
         if ($request->difficulty) $query->where('difficulty', $request->difficulty);
         if ($request->search) {
@@ -31,39 +41,104 @@ class RecipeController extends Controller {
                   ->orWhere('title_ko', 'like', "%$s%")
                   ->orWhere('intro', 'like', "%$s%")
                   ->orWhere('intro_ko', 'like', "%$s%")
-                  ->orWhereJsonContains('ingredients', $s)
                   ->orWhereJsonContains('tags', $s);
             });
         }
-        return response()->json($query->paginate(20));
+
+        $perPage = $request->per_page ? (int)$request->per_page : 20;
+        return response()->json($query->paginate($perPage));
     }
 
     public function show($id) {
-        $recipe = RecipePost::with(['user:id,name,username,avatar', 'category:id,name,name_ko,key,icon',
-            'comments' => fn($q) => $q->with('user:id,name,username,avatar')->latest()->limit(20),
+        $recipe = RecipePost::with(['user:id,nickname,username,avatar', 'category:id,name,name_ko,key,icon',
+            'comments' => fn($q) => $q->with('user:id,nickname,username,avatar')->latest()->limit(20),
         ])->findOrFail($id);
         $recipe->increment('view_count');
         $isLiked = Auth::check() ? DB::table('content_likes')->where('user_id', Auth::id())->where('likeable_type', 'recipe')->where('likeable_id', $id)->exists() : false;
         $isBookmarked = Auth::check() ? DB::table('content_likes')->where('user_id', Auth::id())->where('likeable_type', 'recipe_bookmark')->where('likeable_id', $id)->exists() : false;
+        $related = RecipePost::where('category_id', $recipe->category_id)
+            ->where('id', '!=', $id)
+            ->where('is_hidden', false)
+            ->inRandomOrder()->limit(6)
+            ->get(['id','title','title_ko','image_url','difficulty','cook_time','like_count','view_count','category_id']);
+        $avgRating = DB::table('recipe_comments')
+            ->where('recipe_id', $id)->whereNotNull('rating')->avg('rating');
 
+        // 한글 카테고리명 치환
         if ($recipe->category && $recipe->category->name_ko) {
             $recipe->category->name = $recipe->category->name_ko;
         }
 
         $data = $recipe->toArray();
+        // 한글 우선 필드 추가
         $data['display_title'] = $recipe->title_ko ?: $recipe->title;
         $data['display_intro'] = $recipe->intro_ko ?: $recipe->intro;
         $data['display_ingredients'] = $recipe->ingredients_ko ?: $recipe->ingredients;
         $data['display_steps'] = $recipe->steps_ko ?: $recipe->steps;
         $data['display_tips'] = $recipe->tips_ko ?: $recipe->tips;
 
-        return response()->json(array_merge($data, ['is_liked' => $isLiked, 'is_bookmarked' => $isBookmarked]));
+        return response()->json(array_merge($data, [
+            'is_liked' => $isLiked, 'is_bookmarked' => $isBookmarked,
+            'related' => $related,
+            'avg_rating' => $avgRating ? round($avgRating, 1) : null,
+            'comment_count' => $recipe->comments->count(),
+        ]));
+    }
+
+    public function uploadImage(Request $request) {
+        $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120']);
+        $path = $request->file('image')->store('recipes', 'public');
+        return response()->json(['url' => asset('storage/' . $path)]);
     }
 
     public function store(Request $request) {
-        $request->validate(['title' => 'required|string|max:200', 'category_id' => 'required|exists:recipe_categories,id']);
-        $recipe = RecipePost::create([...$request->only(['title','intro','category_id','difficulty','cook_time','calories','servings','ingredients','steps','tips','tags','image_url']), 'user_id' => Auth::id()]);
-        return response()->json($recipe, 201);
+        $request->validate([
+            'title'       => 'required|string|max:200',
+            'category_id' => 'required|exists:recipe_categories,id',
+            'ingredients' => 'nullable|array',
+            'steps'       => 'nullable|array',
+            'tips'        => 'nullable|array',
+            'tags'        => 'nullable|array',
+        ]);
+
+        $recipe = RecipePost::create([
+            'user_id'     => Auth::id(),
+            'title'       => $request->title,
+            'intro'       => $request->intro,
+            'category_id' => $request->category_id,
+            'difficulty'  => $request->difficulty,
+            'cook_time'   => $request->cook_time,
+            'calories'    => $request->calories,
+            'servings'    => $request->servings ?? 2,
+            'ingredients' => $request->ingredients ?? [],
+            'steps'       => $request->steps ?? [],
+            'tips'        => $request->tips ?? [],
+            'tags'        => $request->tags ?? [],
+            'image_url'   => $request->image_url,
+            'source'      => 'user',
+        ]);
+        // 포인트 적립: 레시피 작성
+        Auth::user()->addPoints(5, 'recipe_write', 'earn', $recipe->id, '레시피 작성');
+
+        return response()->json($recipe->load('user:id,nickname,avatar', 'category:id,name,key,icon'), 201);
+    }
+
+    public function update(Request $request, $id) {
+        $recipe = RecipePost::findOrFail($id);
+        if ($recipe->user_id !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '수정 권한이 없습니다.'], 403);
+        }
+        $recipe->update($request->only(['title','intro','category_id','difficulty','cook_time','calories','servings','ingredients','steps','tips','tags','image_url']));
+        return response()->json($recipe);
+    }
+
+    public function destroy($id) {
+        $recipe = RecipePost::findOrFail($id);
+        if ($recipe->user_id !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '삭제 권한이 없습니다.'], 403);
+        }
+        $recipe->delete();
+        return response()->json(['message' => '삭제되었습니다.']);
     }
 
     public function like($id) {
@@ -99,10 +174,17 @@ class RecipeController extends Controller {
         RecipePost::findOrFail($id);
         $request->validate(['content' => 'required|string|max:1000', 'rating' => 'nullable|integer|min:1|max:5']);
         $comment = RecipeComment::create(['recipe_id' => $id, 'user_id' => Auth::id(), 'content' => $request->content, 'rating' => $request->rating]);
-        return response()->json(['message' => '댓글 등록', 'comment' => $comment->load('user:id,name,username,avatar')], 201);
+        return response()->json(['message' => '댓글 등록', 'comment' => $comment->load('user:id,nickname,username,avatar')], 201);
     }
 
     public function popular() {
         return response()->json(RecipePost::where('is_hidden', false)->orderByDesc('like_count')->limit(10)->get(['id','title','title_ko','image_url','difficulty','cook_time','like_count']));
+    }
+
+    public function myRecipes(Request $request) {
+        $recipes = RecipePost::where('user_id', Auth::id())
+            ->orderByDesc('created_at')
+            ->paginate(20);
+        return response()->json($recipes);
     }
 }

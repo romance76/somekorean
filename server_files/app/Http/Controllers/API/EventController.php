@@ -8,10 +8,12 @@ use App\Models\Bookmark;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HasDistanceFilter;
 use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
+    use HasDistanceFilter;
     public function index(Request $request)
     {
         $query = Event::whereNotIn('status', ['cancelled', 'draft'])
@@ -30,6 +32,7 @@ class EventController extends Controller
             });
         }
 
+        $this->applyDistanceFilter($query, $request, "latitude", "longitude");
         return response()->json($query->paginate(20));
     }
 
@@ -86,7 +89,7 @@ class EventController extends Controller
             'description'   => 'nullable|string',
             'location'      => 'nullable|string',
             'region'        => 'nullable|string',
-            'category'      => 'in:general,meetup,food,culture,sports,education,business',
+            'category'      => 'nullable|in:general,meetup,food,culture,sports,education,business,social',
             'max_attendees' => 'nullable|integer|min:1',
             'price'         => 'nullable|numeric|min:0',
             'event_date'    => 'required|date|after:now',
@@ -99,14 +102,20 @@ class EventController extends Controller
 
     public function update(Request $request, $id)
     {
-        $event = Event::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $event = Event::findOrFail($id);
+        if ($event->user_id !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '수정 권한이 없습니다.'], 403);
+        }
         $event->update($request->only(['title','description','location','region','category','event_date','is_online','max_attendees','price']));
         return response()->json($event);
     }
 
     public function destroy($id)
     {
-        $event = Event::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $event = Event::findOrFail($id);
+        if ($event->user_id !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '삭제 권한이 없습니다.'], 403);
+        }
         $event->update(['status' => 'cancelled']);
         return response()->json(['message' => '이벤트가 취소되었습니다.']);
     }
@@ -144,6 +153,9 @@ class EventController extends Controller
             'updated_at' => now(),
         ]);
         $event->increment('attendee_count');
+
+        // 포인트 적립: 이벤트 참가
+        Auth::user()->addPoints(2, 'event_attend', 'earn', (int)$id, '이벤트 참가');
 
         return response()->json(['attending' => true, 'attendee_count' => $event->fresh()->attendee_count]);
     }
@@ -220,7 +232,7 @@ class EventController extends Controller
         // 포인트 지급
         $todayCount = Comment::where('user_id', Auth::id())->whereDate('created_at', today())->count();
         if ($todayCount <= 10) {
-            Auth::user()->addPoints(5, 'comment', 'earn', $comment->id, '댓글 작성');
+            Auth::user()->addPoints(5, 'comment_write', 'earn', $comment->id, '댓글 작성');
         }
 
         return response()->json([

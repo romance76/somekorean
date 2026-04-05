@@ -1,441 +1,488 @@
 <template>
-  <div class="p-6 space-y-6">
-    <!-- Page Title -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">쇼핑정보 관리</h1>
-        <p class="text-sm text-gray-500 mt-0.5">딜 및 파트너 업체를 관리합니다</p>
-      </div>
-      <div class="flex gap-2">
-        <button @click="activeTab = 'deals'; showCreateDeal = true"
-          class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          딜 등록
-        </button>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <p class="text-xs text-gray-500 mb-1">전체 딜</p>
-        <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
-        <p class="text-xs text-gray-400 mt-1">등록된 딜 전체</p>
-      </div>
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <p class="text-xs text-gray-500 mb-1">오늘 등록</p>
-        <p class="text-2xl font-bold text-blue-600">{{ stats.today }}</p>
-        <p class="text-xs text-gray-400 mt-1">오늘 신규 등록</p>
-      </div>
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <p class="text-xs text-gray-500 mb-1">만료 예정</p>
-        <p class="text-2xl font-bold text-orange-500">{{ stats.expiring }}</p>
-        <p class="text-xs text-gray-400 mt-1">7일 내 만료</p>
-      </div>
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <p class="text-xs text-gray-500 mb-1">파트너 업체</p>
-        <p class="text-2xl font-bold text-purple-600">{{ stats.partners }}</p>
-        <p class="text-xs text-gray-400 mt-1">등록 파트너</p>
-      </div>
-    </div>
+  <div class="p-6 max-w-7xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">쇼핑/마트 관리</h1>
 
     <!-- Tabs -->
-    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-      <button @click="activeTab = 'deals'"
-        class="px-5 py-2 rounded-lg text-sm font-medium transition"
-        :class="activeTab === 'deals' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-        쇼핑 딜
-      </button>
-      <button @click="activeTab = 'partners'"
-        class="px-5 py-2 rounded-lg text-sm font-medium transition"
-        :class="activeTab === 'partners' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-        파트너 업체
+    <div class="flex border-b mb-6">
+      <button v-for="(tab, i) in tabs" :key="i"
+        @click="activeTab = i"
+        :class="['px-4 py-2 font-medium border-b-2 -mb-px transition', activeTab === i ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
+        {{ tab }}
       </button>
     </div>
 
-    <!-- Deals Tab -->
-    <div v-if="activeTab === 'deals'" class="space-y-4">
-      <!-- Filters -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <div class="flex flex-wrap gap-3 items-center">
-          <select v-model="dealFilter.category"
-            class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400 bg-gray-50">
+    <!-- Tab 0: 마트 관리 -->
+    <div v-if="activeTab === 0">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">마트 목록</h2>
+        <button @click="openStoreModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ 마트 추가</button>
+      </div>
+      <div class="overflow-x-auto bg-white rounded shadow">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="p-3 text-left">로고</th>
+              <th class="p-3 text-left">마트명</th>
+              <th class="p-3 text-left">카테고리</th>
+              <th class="p-3 text-center">지점수</th>
+              <th class="p-3 text-left">스크래핑</th>
+              <th class="p-3 text-left">마지막수집</th>
+              <th class="p-3 text-center">상태</th>
+              <th class="p-3 text-center">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in stores" :key="s.id" class="border-t hover:bg-gray-50">
+              <td class="p-3"><img v-if="s.logo_url || s.logo" :src="s.logo_url || s.logo" class="w-8 h-8 rounded object-cover" /><span v-else class="text-gray-300">-</span></td>
+              <td class="p-3">
+                <div class="font-medium">{{ s.name }}</div>
+                <div class="text-xs text-gray-400">{{ s.name_en }}</div>
+              </td>
+              <td class="p-3"><span class="px-2 py-0.5 bg-gray-100 rounded text-xs">{{ s.category || '-' }}</span></td>
+              <td class="p-3 text-center">{{ s.locations_count || 0 }}</td>
+              <td class="p-3 text-xs">{{ s.scrape_method || '-' }}</td>
+              <td class="p-3 text-xs text-gray-500">{{ s.last_scraped_at ? new Date(s.last_scraped_at).toLocaleDateString() : '-' }}</td>
+              <td class="p-3 text-center">
+                <span :class="s.is_active ? 'text-green-500' : 'text-red-400'" class="text-xs font-medium">{{ s.is_active ? '활성' : '비활성' }}</span>
+              </td>
+              <td class="p-3 text-center space-x-1">
+                <button @click="openStoreModal(s)" class="text-blue-500 hover:underline text-xs">수정</button>
+                <button @click="openLocationModal(s)" class="text-purple-500 hover:underline text-xs">지점</button>
+                <button @click="deleteStore(s.id)" class="text-red-500 hover:underline text-xs">삭제</button>
+              </td>
+            </tr>
+            <tr v-if="!stores.length"><td colspan="8" class="p-8 text-center text-gray-400">등록된 마트가 없습니다</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 1: 딜/세일 관리 -->
+    <div v-if="activeTab === 1">
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex gap-2 items-center">
+          <h2 class="text-lg font-semibold">딜/세일 목록</h2>
+          <select v-model="dealFilter.store_id" @change="loadDeals" class="border rounded px-2 py-1 text-sm">
+            <option value="">전체 마트</option>
+            <option v-for="s in stores" :key="s.id" :value="s.id">{{ s.name }}</option>
+          </select>
+          <select v-model="dealFilter.category" @change="loadDeals" class="border rounded px-2 py-1 text-sm">
             <option value="">전체 카테고리</option>
-            <option value="식품">식품</option>
-            <option value="뷰티">뷰티</option>
-            <option value="전자">전자</option>
-            <option value="패션">패션</option>
-            <option value="생활">생활</option>
+            <option v-for="c in dealCategories" :key="c" :value="c">{{ c }}</option>
           </select>
-
-          <select v-model="dealFilter.status"
-            class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400 bg-gray-50">
-            <option value="">전체 상태</option>
-            <option value="active">활성</option>
-            <option value="expiring">만료 예정</option>
-            <option value="expired">만료</option>
-          </select>
-
-          <div class="flex-1 min-w-[200px]">
-            <input v-model="dealFilter.search" type="text" placeholder="딜 제목 또는 업체명 검색..."
-              class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400 bg-gray-50" />
-          </div>
-
-          <button @click="dealFilter.category = ''; dealFilter.status = ''; dealFilter.search = ''"
-            class="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-xl hover:bg-gray-100 transition">
-            초기화
-          </button>
+          <label class="flex items-center gap-1 text-sm">
+            <input type="checkbox" v-model="dealFilter.has_error" @change="loadDeals" />
+            가격오류만
+          </label>
+        </div>
+        <div class="flex gap-2">
+          <button @click="bulkDeleteErrors" class="bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600">일괄삭제 - 오류항목</button>
+          <button @click="openDealModal()" class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600">+ 딜 수동등록</button>
         </div>
       </div>
-
-      <!-- Deals Table -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="bg-gray-50 border-b border-gray-100">
-                <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">딜 정보</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">카테고리</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">할인율</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">원가/할인가</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">만료일</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">조회</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">상태</th>
-                <th class="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">관리</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50">
-              <tr v-for="deal in filteredDeals" :key="deal.id" class="hover:bg-gray-50 transition">
-                <td class="px-5 py-4">
-                  <p class="font-medium text-gray-900 line-clamp-1 max-w-[260px]">{{ deal.title }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">{{ deal.store }}</p>
-                </td>
-                <td class="px-4 py-4">
-                  <span class="px-2.5 py-1 rounded-lg text-xs font-medium"
-                    :class="categoryColors[deal.category] || 'bg-gray-100 text-gray-600'">
-                    {{ deal.category }}
-                  </span>
-                </td>
-                <td class="px-4 py-4">
-                  <span class="text-red-600 font-bold">-{{ deal.discount }}%</span>
-                </td>
-                <td class="px-4 py-4">
-                  <p class="text-gray-400 line-through text-xs">${{ deal.original }}</p>
-                  <p class="font-semibold text-gray-900">${{ deal.sale_price }}</p>
-                </td>
-                <td class="px-4 py-4 text-gray-600 whitespace-nowrap">{{ deal.expires }}</td>
-                <td class="px-4 py-4 text-gray-500">{{ deal.views.toLocaleString() }}</td>
-                <td class="px-4 py-4">
-                  <span class="px-2.5 py-1 rounded-full text-xs font-medium"
-                    :class="dealStatusColors[deal.status] || 'bg-gray-100 text-gray-500'">
-                    {{ dealStatusLabels[deal.status] || deal.status }}
-                  </span>
-                </td>
-                <td class="px-4 py-4">
-                  <div class="flex items-center gap-1.5">
-                    <button @click="openDealDetail(deal)"
-                      class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-medium">
-                      수정
-                    </button>
-                    <button @click="deleteDeal(deal.id)"
-                      class="px-3 py-1.5 text-xs bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition font-medium">
-                      삭제
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="filteredDeals.length === 0">
-                <td colspan="8" class="text-center py-12 text-gray-400">조건에 맞는 딜이 없습니다.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="px-5 py-3 border-t border-gray-100">
-          <span class="text-xs text-gray-400">총 {{ filteredDeals.length }}건</span>
-        </div>
+      <div class="overflow-x-auto bg-white rounded shadow">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="p-3 text-left">마트</th>
+              <th class="p-3 text-left">타이틀</th>
+              <th class="p-3 text-right">가격</th>
+              <th class="p-3 text-right">세일가</th>
+              <th class="p-3 text-right">할인율</th>
+              <th class="p-3 text-left">카테고리</th>
+              <th class="p-3 text-left">유효기간</th>
+              <th class="p-3 text-center">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="d in deals" :key="d.id" class="border-t hover:bg-gray-50">
+              <td class="p-3 text-xs">{{ d.store?.name || '-' }}</td>
+              <td class="p-3">
+                <div class="max-w-xs truncate">{{ d.title }}</div>
+              </td>
+              <td class="p-3 text-right" :class="{'text-red-500 font-bold': !d.price || d.price == 0}">${{ d.price || '0' }}</td>
+              <td class="p-3 text-right" :class="{'text-red-500 font-bold': !d.sale_price || d.sale_price == 0}">${{ d.sale_price || '0' }}</td>
+              <td class="p-3 text-right" :class="{'text-red-500 font-bold': !d.discount_percent || d.discount_percent == 0}">{{ d.discount_percent || 0 }}%</td>
+              <td class="p-3 text-xs">{{ d.category || '-' }}</td>
+              <td class="p-3 text-xs text-gray-500">{{ d.valid_until ? d.valid_until.substring(0,10) : '무기한' }}</td>
+              <td class="p-3 text-center space-x-1">
+                <button @click="openDealModal(d)" class="text-blue-500 hover:underline text-xs">수정</button>
+                <button @click="deleteDeal(d.id)" class="text-red-500 hover:underline text-xs">삭제</button>
+              </td>
+            </tr>
+            <tr v-if="!deals.length"><td colspan="8" class="p-8 text-center text-gray-400">딜이 없습니다</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-
-    <!-- Partners Tab -->
-    <div v-if="activeTab === 'partners'" class="space-y-4">
-      <div class="flex justify-end">
-        <button @click="showCreatePartner = true"
-          class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-purple-700 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          업체 등록
+      <div v-if="dealsPagination.last_page > 1" class="flex justify-center gap-2 mt-4">
+        <button v-for="p in dealsPagination.last_page" :key="p" @click="loadDeals(p)"
+          :class="['px-3 py-1 rounded text-sm', dealsPagination.current_page === p ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200']">
+          {{ p }}
         </button>
       </div>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="partner in partners" :key="partner.id"
-          class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                :style="{ backgroundColor: partner.iconBg }">
-                {{ partner.icon }}
+    <!-- Tab 2: 전단지 관리 -->
+    <div v-if="activeTab === 2">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">전단지 관리</h2>
+        <button @click="openFlyerModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">+ 전단지 등록</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="f in flyers" :key="f.id" class="bg-white rounded shadow overflow-hidden">
+          <img :src="f.image_url" class="w-full h-48 object-cover" @error="$event.target.src='/images/placeholder.png'" />
+          <div class="p-3">
+            <div class="font-medium text-sm">{{ f.store?.name }} - {{ f.title || '전단지' }}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ f.valid_from?.substring(0,10) || '-' }} ~ {{ f.valid_until?.substring(0,10) || '-' }}</div>
+            <div class="mt-2 flex justify-end">
+              <button @click="deleteFlyer(f.id)" class="text-red-500 text-xs hover:underline">삭제</button>
+            </div>
+          </div>
+        </div>
+        <div v-if="!flyers.length" class="col-span-3 text-center text-gray-400 py-12">등록된 전단지가 없습니다</div>
+      </div>
+    </div>
+
+    <!-- Tab 3: 스크래핑 현황 -->
+    <div v-if="activeTab === 3">
+      <h2 class="text-lg font-semibold mb-4">스크래핑 현황</h2>
+
+      <div class="bg-white rounded shadow mb-6">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="p-3 text-left">마트</th>
+              <th class="p-3 text-left">스크래핑 방식</th>
+              <th class="p-3 text-left">마지막 수집</th>
+              <th class="p-3 text-center">활성 딜</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in stores.filter(s => s.scrape_method)" :key="s.id" class="border-t">
+              <td class="p-3 font-medium">{{ s.name }}</td>
+              <td class="p-3 text-xs">{{ s.scrape_method }}</td>
+              <td class="p-3 text-xs">{{ s.last_scraped_at ? new Date(s.last_scraped_at).toLocaleString() : '-' }}</td>
+              <td class="p-3 text-center">{{ s.deals_count || 0 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="font-semibold mb-3">최근 스크래핑 로그 (50개)</h3>
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="p-3 text-left">마트</th>
+              <th class="p-3 text-center">상태</th>
+              <th class="p-3 text-center">수집 딜</th>
+              <th class="p-3 text-left">시작</th>
+              <th class="p-3 text-left">종료</th>
+              <th class="p-3 text-left">에러</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="l in scrapeLogs" :key="l.id" class="border-t">
+              <td class="p-3">{{ l.store?.name || '-' }}</td>
+              <td class="p-3 text-center">
+                <span :class="l.status === 'success' ? 'text-green-500' : 'text-red-500'" class="text-xs font-medium">{{ l.status }}</span>
+              </td>
+              <td class="p-3 text-center">{{ l.deals_count || 0 }}</td>
+              <td class="p-3 text-xs">{{ l.started_at ? new Date(l.started_at).toLocaleString() : '-' }}</td>
+              <td class="p-3 text-xs">{{ l.finished_at ? new Date(l.finished_at).toLocaleString() : '-' }}</td>
+              <td class="p-3 text-xs text-red-400 max-w-xs truncate">{{ l.error_message || '-' }}</td>
+            </tr>
+            <tr v-if="!scrapeLogs.length"><td colspan="6" class="p-8 text-center text-gray-400">스크래핑 로그가 없습니다</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Store Modal -->
+    <div v-if="showStoreModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showStoreModal=false">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <h3 class="text-lg font-bold mb-4">{{ storeForm.id ? '마트 수정' : '마트 추가' }}</h3>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">마트명 (한)</label>
+                <input v-model="storeForm.name" class="w-full border rounded px-3 py-2 text-sm" />
               </div>
               <div>
-                <p class="font-semibold text-gray-900">{{ partner.name }}</p>
-                <span class="text-xs px-2 py-0.5 rounded-md"
-                  :class="categoryColors[partner.category] || 'bg-gray-100 text-gray-600'">
-                  {{ partner.category }}
-                </span>
+                <label class="block text-sm font-medium text-gray-700 mb-1">마트명 (영)</label>
+                <input v-model="storeForm.name_en" class="w-full border rounded px-3 py-2 text-sm" />
               </div>
             </div>
-            <!-- Toggle active -->
-            <button @click="partner.active = !partner.active"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="partner.active ? 'bg-green-500' : 'bg-gray-200'">
-              <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
-                :class="partner.active ? 'translate-x-6' : 'translate-x-1'" />
-            </button>
-          </div>
-
-          <div class="space-y-1.5 text-sm">
-            <div class="flex items-center gap-2 text-gray-600">
-              <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              {{ partner.contact }}
-            </div>
-            <div v-if="partner.rss" class="flex items-center gap-2 text-gray-500">
-              <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7M6 17a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-              <span class="text-xs truncate">{{ partner.rss }}</span>
-            </div>
-          </div>
-
-          <div class="flex gap-2 mt-4">
-            <button class="flex-1 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition">
-              수정
-            </button>
-            <button @click="deletePartner(partner.id)"
-              class="flex-1 py-1.5 text-xs bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition">
-              삭제
-            </button>
-          </div>
-        </div>
-
-        <div v-if="partners.length === 0"
-          class="col-span-2 text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100">
-          등록된 파트너 업체가 없습니다.
-        </div>
-      </div>
-    </div>
-
-    <!-- Create Deal Modal -->
-    <div v-if="showCreateDeal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showCreateDeal = false">
-      <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 class="font-bold text-gray-900 text-lg">딜 등록</h2>
-          <button @click="showCreateDeal = false" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <form @submit.prevent="submitDeal" class="p-6 space-y-4">
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">딜 제목 *</label>
-            <input v-model="dealForm.title" type="text" required placeholder="예: H마트 LA갈비 20% 할인"
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="text-sm font-medium text-gray-700 block mb-1.5">업체명 *</label>
-              <input v-model="dealForm.store" type="text" required placeholder="예: H마트 LA"
-                class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">체인코드</label>
+                <input v-model="storeForm.chain_name" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                <select v-model="storeForm.category" class="w-full border rounded px-3 py-2 text-sm">
+                  <option value="">선택</option>
+                  <option value="korean_mart">한인마트</option>
+                  <option value="us_mart">미국마트</option>
+                  <option value="asian_mart">아시안마트</option>
+                  <option value="online">온라인</option>
+                </select>
+              </div>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-700 block mb-1.5">카테고리 *</label>
-              <select v-model="dealForm.category" required
-                class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400 bg-white">
-                <option value="">선택</option>
-                <option value="식품">식품</option>
-                <option value="뷰티">뷰티</option>
-                <option value="전자">전자</option>
-                <option value="패션">패션</option>
-                <option value="생활">생활</option>
+              <label class="block text-sm font-medium text-gray-700 mb-1">웹사이트</label>
+              <input v-model="storeForm.website" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">로고 URL</label>
+              <input v-model="storeForm.logo_url" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">주간광고 URL</label>
+                <input v-model="storeForm.weekly_ad_url" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">RSS URL</label>
+                <input v-model="storeForm.rss_url" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">스크래핑 방식</label>
+              <select v-model="storeForm.scrape_method" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">없음</option>
+                <option value="rss">RSS</option>
+                <option value="api">API</option>
+                <option value="scrape">웹 스크래핑</option>
+                <option value="manual">수동</option>
               </select>
             </div>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">이미지 URL</label>
-            <input v-model="dealForm.image_url" type="url" placeholder="https://..."
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="text-sm font-medium text-gray-700 block mb-1.5">원가 ($) *</label>
-              <input v-model="dealForm.original" type="number" required min="0" step="0.01" placeholder="0.00"
-                class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">메모</label>
+              <textarea v-model="storeForm.memo" rows="2" class="w-full border rounded px-3 py-2 text-sm"></textarea>
             </div>
-            <div>
-              <label class="text-sm font-medium text-gray-700 block mb-1.5">할인율 (%) *</label>
-              <input v-model="dealForm.discount" type="number" required min="1" max="100" placeholder="0"
-                class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
+            <div class="flex items-center gap-2">
+              <input type="checkbox" v-model="storeForm.is_active" id="store_active" />
+              <label for="store_active" class="text-sm">활성</label>
             </div>
           </div>
-
-          <!-- Computed sale price preview -->
-          <div v-if="dealForm.original && dealForm.discount"
-            class="bg-blue-50 rounded-xl px-4 py-3 text-sm text-blue-700">
-            할인가: <strong>${{ computedSalePrice }}</strong>
-            ({{ dealForm.discount }}% 할인)
+          <div class="flex justify-end gap-2 mt-6">
+            <button @click="showStoreModal=false" class="px-4 py-2 border rounded text-sm hover:bg-gray-50">취소</button>
+            <button @click="saveStore" class="px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">저장</button>
           </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">설명</label>
-            <textarea v-model="dealForm.description" rows="2" placeholder="딜 설명을 입력하세요..."
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">링크 URL</label>
-            <input v-model="dealForm.link_url" type="url" placeholder="https://..."
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">만료일 *</label>
-            <input v-model="dealForm.expires" type="date" required
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div class="flex gap-3 pt-2">
-            <button type="button" @click="showCreateDeal = false"
-              class="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-              취소
-            </button>
-            <button type="submit"
-              class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition">
-              등록하기
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
 
-    <!-- Create Partner Modal -->
-    <div v-if="showCreatePartner" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showCreatePartner = false">
-      <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 class="font-bold text-gray-900 text-lg">파트너 업체 등록</h2>
-          <button @click="showCreatePartner = false" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <!-- Location Modal -->
+    <div v-if="showLocationModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showLocationModal=false">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <h3 class="text-lg font-bold mb-4">{{ locationStore?.name }} - 지점 관리</h3>
+
+          <div class="mb-4">
+            <button @click="showLocationForm=!showLocationForm" class="bg-green-500 text-white px-3 py-1.5 rounded text-sm hover:bg-green-600">
+              {{ showLocationForm ? '폼 닫기' : '+ 지점 추가' }}
+            </button>
+          </div>
+
+          <!-- Location Add/Edit Form -->
+          <div v-if="showLocationForm" class="bg-gray-50 rounded p-4 mb-4 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">지점명</label>
+                <input v-model="locationForm.branch_name" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">전화</label>
+                <input v-model="locationForm.phone" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">주소</label>
+              <input v-model="locationForm.address" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">도시</label>
+                <input v-model="locationForm.city" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">주</label>
+                <input v-model="locationForm.state" class="w-full border rounded px-3 py-2 text-sm" maxlength="2" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">우편번호</label>
+                <input v-model="locationForm.zip_code" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">영업시작</label>
+                <input v-model="locationForm.open_time" type="time" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">영업종료</label>
+                <input v-model="locationForm.close_time" type="time" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-1 text-sm"><input type="checkbox" v-model="locationForm.is_24h" /> 24시간</label>
+              <label class="flex items-center gap-1 text-sm"><input type="checkbox" v-model="locationForm.is_active" /> 활성</label>
+            </div>
+            <div class="flex justify-end gap-2">
+              <button @click="showLocationForm=false" class="px-3 py-1.5 border rounded text-sm">취소</button>
+              <button @click="saveLocation" class="px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">저장</button>
+            </div>
+          </div>
+
+          <!-- Location List -->
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="p-2 text-left">지점명</th>
+                <th class="p-2 text-left">주소</th>
+                <th class="p-2 text-left">전화</th>
+                <th class="p-2 text-center">영업시간</th>
+                <th class="p-2 text-center">상태</th>
+                <th class="p-2 text-center">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="loc in locations" :key="loc.id" class="border-t">
+                <td class="p-2">{{ loc.branch_name || '-' }}</td>
+                <td class="p-2 text-xs">{{ loc.address }}, {{ loc.city }} {{ loc.state }} {{ loc.zip_code }}</td>
+                <td class="p-2 text-xs">{{ loc.phone || '-' }}</td>
+                <td class="p-2 text-center text-xs">{{ loc.is_24h ? '24시간' : `${loc.open_time || '-'} ~ ${loc.close_time || '-'}` }}</td>
+                <td class="p-2 text-center"><span :class="loc.is_active ? 'text-green-500' : 'text-red-400'" class="text-xs">{{ loc.is_active ? '활성' : '비활성' }}</span></td>
+                <td class="p-2 text-center space-x-1">
+                  <button @click="editLocation(loc)" class="text-blue-500 text-xs hover:underline">수정</button>
+                  <button @click="deleteLocation(loc.id)" class="text-red-500 text-xs hover:underline">삭제</button>
+                </td>
+              </tr>
+              <tr v-if="!locations.length"><td colspan="6" class="p-6 text-center text-gray-400">등록된 지점이 없습니다</td></tr>
+            </tbody>
+          </table>
+
+          <div class="flex justify-end mt-4">
+            <button @click="showLocationModal=false" class="px-4 py-2 border rounded text-sm hover:bg-gray-50">닫기</button>
+          </div>
         </div>
-
-        <form @submit.prevent="submitPartner" class="p-6 space-y-4">
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">업체명 *</label>
-            <input v-model="partnerForm.name" type="text" required placeholder="예: H마트 LA"
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">카테고리 *</label>
-            <select v-model="partnerForm.category" required
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400 bg-white">
-              <option value="">선택</option>
-              <option value="식품">식품</option>
-              <option value="뷰티">뷰티</option>
-              <option value="전자">전자</option>
-              <option value="패션">패션</option>
-              <option value="생활">생활</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">연락처</label>
-            <input v-model="partnerForm.contact" type="text" placeholder="예: (213) 555-0100"
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">RSS 피드 URL</label>
-            <input v-model="partnerForm.rss" type="url" placeholder="https://..."
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-
-          <div class="flex gap-3 pt-2">
-            <button type="button" @click="showCreatePartner = false"
-              class="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-              취소
-            </button>
-            <button type="submit"
-              class="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition">
-              등록하기
-            </button>
-          </div>
-        </form>
       </div>
     </div>
 
-    <!-- Deal Detail/Edit Modal -->
-    <div v-if="selectedDeal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="selectedDeal = null">
-      <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 class="font-bold text-gray-900 text-lg">딜 수정</h2>
-          <button @click="selectedDeal = null" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <!-- Deal Modal -->
+    <div v-if="showDealModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showDealModal=false">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <h3 class="text-lg font-bold mb-4">{{ dealForm.id ? '딜 수정' : '딜 수동등록' }}</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">마트</label>
+              <select v-model="dealForm.store_id" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">선택</option>
+                <option v-for="s in stores" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">타이틀</label>
+              <input v-model="dealForm.title" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">설명</label>
+              <textarea v-model="dealForm.description" rows="2" class="w-full border rounded px-3 py-2 text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">원가</label>
+                <input v-model="dealForm.original_price" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">세일가</label>
+                <input v-model="dealForm.sale_price" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">할인율(%)</label>
+                <input v-model="dealForm.discount_percent" type="number" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                <input v-model="dealForm.category" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">단위</label>
+                <input v-model="dealForm.unit" class="w-full border rounded px-3 py-2 text-sm" placeholder="예: lb, ea, pack" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">이미지 URL</label>
+              <input v-model="dealForm.image_url" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">유효 시작</label>
+                <input v-model="dealForm.valid_from" type="date" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">유효 종료</label>
+                <input v-model="dealForm.valid_until" type="date" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-1 text-sm"><input type="checkbox" v-model="dealForm.is_active" /> 활성</label>
+              <label class="flex items-center gap-1 text-sm"><input type="checkbox" v-model="dealForm.is_featured" /> 추천</label>
+              <label class="flex items-center gap-1 text-sm"><input type="checkbox" v-model="dealForm.is_special" /> 특가</label>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <button @click="showDealModal=false" class="px-4 py-2 border rounded text-sm hover:bg-gray-50">취소</button>
+            <button @click="saveDeal" class="px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">저장</button>
+          </div>
         </div>
-        <div class="p-6 space-y-4">
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">딜 제목</label>
-            <input v-model="selectedDeal.title" type="text"
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-          <div class="grid grid-cols-2 gap-3">
+      </div>
+    </div>
+
+    <!-- Flyer Modal -->
+    <div v-if="showFlyerModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showFlyerModal=false">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="p-6">
+          <h3 class="text-lg font-bold mb-4">전단지 등록</h3>
+          <div class="space-y-3">
             <div>
-              <label class="text-sm font-medium text-gray-700 block mb-1.5">업체명</label>
-              <input v-model="selectedDeal.store" type="text"
-                class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">마트</label>
+              <select v-model="flyerForm.store_id" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">선택</option>
+                <option v-for="s in stores" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-700 block mb-1.5">할인율 (%)</label>
-              <input v-model="selectedDeal.discount" type="number" min="1" max="100"
-                class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">제목</label>
+              <input v-model="flyerForm.title" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">이미지 URL</label>
+              <input v-model="flyerForm.image_url" class="w-full border rounded px-3 py-2 text-sm" />
+            </div>
+            <div v-if="flyerForm.image_url" class="border rounded p-2">
+              <img :src="flyerForm.image_url" class="max-h-40 mx-auto" @error="$event.target.style.display='none'" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">세일 시작</label>
+                <input v-model="flyerForm.valid_from" type="date" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">세일 종료</label>
+                <input v-model="flyerForm.valid_until" type="date" class="w-full border rounded px-3 py-2 text-sm" />
+              </div>
             </div>
           </div>
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">만료일</label>
-            <input v-model="selectedDeal.expires" type="date"
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400" />
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-700 block mb-1.5">상태</label>
-            <select v-model="selectedDeal.status"
-              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-400 bg-white">
-              <option value="active">활성</option>
-              <option value="expiring">만료 예정</option>
-              <option value="expired">만료</option>
-            </select>
-          </div>
-          <div class="flex gap-3 pt-2">
-            <button @click="selectedDeal = null"
-              class="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-              취소
-            </button>
-            <button @click="saveEditDeal"
-              class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition">
-              저장
-            </button>
+          <div class="flex justify-end gap-2 mt-6">
+            <button @click="showFlyerModal=false" class="px-4 py-2 border rounded text-sm hover:bg-gray-50">취소</button>
+            <button @click="saveFlyer" class="px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">등록</button>
           </div>
         </div>
       </div>
@@ -444,170 +491,226 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
-import axios from 'axios'
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
-const activeTab = ref('deals')
-const loadingDeals = ref(false)
+const tabs = ['마트 관리', '딜/세일 관리', '전단지 관리', '스크래핑 현황'];
+const activeTab = ref(0);
 
-// Deals data - 더미 데이터 (API 실패시 폴백)
-const deals = ref([
-  { id:1, title:'H마트 주간 세일 - LA갈비 20% 할인', store:'H마트 LA', discount:20, original:35, sale_price:28, category:'식품', expires:'2026-04-05', views:245, status:'active', image_url:null },
-  { id:2, title:'설화수 윤조에센스 15% 할인', store:'면세닷컴', discount:15, original:95, sale_price:80.75, category:'뷰티', expires:'2026-04-15', views:189, status:'active', image_url:null },
-  { id:3, title:'삼성 갤럭시 S24 $150 할인', store:'베스트바이', discount:10, original:1200, sale_price:1050, category:'전자', expires:'2026-03-31', views:412, status:'active', image_url:null },
-  { id:4, title:'한국 과자 박스 세트', store:'아마존', discount:25, original:40, sale_price:30, category:'식품', expires:'2026-04-20', views:78, status:'active', image_url:null },
-  { id:5, title:'라네즈 수분크림 세트', store:'세포라', discount:20, original:65, sale_price:52, category:'뷰티', expires:'2026-04-10', views:156, status:'active', image_url:null },
-  { id:6, title:'코스트코 한우 갈비 특가', store:'코스트코', discount:30, original:58, sale_price:40.6, category:'식품', expires:'2026-03-30', views:534, status:'expiring', image_url:null },
-])
+// Data
+const stores = ref([]);
+const deals = ref([]);
+const dealsPagination = ref({});
+const dealCategories = ref([]);
+const flyers = ref([]);
+const scrapeLogs = ref([]);
+const locations = ref([]);
 
-async function loadDeals() {
-  loadingDeals.value = true
+// Filters
+const dealFilter = ref({ store_id: '', category: '', has_error: false });
+
+// Modals
+const showStoreModal = ref(false);
+const showLocationModal = ref(false);
+const showLocationForm = ref(false);
+const showDealModal = ref(false);
+const showFlyerModal = ref(false);
+
+const locationStore = ref(null);
+
+// Forms
+const defaultStore = { name: '', name_en: '', chain_name: '', category: '', website: '', logo_url: '', weekly_ad_url: '', rss_url: '', scrape_method: '', memo: '', is_active: true };
+const storeForm = ref({ ...defaultStore });
+
+const defaultLocation = { branch_name: '', address: '', city: '', state: '', zip_code: '', phone: '', open_time: '09:00', close_time: '21:00', is_24h: false, is_active: true };
+const locationForm = ref({ ...defaultLocation });
+
+const defaultDeal = { store_id: '', title: '', description: '', original_price: '', sale_price: '', discount_percent: '', category: '', unit: '', image_url: '', valid_from: '', valid_until: '', is_active: true, is_featured: false, is_special: false };
+const dealForm = ref({ ...defaultDeal });
+
+const flyerForm = ref({ store_id: '', title: '', image_url: '', valid_from: '', valid_until: '' });
+
+// API helpers
+const api = axios.create({ baseURL: '/api/admin/shopping' });
+api.interceptors.request.use(c => {
+  const t = localStorage.getItem('sk_token');
+  if (t) c.headers.Authorization = `Bearer ${t}`;
+  return c;
+});
+
+// Load data
+async function loadStores() {
   try {
-    const { data } = await axios.get('/api/admin/shopping/deals')
-    const items = data.data || data
-    if (Array.isArray(items) && items.length > 0) {
-      deals.value = items.map(d => ({
-        ...d,
-        discount: d.discount_percent || d.discount || 0,
-        original: d.original_price || d.original || 0,
-        sale_price: d.sale_price || 0,
-        store: d.store || d.source || '-',
-        expires: d.expires_at ? d.expires_at.slice(0, 10) : '',
-        views: d.views || 0,
-        status: d.is_active ? (d.expires_at && new Date(d.expires_at) < new Date(Date.now() + 7 * 86400000) ? 'expiring' : 'active') : 'expired',
-      }))
+    const { data } = await api.get('/stores');
+    stores.value = data;
+  } catch (e) { console.error('loadStores', e); }
+}
+
+async function loadDeals(page = 1) {
+  try {
+    const params = { page };
+    if (dealFilter.value.store_id) params.store_id = dealFilter.value.store_id;
+    if (dealFilter.value.category) params.category = dealFilter.value.category;
+    if (dealFilter.value.has_error) params.has_error = 1;
+    const { data } = await api.get('/deals', { params });
+    deals.value = data.data;
+    dealsPagination.value = { current_page: data.current_page, last_page: data.last_page };
+  } catch (e) { console.error('loadDeals', e); }
+}
+
+async function loadDealCategories() {
+  try {
+    const { data } = await axios.get('/api/shopping/categories');
+    dealCategories.value = data;
+  } catch (e) { console.error(e); }
+}
+
+async function loadFlyers() {
+  try {
+    const { data } = await api.get('/flyers');
+    flyers.value = data.data || data;
+  } catch (e) { console.error('loadFlyers', e); }
+}
+
+async function loadScrapeLogs() {
+  try {
+    const { data } = await api.get('/scrape-logs');
+    scrapeLogs.value = data;
+  } catch (e) { console.error('loadScrapeLogs', e); }
+}
+
+async function loadLocations(storeId) {
+  try {
+    const { data } = await api.get(`/stores/${storeId}/locations`);
+    locations.value = data;
+  } catch (e) { console.error('loadLocations', e); }
+}
+
+// Store CRUD
+function openStoreModal(s = null) {
+  storeForm.value = s ? { ...s } : { ...defaultStore };
+  showStoreModal.value = true;
+}
+
+async function saveStore() {
+  try {
+    if (storeForm.value.id) {
+      await api.put(`/stores/${storeForm.value.id}`, storeForm.value);
+    } else {
+      await api.post('/stores', storeForm.value);
     }
-  } catch { /* API 미구현시 더미 유지 */ } finally {
-    loadingDeals.value = false
-  }
+    showStoreModal.value = false;
+    loadStores();
+  } catch (e) { alert('저장 실패: ' + (e.response?.data?.message || e.message)); }
 }
 
-onMounted(() => loadDeals())
-
-// Partners data
-const partners = ref([
-  { id:1, name:'H마트 LA', category:'식품', contact:'(213) 388-3400', rss:'https://hmart.com/rss/deals', active:true, icon:'🛒', iconBg:'#dcfce7' },
-  { id:2, name:'면세닷컴', category:'뷰티', contact:'support@meonse.com', rss:'https://meonse.com/feed', active:true, icon:'💄', iconBg:'#fce7f3' },
-  { id:3, name:'코리안 마트', category:'식품', contact:'(310) 555-0192', rss:'', active:false, icon:'🏪', iconBg:'#fef9c3' },
-])
-
-const dealFilter = reactive({ category: '', status: '', search: '' })
-const showCreateDeal = ref(false)
-const showCreatePartner = ref(false)
-const selectedDeal = ref(null)
-
-const dealForm = reactive({
-  title: '', store: '', category: '', image_url: '', original: '', discount: '',
-  description: '', link_url: '', expires: ''
-})
-
-const partnerForm = reactive({
-  name: '', category: '', contact: '', rss: ''
-})
-
-const categoryColors = {
-  '식품':  'bg-green-100 text-green-700',
-  '뷰티':  'bg-pink-100 text-pink-700',
-  '전자':  'bg-blue-100 text-blue-700',
-  '패션':  'bg-purple-100 text-purple-700',
-  '생활':  'bg-yellow-100 text-yellow-700',
+async function deleteStore(id) {
+  if (!confirm('이 마트를 삭제하시겠습니까?')) return;
+  try {
+    await api.delete(`/stores/${id}`);
+    loadStores();
+  } catch (e) { alert('삭제 실패'); }
 }
 
-const dealStatusColors = {
-  'active':   'bg-green-100 text-green-700',
-  'expiring': 'bg-orange-100 text-orange-700',
-  'expired':  'bg-gray-100 text-gray-500',
+// Location CRUD
+function openLocationModal(s) {
+  locationStore.value = s;
+  showLocationForm.value = false;
+  locationForm.value = { ...defaultLocation };
+  showLocationModal.value = true;
+  loadLocations(s.id);
 }
 
-const dealStatusLabels = {
-  'active':   '활성',
-  'expiring': '만료 예정',
-  'expired':  '만료',
+function editLocation(loc) {
+  locationForm.value = { ...loc };
+  showLocationForm.value = true;
 }
 
-const stats = computed(() => ({
-  total: deals.value.length,
-  today: 0, // Would be computed from created_at in real data
-  expiring: deals.value.filter(d => d.status === 'expiring').length,
-  partners: partners.value.filter(p => p.active).length,
-}))
-
-const filteredDeals = computed(() => {
-  return deals.value.filter(d => {
-    if (dealFilter.category && d.category !== dealFilter.category) return false
-    if (dealFilter.status && d.status !== dealFilter.status) return false
-    if (dealFilter.search) {
-      const q = dealFilter.search.toLowerCase()
-      if (!d.title.toLowerCase().includes(q) && !d.store.toLowerCase().includes(q)) return false
+async function saveLocation() {
+  try {
+    if (locationForm.value.id) {
+      await api.put(`/locations/${locationForm.value.id}`, locationForm.value);
+    } else {
+      await api.post(`/stores/${locationStore.value.id}/locations`, locationForm.value);
     }
-    return true
-  })
-})
-
-const computedSalePrice = computed(() => {
-  if (!dealForm.original || !dealForm.discount) return 0
-  const orig = parseFloat(dealForm.original)
-  const disc = parseFloat(dealForm.discount)
-  return (orig * (1 - disc / 100)).toFixed(2)
-})
-
-function openDealDetail(deal) {
-  selectedDeal.value = { ...deal }
+    showLocationForm.value = false;
+    locationForm.value = { ...defaultLocation };
+    loadLocations(locationStore.value.id);
+    loadStores();
+  } catch (e) { alert('저장 실패: ' + (e.response?.data?.message || e.message)); }
 }
 
-function saveEditDeal() {
-  const idx = deals.value.findIndex(d => d.id === selectedDeal.value.id)
-  if (idx !== -1) {
-    deals.value[idx] = { ...selectedDeal.value }
-  }
-  selectedDeal.value = null
+async function deleteLocation(id) {
+  if (!confirm('이 지점을 삭제하시겠습니까?')) return;
+  try {
+    await api.delete(`/locations/${id}`);
+    loadLocations(locationStore.value.id);
+    loadStores();
+  } catch (e) { alert('삭제 실패'); }
 }
 
-function deleteDeal(id) {
-  if (!confirm('이 딜을 삭제하시겠습니까?')) return
-  deals.value = deals.value.filter(d => d.id !== id)
+// Deal CRUD
+function openDealModal(d = null) {
+  dealForm.value = d ? { ...d } : { ...defaultDeal };
+  showDealModal.value = true;
 }
 
-function deletePartner(id) {
-  if (!confirm('이 파트너 업체를 삭제하시겠습니까?')) return
-  partners.value = partners.value.filter(p => p.id !== id)
+async function saveDeal() {
+  try {
+    if (dealForm.value.id) {
+      await api.put(`/deals/${dealForm.value.id}`, dealForm.value);
+    } else {
+      await api.post('/deals', dealForm.value);
+    }
+    showDealModal.value = false;
+    loadDeals();
+  } catch (e) { alert('저장 실패: ' + (e.response?.data?.message || e.message)); }
 }
 
-function submitDeal() {
-  const orig = parseFloat(dealForm.original) || 0
-  const disc = parseFloat(dealForm.discount) || 0
-  const newDeal = {
-    id: Date.now(),
-    title: dealForm.title,
-    store: dealForm.store,
-    discount: disc,
-    original: orig,
-    sale_price: parseFloat((orig * (1 - disc / 100)).toFixed(2)),
-    category: dealForm.category,
-    expires: dealForm.expires,
-    views: 0,
-    status: 'active',
-  }
-  deals.value.unshift(newDeal)
-  showCreateDeal.value = false
-  Object.assign(dealForm, { title:'', store:'', category:'', image_url:'', original:'', discount:'', description:'', link_url:'', expires:'' })
+async function deleteDeal(id) {
+  if (!confirm('이 딜을 삭제하시겠습니까?')) return;
+  try {
+    await api.delete(`/deals/${id}`);
+    loadDeals();
+  } catch (e) { alert('삭제 실패'); }
 }
 
-function submitPartner() {
-  const icons = { '식품':'🛒', '뷰티':'💄', '전자':'💻', '패션':'👗', '생활':'🏠' }
-  const bgs   = { '식품':'#dcfce7', '뷰티':'#fce7f3', '전자':'#dbeafe', '패션':'#f3e8ff', '생활':'#fef9c3' }
-  const newPartner = {
-    id: Date.now(),
-    name: partnerForm.name,
-    category: partnerForm.category,
-    contact: partnerForm.contact || '-',
-    rss: partnerForm.rss || '',
-    active: true,
-    icon: icons[partnerForm.category] || '🏪',
-    iconBg: bgs[partnerForm.category] || '#f3f4f6',
-  }
-  partners.value.unshift(newPartner)
-  showCreatePartner.value = false
-  Object.assign(partnerForm, { name:'', category:'', contact:'', rss:'' })
+async function bulkDeleteErrors() {
+  if (!confirm('가격 오류 항목을 모두 삭제하시겠습니까?')) return;
+  try {
+    const { data } = await api.delete('/deals-bulk-errors');
+    alert(`${data.count}개 오류 항목 삭제됨`);
+    loadDeals();
+  } catch (e) { alert('삭제 실패'); }
 }
+
+// Flyer CRUD
+function openFlyerModal() {
+  flyerForm.value = { store_id: '', title: '', image_url: '', valid_from: '', valid_until: '' };
+  showFlyerModal.value = true;
+}
+
+async function saveFlyer() {
+  try {
+    await api.post('/flyers', { ...flyerForm.value, is_active: true });
+    showFlyerModal.value = false;
+    loadFlyers();
+  } catch (e) { alert('등록 실패: ' + (e.response?.data?.message || e.message)); }
+}
+
+async function deleteFlyer(id) {
+  if (!confirm('이 전단지를 삭제하시겠습니까?')) return;
+  try {
+    await api.delete(`/flyers/${id}`);
+    loadFlyers();
+  } catch (e) { alert('삭제 실패'); }
+}
+
+onMounted(() => {
+  loadStores();
+  loadDeals();
+  loadDealCategories();
+  loadFlyers();
+  loadScrapeLogs();
+});
 </script>

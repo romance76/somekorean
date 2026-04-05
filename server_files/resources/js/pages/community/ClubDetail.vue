@@ -70,7 +70,7 @@
             <!-- 글쓰기 버튼 -->
             <div v-if="isMember" class="flex gap-2 justify-end">
               <button @click="showWriteForm = !showWriteForm"
-                class="bg-blue-600 text-white flex-1 sm:flex-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1">
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1">
                 ✏️ 글쓰기
               </button>
             </div>
@@ -407,7 +407,8 @@ async function updateClub() {
 
 async function changeMemberRole(member, newRole) {
   try {
-    await axios.put(`/api/clubs/${club.value.id}/members/${member.id}`, { role: newRole });
+    const userId = member.user_id || member.user?.id || member.id;
+    await axios.put(`/api/clubs/${club.value.id}/members/${userId}`, { role: newRole });
     await fetchMembers();
   } catch (e) {
     alert(e.response?.data?.message || '오류가 발생했습니다.');
@@ -418,7 +419,8 @@ async function kickMember(member) {
   const name = member.user?.name || member.name;
   if (!confirm(`${name}님을 강퇴하시겠습니까?`)) return;
   try {
-    await axios.delete(`/api/clubs/${club.value.id}/members/${member.id}`);
+    const userId = member.user_id || member.user?.id || member.id;
+    await axios.delete(`/api/clubs/${club.value.id}/members/${userId}`);
     await fetchMembers();
   } catch (e) {
     alert(e.response?.data?.message || '오류가 발생했습니다.');
@@ -427,7 +429,8 @@ async function kickMember(member) {
 
 async function handleRequest(req, action) {
   try {
-    await axios.post(`/api/clubs/${club.value.id}/requests/${req.id}`, { action });
+    const userId = req.user_id || req.user?.id;
+    await axios.post(`/api/clubs/${club.value.id}/members/${userId}/${action}`);
     pendingRequests.value = pendingRequests.value.filter(r => r.id !== req.id);
     if (action === 'approve') await fetchMembers();
   } catch (e) {
@@ -450,33 +453,29 @@ async function fetchClub() {
   const { data } = await axios.get(`/api/clubs/${route.params.id}`);
   const c = data.club || data;
   club.value = c;
-  // members from club relation
-  if (c.members && c.members.length) {
-    members.value = c.members;
-  }
+  if (c.members && c.members.length) { members.value = c.members; }
   editForm.value = { name: c.name, description: c.description, category: c.category };
 }
 
 async function fetchMembers() {
   try {
     const { data } = await axios.get(`/api/clubs/${route.params.id}/members`);
-    if (data && data.length) members.value = data;
-  } catch {
-    // fallback: already loaded from club relation
-  }
+    members.value = data;
+  } catch {}
 }
 
 async function fetchPosts() {
   try {
     const { data } = await axios.get(`/api/clubs/${route.params.id}/posts`);
-    notices.value = (data || []).filter(p => p.is_notice);
-    posts.value = (data || []).filter(p => !p.is_notice);
+    const list = data.data || data || [];
+    notices.value = list.filter(p => p.is_notice);
+    posts.value = list.filter(p => !p.is_notice);
   } catch {}
 }
 
 async function fetchPendingRequests() {
   try {
-    const { data } = await axios.get(`/api/clubs/${route.params.id}/requests`);
+    const { data } = await axios.get(`/api/clubs/${route.params.id}/members/pending`);
     pendingRequests.value = data || [];
   } catch {}
 }

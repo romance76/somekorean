@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-6">
-    <h1 class="text-xl font-bold text-gray-800 mb-5">구인구직 공고 등록</h1>
+    <h1 class="text-xl font-bold text-gray-800 mb-5">{{ isEdit ? '구인구직 공고 수정' : '구인구직 공고 등록' }}</h1>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div class="space-y-5">
         <!-- 제목 -->
@@ -11,7 +11,7 @@
         </div>
 
         <!-- 회사명 / 직종 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">회사명</label>
             <input v-model="form.company_name" type="text" placeholder="비공개 가능"
@@ -27,7 +27,7 @@
         </div>
 
         <!-- 지역 / 급여 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">지역</label>
             <select v-model="form.region" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -52,13 +52,13 @@
         <!-- 사진 업로드 (최대 5장) -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">사진 첨부 (최대 5장)</label>
-          <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+          <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
             <div v-for="i in 5" :key="i" class="relative">
-              <div v-if="photos[i-1]" class="h-20 sm:h-24 rounded-xl overflow-hidden relative group">
+              <div v-if="photos[i-1]" class="h-24 rounded-xl overflow-hidden relative group">
                 <img :src="photos[i-1].preview" class="w-full h-full object-cover" />
                 <button @click="removePhoto(i-1)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
               </div>
-              <label v-else class="h-20 sm:h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+              <label v-else class="h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
                 <span class="text-2xl text-gray-400">+</span>
                 <span class="text-xs text-gray-400 mt-1">사진 {{ i }}</span>
                 <input type="file" accept="image/*" class="hidden" @change="addPhoto($event, i-1)" />
@@ -99,7 +99,7 @@
         <!-- 연락처 정보 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">연락처 정보</label>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-3 gap-4">
             <div>
               <label class="block text-xs text-gray-500 mb-1">전화번호</label>
               <input v-model="form.contact_phone" type="tel" placeholder="000-000-0000"
@@ -122,10 +122,10 @@
         <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{{ error }}</div>
 
         <!-- 버튼 -->
-        <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:space-x-3">
+        <div class="flex justify-end space-x-3">
           <button @click="$router.back()" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">취소</button>
           <button @click="submit" :disabled="loading" class="w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
-            {{ loading ? '등록 중...' : '공고 등록' }}
+            {{ loading ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '공고 수정' : '공고 등록') }}
           </button>
         </div>
       </div>
@@ -134,14 +134,17 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import AddressInput from '../../components/AddressInput.vue';
 
+const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const error = ref('');
+const isEdit = ref(false);
+const editId = ref(null);
 
 const form = ref({
   title: '', company_name: '', job_type: '', region: '', salary_range: '',
@@ -197,12 +200,45 @@ async function submit() {
       fd.append('attachment', attachment.value);
     }
 
-    const { data } = await axios.post('/api/jobs', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    router.push(`/jobs/${data.job.id}`);
+    let data;
+    if (isEdit.value) {
+      fd.append('_method', 'PUT');
+      ({ data } = await axios.post(`/api/jobs/${editId.value}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }));
+      router.push(`/jobs/${editId.value}`);
+    } else {
+      ({ data } = await axios.post('/api/jobs', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }));
+      router.push(`/jobs/${data.job?.id || data.id}`);
+    }
   } catch(e) {
     error.value = e.response?.data?.message || '오류가 발생했습니다.';
   } finally { loading.value = false; }
 }
+
+onMounted(async () => {
+  const id = route.query.edit;
+  if (id) {
+    isEdit.value = true;
+    editId.value = id;
+    try {
+      const { data } = await axios.get(`/api/jobs/${id}`);
+      form.value.title = data.title || '';
+      form.value.company_name = data.company_name || '';
+      form.value.job_type = data.job_type || '';
+      form.value.region = data.region || '';
+      form.value.salary_range = data.salary_range || '';
+      form.value.address = data.address || '';
+      form.value.content = data.content || '';
+      form.value.contact_email = data.contact_email || '';
+      form.value.contact_phone = data.contact_phone || '';
+      form.value.contact_website = data.contact_website || '';
+      form.value.external_link = data.external_link || data.external_url || '';
+    } catch (e) {
+      error.value = '기존 공고를 불러올 수 없습니다.';
+    }
+  }
+});
 </script>

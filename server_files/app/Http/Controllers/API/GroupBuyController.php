@@ -92,10 +92,18 @@ class GroupBuyController extends Controller
             return response()->json(['message' => '최대 인원이 초과되었습니다.'], 422);
         }
 
-        GroupBuyParticipant::firstOrCreate(
-            ['group_buy_id' => $gb->id, 'user_id' => Auth::id()],
-            ['quantity' => $request->quantity ?? 1]
-        );
+        [$participant, $created] = [
+            GroupBuyParticipant::firstOrCreate(
+                ['group_buy_id' => $gb->id, 'user_id' => Auth::id()],
+                ['quantity' => $request->quantity ?? 1]
+            ),
+            !GroupBuyParticipant::where(['group_buy_id' => $gb->id, 'user_id' => Auth::id()])->whereNull('created_at')->exists()
+        ];
+
+        // 포인트 적립: 신규 참여시만
+        if ($participant->wasRecentlyCreated) {
+            Auth::user()->addPoints(2, 'groupbuy_join', 'earn', $gb->id, '공동구매 참여');
+        }
 
         // 최소 인원 달성 시 상태 변경
         $count = $gb->participants()->count();

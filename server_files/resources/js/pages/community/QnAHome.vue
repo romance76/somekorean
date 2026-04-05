@@ -2,9 +2,9 @@
   <div class="max-w-[1200px] mx-auto px-4 py-6">
 
     <!-- 검색 영역 -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 mb-8 shadow-lg">
-      <h1 class="text-white text-2xl font-bold mb-1">지식인</h1>
-      <p class="text-blue-100 text-sm mb-4">궁금한 건 뭐든 물어보세요!</p>
+    <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl px-6 py-6 mb-8 shadow-lg">
+      <h1 class="text-white text-xl font-black mb-1">커뮤니티</h1>
+      <p class="text-blue-100 text-sm mb-4">함께 나누는 한인 커뮤니티</p>
       <div class="flex gap-2">
         <div class="relative flex-1">
           <input
@@ -57,7 +57,7 @@
     </section>
 
     <!-- 3열 레이아웃 (데스크톱) -->
-    <div class="flex gap-6">
+    <div class="flex gap-4 lg:gap-6">
 
       <!-- 왼쪽 사이드바: 카테고리 (데스크톱) -->
       <aside class="hidden lg:block w-48 flex-shrink-0">
@@ -69,7 +69,7 @@
                 @click="selectCategory(cat.slug)"
                 class="w-full text-left px-4 py-2.5 text-sm transition"
                 :class="selectedCategory === cat.slug
-                  ? 'bg-blue-50 text-blue-600 font-semibold border-l-2 border-blue-500'
+ ? 'bg-blue-50 text-blue-600 font-semibold border-l-2 border-blue-500'
                   : 'text-gray-600 hover:bg-gray-50'"
               >
                 {{ cat.label }}
@@ -80,7 +80,7 @@
       </aside>
 
       <!-- 모바일 카테고리 탭 -->
-      <div class="lg:hidden w-full mb-4">
+      <div class="lg:hidden w-full mb-4 overflow-hidden">
         <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
           <button
             v-for="cat in categories"
@@ -88,7 +88,7 @@
             @click="selectCategory(cat.slug)"
             class="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition"
             :class="selectedCategory === cat.slug
-              ? 'bg-blue-500 text-white'
+ ? 'bg-blue-500 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
           >
             {{ cat.label }}
@@ -98,22 +98,7 @@
 
       <!-- 중앙: 질문 리스트 -->
       <main class="flex-1 min-w-0">
-        <!-- 모바일 카테고리 -->
-        <div class="lg:hidden mb-4">
-          <div class="flex overflow-x-auto gap-2 pb-2 -mx-1 px-1" style="scrollbar-width: none;">
-            <button
-              v-for="cat in categories"
-              :key="'m-' + cat.slug"
-              @click="selectCategory(cat.slug)"
-              class="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition flex-shrink-0"
-              :class="selectedCategory === cat.slug
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-            >
-              {{ cat.label }}
-            </button>
-          </div>
-        </div>
+        
 
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm text-gray-500">
@@ -188,7 +173,7 @@
             @click="goPage(p)"
             class="w-8 h-8 rounded-lg text-xs font-medium transition"
             :class="currentPage === p
-              ? 'bg-blue-500 text-white'
+ ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'"
           >
             {{ p }}
@@ -199,7 +184,7 @@
       <!-- 오른쪽 사이드바: 랭킹 (데스크톱) -->
       <aside class="hidden xl:block w-56 flex-shrink-0">
         <div class="bg-white rounded-xl border border-gray-100 sticky top-20">
-          <h3 class="text-sm font-bold text-gray-700 px-4 py-3 border-b border-gray-100">🏆 지식인 랭킹</h3>
+          <h3 class="text-sm font-bold text-gray-700 px-4 py-3 border-b border-gray-100">🏆 커뮤니티 랭킹</h3>
           <ul class="py-2">
             <li
               v-for="(user, idx) in topUsers"
@@ -270,24 +255,11 @@ const categories = [
   { slug: 'shopping', label: '쇼핑' },
 ];
 
-// 많이 본 Q&A 목데이터
-const popularQuestions = [
-  { id: 1, title: '미국에서 한국 운전면허 교환 방법이 궁금합니다', preview: '조지아주에서 한국 면허를 미국 면허로 교환하려면 어떤 절차가 필요한가요?', views: 3842, answers: 12 },
-  { id: 2, title: 'H1B 비자 갱신 시 주의사항이 있나요?', preview: '첫 번째 H1B 갱신인데 준비 서류와 타임라인이 궁금합니다.', views: 2915, answers: 8 },
-  { id: 3, title: '미국 건강보험 종류와 선택 가이드', preview: 'HMO, PPO, EPO 차이점과 한인에게 맞는 보험 추천 부탁드립니다.', views: 2650, answers: 15 },
-  { id: 4, title: '한인 식당 창업 시 필요한 허가증 목록', preview: '조지아주에서 식당 오픈하려면 어떤 라이센스가 필요한지 알려주세요.', views: 2210, answers: 6 },
-  { id: 5, title: '미국 세금 보고 시 한국 소득도 신고해야 하나요?', preview: 'FBAR, FATCA 관련해서 한국에 있는 계좌도 보고 의무가 있는지 궁금합니다.', views: 1980, answers: 9 },
-  { id: 6, title: '아이 한국어 교육 어떻게 시키시나요?', preview: '미국에서 태어난 아이의 한국어 실력을 유지하는 방법을 공유해주세요.', views: 1745, answers: 21 },
-];
+// 많이 본 Q&A - 실제 API 데이터
+const popularQuestions = ref([]);
 
-// 랭킹 목데이터
-const topUsers = [
-  { name: '김변호사', level: 'Lv.8 태양', adopted: 142, color: '#3B82F6' },
-  { name: '이세무사', level: 'Lv.7 별', adopted: 98, color: '#8B5CF6' },
-  { name: '박약사', level: 'Lv.6 달', adopted: 76, color: '#EC4899' },
-  { name: '최교수님', level: 'Lv.5 바람', adopted: 51, color: '#F59E0B' },
-  { name: '정보험전문가', level: 'Lv.5 바람', adopted: 43, color: '#10B981' },
-];
+// 랭킹
+const topUsers = ref([]);
 
 function handleSearch() {
   if (searchQuery.value.trim()) {
@@ -355,8 +327,22 @@ async function fetchPosts(page = 1) {
   }
 }
 
+async function fetchPopular() {
+  try {
+    const { data } = await axios.get('/api/posts', { params: { sort: 'views', per_page: 6 } });
+    popularQuestions.value = (data.data || []).map(p => ({
+      id: p.id,
+      title: p.title,
+      preview: p.content ? p.content.replace(/<[^>]*>/g, '').substring(0, 80) : '',
+      views: p.view_count || 0,
+      answers: p.comment_count || 0,
+    }));
+  } catch {}
+}
+
 onMounted(() => {
   fetchPosts(1);
+  fetchPopular();
 });
 
 watch(sortOrder, () => {

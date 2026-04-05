@@ -348,60 +348,48 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
+import axios from 'axios'
 
-// Dummy data
-const dummyListings = ref([
-  { id:1, title:'코리아타운 콘도 매매', type:'매매', price:'$450,000', size:'850sqft', rooms:2, address:'3200 Wilshire Blvd #505, LA', agent:'새롬 부동산', status:'active', views:125, created_at:'2026-03-10' },
-  { id:2, title:'Gardena 단독주택 임대', type:'월세', price:'$2,800/월', size:'1,400sqft', rooms:3, address:'1234 Main St, Gardena, CA', agent:'이재현', status:'active', views:89, created_at:'2026-03-15' },
-  { id:3, title:'Irvine 아파트 임대', type:'월세', price:'$2,200/월', size:'750sqft', rooms:1, address:'5678 Barranca Pkwy, Irvine, CA', agent:'코리아 부동산', status:'active', views:210, created_at:'2026-03-20' },
-  { id:4, title:'한인타운 상가 임대', type:'상가', price:'$3,500/월', size:'1,200sqft', rooms:0, address:'Olympic Blvd, LA, CA', agent:'새롬 부동산', status:'pending', views:45, created_at:'2026-03-26' },
-  { id:5, title:'Torrance 타운홈 매매', type:'매매', price:'$680,000', size:'1,800sqft', rooms:3, address:'456 Sepulveda Blvd, Torrance, CA', agent:'이재현', status:'active', views:178, created_at:'2026-03-05' },
-])
-
-const filter = reactive({ type: '', priceRange: '', region: '', status: '', search: '' })
+const listings = ref([])
+const loading = ref(false)
+const filter = reactive({ type: '', status: '', search: '' })
 const selectedListing = ref(null)
-const showCreateModal = ref(false)
-
-const createForm = reactive({
-  title: '', type: '', price: '', address: '', size: '', rooms: 0, agent: ''
-})
 
 const typeColors = {
   '매매': 'bg-blue-100 text-blue-700',
   '전세': 'bg-purple-100 text-purple-700',
-  '월세': 'bg-green-100 text-green-700',
+  '렌트': 'bg-green-100 text-green-700',
+  '룸메이트': 'bg-teal-100 text-teal-700',
   '상가': 'bg-orange-100 text-orange-700',
-  '토지': 'bg-yellow-100 text-yellow-700',
 }
 
 const statusColors = {
   'active':  'bg-green-100 text-green-700',
-  'pending': 'bg-yellow-100 text-yellow-700',
   'closed':  'bg-gray-100 text-gray-500',
+  'deleted': 'bg-red-100 text-red-500',
 }
 
 const statusLabels = {
   'active':  '활성',
-  'pending': '검토중',
-  'closed':  '거래완료',
+  'closed':  '마감',
+  'deleted': '삭제',
 }
 
 const stats = computed(() => ({
-  total: dummyListings.value.length,
-  active: dummyListings.value.filter(l => l.status === 'active').length,
-  newThisMonth: dummyListings.value.filter(l => l.created_at.startsWith('2026-03')).length,
-  agents: [...new Set(dummyListings.value.map(l => l.agent))].length,
+  total:       listings.value.length,
+  active:      listings.value.filter(l => l.status === 'active').length,
+  closed:      listings.value.filter(l => l.status === 'closed').length,
+  newThisMonth: listings.value.filter(l => l.created_at?.startsWith('2026-03')).length,
 }))
 
 const filteredListings = computed(() => {
-  return dummyListings.value.filter(l => {
-    if (filter.type && l.type !== filter.type) return false
+  return listings.value.filter(l => {
+    if (filter.type   && l.type   !== filter.type)   return false
     if (filter.status && l.status !== filter.status) return false
-    if (filter.region && !l.address.includes(filter.region)) return false
     if (filter.search) {
       const q = filter.search.toLowerCase()
-      if (!l.title.toLowerCase().includes(q) && !l.address.toLowerCase().includes(q)) return false
+      if (!l.title?.toLowerCase().includes(q) && !l.address?.toLowerCase().includes(q)) return false
     }
     return true
   })
@@ -409,8 +397,6 @@ const filteredListings = computed(() => {
 
 function resetFilters() {
   filter.type = ''
-  filter.priceRange = ''
-  filter.region = ''
   filter.status = ''
   filter.search = ''
 }
@@ -419,34 +405,45 @@ function openDetail(listing) {
   selectedListing.value = { ...listing }
 }
 
-function toggleStatus(listing) {
-  const idx = dummyListings.value.findIndex(l => l.id === listing.id)
-  if (idx !== -1) {
-    dummyListings.value[idx].status = dummyListings.value[idx].status === 'active' ? 'pending' : 'active'
+async function toggleStatus(listing) {
+  try {
+    const { data } = await axios.patch(`/api/admin/realestate/${listing.id}/toggle`)
+    const idx = listings.value.findIndex(l => l.id === listing.id)
+    if (idx !== -1) listings.value[idx].status = data.status
+    if (selectedListing.value?.id === listing.id) selectedListing.value.status = data.status
+  } catch (e) {
+    alert('상태 변경 실패')
   }
 }
 
-function deleteListing(id) {
+async function deleteListing(id) {
   if (!confirm('이 매물을 삭제하시겠습니까?')) return
-  dummyListings.value = dummyListings.value.filter(l => l.id !== id)
+  try {
+    await axios.delete(`/api/admin/realestate/${id}`)
+    listings.value = listings.value.filter(l => l.id !== id)
+    if (selectedListing.value?.id === id) selectedListing.value = null
+  } catch (e) {
+    alert('삭제 실패')
+  }
 }
 
-function submitCreate() {
-  const newListing = {
-    id: Date.now(),
-    title: createForm.title,
-    type: createForm.type,
-    price: createForm.price,
-    size: createForm.size || '-',
-    rooms: Number(createForm.rooms) || 0,
-    address: createForm.address,
-    agent: createForm.agent || '-',
-    status: 'pending',
-    views: 0,
-    created_at: new Date().toISOString().slice(0, 10),
+async function loadListings() {
+  loading.value = true
+  try {
+    const { data } = await axios.get('/api/admin/realestate', {
+      params: {
+        search: filter.search || undefined,
+        type:   filter.type || undefined,
+        status: filter.status || undefined,
+      }
+    })
+    listings.value = data.data || data
+  } catch (e) {
+    listings.value = []
+  } finally {
+    loading.value = false
   }
-  dummyListings.value.unshift(newListing)
-  showCreateModal.value = false
-  Object.assign(createForm, { title:'', type:'', price:'', address:'', size:'', rooms:0, agent:'' })
 }
+
+onMounted(() => loadListings())
 </script>

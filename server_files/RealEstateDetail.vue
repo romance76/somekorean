@@ -170,6 +170,7 @@
                   <p class="text-xs text-gray-400">{{ formatDate(listing.created_at) }} 등록</p>
                 </div>
                 <div v-if="canEdit" class="ml-auto flex gap-2">
+                  <router-link :to="`/realestate/write?edit=${listing.id}`" class="text-xs text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100">수정</router-link>
                   <button @click="deleteListing" class="text-xs text-red-500 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100">삭제</button>
                 </div>
               </div>
@@ -275,14 +276,12 @@ const typeBadgeClass = computed(() => {
   return 'bg-orange-500 text-white'
 })
 
-// Mock data for demo
-const mockListings = {
-  1: { id: 1, title: '에이범동 2BR 아파트 렌트', type: '렌트', price: 2200, address: '3456 Wilshire Blvd, Los Angeles, CA 90010', bedrooms: 2, bathrooms: 1, sqft: 950, region: 'Los Angeles', photos: [], created_at: '2026-03-20', deposit: 2200, pet_policy: '협의', move_in_date: '2026-04-01', phone: '213-555-1234', email: 'rent@example.com', description: '에이버 지역 깨끗한 아파트입니다.\n- 주차 1대 포함\n- 세탁기/건조기 인유닛\n- 냉난방 중앙 시스템\n- 한인타운 5분 거리\n- 1년 리스 기본', user: { id: 2, name: '김부동산' } },
-  2: { id: 2, title: '풀러턴 타운하우스 매매', type: '매매', price: 685000, address: '125 Peachtree St NE, Atlanta, GA 30303', bedrooms: 3, bathrooms: 2, sqft: 1800, region: 'Atlanta', photos: [], created_at: '2026-03-18', deposit: 0, pet_policy: '가능', phone: '770-555-5678', email: 'sale@example.com', description: '풀러턴 지역 타운하우스입니다.\n- 복층 구조 3베드 2배스\n- 2차 주차 가라지\n- 넓은 백야드\n- HOA $250/월\n- 좋은 학군', user: { id: 3, name: '이매매' } },
-}
-
-function toggleBookmark() {
-  bookmarked.value = !bookmarked.value
+async function toggleBookmark() {
+  if (!authStore.isLoggedIn) { router.push('/auth/login'); return }
+  try {
+    const { data } = await axios.post(`/api/realestate/${listing.value.id}/bookmark`)
+    bookmarked.value = data.bookmarked
+  } catch {}
 }
 
 function shareListing() {
@@ -295,7 +294,7 @@ function shareListing() {
 }
 
 function sendMessage() {
-  router.push('/messages')
+  router.push(`/messages?to=${listing.value.user_id || listing.value.user?.id}&listing=${listing.value.id}`)
 }
 
 async function deleteListing() {
@@ -336,9 +335,9 @@ onMounted(async () => {
   try {
     const { data } = await axios.get(`/api/realestate/${id}`)
     listing.value = data
+    bookmarked.value = data.is_bookmarked || false
   } catch {
-    // Use mock data as fallback
-    listing.value = mockListings[id] || null
+    listing.value = null
   }
 
   // Load comments

@@ -58,7 +58,7 @@
                 class="block w-full text-left px-4 py-2.5 text-sm transition"
                 :class="slug === cat.slug ? 'bg-red-50 text-red-600 font-semibold border-l-2 border-red-500' : 'text-gray-600 hover:bg-gray-50'"
               >
-                {{ cat.icon }} {{ cat.name }}
+                {{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span>
               </router-link>
             </li>
           </ul>

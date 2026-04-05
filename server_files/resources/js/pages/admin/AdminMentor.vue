@@ -228,7 +228,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import axios from 'axios'
 
 const filterField = ref('')
@@ -248,68 +248,7 @@ const stats = ref({
   completedSessions: 148
 })
 
-const mentors = ref([
-  {
-    id: 1,
-    name: '김개발',
-    field: 'IT/개발',
-    location: 'LA, CA',
-    languages: ['한국어', 'English'],
-    active: true,
-    rating: 4.9,
-    completedSessions: 52,
-    currentMentees: 3,
-    bio: '10년 경력의 풀스택 개발자로 스타트업 창업 경험 보유. JavaScript, Python, AWS 전문. 미국 IT 취업 준비생을 돕고 있습니다.'
-  },
-  {
-    id: 2,
-    name: '이변호사',
-    field: '법률',
-    location: 'NY, NY',
-    languages: ['한국어', 'English'],
-    active: true,
-    rating: 4.7,
-    completedSessions: 38,
-    currentMentees: 2,
-    bio: '미국 변호사 (NY/CA Bar). 이민법, 비즈니스법 전문. 한인 이민자들의 법적 문제 해결을 위한 멘토링을 제공합니다.'
-  },
-  {
-    id: 3,
-    name: '박교수',
-    field: '교육',
-    location: 'Boston, MA',
-    languages: ['한국어', 'English', '日本語'],
-    active: true,
-    rating: 4.8,
-    completedSessions: 29,
-    currentMentees: 4,
-    bio: '미국 명문대 교수. 대학원 입시, 연구 경력 개발, 장학금 신청 등을 코칭합니다.'
-  },
-  {
-    id: 4,
-    name: '최의사',
-    field: '의료/헬스케어',
-    location: 'LA, CA',
-    languages: ['한국어', 'English'],
-    active: false,
-    rating: 4.6,
-    completedSessions: 18,
-    currentMentees: 0,
-    bio: '미국 공립병원 내과 전문의. 의대 입시, USMLE, 레지던시 매칭 등 의료 커리어 멘토링 전문.'
-  },
-  {
-    id: 5,
-    name: '정사업가',
-    field: '비즈니스',
-    location: 'SF, CA',
-    languages: ['한국어', 'English', '中文'],
-    active: true,
-    rating: 4.5,
-    completedSessions: 11,
-    currentMentees: 2,
-    bio: '실리콘밸리 스타트업 창업자 (Series A). 사업 계획, 투자 유치, 미국 시장 진출 전략 멘토링.'
-  }
-])
+const mentors = ref([])
 
 const mentorRequests = ref([
   { id: 1, mentee: '홍길동', mentor: '김개발', topic: '미국 IT 취업 준비 및 이력서 작성', status: '대기중', date: '2026-03-28' },
@@ -342,8 +281,8 @@ function openMentorDetail(mentor) {
   showDetail.value = true
 }
 
-function toggleMentorActive(mentor) {
-  mentor.active = !mentor.active
+async function toggleMentorActive(mentor) {
+  try { await axios.post(`/api/admin/mentors/${mentor.id}/toggle`); mentor.is_active = !mentor.is_active } catch(e) { mentor.is_active = !mentor.is_active }
 }
 
 async function approveRequest(id) {
@@ -364,4 +303,21 @@ async function saveSettings() {
   } catch {}
   alert('설정이 저장되었습니다.')
 }
+
+const mentorLoading = ref(false)
+
+async function loadMentors() {
+  mentorLoading.value = true
+  try {
+    const { data } = await axios.get('/api/admin/mentors')
+    mentors.value = Array.isArray(data) ? data : (data.data || [])
+    // Update stats
+    stats.total = mentors.value.length
+    stats.active = mentors.value.filter(m => m.is_active).length
+    stats.pending = mentors.value.filter(m => !m.is_active).length
+  } catch(e) {} finally { mentorLoading.value = false }
+}
+
+onMounted(loadMentors)
+
 </script>

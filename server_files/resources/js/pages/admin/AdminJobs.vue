@@ -238,18 +238,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const dummyJobs = [
-  { id:1, title:'한식당 홀서빙 직원 모집', company:'새마을 식당', category:'파트타임', salary:'$18/hr', location:'LA 코리아타운', applicants:12, status:'active', deadline:'2026-04-30', user_name:'정대한', created_at:'2026-03-15' },
-  { id:2, title:'이민법 전문 어시스턴트', company:'한미 법률사무소', category:'정규직', salary:'$55,000-65,000/yr', location:'Wilshire Blvd, LA', applicants:8, status:'active', deadline:'2026-04-15', user_name:'송재원', created_at:'2026-03-20' },
-  { id:3, title:'한국어/영어 통역사', company:'LA 한인회', category:'프리랜서', salary:'$35/hr', location:'LA', applicants:25, status:'active', deadline:'2026-04-01', user_name:'김영수', created_at:'2026-03-10' },
-  { id:4, title:'K-뷰티 메이크업 아티스트', company:'미소 헤어살롱', category:'정규직', salary:'$45,000/yr + 팁', location:'S Western Ave, LA', applicants:15, status:'active', deadline:'2026-05-01', user_name:'박미소', created_at:'2026-03-22' },
-  { id:5, title:'한인 부동산 에이전트', company:'새롬 부동산', category:'프리랜서', salary:'커미션', location:'LA/OC', applicants:5, status:'active', deadline:'2026-06-30', user_name:'이재현', created_at:'2026-03-01' },
-  { id:6, title:'IT 개발자 (Vue.js/Laravel)', company:'K-Tech Solutions', category:'정규직', salary:'$90,000-120,000/yr', location:'원격근무', applicants:43, status:'active', deadline:'2026-04-20', user_name:'최개발', created_at:'2026-03-25' },
-  { id:7, title:'한인마트 계산원', company:'LA 한인마트', category:'파트타임', salary:'$17/hr', location:'W 6th St, LA', applicants:20, status:'expired', deadline:'2026-03-20', user_name:'김영수', created_at:'2026-03-01' },
-  { id:8, title:'한의원 인턴 (한의학과 졸업예정자)', company:'아리랑 한의원', category:'인턴', salary:'$15/hr', location:'W Olympic Blvd, LA', applicants:3, status:'active', deadline:'2026-05-15', user_name:'김한의', created_at:'2026-03-28' },
-]
 
-const jobs = ref([...dummyJobs])
+const jobs = ref([])
 const search = ref('')
 const filterCategory = ref('')
 const filterStatus = ref('')
@@ -326,9 +316,9 @@ function resetFilters() {
 async function loadJobs() {
   try {
     const res = await axios.get('/api/admin/jobs')
-    if (res.data && res.data.length) jobs.value = res.data
+    jobs.value = res.data?.data || res.data || []
   } catch (e) {
-    // use dummy data
+    jobs.value = []
   }
 }
 

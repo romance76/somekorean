@@ -7,15 +7,17 @@
     ============================================================ -->
     <div v-if="!activeRoom" class="lg:hidden flex flex-col h-full">
       <!-- 헤더 -->
-      <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
-        <div>
-          <h1 class="text-lg font-black">💬 채팅방</h1>
-          <p class="text-blue-100 text-xs">실시간 커뮤니티 채팅</p>
+      <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-black">💬 채팅방</h1>
+            <p class="text-sm opacity-80 mt-0.5">실시간 커뮤니티 채팅</p>
+          </div>
+          <button @click="showCreateModal = true" class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold">+ 개설</button>
         </div>
-        <button @click="showCreateModal = true" class="bg-white text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold">+ 개설</button>
       </div>
       <!-- 카테고리 -->
-      <div class="bg-white border-b px-3 py-2 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-hide">
+      <div class="px-4 py-2 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-hide">
         <button v-for="cat in categories" :key="cat.id" @click="activeCat = cat.id"
           class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition"
           :class="activeCat === cat.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'">
@@ -43,7 +45,13 @@
           </div>
           <div class="px-4 py-2 flex items-center justify-between">
             <span class="text-xs text-gray-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400"></span>실시간</span>
-            <span class="text-xs text-blue-500 font-semibold">입장 →</span>
+            <div class="flex items-center gap-2">
+              <template v-if="isCreator(room)">
+                <button @click.stop="renameRoom(room)" class="text-xs text-gray-400 hover:text-blue-500 px-1" title="이름 수정">✏️</button>
+                <button @click.stop="destroyRoom(room)" class="text-xs text-red-400 hover:text-red-600 px-1" title="방 삭제">🗑️</button>
+              </template>
+              <span class="text-xs text-blue-500 font-semibold">입장 →</span>
+            </div>
           </div>
         </div>
       </div>
@@ -170,9 +178,9 @@
     ============================================================ -->
     <div class="hidden lg:flex flex-col h-full">
       <!-- 상단 배너 + 카테고리 (flex-shrink-0) -->
-      <div class="px-6 pt-4 pb-3 flex-shrink-0">
-        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-4 rounded-2xl mb-3 flex items-center justify-between">
-          <div><h1 class="text-xl font-black">💬 채팅방</h1><p class="text-blue-100 text-sm">실시간 커뮤니티 채팅</p></div>
+      <div class="max-w-[1200px] mx-auto w-full px-4 pt-4 pb-3 flex-shrink-0">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl mb-2 flex items-center justify-between">
+          <div><h1 class="text-xl font-black">💬 채팅방</h1><p class="text-sm opacity-80 mt-0.5">실시간 커뮤니티 채팅</p></div>
           <button @click="showCreateModal = true" class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50">+ 채팅방 개설</button>
         </div>
         <div class="flex gap-2 overflow-x-auto scrollbar-hide">
@@ -185,7 +193,7 @@
       </div>
 
       <!-- 메인 영역 (남은 높이 전부) -->
-      <div class="flex gap-4 flex-1 min-h-0 px-6 pb-4">
+      <div class="flex gap-4 flex-1 min-h-0 max-w-[1200px] mx-auto w-full px-4 pb-4">
 
         <!-- 왼쪽: 채팅방 목록 (스크롤바 숨김) -->
         <div class="w-[340px] flex-shrink-0 overflow-y-auto scrollbar-hide space-y-2">
@@ -522,6 +530,30 @@ function doSearch() {
   }, 300)
 }
 
+function isCreator(room) {
+  return auth.user && room.created_by && room.created_by === auth.user.id
+}
+
+// 방장 채팅방 이름 수정
+async function renameRoom(room) {
+  const newName = prompt('새 채팅방 이름:', room.name)
+  if (!newName || !newName.trim() || newName.trim() === room.name) return
+  try {
+    await axios.patch(`/api/chat/rooms/${room.slug}`, { name: newName.trim() })
+    room.name = newName.trim()
+  } catch (e) { alert(e?.response?.data?.message || '수정 실패') }
+}
+
+// 방장 채팅방 삭제
+async function destroyRoom(room) {
+  if (!confirm(`"${room.name}" 채팅방을 삭제하시겠습니까?`)) return
+  try {
+    await axios.delete(`/api/chat/rooms/${room.slug}`)
+    rooms.value = rooms.value.filter(r => r.slug !== room.slug)
+    if (activeRoom.value?.slug === room.slug) activeRoom.value = null
+  } catch (e) { alert(e?.response?.data?.message || '삭제 실패') }
+}
+
 async function openRoom(room) {
   if (activeRoom.value?.slug === room.slug) return
   if (activeRoom.value && chatChannel) {
@@ -650,7 +682,7 @@ async function createRoom() {
   if (!newRoom.value.name.trim()) return; creating.value = true
   try {
     const { data } = await axios.post('/api/chat/rooms', { name: newRoom.value.name, type: 'friend', invite_users: selectedFriends.value.map(f => f.id) })
-    for (const f of selectedFriends.value) { try { await axios.post('/api/messages', { recipient_id: f.id, content: `💬 "${newRoom.value.name}" 채팅방에 초대되었습니다!` }) } catch {} }
+    for (const f of selectedFriends.value) { try { await axios.post('/api/messages', { receiver_id: f.id, content: `💬 "${newRoom.value.name}" 채팅방에 초대되었습니다!` }) } catch {} }
     if (data) { rooms.value.unshift(data); openRoom(data) }
     showCreateModal.value = false; newRoom.value = { name: '' }; selectedFriends.value = []
   } catch (e) { alert(e?.response?.data?.message || '채팅방 개설 실패') }
@@ -660,18 +692,14 @@ async function createRoom() {
 
 <style scoped>
 .chat-page-wrap {
-  /* iOS-safe: transform 대신 left/right calc 사용 */
-  position: fixed;
-  top: 48px; /* 모바일: NavBar Row1 = 48px */
-  bottom: 0;
-  left: max(0px, calc((100vw - 1200px) / 2));
-  right: max(0px, calc((100vw - 1200px) / 2));
+  min-height: calc(100vh - 48px);
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 @media (min-width: 768px) {
-  .chat-page-wrap { top: 84px; } /* 데스크탑: Row1+Row2 = 84px */
+  .chat-page-wrap { min-height: calc(100vh - 84px); }
 }
 /* 스크롤바 숨김 */
 .scrollbar-hide::-webkit-scrollbar { display: none; }

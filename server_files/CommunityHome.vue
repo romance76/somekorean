@@ -1,11 +1,11 @@
 <template>
-  <div class="max-w-[1200px] mx-auto px-4 py-6">
+  <div class="max-w-[1200px] mx-auto px-4 pt-4">
 
     <!-- 상단 배너 -->
-    <div class="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl px-6 py-6 mb-8 shadow-lg">
+    <div class="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl px-6 py-5 mb-8 shadow-lg">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-white text-2xl font-black mb-1">💬 커뮤니티</h1>
+          <h1 class="text-white text-xl font-black mb-1">💬 커뮤니티</h1>
           <p class="text-red-100 text-sm">자유롭게 소통하는 한인 커뮤니티</p>
         </div>
         <router-link
@@ -36,11 +36,11 @@
             </li>
             <li v-for="cat in categories" :key="cat.slug">
               <router-link
-                :to="'/community/' + cat.slug"
+                :to="'/community/' + cat.slug" @click="markCategoryRead(cat.slug)"
                 class="block w-full text-left px-4 py-2.5 text-sm transition"
                 :class="currentSlug === cat.slug ? 'bg-red-50 text-red-600 font-semibold border-l-2 border-red-500' : 'text-gray-600 hover:bg-gray-50'"
               >
-                {{ cat.icon }} {{ cat.name }}
+                {{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span> <span v-if="isNewCategory(cat)" class="text-[10px] bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1">N</span>
               </router-link>
             </li>
           </ul>
@@ -53,7 +53,7 @@
         <div class="lg:hidden mb-4">
           <select v-model="mobileCategory" @change="onMobileCategory" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
             <option value="">전체 카테고리</option>
-            <option v-for="cat in categories" :key="cat.slug" :value="cat.slug">{{ cat.icon }} {{ cat.name }}</option>
+            <option v-for="cat in categories" :key="cat.slug" :value="cat.slug">{{ cat.icon }} {{ cat.name }} <span class="text-xs text-gray-400">({{ cat.count || 0 }})</span></option>
           </select>
         </div>
 
@@ -184,6 +184,18 @@ function onMobileCategory() {
   } else {
     router.push('/community')
   }
+}
+
+function isNewCategory(cat) {
+  if (!cat.latest_at) return false
+  const readKey = 'community_read_' + cat.slug
+  const lastRead = localStorage.getItem(readKey)
+  if (!lastRead) return true
+  return new Date(cat.latest_at) > new Date(lastRead)
+}
+
+function markCategoryRead(slug) {
+  localStorage.setItem('community_read_' + slug, new Date().toISOString())
 }
 
 async function fetchCategories() {

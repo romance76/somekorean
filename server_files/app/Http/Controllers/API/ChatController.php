@@ -163,4 +163,61 @@ class ChatController extends Controller
         );
         return response()->json(['reported' => true]);
     }
+
+    public function createRoom(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'type' => 'in:public,friend,group',
+        ]);
+
+        $slug = \Illuminate\Support\Str::slug($request->name) . '-' . time();
+        $room = ChatRoom::create([
+            'name'       => $request->name,
+            'slug'       => $slug,
+            'type'       => $request->input('type', 'public'),
+            'is_open'    => true,
+            'created_by' => Auth::id(),
+        ]);
+
+        // 초대 유저 처리
+        if ($request->has('invite_users') && is_array($request->invite_users)) {
+            foreach ($request->invite_users as $uid) {
+                try {
+                    DB::table('notifications')->insert([
+                        'user_id'    => $uid,
+                        'type'       => 'chat_invite',
+                        'data'       => json_encode(['room_id' => $room->id, 'room_name' => $room->name, 'slug' => $room->slug]),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } catch (\Exception $e) {}
+            }
+        }
+
+        return response()->json($room, 201);
+    }
+
+    public function updateRoom(Request $request, $slug)
+    {
+        $room = \App\Models\ChatRoom::where('slug', $slug)->firstOrFail();
+        if ($room->created_by !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '방장만 수정할 수 있습니다.'], 403);
+        }
+        $request->validate(['name' => 'required|string|max:100']);
+        $room->update(['name' => $request->name]);
+        return response()->json($room);
+    }
+
+    public function deleteRoom(Request $request, $slug)
+    {
+        $room = \App\Models\ChatRoom::where('slug', $slug)->firstOrFail();
+        if ($room->created_by !== Auth::id() && !Auth::user()->is_admin) {
+            return response()->json(['message' => '방장만 삭제할 수 있습니다.'], 403);
+        }
+        // Delete messages first
+        \Illuminate\Support\Facades\DB::table('chat_messages')->where('room_id', $room->id)->delete();
+        $room->delete();
+        return response()->json(['message' => '채팅방이 삭제되었습니다.']);
+    }
 }

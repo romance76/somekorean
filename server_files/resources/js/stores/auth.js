@@ -50,6 +50,17 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    // 포인트/레벨 실시간 갱신 (글쓰기, 댓글 후 호출)
+    async function refreshPoints() {
+        try {
+            const { data } = await axios.get('/api/points/balance');
+            if (user.value) {
+                user.value = { ...user.value, points: data.points, cash: data.cash, level: data.level };
+                localStorage.setItem('sk_user', JSON.stringify(user.value));
+            }
+        } catch {}
+    }
+
     // 토큰 없으면 즉시 resolve
     function resolveInit() { _resolveInit(); }
 
@@ -67,5 +78,5 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('sk_user');
     }
 
-    return { user, token, isLoggedIn, initPromise, initialize, login, register, logout, fetchMe, resolveInit };
+    return { user, token, isLoggedIn, initPromise, initialize, login, register, logout, fetchMe, resolveInit, refreshPoints };
 });

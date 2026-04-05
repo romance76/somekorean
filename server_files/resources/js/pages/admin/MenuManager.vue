@@ -153,6 +153,7 @@ const defaultMenus = [
   { key: 'mentor',     icon: '🎓', label_ko: '멘토링',    label_en: 'Mentoring',   enabled: true,  auth_required: false, admin_only: false },
   { key: 'ai',         icon: '🤖', label_ko: 'AI검색',    label_en: 'AI Search',   enabled: true,  auth_required: false, admin_only: false },
   { key: 'points',     icon: '⭐', label_ko: '포인트',    label_en: 'Points',      enabled: true,  auth_required: true,  admin_only: false },
+  { key: 'music',      icon: '🎵', label_ko: '음악듣기',  label_en: 'Music',       enabled: true,  auth_required: false, admin_only: false },
 ]
 
 // ─── 상태 ────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-6">
-    <h1 class="text-xl font-bold text-gray-800 mb-5">물품 등록</h1>
+    <h1 class="text-xl font-bold text-gray-800 mb-5">{{ isEdit ? '물품 수정' : '물품 등록' }}</h1>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div class="space-y-5">
         <!-- 제목 -->
@@ -29,7 +29,7 @@
         </div>
 
         <!-- 카테고리 / 상태 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
             <select v-model="form.category" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -64,15 +64,15 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">사진 첨부</label>
           <p class="text-xs text-gray-500 mb-3">첫 번째 사진은 무료, 추가 사진은 각 10포인트가 차감됩니다.</p>
-          <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+          <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
             <div v-for="i in 6" :key="i" class="relative">
-              <div v-if="photos[i-1]" class="h-20 sm:h-24 rounded-xl overflow-hidden relative group">
+              <div v-if="photos[i-1]" class="h-24 rounded-xl overflow-hidden relative group">
                 <img :src="photos[i-1].preview" class="w-full h-full object-cover" />
                 <button @click="removePhoto(i-1)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                 <span v-if="i === 1" class="absolute bottom-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">기본</span>
                 <span v-else class="absolute bottom-1 left-1 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">10P</span>
               </div>
-              <label v-else class="h-20 sm:h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors"
+              <label v-else class="h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors"
                 :class="i === 1 ? 'border-green-300 hover:border-green-400 hover:bg-green-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'">
                 <span class="text-2xl" :class="i === 1 ? 'text-green-400' : 'text-gray-400'">+</span>
                 <span class="text-[10px] mt-1 font-medium" :class="i === 1 ? 'text-green-500' : 'text-orange-500'">
@@ -110,7 +110,7 @@
         <!-- 연락처 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">연락처 정보</label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs text-gray-500 mb-1">전화번호</label>
               <input v-model="form.contact_phone" type="tel" placeholder="000-000-0000"
@@ -132,10 +132,10 @@
         <div v-if="error" class="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{{ error }}</div>
 
         <!-- 버튼 -->
-        <div class="flex flex-col-reverse sm:flex-row justify-end gap-2">
+        <div class="flex justify-end gap-3">
           <button @click="$router.back()" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">취소</button>
           <button @click="submit" :disabled="loading" class="w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
-            {{ loading ? '등록 중...' : '물품 등록' }}
+            {{ loading ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '물품 수정' : '물품 등록') }}
           </button>
         </div>
       </div>
@@ -144,14 +144,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import AddressInput from '../../components/AddressInput.vue';
 
+const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const error = ref('');
+const isEdit = ref(false);
+const editId = ref(null);
 
 const form = ref({
   title: '', category: '', condition: '', price: '', region: '',
@@ -194,12 +197,46 @@ async function submit() {
       if (photo?.file) fd.append('photos[]', photo.file);
     });
 
-    const { data } = await axios.post('/api/market', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    router.push(`/market/${data.item.id}`);
+    let data;
+    if (isEdit.value) {
+      fd.append('_method', 'PUT');
+      ({ data } = await axios.post(`/api/market/${editId.value}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }));
+      router.push(`/market/${editId.value}`);
+    } else {
+      ({ data } = await axios.post('/api/market', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }));
+      router.push(`/market/${data.item?.id || data.id}`);
+    }
   } catch(e) {
     error.value = e.response?.data?.message || '오류가 발생했습니다.';
   } finally { loading.value = false; }
 }
+
+onMounted(async () => {
+  const id = route.query.edit;
+  if (id) {
+    isEdit.value = true;
+    editId.value = id;
+    try {
+      const { data } = await axios.get(`/api/market/${id}`);
+      form.value.title = data.title || '';
+      form.value.category = data.category || '';
+      form.value.condition = data.condition || '';
+      form.value.price = data.price ?? '';
+      form.value.region = data.region || '';
+      form.value.description = data.description || '';
+      form.value.price_negotiable = !!data.price_negotiable;
+      form.value.item_type = data.item_type || 'sell';
+      form.value.address = data.address || '';
+      form.value.external_link = data.external_link || '';
+      form.value.contact_phone = data.contact_phone || '';
+      form.value.preferred_contact = data.preferred_contact || '';
+    } catch (e) {
+      error.value = '기존 물품 정보를 불러올 수 없습니다.';
+    }
+  }
+});
 </script>

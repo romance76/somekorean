@@ -1,20 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 배너 -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-      <div class="max-w-7xl mx-auto px-4 py-8 flex items-center justify-between">
+  <div class="max-w-[1200px] mx-auto px-4 pt-4">
+
+    <!-- 상단 배너 (커뮤니티와 동일 스타일) -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-500 rounded-2xl px-6 py-5 mb-8 shadow-lg">
+      <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">❓ Q&A 지식인</h1>
-          <p class="text-blue-100 mt-1 text-sm">궁금한 것을 물어보고, 아는 것을 나눠주세요</p>
+          <h1 class="text-white text-xl font-black mb-1">❓ Q&A 지식인</h1>
+          <p class="text-blue-100 text-sm">궁금한 것을 물어보고, 아는 것을 나눠주세요</p>
         </div>
         <router-link to="/qa/write"
-          class="bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-50 transition shadow">
+          class="bg-white text-blue-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-50 transition flex items-center gap-1.5 shadow">
           ✏️ 질문하기
         </router-link>
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 py-6">
+    <div>
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- 좌: 카테고리 사이드바 -->
         <div class="lg:col-span-2">
@@ -31,7 +32,7 @@
                 class="px-3 py-2 rounded-lg text-sm cursor-pointer"
                 :class="currentSlug === cat.slug ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'">
                 {{ cat.name }}
-                <span class="text-xs text-gray-400 ml-1">({{ cat.questions_count || 0 }})</span>
+                <span class="text-xs text-gray-400 ml-1">({{ cat.count || 0 }})</span>
               </div>
             </div>
           </div>

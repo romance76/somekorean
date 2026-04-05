@@ -33,6 +33,11 @@ app.use(router);
 
 const authStore = useAuthStore();
 authStore.initialize();
+if (authStore.isLoggedIn) {
+    authStore.fetchMe();
+} else {
+    authStore.resolveInit();
+}
 
 // 앱 시작 시 관리자 공개 설정 로드 (메뉴 on/off, 사이트명 등)
 const siteStore = useSiteStore();
@@ -66,3 +71,23 @@ router.onError((err) => {
         }
     }
 });
+
+// ─── Service Worker 등록 (PWA 푸시 알림) ─────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    console.log('[SW] Registered:', reg.scope);
+  }).catch(err => {
+    console.error('[SW] Registration failed:', err);
+  });
+}
+
+// ─── Socket.io 실시간 연결 ─────────────────────────────
+import { useSocket } from './composables/useSocket'
+import { watch } from 'vue'
+
+const { connect: socketConnect } = useSocket();
+
+// 로그인 상태면 소켓 연결
+watch(() => authStore.isLoggedIn, (loggedIn) => {
+  if (loggedIn) socketConnect();
+}, { immediate: true });

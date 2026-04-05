@@ -16,9 +16,9 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
             공유
           </button>
-          <button class="flex items-center gap-1 text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-            북마크
+          <button @click="toggleBookmark" :class="question.is_bookmarked ? 'bg-yellow-400/30' : 'bg-white/10 hover:bg-white/20'" class="flex items-center gap-1 text-xs text-white/80 hover:text-white px-3 py-1.5 rounded-lg transition">
+            <svg class="w-3.5 h-3.5" :fill="question.is_bookmarked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            {{ question.is_bookmarked ? '북마크됨' : '북마크' }}
           </button>
         </div>
       </div>
@@ -220,6 +220,11 @@ function shareQuestion() {
   }
 }
 
+function toggleBookmark() {
+  if (!isLoggedIn) return router.push('/auth/login')
+  question.value.is_bookmarked = !question.value.is_bookmarked
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -249,8 +254,8 @@ async function recommendQuestion() {
   if (!isLoggedIn) return router.push('/auth/login')
   try {
     const resp = await axios.post('/api/qa-v2/questions/' + questionId.value + '/recommend', {}, { headers: headers })
-    question.value.recommend_count = resp.data.recommend_count !== undefined ? resp.data.recommend_count : (question.value.recommend_count || 0) + 1
-    question.value.is_recommended = !question.value.is_recommended
+    question.value.recommend_count = resp.data.recommend_count
+    question.value.is_recommended = resp.data.recommended
   } catch (e) { console.error(e) }
 }
 
@@ -258,8 +263,8 @@ async function likeAnswer(ans) {
   if (!isLoggedIn) return router.push('/auth/login')
   try {
     const resp = await axios.post('/api/qa-v2/answers/' + ans.id + '/like', {}, { headers: headers })
-    ans.likes_count = resp.data.likes_count !== undefined ? resp.data.likes_count : (ans.likes_count || 0) + 1
-    ans.is_liked = !ans.is_liked
+    ans.likes_count = resp.data.like_count
+    ans.is_liked = resp.data.liked
   } catch (e) { console.error(e) }
 }
 

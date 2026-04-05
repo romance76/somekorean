@@ -123,6 +123,7 @@ async function doCheckin() {
     const { data } = await axios.post('/api/points/checkin');
     checkedIn.value = true;
     balance.value.points = data.points;
+      authStore.refreshPoints()
     alert(data.message);
     await authStore.fetchMe();
     await loadHistory();
@@ -161,6 +162,9 @@ function formatDate(d) {
 onMounted(async () => {
   const { data } = await axios.get('/api/points/balance');
   balance.value = data;
+  if (data.checked_in_today !== undefined) {
+    checkedIn.value = data.checked_in_today;
+  }
   await loadHistory();
 });
 </script>

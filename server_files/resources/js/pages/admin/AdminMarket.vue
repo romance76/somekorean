@@ -265,18 +265,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const dummyItems = [
-  { id:1, title:'삼성 65인치 4K QLED TV', category:'전자기기', price:350, seller:'김민준', status:'판매중', views:89, description:'2024년형, 상태 좋음. 이사로 급처.', created_at:'2026-03-20' },
-  { id:2, title:'아이폰 15 Pro 256GB', category:'전자기기', price:750, seller:'박서연', status:'예약중', views:145, description:'개인 판매, 해외 직구 제품. 풀박스.', created_at:'2026-03-22' },
-  { id:3, title:'이케아 소파 (3인용)', category:'가구', price:120, seller:'이하은', status:'판매중', views:34, description:'3년 사용, 깨끗하게 사용했습니다.', created_at:'2026-03-25' },
-  { id:4, title:'혼다 어코드 2021', category:'자동차', price:22000, seller:'정우진', status:'판매중', views:210, description:'2021년 혼다 어코드, 마일리지 45K.', created_at:'2026-03-18' },
-  { id:5, title:'한복 세트 (여성용)', category:'의류', price:80, seller:'강이서', status:'판매중', views:28, description:'결혼식 1회 착용, 사이즈 S', created_at:'2026-03-26' },
-  { id:6, title:'에어프라이어 대형', category:'전자기기', price:45, seller:'한준우', status:'완료', views:67, description:'필립스 에어프라이어 6L, 1년 사용', created_at:'2026-03-15' },
-  { id:7, title:'DSLR 카메라 캐논 EOS R5', category:'전자기기', price:2800, seller:'윤하린', status:'판매중', views:180, description:'바디만, 렌즈별도. 촬영 5천장 미만.', created_at:'2026-03-27' },
-  { id:8, title:'한국 책 세트 (30권)', category:'기타', price:30, seller:'조수빈', status:'판매중', views:15, description:'각종 소설, 자기계발서 등. 일괄판매만.', created_at:'2026-03-28' },
-]
 
-const items = ref([...dummyItems])
+const items = ref([])
 const search = ref('')
 const filterCategory = ref('')
 const filterStatus = ref('')
@@ -394,9 +384,9 @@ function resetFilters() {
 async function loadItems() {
   try {
     const res = await axios.get('/api/admin/market')
-    if (res.data && res.data.length) items.value = res.data
+    items.value = res.data?.data || res.data || []
   } catch (e) {
-    // use dummy data
+    items.value = []
   }
 }
 

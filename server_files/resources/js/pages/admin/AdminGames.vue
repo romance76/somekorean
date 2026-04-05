@@ -1,231 +1,516 @@
 <template>
-  <div class="space-y-5">
-    <!-- 헤더 -->
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">게임 관리</h1>
-      <p class="text-sm text-gray-500 mt-1">게임 활성화, 리더보드, 포인트 경제를 관리합니다</p>
-    </div>
-
-    <!-- 통계 카드 -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">전체 플레이어</p>
-        <p class="text-3xl font-bold text-gray-800 mt-1">{{ stats.totalPlayers.toLocaleString() }}</p>
+  <div class="admin-games">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">🎮 게임 관리</h1>
+        <p class="page-sub">총 {{ games.length }}개 · 활성 {{ activeCount }}개 · 교육형 {{ eduCount }}개</p>
       </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">오늘 활성</p>
-        <p class="text-3xl font-bold text-green-600 mt-1">{{ stats.todayActive.toLocaleString() }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">총 게임수</p>
-        <p class="text-3xl font-bold text-blue-600 mt-1">{{ stats.totalGames }}</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p class="text-sm text-gray-500">포인트 지급 총액</p>
-        <p class="text-3xl font-bold text-yellow-600 mt-1">{{ stats.totalPoints.toLocaleString() }}</p>
+      <div class="header-actions">
+        <select v-model="filterType" class="filter-sel">
+          <option value="">전체 유형</option>
+          <option value="educational">📚 교육형</option>
+          <option value="single">🎯 단일형</option>
+          <option value="betting">🎰 베팅형</option>
+          <option value="arcade">🕹️ 아케이드</option>
+        </select>
+        <select v-model="filterCat" class="filter-sel">
+          <option value="">전체 카테고리</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+        </select>
+        <input v-model="search" class="search-input" placeholder="🔍 게임 검색..."/>
       </div>
     </div>
 
-    <!-- 게임 목록 / 토글 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-4 border-b border-gray-100">
-        <h2 class="font-semibold text-gray-800">게임 ON/OFF 관리</h2>
+    <div class="stat-cards">
+      <div class="stat-card blue">
+        <div class="stat-num">{{ games.length }}</div>
+        <div class="stat-label">전체 게임</div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-100">
-        <div v-for="game in games" :key="game.id" class="p-4 flex items-center justify-between hover:bg-gray-50 transition">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl">{{ game.icon }}</span>
-            <div>
-              <p class="font-medium text-gray-900">{{ game.name }}</p>
-              <p class="text-xs text-gray-400">일 {{ game.dailyPlays.toLocaleString() }}회 · 포인트 x{{ game.multiplier }}</p>
+      <div class="stat-card green">
+        <div class="stat-num">{{ activeCount }}</div>
+        <div class="stat-label">활성 게임</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-num">{{ totalPlays.toLocaleString() }}</div>
+        <div class="stat-label">총 플레이</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-num">{{ eduCount }}</div>
+        <div class="stat-label">교육형 (문제관리)</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-num">{{ arcadeCount }}</div>
+        <div class="stat-label">아케이드 게임</div>
+      </div>
+    </div>
+
+    <!-- 게임 목록 -->
+    <div class="games-section">
+      <div v-if="loading" class="loading-box">
+        <div class="spinner"></div>
+        <p>게임 목록을 불러오는 중...</p>
+      </div>
+      <div v-else>
+        <div v-for="cat in filteredCategories" :key="cat.id" class="cat-group">
+          <div class="cat-header">
+            <span class="cat-icon">{{ catIcon(cat.id) }}</span>
+            <span class="cat-name">{{ cat.name }}</span>
+            <span class="cat-count">{{ gamesByCategory(cat.id).length }}개</span>
+          </div>
+          <div class="games-grid">
+            <div v-for="game in gamesByCategory(cat.id)" :key="game.id"
+                 class="game-card" :class="{inactive: !game.is_active}">
+              <div class="game-top">
+                <div class="game-id">#{{ game.id }}</div>
+                <label class="toggle-switch">
+                  <input type="checkbox" :checked="game.is_active" @change="toggleGame(game)"/>
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="game-name">{{ game.name }}</div>
+              <div class="game-route">{{ game.route_name || '라우트 없음' }}</div>
+              <!-- 게임 유형 뱃지 -->
+              <div class="type-badge" :class="'type-' + game.type">
+                {{ typeLabel(game.type) }}
+              </div>
+              <div class="game-stats">
+                <span class="stat-pill plays">🎮 {{ (game.session_count || 0).toLocaleString() }}</span>
+                <span class="stat-pill score">⭐ {{ game.top_score || 0 }}</span>
+                <span v-if="game.is_new" class="stat-pill new-tag">NEW</span>
+              </div>
+              <!-- 교육형만 문제관리 버튼 표시 -->
+              <div v-if="game.type === 'educational'" class="game-actions">
+                <button class="action-btn q-btn" @click="openQuestions(game)">
+                  📝 문제관리
+                  <span v-if="game.question_count > 0" class="q-count-badge">{{ game.question_count }}</span>
+                </button>
+              </div>
+              <div v-else class="game-type-note">
+                {{ game.type === 'betting' ? '🎰 베팅 게임' : '🎯 단일 게임' }}
+              </div>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span :class="game.enabled ? 'text-green-600' : 'text-gray-400'" class="text-xs font-medium">
-              {{ game.enabled ? 'ON' : 'OFF' }}
-            </span>
-            <button @click="toggleGame(game)" :class="game.enabled ? 'bg-green-500' : 'bg-gray-300'" class="relative inline-flex w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none">
-              <span :class="game.enabled ? 'translate-x-4' : 'translate-x-0'" class="inline-block w-5 h-5 mt-0.5 ml-0.5 bg-white rounded-full shadow transform transition-transform duration-200"></span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- 포인트 배율 조정 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
-        <h2 class="font-semibold text-gray-800">포인트 경제 관리</h2>
-        <button @click="saveMultipliers" class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">저장</button>
+    <!-- 아케이드 게임 섹션 -->
+    <div v-if="!filterType || filterType === 'arcade'" class="arcade-section">
+      <div class="cat-header">
+        <span class="cat-icon">🕹️</span>
+        <span class="cat-name">아케이드 게임</span>
+        <span class="cat-count">{{ arcadeGames.length }}개</span>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-4 py-3 text-left">게임</th>
-              <th class="px-4 py-3 text-center">지급된 총 포인트</th>
-              <th class="px-4 py-3 text-center">포인트 배율</th>
-              <th class="px-4 py-3 text-center">일 플레이</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-50">
-            <tr v-for="game in games" :key="game.id" class="hover:bg-gray-50 transition">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2">
-                  <span>{{ game.icon }}</span>
-                  <span class="font-medium text-gray-900">{{ game.name }}</span>
+      <div class="games-grid">
+        <div v-for="game in filteredArcadeGames" :key="game.id"
+             class="game-card" :class="{inactive: !game.is_active}">
+          <div class="game-top">
+            <div class="game-id">🕹️ ARCADE</div>
+            <label class="toggle-switch">
+              <input type="checkbox" :checked="game.is_active" @change="toggleArcadeGame(game)"/>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="game-name">{{ game.name }}</div>
+          <div class="game-route">{{ game.route_name }}</div>
+          <div class="type-badge type-arcade">🕹️ 아케이드</div>
+          <div class="game-stats">
+            <span class="stat-pill plays">🎮 {{ (game.play_count || 0).toLocaleString() }}</span>
+          </div>
+          <div class="game-type-note">무료 아케이드 게임</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 문제 관리 모달 (교육형 전용) -->
+    <Teleport to="body">
+      <div v-if="qModal.open" class="modal-backdrop" @click.self="qModal.open=false">
+        <div class="modal-box">
+          <div class="modal-header">
+            <div>
+              <h2>📚 {{ qModal.game?.name }}</h2>
+              <p class="modal-sub">문제 {{ qModal.questions.length }}개 등록됨</p>
+            </div>
+            <button class="close-btn" @click="qModal.open=false">✕</button>
+          </div>
+          <div class="modal-body">
+            <!-- 문제 추가 폼 -->
+            <div class="add-question-form">
+              <h3 class="form-title">➕ 새 문제 추가</h3>
+              <div class="form-row">
+                <input v-model="newQ.question" class="form-input" placeholder="문제 내용 (예: 다음 중 봄 꽃은?)"/>
+                <input v-model="newQ.answer" class="form-input sm" placeholder="정답"/>
+              </div>
+              <div class="form-row">
+                <input v-model="newQ.options_str" class="form-input"
+                  placeholder="보기 (쉼표로 구분, 예: 장미,국화,벚꽃,튤립) — 정답 포함 입력"/>
+                <select v-model="newQ.difficulty" class="form-input sm">
+                  <option value="1">⭐ 레벨 1 (쉬움)</option>
+                  <option value="2">⭐⭐ 레벨 2 (보통)</option>
+                  <option value="3">⭐⭐⭐ 레벨 3 (어려움)</option>
+                </select>
+              </div>
+              <button class="add-btn" @click="addQuestion"
+                :disabled="!newQ.question || !newQ.answer">
+                + 문제 추가하기
+              </button>
+            </div>
+
+            <!-- 레벨별 문제 목록 -->
+            <div v-if="qModal.loading" class="q-loading">불러오는 중...</div>
+            <div v-else-if="qModal.questions.length === 0" class="q-empty">
+              <div style="font-size:48px;margin-bottom:8px">📭</div>
+              <p>등록된 문제가 없습니다.</p>
+              <p style="font-size:13px;color:#94a3b8">위에서 첫 번째 문제를 추가해보세요!</p>
+            </div>
+            <div v-else>
+              <div v-for="lv in [1,2,3]" :key="lv" class="level-section">
+                <div v-if="questionsByLevel(lv).length > 0">
+                  <div class="level-header">
+                    <span class="level-stars">{{ '⭐'.repeat(lv) }}</span>
+                    <span class="level-name">레벨 {{ lv }} {{ ['(쉬움)','(보통)','(어려움)'][lv-1] }}</span>
+                    <span class="level-count">{{ questionsByLevel(lv).length }}문제</span>
+                  </div>
+                  <div v-for="q in questionsByLevel(lv)" :key="q.id" class="q-item">
+                    <div class="q-content">
+                      <div class="q-text">{{ q.question }}</div>
+                      <div class="q-answer-row">
+                        <span class="q-answer-label">정답:</span>
+                        <span class="q-answer">{{ q.answer }}</span>
+                      </div>
+                      <div v-if="q.options && parseOptions(q.options).length > 0" class="q-opts">
+                        <span class="q-opts-label">보기:</span>
+                        <span v-for="(opt, i) in parseOptions(q.options)" :key="i"
+                          class="q-opt-chip" :class="{correct: opt === q.answer}">
+                          {{ opt }}
+                        </span>
+                      </div>
+                    </div>
+                    <button class="del-btn" @click="deleteQuestion(q.id)" title="삭제">🗑</button>
+                  </div>
                 </div>
-              </td>
-              <td class="px-4 py-3 text-center font-medium text-yellow-700">{{ game.totalPoints.toLocaleString() }}</td>
-              <td class="px-4 py-3 text-center">
-                <input v-model.number="game.multiplier" type="number" min="0.1" max="10" step="0.1"
-                  class="w-20 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </td>
-              <td class="px-4 py-3 text-center text-gray-600">{{ game.dailyPlays.toLocaleString() }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+              </div>
 
-    <!-- 리더보드 관리 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-4 border-b border-gray-100">
-        <div class="flex items-center justify-between flex-wrap gap-3">
-          <h2 class="font-semibold text-gray-800">리더보드 관리</h2>
-          <select v-model="selectedGameId" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option v-for="g in games" :key="g.id" :value="g.id">{{ g.name }}</option>
-          </select>
-        </div>
-      </div>
-      <div class="p-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="text-gray-500 text-xs uppercase">
-              <tr>
-                <th class="pb-2 text-left">순위</th>
-                <th class="pb-2 text-left">닉네임</th>
-                <th class="pb-2 text-center">점수</th>
-                <th class="pb-2 text-center">플레이</th>
-                <th class="pb-2 text-center">포인트</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50">
-              <tr v-for="(entry, i) in currentLeaderboard" :key="i" class="hover:bg-gray-50">
-                <td class="py-2 pr-4">
-                  <span v-if="i === 0" class="text-yellow-500 font-bold text-base">🥇</span>
-                  <span v-else-if="i === 1" class="text-gray-400 font-bold text-base">🥈</span>
-                  <span v-else-if="i === 2" class="text-amber-600 font-bold text-base">🥉</span>
-                  <span v-else class="text-gray-500 font-medium">{{ i + 1 }}</span>
-                </td>
-                <td class="py-2 font-medium text-gray-900">{{ entry.name }}</td>
-                <td class="py-2 text-center font-bold text-blue-700">{{ entry.score.toLocaleString() }}</td>
-                <td class="py-2 text-center text-gray-500">{{ entry.plays }}</td>
-                <td class="py-2 text-center text-yellow-600 font-medium">{{ entry.points.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="mt-4 flex justify-end">
-          <button @click="resetLeaderboard" class="text-sm text-red-500 hover:text-red-700 border border-red-200 px-4 py-1.5 rounded-lg hover:bg-red-50 transition">
-            리더보드 초기화
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 최근 게임 활동 로그 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-4 border-b border-gray-100">
-        <h2 class="font-semibold text-gray-800">최근 게임 활동</h2>
-      </div>
-      <div class="divide-y divide-gray-50">
-        <div v-for="log in activityLogs" :key="log.id" class="px-4 py-3 flex items-center gap-3">
-          <span class="text-lg">{{ log.icon }}</span>
-          <div class="flex-1">
-            <p class="text-sm text-gray-800">
-              <span class="font-medium">{{ log.user }}</span>
-              <span class="text-gray-500">님이 </span>
-              <span class="font-medium text-blue-600">{{ log.game }}</span>
-              <span class="text-gray-500">에서 </span>
-              <span class="font-medium text-yellow-600">{{ log.points }}포인트</span>
-              <span class="text-gray-500"> 획득</span>
-            </p>
+              <!-- 레벨 미설정 문제 -->
+              <div v-if="questionsByLevel(0).length > 0" class="level-section">
+                <div class="level-header">
+                  <span class="level-stars">❓</span>
+                  <span class="level-name">레벨 미설정</span>
+                  <span class="level-count">{{ questionsByLevel(0).length }}문제</span>
+                </div>
+                <div v-for="q in questionsByLevel(0)" :key="q.id" class="q-item">
+                  <div class="q-content">
+                    <div class="q-text">{{ q.question }}</div>
+                    <div class="q-answer-row">
+                      <span class="q-answer-label">정답:</span>
+                      <span class="q-answer">{{ q.answer }}</span>
+                    </div>
+                  </div>
+                  <button class="del-btn" @click="deleteQuestion(q.id)">🗑</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <span class="text-xs text-gray-400">{{ log.time }}</span>
         </div>
       </div>
-    </div>
+    </Teleport>
+
+    <Transition name="toast">
+      <div v-if="toast.show" class="toast" :class="toast.type">{{ toast.msg }}</div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const selectedGameId = ref(1)
+const games = ref([])
+const arcadeGames = ref([
+  { id: 'snake', name: '🐍 뱀 게임', route_name: 'game-snake', type: 'arcade', play_count: 0, is_active: true },
+  { id: 'pacman', name: '👾 팩맨', route_name: 'game-pacman', type: 'arcade', play_count: 0, is_active: true },
+  { id: 'flappy', name: '🐦 클럼지 버드', route_name: 'game-flappy', type: 'arcade', play_count: 0, is_active: true },
+  { id: 'duckhunt', name: '🦆 덕 헌트', route_name: 'game-duckhunt', type: 'arcade', play_count: 0, is_active: true },
+  { id: 'slots', name: '🎰 슬롯머신', route_name: 'game-slots', type: 'arcade', play_count: 0, is_active: true },
+  { id: 'hextris', name: '🔷 헥스트리스', route_name: 'game-hextris', type: 'arcade', play_count: 0, is_active: true },
+  { id: 'mahjong', name: '🀄 마작 솔리테어', route_name: 'game-mahjong', type: 'arcade', play_count: 0, is_active: true },
+])
+const categories = ref([
+  { id: 1, name: '아기 (0-3세)' },
+  { id: 2, name: '어린이 (4-10세)' },
+  { id: 3, name: '청소년 (11-18세)' },
+  { id: 4, name: '성인' },
+  { id: 5, name: '시니어' },
+])
+const loading = ref(true)
+const search = ref('')
+const filterCat = ref('')
+const filterType = ref('')
+const toast = ref({ show: false, msg: '', type: 'success' })
+const qModal = ref({ open: false, game: null, questions: [], loading: false })
+const newQ = ref({ question: '', answer: '', options_str: '', difficulty: '1' })
 
-const stats = ref({
-  totalPlayers: 3842,
-  todayActive: 218,
-  totalGames: 9,
-  totalPoints: 1284500
+function catIcon(id) {
+  return ['👶','👦','🧑‍🎓','👨','👴'][id - 1] || '🎮'
+}
+function typeLabel(type) {
+  return { educational: '📚 교육형', single: '🎯 단일형', betting: '🎰 베팅형', multi: '👥 멀티', arcade: '🕹️ 아케이드' }[type] || type
+}
+
+const activeCount = computed(() => games.value.filter(g => g.is_active).length)
+const eduCount = computed(() => games.value.filter(g => g.type === 'educational').length)
+const arcadeCount = computed(() => arcadeGames.value.filter(g => g.is_active).length)
+const totalPlays = computed(() => games.value.reduce((s, g) => s + (g.session_count || 0), 0))
+
+const filteredArcadeGames = computed(() => {
+  if (!search.value) return arcadeGames.value
+  return arcadeGames.value.filter(g => g.name.toLowerCase().includes(search.value.toLowerCase()))
 })
 
-const games = ref([
-  { id: 1, name: '고스톱', icon: '🃏', enabled: true, multiplier: 2.0, dailyPlays: 320, totalPoints: 285000 },
-  { id: 2, name: '블랙잭', icon: '🂡', enabled: true, multiplier: 1.5, dailyPlays: 250, totalPoints: 198000 },
-  { id: 3, name: '포커', icon: '♠️', enabled: true, multiplier: 2.5, dailyPlays: 180, totalPoints: 312000 },
-  { id: 4, name: '홀덤', icon: '🎰', enabled: false, multiplier: 3.0, dailyPlays: 0, totalPoints: 95000 },
-  { id: 5, name: '메모리게임', icon: '🧩', enabled: true, multiplier: 1.0, dailyPlays: 410, totalPoints: 142000 },
-  { id: 6, name: '2048', icon: '🔢', enabled: true, multiplier: 1.2, dailyPlays: 290, totalPoints: 118000 },
-  { id: 7, name: '빙고', icon: '🎱', enabled: true, multiplier: 1.0, dailyPlays: 175, totalPoints: 88000 },
-  { id: 8, name: '오목', icon: '⚫', enabled: true, multiplier: 1.5, dailyPlays: 130, totalPoints: 76500 },
-  { id: 9, name: '퀴즈', icon: '❓', enabled: true, multiplier: 1.0, dailyPlays: 380, totalPoints: 170000 }
-])
-
-const leaderboards = {
-  1: [ { name: '고수왕', score: 98500, plays: 84, points: 12400 }, { name: '화투마스터', score: 87200, plays: 72, points: 10800 }, { name: '가람이', score: 75600, plays: 60, points: 9600 }, { name: '전주최고', score: 61000, plays: 51, points: 8200 }, { name: '끝장패', score: 54800, plays: 45, points: 7000 } ],
-  2: [ { name: '블랙잭킹', score: 120000, plays: 98, points: 15200 }, { name: '21달인', score: 105000, plays: 88, points: 13800 }, { name: '카드귀신', score: 92000, plays: 76, points: 11400 }, { name: '행운의손', score: 78000, plays: 64, points: 9600 }, { name: '딜러박', score: 65000, plays: 55, points: 8250 } ],
-  3: [ { name: '포커페이스', score: 250000, plays: 140, points: 28000 }, { name: '올인왕', score: 198000, plays: 118, points: 22400 }, { name: '블러프킹', score: 175000, plays: 104, points: 20000 }, { name: '콜미', score: 142000, plays: 88, points: 16800 }, { name: '레이즈', score: 128000, plays: 74, points: 14400 } ],
-  4: [ { name: '홀덤마스터', score: 320000, plays: 160, points: 38400 }, { name: '리버강', score: 265000, plays: 132, points: 31800 }, { name: '플럭', score: 220000, plays: 110, points: 26400 }, { name: '스트레이트', score: 185000, plays: 96, points: 22200 }, { name: '풀하우스', score: 155000, plays: 80, points: 18600 } ],
-  5: [ { name: '기억력甲', score: 9800, plays: 210, points: 8200 }, { name: '카드외우기', score: 9200, plays: 195, points: 7800 }, { name: '집중력왕', score: 8700, plays: 180, points: 7200 }, { name: '두뇌짱', score: 8100, plays: 162, points: 6600 }, { name: '퍼펙트기억', score: 7600, plays: 148, points: 6200 } ],
-  6: [ { name: '2048달인', score: 131072, plays: 320, points: 11400 }, { name: '합치기왕', score: 65536, plays: 285, points: 9800 }, { name: '타일마스터', score: 32768, plays: 245, points: 8200 }, { name: '슬라이드킹', score: 16384, plays: 210, points: 6800 }, { name: '숫자게임', score: 8192, plays: 178, points: 5600 } ],
-  7: [ { name: '빙고킹', score: 5400, plays: 88, points: 6400 }, { name: '행운카드', score: 5100, plays: 80, points: 6000 }, { name: '완성왕', score: 4800, plays: 74, points: 5600 }, { name: '직선빙고', score: 4500, plays: 68, points: 5200 }, { name: '빙고여왕', score: 4200, plays: 60, points: 4800 } ],
-  8: [ { name: '바둑마스터', score: 12800, plays: 64, points: 7400 }, { name: '오목고수', score: 11500, plays: 58, points: 6600 }, { name: '연속오목', score: 10200, plays: 52, points: 5900 }, { name: '전략가', score: 9000, plays: 46, points: 5100 }, { name: '돌놓기왕', score: 7800, plays: 40, points: 4400 } ],
-  9: [ { name: '퀴즈왕', score: 9900, plays: 420, points: 12800 }, { name: '지식인', score: 9600, plays: 395, points: 12200 }, { name: '박학다식', score: 9300, plays: 365, points: 11500 }, { name: '만점자', score: 9000, plays: 340, points: 10800 }, { name: '한인상식왕', score: 8700, plays: 315, points: 10200 } ]
+function gamesByCategory(catId) {
+  return games.value.filter(g => {
+    if (g.category_id !== catId) return false
+    if (filterType.value && g.type !== filterType.value) return false
+    if (search.value && !g.name.toLowerCase().includes(search.value.toLowerCase())) return false
+    return true
+  })
 }
 
-const currentLeaderboard = computed(() => leaderboards[selectedGameId.value] || [])
+const filteredCategories = computed(() => {
+  const cats = filterCat.value
+    ? categories.value.filter(c => c.id == filterCat.value)
+    : categories.value
+  return cats.filter(c => gamesByCategory(c.id).length > 0)
+})
 
-const activityLogs = ref([
-  { id: 1, user: '고수왕', game: '고스톱', points: 450, icon: '🃏', time: '방금 전' },
-  { id: 2, user: '퀴즈왕', game: '퀴즈', points: 200, icon: '❓', time: '2분 전' },
-  { id: 3, user: '블랙잭킹', game: '블랙잭', points: 380, icon: '🂡', time: '5분 전' },
-  { id: 4, user: '기억력甲', game: '메모리게임', points: 150, icon: '🧩', time: '8분 전' },
-  { id: 5, user: '2048달인', game: '2048', points: 290, icon: '🔢', time: '12분 전' },
-  { id: 6, user: '빙고킹', game: '빙고', points: 120, icon: '🎱', time: '15분 전' }
-])
-
-function toggleGame(game) {
-  game.enabled = !game.enabled
+function questionsByLevel(lv) {
+  return qModal.value.questions.filter(q => {
+    if (lv === 0) return !q.difficulty || (q.difficulty !== 1 && q.difficulty !== 2 && q.difficulty !== 3)
+    return q.difficulty === lv
+  })
 }
 
-async function saveMultipliers() {
+async function loadGames() {
+  loading.value = true
   try {
-    await axios.post('/api/admin/games/multipliers', { games: games.value })
-    alert('포인트 배율이 저장되었습니다.')
-  } catch {
-    alert('저장되었습니다. (데모)')
+    const res = await axios.get('/api/admin/games')
+    // Add question count to each game
+    games.value = res.data
+    // Load question counts for educational games
+    const eduGames = games.value.filter(g => g.type === 'educational')
+    await Promise.all(eduGames.map(async g => {
+      try {
+        const r = await axios.get('/api/admin/games/' + g.id + '/questions')
+        g.question_count = r.data.length
+      } catch { g.question_count = 0 }
+    }))
+  } catch (e) {
+    showToast('게임 목록을 불러오지 못했습니다', 'error')
+  } finally {
+    loading.value = false
   }
 }
 
-async function resetLeaderboard() {
-  const game = games.value.find(g => g.id === selectedGameId.value)
-  if (!confirm(`${game?.name} 리더보드를 초기화하시겠습니까?`)) return
+async function toggleGame(game) {
+  const prev = game.is_active
+  game.is_active = !game.is_active
   try {
-    await axios.delete(`/api/admin/games/${selectedGameId.value}/leaderboard`)
-  } catch {}
-  alert('리더보드가 초기화되었습니다. (데모)')
+    await axios.put('/api/admin/games/' + game.id + '/toggle')
+    showToast(game.name + ': ' + (game.is_active ? '활성화' : '비활성화') + ' 완료')
+  } catch (e) {
+    game.is_active = prev
+    showToast('변경 실패', 'error')
+  }
 }
+
+function toggleArcadeGame(game) {
+  game.is_active = !game.is_active
+  showToast(game.name + ': ' + (game.is_active ? '활성화' : '비활성화') + ' 완료')
+}
+
+async function openQuestions(game) {
+  qModal.value = { open: true, game, questions: [], loading: true }
+  newQ.value = { question: '', answer: '', options_str: '', difficulty: '1' }
+  try {
+    const res = await axios.get('/api/admin/games/' + game.id + '/questions')
+    qModal.value.questions = res.data
+  } catch (e) {
+    showToast('문제 목록 로드 실패', 'error')
+  } finally {
+    qModal.value.loading = false
+  }
+}
+
+async function addQuestion() {
+  const opts = newQ.value.options_str
+    ? newQ.value.options_str.split(',').map(s => s.trim()).filter(Boolean)
+    : []
+  try {
+    const res = await axios.post('/api/admin/games/' + qModal.value.game.id + '/questions', {
+      question: newQ.value.question,
+      answer: newQ.value.answer,
+      options: opts,
+      difficulty: parseInt(newQ.value.difficulty),
+    })
+    showToast('문제가 추가되었습니다!')
+    newQ.value = { question: '', answer: '', options_str: '', difficulty: '1' }
+    // Reload questions
+    const r = await axios.get('/api/admin/games/' + qModal.value.game.id + '/questions')
+    qModal.value.questions = r.data
+    // Update count in game card
+    const g = games.value.find(g => g.id === qModal.value.game.id)
+    if (g) g.question_count = r.data.length
+  } catch (e) {
+    showToast('문제 추가 실패', 'error')
+  }
+}
+
+async function deleteQuestion(qid) {
+  if (!confirm('이 문제를 삭제하시겠습니까?')) return
+  try {
+    await axios.delete('/api/admin/questions/' + qid)
+    qModal.value.questions = qModal.value.questions.filter(q => q.id !== qid)
+    const g = games.value.find(g => g.id === qModal.value.game.id)
+    if (g) g.question_count = qModal.value.questions.length
+    showToast('삭제되었습니다')
+  } catch (e) {
+    showToast('삭제 실패', 'error')
+  }
+}
+
+function parseOptions(opts) {
+  try {
+    const parsed = JSON.parse(opts)
+    return Array.isArray(parsed) ? parsed : []
+  } catch { return [] }
+}
+
+function showToast(msg, type = 'success') {
+  toast.value = { show: true, msg, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
+
+onMounted(loadGames)
 </script>
+
+<style scoped>
+.admin-games { padding: 24px; max-width: 1400px; margin: 0 auto; font-family: 'Noto Sans KR', sans-serif; }
+
+/* 헤더 */
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.page-title { font-size: 26px; font-weight: 800; color: #1e293b; margin: 0; }
+.page-sub { color: #64748b; font-size: 14px; margin: 4px 0 0; }
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-sel, .search-input { border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 14px; font-size: 14px; outline: none; background: #fff; }
+.filter-sel:focus, .search-input:focus { border-color: #6366f1; }
+
+/* 통계 카드 */
+.stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+@media (max-width: 768px) { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { border-radius: 16px; padding: 20px; color: #fff; text-align: center; }
+.stat-card.blue { background: linear-gradient(135deg, #6366f1, #818cf8); }
+.stat-card.green { background: linear-gradient(135deg, #10b981, #34d399); }
+.stat-card.purple { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.stat-card.teal { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+.stat-card.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.stat-num { font-size: 32px; font-weight: 800; }
+.stat-label { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+
+/* 카테고리 그룹 */
+.cat-group { margin-bottom: 32px; }
+.cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+.cat-icon { font-size: 22px; }
+.cat-name { font-size: 18px; font-weight: 700; color: #1e293b; }
+.cat-count { background: #e2e8f0; color: #64748b; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+
+/* 게임 카드 그리드 */
+.games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.game-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; transition: all .2s; box-shadow: 0 2px 6px rgba(0,0,0,.04); }
+.game-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
+.game-card.inactive { opacity: 0.5; background: #f8fafc; }
+.game-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.game-id { font-size: 11px; color: #94a3b8; font-weight: 600; }
+.game-name { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; line-height: 1.3; }
+.game-route { font-size: 11px; color: #94a3b8; margin-bottom: 8px; word-break: break-all; }
+.type-badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; margin-bottom: 8px; }
+.type-educational { background: #dbeafe; color: #1d4ed8; }
+.type-single { background: #f3f4f6; color: #4b5563; }
+.type-betting { background: #fef3c7; color: #b45309; }
+.type-arcade { background: #fce7f3; color: #be185d; }
+.game-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.stat-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.stat-pill.plays { background: #ede9fe; color: #7c3aed; }
+.stat-pill.score { background: #fef9c3; color: #ca8a04; }
+.stat-pill.new-tag { background: #dcfce7; color: #16a34a; }
+.game-actions { }
+.action-btn { width: 100%; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.q-btn { background: #ede9fe; color: #7c3aed; transition: background .15s; }
+.q-btn:hover { background: #ddd6fe; }
+.q-count-badge { background: #7c3aed; color: #fff; border-radius: 20px; padding: 1px 7px; font-size: 11px; }
+.game-type-note { text-align: center; font-size: 12px; color: #9ca3af; padding: 6px 0; }
+
+/* 토글 스위치 */
+.toggle-switch { position: relative; display: inline-block; width: 38px; height: 22px; cursor: pointer; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 22px; transition: .3s; }
+.slider:before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; bottom: 3px; left: 3px; transition: .3s; }
+input:checked + .slider { background: #10b981; }
+input:checked + .slider:before { transform: translateX(16px); }
+
+/* 모달 */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-box { background: #fff; border-radius: 20px; width: 100%; max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 24px 16px; border-bottom: 1px solid #e2e8f0; }
+.modal-header h2 { font-size: 20px; font-weight: 800; margin: 0; color: #1e293b; }
+.modal-sub { font-size: 13px; color: #64748b; margin: 4px 0 0; }
+.close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; padding: 0; }
+.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+
+/* 문제 추가 폼 */
+.form-title { font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .5px; }
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.form-input { flex: 1; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 14px; outline: none; font-family: inherit; }
+.form-input.sm { flex: 0 0 140px; }
+.form-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+.add-btn { background: #6366f1; color: #fff; border: none; padding: 10px 28px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 24px; }
+.add-btn:disabled { opacity: .4; cursor: not-allowed; }
+.add-question-form { background: #f8fafc; border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+
+/* 레벨별 문제 목록 */
+.level-section { margin-bottom: 20px; }
+.level-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 12px; background: #f1f5f9; border-radius: 10px; }
+.level-stars { font-size: 14px; }
+.level-name { font-size: 14px; font-weight: 700; color: #1e293b; flex: 1; }
+.level-count { font-size: 12px; color: #64748b; background: #fff; padding: 2px 10px; border-radius: 20px; }
+
+.q-loading { text-align: center; color: #94a3b8; padding: 30px; }
+.q-empty { text-align: center; color: #94a3b8; padding: 40px 20px; }
+.q-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; gap: 10px; transition: border-color .2s; }
+.q-item:hover { border-color: #c7d2fe; }
+.q-content { flex: 1; }
+.q-text { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 6px; line-height: 1.5; }
+.q-answer-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.q-answer-label { font-size: 12px; color: #64748b; }
+.q-answer { font-size: 13px; font-weight: 700; color: #059669; background: #d1fae5; padding: 2px 8px; border-radius: 6px; }
+.q-opts { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 6px; }
+.q-opts-label { font-size: 12px; color: #64748b; margin-right: 2px; }
+.q-opt-chip { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; font-weight: 500; }
+.q-opt-chip.correct { background: #d1fae5; color: #059669; font-weight: 700; }
+.del-btn { background: none; border: none; cursor: pointer; font-size: 18px; opacity: .5; flex-shrink: 0; padding: 4px; transition: opacity .15s; }
+.del-btn:hover { opacity: 1; }
+
+/* 로딩 */
+.loading-box { text-align: center; padding: 60px 20px; color: #64748b; }
+.spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #6366f1; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 아케이드 섹션 */
+.arcade-section { margin-bottom: 32px; }
+
+/* 토스트 */
+.toast { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 600; font-size: 14px; z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+.toast.success { background: #10b981; }
+.toast.error { background: #ef4444; }
+.toast-enter-active, .toast-leave-active { transition: all .3s; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
+</style>

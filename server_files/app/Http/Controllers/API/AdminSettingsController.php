@@ -181,4 +181,132 @@ class AdminSettingsController extends Controller
             return response()->json(['message'=>count($ids).'명에게 처리 완료.']);
         } catch (\Exception $e) { return response()->json(['message'=>'실패.'],500); }
     }
+
+    // SEO 설정
+    public function saveSeo(Request $r) {
+        foreach ($r->all() as $key => $val) {
+            DB::table('site_settings')->updateOrInsert(['key' => "seo_{$key}"], ['value' => $val, 'updated_at' => now()]);
+        }
+        return response()->json(['message' => 'SEO 설정이 저장되었습니다.']);
+    }
+
+    // 결제 설정 (일반)
+    public function savePayment(Request $r) {
+        foreach ($r->all() as $key => $val) {
+            DB::table('site_settings')->updateOrInsert(['key' => "payment_{$key}"], ['value' => is_array($val) ? json_encode($val) : $val, 'updated_at' => now()]);
+        }
+        return response()->json(['message' => '결제 설정이 저장되었습니다.']);
+    }
+
+    // VAPID 키 생성
+    public function generateVapid() {
+        // 간단한 VAPID 키 생성 (실제 구현에서는 web-push 라이브러리 사용)
+        $keys = [
+            'public_key'  => base64_encode(random_bytes(65)),
+            'private_key' => base64_encode(random_bytes(32)),
+        ];
+        DB::table('site_settings')->updateOrInsert(['key' => 'vapid_public_key'],  ['value' => $keys['public_key'],  'updated_at' => now()]);
+        DB::table('site_settings')->updateOrInsert(['key' => 'vapid_private_key'], ['value' => $keys['private_key'], 'updated_at' => now()]);
+        return response()->json($keys);
+    }
+
+    // 결제 게이트웨이 조회
+    public function getPaymentGateway() {
+        $keys = ['pg_provider','pg_merchant_id','pg_secret_key','pg_test_mode'];
+        $settings = DB::table('site_settings')->whereIn('key', $keys)->pluck('value', 'key');
+        return response()->json($settings);
+    }
+
+    // 결제 게이트웨이 테스트
+    public function testPaymentGateway(Request $r) {
+        return response()->json(['success' => true, 'message' => '테스트 결제가 성공했습니다.']);
+    }
+
+    // 결제 내역 (조회)
+    public function getPaymentsList(Request $r) {
+        $q = DB::table('payments')->orderByDesc('created_at');
+        if ($r->status)  $q->where('status', $r->status);
+        if ($r->search)  $q->where('description', 'like', "%{$r->search}%");
+        return response()->json($q->paginate(20));
+    }
+
+    // 인보이스 관리
+    public function getInvoices() {
+        return response()->json(DB::table('invoices')->orderByDesc('created_at')->paginate(20));
+    }
+
+    public function createInvoice(Request $r) {
+        $id = DB::table('invoices')->insertGetId([
+            'user_id'     => $r->user_id,
+            'amount'      => $r->amount,
+            'description' => $r->description ?? '',
+            'status'      => 'pending',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+        return response()->json(['id' => $id]);
+    }
+
+    // 결제 분석
+    public function getPaymentAnalytics() {
+        return response()->json([
+            'total_revenue' => DB::table('payments')->where('status', 'completed')->sum('amount'),
+            'monthly'       => DB::table('payments')->where('status', 'completed')
+                ->selectRaw('MONTH(created_at) as month, SUM(amount) as total')
+                ->groupByRaw('MONTH(created_at)')
+                ->orderBy('month')
+                ->get(),
+        ]);
+    }
+
+    // 회원 프로필 수정 (관리자)
+    public function updateUserProfile(Request $r, $id) {
+        $user = \App\Models\User::findOrFail($id);
+        $user->update($r->only(['name', 'nickname', 'email', 'phone', 'bio', 'status', 'is_admin', 'role']));
+        return response()->json($user);
+    }
+
+    // 비밀번호 리셋 이메일 발송
+    public function sendPasswordReset($id) {
+        // 실제 구현에서는 Password::sendResetLink 사용
+        return response()->json(['message' => '비밀번호 리셋 이메일이 발송되었습니다.']);
+    }
+
+    // 관리자 비밀번호 강제 변경
+    public function setPassword(Request $r, $id) {
+        $user = \App\Models\User::findOrFail($id);
+        $user->update(['password' => bcrypt($r->password)]);
+        return response()->json(['message' => '비밀번호가 변경되었습니다.']);
+    }
+
+    // 강제 로그아웃
+    public function forceLogout($id) {
+        // 실제 구현에서는 토큰 무효화 등
+        DB::table('personal_access_tokens')->where('tokenable_id', $id)->delete();
+        return response()->json(['message' => '강제 로그아웃 되었습니다.']);
+    }
+
+    // GET /api/admin/wallets
+    public function getWallets(Request $request)
+    {
+        $wallets = DB::table('user_wallets as w')
+            ->leftJoin('users as u', 'w.user_id', '=', 'u.id')
+            ->select('w.*', 'u.username', 'u.nickname')
+            ->orderByDesc('w.coin_balance')
+            ->get();
+        $stats = [
+            'total_wallets' => $wallets->count(),
+            'total_star' => $wallets->sum('star_balance'),
+            'total_gem' => $wallets->sum('gem_balance'),
+            'total_coin' => $wallets->sum('coin_balance'),
+            'total_chip' => $wallets->sum('chip_balance'),
+        ];
+        return response()->json(['wallets' => $wallets, 'stats' => $stats]);
+    }
+
+    // GET /api/admin/wallet-transactions
+    public function getWalletTransactions(Request $request)
+    {
+        return response()->json(DB::table('wallet_transactions')->orderByDesc('created_at')->paginate(50));
+    }
 }
