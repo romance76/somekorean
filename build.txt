@@ -1,0 +1,36 @@
+
+> build
+> vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 108 modules transformed.
+rendering chunks...
+computing gzip size...
+public/build/manifest.json                                   7.77 kB │ gzip:  0.97 kB
+public/build/assets/app-bELj5EM0.css                        14.50 kB │ gzip:  3.42 kB
+public/build/assets/_plugin-vue_export-helper-DlAUqK2U.js    0.09 kB │ gzip:  0.10 kB
+public/build/assets/BoardList-jP6qUF_S.js                    0.26 kB │ gzip:  0.25 kB
+public/build/assets/PostDetail-D8MCF4MP.js                   0.26 kB │ gzip:  0.25 kB
+public/build/assets/PostWrite-B5M-QgxL.js                    0.26 kB │ gzip:  0.25 kB
+public/build/assets/JobList-DtZdor-F.js                      0.26 kB │ gzip:  0.25 kB
+public/build/assets/JobDetail-Cc7rFYBk.js                    0.26 kB │ gzip:  0.25 kB
+public/build/assets/JobWrite-CeCV8gmF.js                     0.26 kB │ gzip:  0.25 kB
+public/build/assets/MarketList-oNBLbtOe.js                   0.26 kB │ gzip:  0.25 kB
+public/build/assets/MarketDetail-Cg_XvUmE.js                 0.26 kB │ gzip:  0.25 kB
+public/build/assets/BusinessDetail-CVkz_QpD.js               0.26 kB │ gzip:  0.25 kB
+public/build/assets/PointDashboard-DgMO14Cc.js               0.26 kB │ gzip:  0.25 kB
+public/build/assets/MessageInbox-D4j4-KwR.js                 0.26 kB │ gzip:  0.25 kB
+public/build/assets/Dashboard-CHLEGhNA.js                    0.26 kB │ gzip:  0.25 kB
+public/build/assets/MarketWrite-BWfZ3skM.js                  0.27 kB │ gzip:  0.25 kB
+public/build/assets/BusinessList-BfSzrRlN.js                 0.27 kB │ gzip:  0.25 kB
+public/build/assets/BusinessRegister-BTWQOzdh.js             0.27 kB │ gzip:  0.25 kB
+public/build/assets/UserProfile-CEyJNaFK.js                  0.27 kB │ gzip:  0.25 kB
+public/build/assets/NotFound-DICZG5WN.js                     0.82 kB │ gzip:  0.58 kB
+public/build/assets/Login-fUgBrUE8.js                        2.40 kB │ gzip:  1.22 kB
+public/build/assets/PostList-DqkvyCcW.js                     3.61 kB │ gzip:  1.77 kB
+public/build/assets/Register-y4RX_oV6.js                     3.72 kB │ gzip:  1.45 kB
+public/build/assets/Home-BLwXZovP.js                         5.81 kB │ gzip:  2.38 kB
+public/build/assets/app-avp64CT3.js                        142.73 kB │ gzip: 55.14 kB
+✓ built in 6.58s
+EX:0

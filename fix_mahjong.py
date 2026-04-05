@@ -1,0 +1,171 @@
+import paramiko, io
+
+def get_ssh():
+    c = paramiko.SSHClient()
+    c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    c.connect('68.183.60.70', username='root', password='EhdRh0817wodl', timeout=15)
+    return c
+
+def ssh(cmd, timeout=60):
+    c = get_ssh()
+    stdin, stdout, stderr = c.exec_command(cmd, timeout=timeout)
+    o = stdout.read().decode('utf-8','replace').strip()
+    e = stderr.read().decode('utf-8','replace').strip()
+    c.close()
+    return o + ('\n[STDERR]' + e if e else '')
+
+def sftp_write(path, content):
+    c = get_ssh()
+    sftp = c.open_sftp()
+    f = sftp.open(path, 'wb')
+    f.write(content.encode('utf-8'))
+    f.close()
+    sftp.close()
+    c.close()
+    return "OK"
+
+mahjong_html = """<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mahjong Solitaire</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a3a2a;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;color:white;overflow:auto;padding:8px}
+#hud{display:flex;gap:16px;margin-bottom:8px;font-size:14px;flex-wrap:wrap;justify-content:center}
+.hv{color:#86efac;font-weight:bold;font-size:17px}
+#board{display:flex;flex-direction:column;align-items:center;gap:3px}
+.row{display:flex;gap:3px;justify-content:center}
+.tile{width:42px;height:52px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform 0.1s}
+.free{background:linear-gradient(135deg,#f0fdf4,#dcfce7);color:#000;border:2px solid rgba(0,100,0,0.3);box-shadow:2px 2px 0 #166534}
+.free:hover{transform:translateY(-3px);box-shadow:2px 5px 0 #166534}
+.blocked{background:#1e3a2a;color:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.08);cursor:default}
+.sel{background:linear-gradient(135deg,#fef3c7,#fde68a)!important;transform:translateY(-5px)!important;box-shadow:2px 7px 0 #92400e!important;border-color:#f59e0b!important}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:white}
+#ov h2{font-size:26px;color:#86efac}
+.btn{background:#22c55e;color:#000;border:none;padding:12px 28px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
+.btn-b{background:#475569;color:white;margin-left:8px}
+</style>
+</head>
+<body>
+<div id="hud">
+  <span>Remaining: <span class="hv" id="leftEl">56</span></span>
+  <span>Score: <span class="hv" id="scEl">0</span></span>
+  <span>Time: <span class="hv" id="tmEl">0:00</span></span>
+</div>
+<div id="board"></div>
+<div id="ov">
+  <div style="font-size:44px">&#x1F004;</div>
+  <h2>Mahjong Solitaire</h2>
+  <p style="color:#94a3b8">Match 2 identical tiles to remove them!</p>
+  <p style="color:#94a3b8">Only tiles open on at least one side can be selected.</p>
+  <button class="btn" onclick="go()">Start Game</button>
+</div>
+<script>
+var TILES=['M1','M2','M3','M4','M5','M6','M7','M8','M9','P1','P2','P3','P4','P5','P6','P7','P8','P9','W1','W2','W3','W4','D1','D2','D3','M1','M2','M3'];
+var SYMS={'M1':'1m','M2':'2m','M3':'3m','M4':'4m','M5':'5m','M6':'6m','M7':'7m','M8':'8m','M9':'9m','P1':'1p','P2':'2p','P3':'3p','P4':'4p','P5':'5p','P6':'6p','P7':'7p','P8':'8p','P9':'9p','W1':'E','W2':'S','W3':'W','W4':'N','D1':'Hk','D2':'Ht','D3':'Ch'};
+var EMOJIS=['&#x1F007;','&#x1F008;','&#x1F009;','&#x1F00A;','&#x1F00B;','&#x1F00C;','&#x1F00D;','&#x1F00E;','&#x1F00F;','&#x1F019;','&#x1F01A;','&#x1F01B;','&#x1F01C;','&#x1F01D;','&#x1F01E;','&#x1F01F;','&#x1F020;','&#x1F021;','&#x1F000;','&#x1F001;','&#x1F002;','&#x1F003;','&#x1F004;','&#x1F005;','&#x1F006;','&#x1F007;','&#x1F008;','&#x1F009;'];
+var LAYOUT=[
+  [1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,1,1,1,1,1,1,1,1,1,1,0],
+  [1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,1,1,1,1,1,1,1,1,0,0],
+  [1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,1,1,1,1,1,1,1,1,1,1,0],
+  [1,1,1,1,1,1,1,1,1,1,1,1]
+];
+var ROWS=LAYOUT.length,COLS=LAYOUT[0].length;
+var board,sel,sc,startT,tmIv,run;
+var ov=document.getElementById('ov'),brd=document.getElementById('board');
+var leftEl=document.getElementById('leftEl'),scEl=document.getElementById('scEl'),tmEl=document.getElementById('tmEl');
+
+function go(){
+  var pos=[];
+  for(var ri=0;ri<ROWS;ri++){for(var ci=0;ci<COLS;ci++){if(LAYOUT[ri][ci])pos.push({r:ri,c:ci});}}
+  var types=[];
+  for(var i=0;i<pos.length/2;i++){var t=TILES[i%TILES.length];types.push(t,t);}
+  for(var i=types.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=types[i];types[i]=types[j];types[j]=tmp;}
+  board=pos.map(function(p,i){return {r:p.r,c:p.c,t:types[i],em:EMOJIS[TILES.indexOf(types[i])],rm:false,sel:false};});
+  sel=null;sc=0;run=true;ov.style.display='none';
+  clearInterval(tmIv);startT=Date.now();
+  tmIv=setInterval(function(){var s=Math.floor((Date.now()-startT)/1000);tmEl.textContent=Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);},1000);
+  render();
+}
+
+function isFree(t){
+  if(t.rm)return false;
+  var L=0,R=0;
+  for(var i=0;i<board.length;i++){if(!board[i].rm&&board[i].r===t.r&&board[i].c===t.c-1)L++;if(!board[i].rm&&board[i].r===t.r&&board[i].c===t.c+1)R++;}
+  return L===0||R===0;
+}
+
+function render(){
+  brd.innerHTML='';
+  var rem=board.filter(function(x){return !x.rm;}).length;
+  leftEl.textContent=rem;
+  for(var r=0;r<ROWS;r++){
+    var row=document.createElement('div');row.className='row';
+    for(var c=0;c<COLS;c++){
+      var tile=null;
+      for(var i=0;i<board.length;i++){if(board[i].r===r&&board[i].c===c&&!board[i].rm){tile=board[i];break;}}
+      var div=document.createElement('div');
+      if(tile){
+        var fr=isFree(tile);
+        div.className='tile '+(fr?'free':'blocked')+(sel===tile?' sel':'');
+        div.innerHTML=tile.em;
+        if(fr){(function(tl){div.addEventListener('click',function(){click(tl);});})(tile);}
+      } else {
+        div.className='tile';div.style.visibility='hidden';
+      }
+      row.appendChild(div);
+    }
+    brd.appendChild(row);
+  }
+}
+
+function click(tile){
+  if(!isFree(tile))return;
+  if(sel===tile){sel=null;render();return;}
+  if(sel&&sel.t===tile.t){
+    sel.rm=true;tile.rm=true;sc+=20;scEl.textContent=sc;sel=null;render();
+    var rem=board.filter(function(t){return !t.rm;});
+    if(!rem.length)over(true);
+    else if(!hasMove())over(false);
+  } else {sel=tile;render();}
+}
+
+function hasMove(){
+  var fr=board.filter(function(t){return !t.rm&&isFree(t);});
+  for(var i=0;i<fr.length;i++)for(var j=i+1;j<fr.length;j++)if(fr[i].t===fr[j].t)return true;
+  return false;
+}
+
+function over(won){
+  run=false;clearInterval(tmIv);
+  var fin=sc+(won?Math.max(0,2000-Math.floor((Date.now()-startT)/1000)*8):0);
+  ov.innerHTML='<h2>'+(won?'Clear!':'Stuck!')+'</h2><p>Score: <strong style="color:#86efac">'+fin+'</strong></p><div style="display:flex;gap:10px"><button class="btn btn-b" onclick="exitGame()">Exit</button><button class="btn" onclick="go()">Retry</button></div>';
+  ov.style.display='flex';
+  window.parent.postMessage({type:'GAME_SCORE',game:'mahjong',score:fin},'*');
+}
+function exitGame(){window.parent.postMessage({type:'GAME_EXIT',game:'mahjong'},'*');}
+render();
+</script>
+</body>
+</html>"""
+
+print("=== Writing mahjong/index.html via SFTP ===")
+r = sftp_write('/var/www/somekorean/public/games/mahjong/index.html', mahjong_html)
+print("mahjong:", r)
+
+print("\n=== Final file sizes ===")
+print(ssh('ls -lh /var/www/somekorean/public/games/slots/index.html /var/www/somekorean/public/games/hextris/index.html /var/www/somekorean/public/games/mahjong/index.html'))
+
+print("\n=== Verify mahjong starts with DOCTYPE ===")
+c = paramiko.SSHClient()
+c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+c.connect('68.183.60.70', username='root', password='EhdRh0817wodl', timeout=15)
+stdin, stdout, stderr = c.exec_command('head -3 /var/www/somekorean/public/games/mahjong/index.html')
+out = stdout.read().decode('utf-8', 'replace')
+print(out)
+c.close()
