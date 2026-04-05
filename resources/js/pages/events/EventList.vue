@@ -101,6 +101,9 @@ async function load() {
     const params = {}
     if (selectedCat.value) params.category = selectedCat.value
     if (search.value) params.search = search.value
+    if (userLat.value) params.lat = userLat.value
+    if (userLng.value) params.lng = userLng.value
+    if (userRadius.value) params.radius = userRadius.value
     const { data } = await axios.get('/api/events', { params })
     events.value = data.data || data || []
   } catch (e) {
@@ -149,5 +152,8 @@ function onLocationChange({ city, radius }) {
   load()
 }
 
-onMounted(load)
+onMounted(() => {
+  getUserLocation()
+  load()
+})
 </script>

@@ -3,7 +3,7 @@
     <!-- Row 1: Logo + Search + User Actions -->
     <div class="max-w-[1200px] mx-auto px-4 flex items-center h-12 gap-3">
       <RouterLink to="/" class="flex-shrink-0">
-        <img src="/images/logo.jpg" alt="SomeKorean" class="h-8" />
+        <img :src="siteStore.logoUrl || '/images/logo.jpg'" alt="SomeKorean" class="h-8" />
       </RouterLink>
 
       <!-- Search (desktop) -->
@@ -222,10 +222,9 @@ function isActive(path) {
 
 // 전체 메뉴 목록 (key = 관리자 menu_settings의 key와 일치)
 const allNavItems = computed(() => {
-  const ko = langStore.locale === 'ko'
   return [
     { key: 'community',  to: '/community',  icon: '💬', label: t('nav.community') },
-    { key: 'clubs',      to: '/clubs',      icon: '👥', label: ko ? '동호회' : 'Clubs' },
+    { key: 'clubs',      to: '/clubs',      icon: '👥', label: t('nav.clubs') },
     { key: 'jobs',       to: '/jobs',       icon: '💼', label: t('nav.jobs') },
     { key: 'market',     to: '/market',     icon: '🛍️', label: t('nav.market') },
     { key: 'realestate', to: '/realestate', icon: '🏠', label: t('nav.realestate') },
@@ -238,16 +237,16 @@ const allNavItems = computed(() => {
     { key: 'ride',       to: '/ride',       icon: '🚗', label: t('nav.ride') },
     { key: 'elder',      to: '/elder',      icon: '💙', label: t('nav.elder'),   color: 'text-gray-700 hover:text-blue-600' },
     { key: 'news',       to: '/news',       icon: '📰', label: t('nav.news') },
-    { key: 'qa',         to: '/qa',         icon: '❓', label: 'Q&A' },
-    { key: 'recipes',    to: '/recipes',    icon: '🍳', label: '레시피' },
+    { key: 'qa',         to: '/qa',         icon: '❓', label: t('nav.qa') },
+    { key: 'recipes',    to: '/recipes',    icon: '🍳', label: t('nav.recipes') },
     { key: 'shorts',     to: '/shorts',     icon: '📱', label: t('nav.shorts'),   color: 'text-red-600 hover:text-red-700',   extraClass: 'font-semibold text-red-500' },
     { key: 'shopping',   to: '/shopping',   icon: '🛒', label: t('nav.shopping'), color: 'text-green-700 hover:text-green-800', extraClass: 'font-semibold text-green-600' },
     { key: 'groupbuy',   to: '/groupbuy',   icon: '🤝', label: t('nav.groupbuy'), color: 'text-orange-600 hover:text-orange-700', extraClass: 'font-semibold text-orange-500' },
     { key: 'mentor',     to: '/mentor',     icon: '🎓', label: t('nav.mentor'),   color: 'text-teal-600 hover:text-teal-700',   extraClass: 'font-semibold text-teal-600' },
-    { key: 'music',     to: '/music',     icon: '🎵', label: ko ? '음악듣기' : 'Music' },
+    { key: 'music',     to: '/music',     icon: '🎵', label: t('nav.music') },
     { key: 'ai',         to: '/ai',         icon: '🤖', label: t('nav.aiSearch'), color: 'text-violet-600 hover:text-violet-700', extraClass: 'font-semibold text-violet-600' },
-    { key: 'points',     to: '/points',     icon: '⭐', label: ko ? '포인트' : 'Points' },
-    { key: 'messages',   to: '/messages',   icon: '✉️', label: ko ? '메시지' : 'Messages' },
+    { key: 'points',     to: '/points',     icon: '⭐', label: t('nav.points') },
+    { key: 'messages',   to: '/messages',   icon: '✉️', label: t('nav.messages') },
   ]
 })
 

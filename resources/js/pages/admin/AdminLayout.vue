@@ -198,7 +198,7 @@ const navGroups = [
       { to: '/admin/shorts-admin',   icon: '📱', label: '숏츠' },
       { to: '/admin/music-admin',    icon: '🎵', label: '음악 관리' },
       { to: '/admin/shopping-admin', icon: '🛍️', label: '쇼핑 정보' },
-      { to: '/admin/ai-admin',       icon: '🤖', label: 'AI 검색' },
+      { to: '/admin/ai',              icon: '🤖', label: 'AI 검색' },
     ]
   },
   {
@@ -233,9 +233,10 @@ const navGroups = [
     label: '운영',
     icon: '📢',
     items: [
-      { to: '/admin/site',    icon: '⚙️', label: '사이트 설정' },
-      { to: '/admin/banners', icon: '📢', label: '배너 / 광고' },
-      { to: '/admin/system',  icon: '🖥️', label: '시스템 로그' },
+      { to: '/admin/security', icon: '🛡️', label: '보안 관리' },
+      { to: '/admin/site',     icon: '⚙️', label: '사이트 설정' },
+      { to: '/admin/banners',  icon: '📢', label: '배너 / 광고' },
+      { to: '/admin/system',   icon: '🖥️', label: '시스템 로그' },
     ]
   },
 
@@ -283,7 +284,7 @@ const titleMap = {
   '/admin/shorts-admin':     '📱 숏츠 관리',
   '/admin/music-admin':      '🎵 음악 관리',
   '/admin/shopping-admin':   '🛍️ 쇼핑 정보 관리',
-  '/admin/ai-admin':         '🤖 AI 검색 관리',
+  '/admin/ai':               '🤖 AI 검색 관리',
   '/admin/jobs':             '💼 구인구직 관리',
   '/admin/market':           '🛒 중고장터 관리',
   '/admin/realestate-admin': '🏠 부동산 관리',
@@ -294,7 +295,9 @@ const titleMap = {
   '/admin/mentor-admin':     '🎓 멘토링 관리',
   '/admin/games-admin':      '🎮 게임 관리',
   '/admin/payments':         '💰 결제 / 포인트 관리',
+  '/admin/security':         '🛡️ 보안 관리',
   '/admin/banners':          '📢 배너 / 광고 관리',
+  '/admin/site':             '⚙️ 사이트 설정',
   '/admin/system':           '🖥️ 시스템 로그',
 }
 

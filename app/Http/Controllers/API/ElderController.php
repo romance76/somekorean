@@ -123,11 +123,22 @@ class ElderController extends Controller
 
             $settings->update(['last_sos_at' => now()]);
 
-            // Create SOS log
+            // Create SOS alert record
+            $sosId = DB::table('elder_sos_alerts')->insertGetId([
+                'user_id'    => $user->id,
+                'latitude'   => $request->input('latitude') ?? $request->input('lat'),
+                'longitude'  => $request->input('longitude') ?? $request->input('lng'),
+                'address'    => $request->input('address'),
+                'status'     => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Also create legacy SOS log for backward compatibility
             $sosLog = ElderSosLog::create([
                 'user_id' => $user->id,
-                'lat'     => $request->input('lat'),
-                'lng'     => $request->input('lng'),
+                'lat'     => $request->input('latitude') ?? $request->input('lat'),
+                'lng'     => $request->input('longitude') ?? $request->input('lng'),
                 'status'  => 'triggered',
             ]);
 
@@ -137,7 +148,21 @@ class ElderController extends Controller
                 ['status' => 'sos']
             );
 
-            // Notify guardian (site member)
+            // Notify all guardians
+            $guardianIds = collect();
+
+            // Primary guardian
+            if ($settings->guardian_user_id) {
+                $guardianIds->push($settings->guardian_user_id);
+            }
+
+            // Also check elder_settings for any guardians watching this senior
+            $additionalGuardians = DB::table('elder_settings')
+                ->where('guardian_user_id', '!=', null)
+                ->where('user_id', '!=', $user->id)
+                ->pluck('guardian_user_id');
+
+            // Primary guardian notification
             if ($settings->guardian_user_id) {
                 Notification::create([
                     'user_id' => $settings->guardian_user_id,
@@ -145,12 +170,12 @@ class ElderController extends Controller
                     'title'   => 'SOS 긴급 알림',
                     'body'    => ($user->nickname ?? $user->name) . '님이 SOS 긴급 신호를 보냈습니다.',
                     'data'    => json_encode([
-                        'sos_id'  => $sosLog->id,
+                        'sos_id'  => $sosId,
                         'user_id' => $user->id,
-                        'lat'     => $request->input('lat'),
-                        'lng'     => $request->input('lng'),
+                        'lat'     => $request->input('latitude') ?? $request->input('lat'),
+                        'lng'     => $request->input('longitude') ?? $request->input('lng'),
                     ]),
-                    'url'     => '/elder/guardian/' . $user->id,
+                    'url'     => '/elder/guardian?sos=' . $sosId,
                 ]);
             }
 
@@ -161,14 +186,15 @@ class ElderController extends Controller
                         'userId' => (string) $settings->guardian_user_id,
                         'event' => 'elder:sos-alert',
                         'data' => [
-                            'title' => '\xF0\x9F\x9A\xA8 긴급 SOS',
+                            'title' => '긴급 SOS',
                             'message' => ($user->nickname ?? $user->name) . '님이 SOS를 발동했습니다!',
                             'body' => ($user->nickname ?? $user->name) . '님이 SOS를 발동했습니다!',
                             'url' => '/elder/guardian',
                             'elderId' => $user->id,
                             'elderName' => $user->nickname ?? $user->name,
-                            'lat' => $request->input('lat'),
-                            'lng' => $request->input('lng'),
+                            'lat' => $request->input('latitude') ?? $request->input('lat'),
+                            'lng' => $request->input('longitude') ?? $request->input('lng'),
+                            'address' => $request->input('address'),
                         ]
                     ]);
                 } catch (\Exception $e) {
@@ -180,8 +206,9 @@ class ElderController extends Controller
             $guardianName  = $settings->guardian_name ?? '보호자';
 
             return response()->json([
+                'success'       => true,
                 'message'       => 'SOS 신호가 발송되었습니다.',
-                'sos_id'        => $sosLog->id,
+                'sos_id'        => $sosId,
                 'guardian_name' => $guardianName,
                 'sent_to'       => $guardianPhone
                     ? substr($guardianPhone, 0, 3) . '****' . substr($guardianPhone, -4)
@@ -220,6 +247,41 @@ class ElderController extends Controller
                 ->limit(20)
                 ->get();
 
+            // Health records (last 30 days)
+            $healthRecords = DB::table('elder_health_records')
+                ->where('user_id', $userId)
+                ->where('recorded_at', '>=', now()->subDays(30))
+                ->orderBy('recorded_at', 'desc')
+                ->get();
+
+            // Medication info
+            $medications = json_decode($settings->medication_times ?? '[]', true);
+            if (!is_array($medications)) $medications = [];
+            $medicationTotal = count($medications);
+            $medicationTaken = DB::table('elder_medication_logs')
+                ->where('user_id', $userId)
+                ->whereDate('taken_at', now()->toDateString())
+                ->count();
+
+            // Today checked
+            $todayChecked = ElderCheckinLog::where('user_id', $userId)
+                ->where('checkin_date', now()->toDateString())
+                ->where('status', 'checked')
+                ->exists();
+
+            // Calculate streak
+            $checkedDates = $checkinLogs->where('status', 'checked')->pluck('checkin_date')->map(fn($d) => $d->format('Y-m-d'))->toArray();
+            $streak = 0;
+            $today = now()->startOfDay();
+            for ($i = 0; $i < 365; $i++) {
+                $dateStr = $today->copy()->subDays($i)->format('Y-m-d');
+                if (in_array($dateStr, $checkedDates)) {
+                    $streak++;
+                } elseif ($i > 0) {
+                    break;
+                }
+            }
+
             $overdue = false;
             if ($settings->last_checkin_at) {
                 $hoursAgo = $settings->last_checkin_at->diffInHours(now());
@@ -228,13 +290,32 @@ class ElderController extends Controller
                 $overdue = true;
             }
 
+            // Recent notifications for this elder
+            $recentNotifications = Notification::where('user_id', $caller->id)
+                ->where(function ($q) use ($userId) {
+                    $q->where('url', 'like', "%/elder/guardian/{$userId}%")
+                      ->orWhere('url', 'like', '%/elder/guardian%');
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+
             return response()->json([
-                'user'            => ['id' => $user->id, 'name' => $user->name, 'nickname' => $user->nickname],
-                'settings'        => $settings->only(['checkin_interval', 'checkin_time', 'checkin_enabled', 'last_checkin_at', 'last_sos_at', 'missed_count']),
-                'is_overdue'      => $overdue,
-                'alert_sent'      => $settings->alert_sent,
-                'checkin_logs'    => $checkinLogs,
-                'sos_logs'        => $sosLogs,
+                'user'              => ['id' => $user->id, 'name' => $user->name, 'nickname' => $user->nickname],
+                'settings'          => $settings->only(['checkin_interval', 'checkin_time', 'checkin_enabled', 'last_checkin_at', 'last_sos_at', 'missed_count']),
+                'is_overdue'        => $overdue,
+                'alert_sent'        => $settings->alert_sent,
+                'checkin_logs'      => $checkinLogs,
+                'checkin_history'   => $checkinLogs,
+                'sos_logs'          => $sosLogs,
+                'sos_history'       => $sosLogs,
+                'health_records'    => $healthRecords,
+                'today_checked'     => $todayChecked,
+                'last_checkin_at'   => $settings->last_checkin_at,
+                'streak'            => $streak,
+                'medication_taken'  => $medicationTaken,
+                'medication_total'  => $medicationTotal,
+                'notifications'     => $recentNotifications,
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => '보호자 대시보드 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
@@ -409,6 +490,160 @@ class ElderController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => '보호자 연결 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ─── Health Records ─────────────────────────────────────────
+
+    // POST /api/elder/health-record - 건강 기록 저장
+    public function storeHealthRecord(Request $request)
+    {
+        try {
+            $request->validate([
+                'blood_pressure_systolic'  => 'nullable|integer|min:60|max:250',
+                'blood_pressure_diastolic' => 'nullable|integer|min:40|max:150',
+                'blood_sugar'              => 'nullable|integer|min:30|max:600',
+                'weight'                   => 'nullable|numeric|min:20|max:300',
+            ]);
+
+            DB::table('elder_health_records')->insert([
+                'user_id'                  => Auth::id(),
+                'blood_pressure_systolic'  => $request->blood_pressure_systolic,
+                'blood_pressure_diastolic' => $request->blood_pressure_diastolic,
+                'blood_sugar'              => $request->blood_sugar,
+                'weight'                   => $request->weight,
+                'recorded_at'              => now(),
+                'created_at'               => now(),
+            ]);
+
+            return response()->json(['success' => true, 'message' => '건강 기록이 저장되었습니다.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '건강 기록 저장 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // GET /api/elder/health-records - 건강 기록 목록
+    public function healthRecords(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id', Auth::id());
+
+            // If requesting another user's records, verify guardian access
+            if ($userId != Auth::id()) {
+                $settings = ElderSetting::where('user_id', $userId)->first();
+                $caller = Auth::user();
+                if (!$settings || ($settings->guardian_user_id !== $caller->id && !$caller->is_admin)) {
+                    return response()->json(['message' => '권한이 없습니다.'], 403);
+                }
+            }
+
+            $records = DB::table('elder_health_records')
+                ->where('user_id', $userId)
+                ->orderBy('recorded_at', 'desc')
+                ->paginate(30);
+
+            return response()->json($records);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '건강 기록 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ─── Medications ─────────────────────────────────────────────
+
+    // POST /api/elder/medications - 복약 알림 설정
+    public function setMedication(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:100',
+                'time' => 'required|string',
+                'days' => 'required|array',
+            ]);
+
+            $settings = ElderSetting::firstOrCreate(
+                ['user_id' => Auth::id()],
+                ['elder_mode' => true]
+            );
+
+            $medications = json_decode($settings->medication_times ?? '[]', true);
+            if (!is_array($medications)) $medications = [];
+
+            $medications[] = [
+                'id'   => uniqid(),
+                'name' => $request->name,
+                'time' => $request->time,
+                'days' => $request->days,
+            ];
+
+            $settings->update(['medication_times' => json_encode($medications)]);
+
+            return response()->json(['success' => true, 'medications' => $medications]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '복약 알림 설정 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // GET /api/elder/medications - 복약 알림 목록 + 오늘 복약 기록
+    public function getMedications()
+    {
+        try {
+            $settings = ElderSetting::where('user_id', Auth::id())->first();
+            $medications = [];
+            if ($settings) {
+                $medications = json_decode($settings->medication_times ?? '[]', true);
+                if (!is_array($medications)) $medications = [];
+            }
+
+            $todayLogs = DB::table('elder_medication_logs')
+                ->where('user_id', Auth::id())
+                ->whereDate('taken_at', now()->toDateString())
+                ->get();
+
+            return response()->json([
+                'medications' => $medications,
+                'today_logs'  => $todayLogs,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '복약 알림 조회 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // POST /api/elder/medications/{id}/taken - 복약 완료
+    public function medicationTaken($id)
+    {
+        try {
+            DB::table('elder_medication_logs')->insert([
+                'user_id'       => Auth::id(),
+                'medication_id' => $id,
+                'taken_at'      => now(),
+                'created_at'    => now(),
+            ]);
+
+            return response()->json(['success' => true, 'message' => '복약 완료가 기록되었습니다.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '복약 완료 처리 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // DELETE /api/elder/medications/{id} - 복약 알림 삭제
+    public function deleteMedication($id)
+    {
+        try {
+            $settings = ElderSetting::where('user_id', Auth::id())->first();
+            if (!$settings) {
+                return response()->json(['message' => '설정을 찾을 수 없습니다.'], 404);
+            }
+
+            $medications = json_decode($settings->medication_times ?? '[]', true);
+            if (!is_array($medications)) $medications = [];
+
+            $medications = array_values(array_filter($medications, fn($m) => ($m['id'] ?? '') !== $id));
+
+            $settings->update(['medication_times' => json_encode($medications)]);
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '복약 알림 삭제 중 오류가 발생했습니다.', 'error' => $e->getMessage()], 500);
         }
     }
 

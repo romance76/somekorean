@@ -13,16 +13,55 @@
             <div class="flex items-center space-x-2 mb-1">
               <h1 class="text-lg font-bold text-gray-900">{{ profile.name }}</h1>
               <span class="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded font-medium">{{ profile.level }}</span>
+              <!-- 친구 뱃지 -->
+              <span v-if="!isMyProfile && friendStatus === 'friends'" class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded font-medium">친구</span>
             </div>
             <p class="text-sm text-gray-500">@{{ profile.username }}</p>
             <p v-if="profile.region" class="text-xs text-gray-400 mt-1">📍 {{ profile.region }}</p>
           </div>
+          <!-- 본인 프로필: 수정 버튼 -->
           <div v-if="isMyProfile" class="flex-shrink-0">
             <button @click="showEdit = !showEdit" class="text-sm text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50">
               프로필 수정
             </button>
           </div>
         </div>
+
+        <!-- 친구 관련 액션 (타인 프로필) -->
+        <div v-if="!isMyProfile && friendStatus !== null" class="mt-4 pt-4 border-t border-gray-100">
+          <!-- 친구가 아닌 경우 -->
+          <div v-if="friendStatus === 'none'" class="flex gap-2">
+            <button @click="sendFriendRequest" :disabled="friendLoading"
+              class="bg-blue-600 text-white text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
+              {{ friendLoading ? '요청 중...' : '👋 친구 추가' }}
+            </button>
+          </div>
+          <!-- 이미 친구인 경우 -->
+          <div v-else-if="friendStatus === 'friends'" class="flex items-center gap-3">
+            <span class="text-sm text-green-600 font-semibold">친구입니다</span>
+            <button @click="removeFriend"
+              class="text-xs text-red-400 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition">
+              친구 삭제
+            </button>
+          </div>
+          <!-- 요청 보낸 상태 -->
+          <div v-else-if="friendStatus === 'request_sent'" class="flex items-center gap-2">
+            <span class="text-sm text-yellow-600 font-semibold bg-yellow-50 px-3 py-1.5 rounded-lg">요청 대기중</span>
+          </div>
+          <!-- 요청 받은 상태 -->
+          <div v-else-if="friendStatus === 'request_received'" class="flex items-center gap-2">
+            <span class="text-sm text-gray-600 mr-2">친구 요청을 받았습니다</span>
+            <button @click="acceptFriendRequest" :disabled="friendLoading"
+              class="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
+              수락
+            </button>
+            <button @click="rejectFriendRequest" :disabled="friendLoading"
+              class="bg-gray-100 text-gray-500 text-sm font-bold px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition">
+              거절
+            </button>
+          </div>
+        </div>
+
         <p v-if="profile.bio" class="text-sm text-gray-600 mt-3 leading-relaxed">{{ profile.bio }}</p>
         <div class="flex space-x-6 mt-4 pt-4 border-t border-gray-100 text-center">
           <div><p class="font-bold text-gray-800">{{ profile.post_count }}</p><p class="text-xs text-gray-400">게시글</p></div>
@@ -70,7 +109,7 @@
         <div v-if="posts.length === 0" class="text-center py-8 text-gray-400 text-sm">게시글이 없습니다.</div>
         <ul v-else>
           <li v-for="post in posts" :key="post.id" class="px-5 py-3 border-b border-gray-50 last:border-0">
-            <router-link :to="`/community/post/${post.id}`" class="flex items-center justify-between hover:text-red-600">
+            <router-link :to="`/community/${post.board?.slug || 'general'}/${post.id}`" class="flex items-center justify-between hover:text-red-600">
               <span class="text-sm text-gray-800 truncate flex-1">{{ post.title }}</span>
               <span class="text-xs text-gray-400 ml-3 flex-shrink-0">{{ formatDate(post.created_at) }}</span>
             </router-link>
@@ -83,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import axios from 'axios';
@@ -98,9 +137,84 @@ const saving = ref(false);
 const editError = ref('');
 const editForm = ref({ name: '', bio: '', region: '' });
 
+// Friend state
+const friendStatus = ref(null);
+const friendLoading = ref(false);
+
 const isMyProfile = computed(() =>
   authStore.user && (authStore.user.username === route.params.username)
 );
+
+// Check friendship status
+async function checkFriendship() {
+  if (isMyProfile.value || !profile.value?.id || !authStore.user) {
+    friendStatus.value = null;
+    return;
+  }
+  try {
+    const { data } = await axios.get(`/api/friends/check/${profile.value.id}`);
+    friendStatus.value = data.status;
+  } catch (e) {
+    friendStatus.value = 'none';
+  }
+}
+
+// Send friend request
+async function sendFriendRequest() {
+  if (!profile.value?.id) return;
+  friendLoading.value = true;
+  try {
+    await axios.post(`/api/friends/request/${profile.value.id}`);
+    friendStatus.value = 'request_sent';
+  } catch (e) {
+    alert(e?.response?.data?.message || '친구 요청 실패');
+  } finally {
+    friendLoading.value = false;
+  }
+}
+
+// Accept friend request
+async function acceptFriendRequest() {
+  if (!profile.value?.id) return;
+  friendLoading.value = true;
+  try {
+    await axios.post(`/api/friends/accept/${profile.value.id}`);
+    friendStatus.value = 'friends';
+  } catch (e) {
+    alert(e?.response?.data?.message || '수락 실패');
+  } finally {
+    friendLoading.value = false;
+  }
+}
+
+// Reject friend request
+async function rejectFriendRequest() {
+  if (!profile.value?.id) return;
+  friendLoading.value = true;
+  try {
+    await axios.post(`/api/friends/reject/${profile.value.id}`);
+    friendStatus.value = 'none';
+  } catch (e) {
+    alert(e?.response?.data?.message || '거절 실패');
+  } finally {
+    friendLoading.value = false;
+  }
+}
+
+// Remove friend
+async function removeFriend() {
+  if (!profile.value?.id) return;
+  if (!confirm('친구를 삭제할까요?')) return;
+  friendLoading.value = true;
+  try {
+    await axios.delete(`/api/friends/${profile.value.id}`);
+    friendStatus.value = 'none';
+  } catch (e) {
+    alert(e?.response?.data?.message || '삭제 실패');
+  } finally {
+    friendLoading.value = false;
+  }
+}
 
 async function saveProfile() {
   saving.value = true; editError.value = '';
@@ -120,7 +234,8 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('ko-KR');
 }
 
-onMounted(async () => {
+async function loadProfile() {
+  loading.value = true;
   try {
     const [profileRes, postsRes] = await Promise.all([
       axios.get(`/api/profile/${route.params.username}`),
@@ -129,7 +244,18 @@ onMounted(async () => {
     profile.value = profileRes.data;
     posts.value = postsRes.data.data || [];
     editForm.value = { name: profile.value.name, bio: profile.value.bio || '', region: profile.value.region || '' };
+    // Check friendship after loading profile
+    await checkFriendship();
   } catch { profile.value = null; }
   loading.value = false;
+}
+
+onMounted(loadProfile);
+
+// Re-load when route changes (navigating to different profile)
+watch(() => route.params.username, (newVal, oldVal) => {
+  if (newVal && newVal !== oldVal) {
+    loadProfile();
+  }
 });
 </script>

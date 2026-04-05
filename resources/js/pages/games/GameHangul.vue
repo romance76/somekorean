@@ -383,7 +383,11 @@ function dismissLevelUp() {
 
 async function claimReward() {
   try {
-    await axios.post('/api/wallet/daily-bonus', { source: 'game_hangul', amount: starsEarned.value })
+    await axios.post('/api/games/earn-stars', {
+      game: 'hangul',
+      stars: starsEarned.value,
+      score: score.value
+    })
   } catch (e) {
     // Silently fail - reward display still shows
   }

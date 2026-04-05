@@ -23,18 +23,22 @@ class FriendController extends Controller
                   ->orWhere('recipient_id', $userId);
             })
             ->with([
-                'requester:id,name,username,avatar,region,level',
-                'recipient:id,name,username,avatar,region,level',
+                'requester:id,name,username,avatar,region,level,points_total,phone,email,kakao_id,telegram_id',
+                'recipient:id,name,username,avatar,region,level,points_total,phone,email,kakao_id,telegram_id',
             ])
             ->get()
             ->map(function ($friend) use ($userId) {
-                // Return the other person's info, not the auth user's
-                return $friend->requester_id === $userId
+                $other = $friend->requester_id === $userId
                     ? $friend->recipient
                     : $friend->requester;
-            });
+                if ($other && $other->avatar) {
+                    $other->avatar = asset('storage/' . $other->avatar);
+                }
+                return $other;
+            })
+            ->filter();
 
-        return response()->json(['data' => $friends]);
+        return response()->json($friends->values());
     }
 
     /**
@@ -104,7 +108,7 @@ class FriendController extends Controller
             ->where('status', 'pending')
             ->firstOrFail();
 
-        $friend->update(['status' => 'rejected']);
+        $friend->delete();
 
         return response()->json(['message' => '친구 요청을 거절했습니다.']);
     }
@@ -141,15 +145,89 @@ class FriendController extends Controller
         $requests = Friend::where('recipient_id', $authId)
             ->where('status', 'pending')
             ->with('requester:id,name,username,avatar,region,level')
+            ->orderByDesc('created_at')
             ->get()
             ->map(function ($friend) {
-                return array_merge(
-                    $friend->requester->toArray(),
-                    ['friend_id' => $friend->id, 'requested_at' => $friend->created_at]
-                );
+                $user = $friend->requester;
+                if ($user && $user->avatar) {
+                    $user->avatar = asset('storage/' . $user->avatar);
+                }
+                return [
+                    'id' => $friend->id,
+                    'requester_id' => $friend->requester_id,
+                    'requester' => $user,
+                    'requested_at' => $friend->created_at,
+                ];
             });
 
-        return response()->json(['data' => $requests]);
+        return response()->json($requests);
+    }
+
+    /**
+     * Return outgoing pending friend requests sent by the authenticated user.
+     */
+    public function sentRequests()
+    {
+        $authId = Auth::id();
+
+        $requests = Friend::where('requester_id', $authId)
+            ->where('status', 'pending')
+            ->with('recipient:id,name,username,avatar,region,level')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($friend) {
+                $user = $friend->recipient;
+                if ($user && $user->avatar) {
+                    $user->avatar = asset('storage/' . $user->avatar);
+                }
+                return [
+                    'id' => $friend->id,
+                    'recipient_id' => $friend->recipient_id,
+                    'recipient' => $user,
+                    'requested_at' => $friend->created_at,
+                ];
+            });
+
+        return response()->json($requests);
+    }
+
+    /**
+     * Check friendship status with a specific user.
+     * Returns: 'friends', 'request_sent', 'request_received', 'none'
+     */
+    public function checkFriendship(int $userId)
+    {
+        $authId = Auth::id();
+
+        if ($authId === $userId) {
+            return response()->json(['status' => 'self']);
+        }
+
+        // Check requester -> recipient direction
+        $sent = Friend::where('requester_id', $authId)
+            ->where('recipient_id', $userId)
+            ->first();
+
+        if ($sent) {
+            return response()->json([
+                'status' => $sent->status === 'accepted' ? 'friends' : 'request_sent',
+                'friend_id' => $sent->id,
+            ]);
+        }
+
+        // Check recipient -> requester direction
+        $received = Friend::where('requester_id', $userId)
+            ->where('recipient_id', $authId)
+            ->first();
+
+        if ($received) {
+            return response()->json([
+                'status' => $received->status === 'accepted' ? 'friends' : 'request_received',
+                'friend_id' => $received->id,
+            ]);
+        }
+
+        return response()->json(['status' => 'none']);
     }
 
     /**
@@ -178,8 +256,14 @@ class FriendController extends Controller
             ->whereNotIn('id', $friendIds)
             ->select('id', 'name', 'username', 'avatar', 'region', 'level')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($user) {
+                if ($user->avatar) {
+                    $user->avatar = asset('storage/' . $user->avatar);
+                }
+                return $user;
+            });
 
-        return response()->json(['data' => $users]);
+        return response()->json($users);
     }
 }

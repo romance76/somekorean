@@ -15,6 +15,8 @@ class Club extends Model
         'cover_image',
         'is_approval',
         'member_count',
+        'is_online',
+        'zip_code',
         'address',
         'latitude',
         'longitude',
@@ -22,6 +24,7 @@ class Club extends Model
 
     protected $casts = [
         'is_approval' => 'boolean',
+        'is_online' => 'boolean',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
     ];

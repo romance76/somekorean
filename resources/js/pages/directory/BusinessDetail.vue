@@ -129,10 +129,10 @@
                 <p class="claim-title">🏪 이 업소의 사장님이신가요?</p>
                 <p class="claim-sub">업소 정보를 직접 관리하고 고객과 소통하세요.</p>
               </div>
-              <router-link :to="'/directory/'+biz.id+'/claim'" class="claim-btn">내 업소 등록하기 →</router-link>
+              <router-link :to="{ name: 'claim-business', params: { id: biz.id } }" class="claim-btn">내 업소 등록하기 →</router-link>
             </div>
             <div v-else-if="isOwner" class="owner-manage-banner">
-              <router-link to="/my-business" class="manage-btn">📊 내 업소 관리하기</router-link>
+              <router-link to="/dashboard" class="manage-btn">📊 내 업소 관리하기</router-link>
             </div>
 
             <!-- 리뷰 -->

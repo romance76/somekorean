@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-[1200px] mx-auto px-4 py-6">
-    <h1 class="text-xl font-bold text-gray-800 mb-5">구인구직 공고 등록</h1>
+    <h1 class="text-xl font-bold text-gray-800 mb-5">{{ isEdit ? '구인구직 공고 수정' : '구인구직 공고 등록' }}</h1>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div class="space-y-5">
         <!-- 제목 -->
@@ -125,7 +125,7 @@
         <div class="flex justify-end space-x-3">
           <button @click="$router.back()" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">취소</button>
           <button @click="submit" :disabled="loading" class="w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
-            {{ loading ? '등록 중...' : '공고 등록' }}
+            {{ loading ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '공고 수정' : '공고 등록') }}
           </button>
         </div>
       </div>
@@ -134,14 +134,17 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import AddressInput from '../../components/AddressInput.vue';
 
+const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const error = ref('');
+const isEdit = ref(false);
+const editId = ref(null);
 
 const form = ref({
   title: '', company_name: '', job_type: '', region: '', salary_range: '',
@@ -197,12 +200,45 @@ async function submit() {
       fd.append('attachment', attachment.value);
     }
 
-    const { data } = await axios.post('/api/jobs', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    router.push(`/jobs/${data.job.id}`);
+    let data;
+    if (isEdit.value) {
+      fd.append('_method', 'PUT');
+      ({ data } = await axios.post(`/api/jobs/${editId.value}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }));
+      router.push(`/jobs/${editId.value}`);
+    } else {
+      ({ data } = await axios.post('/api/jobs', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }));
+      router.push(`/jobs/${data.job?.id || data.id}`);
+    }
   } catch(e) {
     error.value = e.response?.data?.message || '오류가 발생했습니다.';
   } finally { loading.value = false; }
 }
+
+onMounted(async () => {
+  const id = route.query.edit;
+  if (id) {
+    isEdit.value = true;
+    editId.value = id;
+    try {
+      const { data } = await axios.get(`/api/jobs/${id}`);
+      form.value.title = data.title || '';
+      form.value.company_name = data.company_name || '';
+      form.value.job_type = data.job_type || '';
+      form.value.region = data.region || '';
+      form.value.salary_range = data.salary_range || '';
+      form.value.address = data.address || '';
+      form.value.content = data.content || '';
+      form.value.contact_email = data.contact_email || '';
+      form.value.contact_phone = data.contact_phone || '';
+      form.value.contact_website = data.contact_website || '';
+      form.value.external_link = data.external_link || data.external_url || '';
+    } catch (e) {
+      error.value = '기존 공고를 불러올 수 없습니다.';
+    }
+  }
+});
 </script>

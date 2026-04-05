@@ -97,7 +97,7 @@
           </div>
           <div v-if="loadingPosts" class="text-center py-8 text-gray-400 text-sm">{{ t('common.loading') }}</div>
           <div v-else class="divide-y divide-gray-50">
-            <router-link v-for="post in posts" :key="post.id" :to="`/community/post/${post.id}`"
+            <router-link v-for="post in posts" :key="post.id" :to="`/community/${post.board_slug || post.category_slug || 'free'}/${post.id}`"
               class="px-4 py-3 flex items-start gap-3 hover:bg-blue-50/50 transition block">
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-medium text-gray-800 truncate">{{ post.title }}</div>

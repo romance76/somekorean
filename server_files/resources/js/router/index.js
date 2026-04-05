@@ -145,6 +145,7 @@ const routes = [
             { path: 'banners', name: 'admin-banners', component: () => import('../pages/admin/Banners.vue') },
             { path: 'members-list', name: 'admin-members-list', component: () => import('../pages/admin/Members.vue') },
             { path: 'wallet-payments', name: 'admin-wallet-payments', component: () => import('../pages/admin/Payments.vue') },
+            { path: 'security', name: 'admin-security', component: () => import('../pages/admin/AdminSecurity.vue') },
         ]
     },
 

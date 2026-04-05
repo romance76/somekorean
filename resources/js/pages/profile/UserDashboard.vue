@@ -181,7 +181,7 @@
         <!-- 비밀번호 변경 -->
         <div class="bg-white rounded-2xl shadow-sm p-5 space-y-3">
           <h2 class="font-bold text-gray-800 text-sm">비밀번호 변경</h2>
-          <input v-model="pwForm.current" type="password" placeholder="현재 비밀번호"
+          <input v-model="pwForm.current_password" type="password" placeholder="현재 비밀번호"
             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
           <input v-model="pwForm.password" type="password" placeholder="새 비밀번호 (8자 이상)"
             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" />
@@ -345,7 +345,7 @@
           <div v-else-if="!myPosts.length" class="text-center py-4 text-gray-400 text-sm">게시글이 없습니다</div>
           <div v-else class="space-y-2">
             <router-link v-for="post in myPosts.slice(0,5)" :key="post.id"
-              :to="`/community/post/${post.id}`"
+              :to="`/community/${post.board?.slug || 'general'}/${post.id}`"
               class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition">
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-gray-800 truncate font-medium">{{ post.title }}</p>
@@ -738,7 +738,7 @@ const profileForm = ref({ name: '', nickname: '', bio: '', phone: '', address: '
 const profileSaving = ref(false)
 const profileMsg    = ref(null)
 
-const pwForm = ref({ current: '', password: '', password_confirmation: '' })
+const pwForm = ref({ current_password: '', password: '', password_confirmation: '' })
 const pwSaving = ref(false)
 const pwMsg    = ref(null)
 
@@ -765,7 +765,7 @@ async function changePassword() {
   try {
     await axios.post('/api/profile/password', pwForm.value)
     pwMsg.value = { ok: true, text: '✅ 비밀번호가 변경되었습니다!' }
-    pwForm.value = { current: '', password: '', password_confirmation: '' }
+    pwForm.value = { current_password: '', password: '', password_confirmation: '' }
   } catch (e) {
     pwMsg.value = { ok: false, text: e.response?.data?.message || '변경 실패' }
   } finally {
@@ -880,7 +880,7 @@ async function doCheckin() {
   checkingIn.value = true
   try {
     const { data } = await axios.post('/api/points/checkin')
-      authStore.refreshPoints()
+      auth.fetchMe()
     checkedIn.value = true
     auth.user = { ...auth.user, points: (auth.user?.points ?? 0) + (data.points ?? 10) }
     pointLogs.value.unshift({ type: 'earn', amount: data.points ?? 10, description: '출석 체크', created_at: new Date().toISOString() })
@@ -966,7 +966,7 @@ async function loadClubMembers(clubId) {
 
 async function loadClubPending(clubId) {
   try {
-    const { data } = await axios.get(`/api/clubs/${clubId}/requests`)
+    const { data } = await axios.get(`/api/clubs/${clubId}/members/pending`)
     clubPendingRequests.value[clubId] = data.data || data || []
   } catch { clubPendingRequests.value[clubId] = [] }
 }
@@ -999,7 +999,7 @@ async function kickMember(clubId, memberId) {
 
 async function approveRequest(clubId, requestId) {
   try {
-    await axios.post(`/api/clubs/${clubId}/requests/${requestId}/approve`)
+    await axios.post(`/api/clubs/${clubId}/members/${requestId}/approve`)
     clubPendingRequests.value[clubId] = (clubPendingRequests.value[clubId] || []).filter(r => r.id !== requestId)
     loadClubMembers(clubId)
   } catch { alert('승인 실패') }
@@ -1007,7 +1007,7 @@ async function approveRequest(clubId, requestId) {
 
 async function rejectRequest(clubId, requestId) {
   try {
-    await axios.post(`/api/clubs/${clubId}/requests/${requestId}/reject`)
+    await axios.post(`/api/clubs/${clubId}/members/${requestId}/reject`)
     clubPendingRequests.value[clubId] = (clubPendingRequests.value[clubId] || []).filter(r => r.id !== requestId)
   } catch { alert('거절 실패') }
 }

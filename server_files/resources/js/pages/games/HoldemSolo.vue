@@ -31,7 +31,7 @@
             <span v-if="aiThinking" class="text-xs text-yellow-300 animate-pulse">생각 중...</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-white/50 text-xs">칩</span>
+            <span class="text-white/50 text-xs">게임머니</span>
             <span class="text-yellow-300 font-black text-sm">{{ aiChips.toLocaleString() }}</span>
           </div>
         </div>
@@ -83,7 +83,7 @@
             <span class="text-green-300 text-sm font-bold">나 (딜러)</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-white/50 text-xs">칩</span>
+            <span class="text-white/50 text-xs">게임머니</span>
             <span class="text-yellow-300 font-black text-sm">{{ myChips.toLocaleString() }}</span>
           </div>
         </div>
@@ -151,8 +151,14 @@
 
       <!-- ── IDLE (START) ── -->
       <div v-if="phase === 'idle'" class="w-full max-w-md flex flex-col items-center gap-4 py-6">
-        <div class="text-white/60 text-center text-sm">스타팅 칩: 각 1,500</div>
+        <div class="text-white/60 text-center text-sm">스타팅 게임머니: 각 {{ myChips.toLocaleString() }}</div>
         <div class="text-white/40 text-xs text-center">스몰 블라인드: 20 / 빅 블라인드: 40<br/>당신은 항상 딜러/스몰 블라인드입니다</div>
+        <div v-if="myChips <= 0" class="bg-orange-600/30 border border-orange-500/50 rounded-xl p-3 text-center mt-2">
+          <p class="text-orange-200 text-sm mb-2">게임머니가 부족합니다. 룰렛을 돌려보세요!</p>
+          <button @click="$router.push('/games')" class="bg-orange-500 hover:bg-orange-400 text-white text-sm px-4 py-1.5 rounded-lg font-bold">
+            🎡 룰렛 돌리러 가기
+          </button>
+        </div>
         <button @click="startHand"
           class="px-8 py-3 rounded-2xl font-black text-lg transition-all active:scale-95"
           style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 4px 20px rgba(22,163,74,.4);">
@@ -201,7 +207,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, defineComponent, h } from 'vue'
+import { ref, computed, watch, onMounted, defineComponent, h } from 'vue'
+import axios from 'axios'
 
 // ══════════════════════════════════════════
 //  CARD TILE COMPONENT (inline)
@@ -815,6 +822,21 @@ watch(myTurn, (v) => {
     const min = Math.max(bigBlind * 2, toCall.value * 2)
     raiseAmount.value = Math.min(Math.max(min, bigBlind * 2), myChips.value)
   }
+})
+
+// 게임머니 잔액 로드
+async function loadChipBalance() {
+  try {
+    const { data } = await axios.get('/api/wallet/balance')
+    if (data.chip > 0) {
+      myChips.value = data.chip
+      aiChips.value = data.chip // AI도 같은 금액
+    }
+  } catch {}
+}
+
+onMounted(() => {
+  loadChipBalance()
 })
 </script>
 

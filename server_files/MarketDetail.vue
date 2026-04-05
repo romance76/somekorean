@@ -126,6 +126,91 @@
               <div v-if="item.address" class="px-5 py-3 text-sm text-gray-600">{{ item.address }}</div>
             </div>
 
+            <!-- 찜/예약 섹션 -->
+            <div v-if="item.reservation_points > 0 || item.reservation" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">찜/예약 정보</h3>
+
+              <!-- 찜 가능 상태 (찜이 없고, 내 물건이 아닐 때) -->
+              <div v-if="!item.reservation && !canEdit && item.status !== 'sold'" class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-sm font-medium px-3 py-1.5 rounded-full border border-green-200">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span> 찜 가능
+                  </span>
+                  <span v-if="item.reservation_points > 0" class="text-sm text-gray-600">보증금: <strong class="text-orange-600">{{ item.reservation_points }}P</strong></span>
+                  <span class="text-sm text-gray-500">유효시간: {{ item.reservation_hours || 24 }}시간</span>
+                </div>
+                <button v-if="authStore.isLoggedIn" @click="showReserveModal = true"
+                  class="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition">
+                  찜하기
+                </button>
+                <p v-else class="text-xs text-gray-400 text-center">
+                  <router-link to="/auth/login" class="text-orange-600 hover:underline">로그인</router-link> 후 찜할 수 있습니다.
+                </p>
+              </div>
+
+              <!-- 찜된 상태 - 내가 찜한 경우 -->
+              <div v-else-if="item.reservation && item.my_reservation" class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 text-sm font-medium px-3 py-1.5 rounded-full border border-yellow-200">
+                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> 내가 찜함
+                  </span>
+                  <span v-if="item.reservation.points_held > 0" class="text-sm text-gray-600">보증금: <strong class="text-orange-600">{{ item.reservation.points_held }}P</strong></span>
+                </div>
+                <div class="text-xs text-gray-500">
+                  만료: {{ formatDateTime(item.reservation.expires_at) }}
+                  <span v-if="reservationTimeLeft" class="ml-1 text-orange-600 font-medium">({{ reservationTimeLeft }})</span>
+                </div>
+                <div class="flex gap-2">
+                  <button @click="completeReservation"
+                    class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition">
+                    거래완료
+                  </button>
+                  <button @click="cancelReservation"
+                    class="flex-1 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300 transition">
+                    찜 취소
+                  </button>
+                </div>
+                <p v-if="item.reservation.points_held > 0" class="text-xs text-red-500">* 취소 시 보증금의 50%가 판매자에게 지급됩니다.</p>
+              </div>
+
+              <!-- 찜된 상태 - 내 물건인 경우 (판매자 뷰) -->
+              <div v-else-if="item.reservation && canEdit" class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 text-sm font-medium px-3 py-1.5 rounded-full border border-yellow-200">
+                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> 찜됨
+                  </span>
+                  <span class="text-sm text-gray-700">구매자: <strong>{{ item.reservation.buyer?.name }}</strong></span>
+                </div>
+                <div class="text-xs text-gray-500">
+                  만료: {{ formatDateTime(item.reservation.expires_at) }}
+                  <span v-if="reservationTimeLeft" class="ml-1 text-orange-600 font-medium">({{ reservationTimeLeft }})</span>
+                </div>
+                <button @click="completeReservation"
+                  class="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition">
+                  거래완료 처리
+                </button>
+              </div>
+
+              <!-- 다른 사람이 찜한 경우 -->
+              <div v-else-if="item.reservation && !item.my_reservation && !canEdit" class="space-y-2">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-sm font-medium px-3 py-1.5 rounded-full border border-red-200">
+                    <span class="w-2 h-2 bg-red-500 rounded-full"></span> 예약중
+                  </span>
+                  <span class="text-sm text-gray-500">다른 사용자가 찜한 물품입니다.</span>
+                </div>
+              </div>
+
+              <!-- 내 물건인데 찜이 없는 경우 -->
+              <div v-else-if="!item.reservation && canEdit && item.reservation_points > 0" class="space-y-2">
+                <div class="flex items-center gap-3 text-sm text-gray-600">
+                  <span>보증금: <strong class="text-orange-600">{{ item.reservation_points }}P</strong></span>
+                  <span>유효시간: {{ item.reservation_hours || 24 }}시간</span>
+                </div>
+                <p class="text-xs text-gray-400">아직 찜한 사용자가 없습니다.</p>
+              </div>
+            </div>
+
             <!-- 좋아요 / 연락하기 버튼 -->
             <div class="bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-center justify-center gap-3">
               <button @click="toggleLike"
@@ -140,6 +225,33 @@
                 <span>💬</span>
                 <span>연락하기</span>
               </button>
+            </div>
+
+            <!-- 찜 확인 모달 -->
+            <div v-if="showReserveModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showReserveModal = false">
+              <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">찜하기</h3>
+                <div class="space-y-3 text-sm text-gray-700">
+                  <p><strong>{{ item.title }}</strong></p>
+                  <div v-if="item.reservation_points > 0" class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <p class="font-medium text-orange-800">보증금: {{ item.reservation_points }}P</p>
+                    <p class="text-xs text-orange-600 mt-1">찜 취소 시 보증금의 50%가 판매자에게 지급됩니다.</p>
+                    <p class="text-xs text-orange-600">시간 초과 시 보증금 전액이 판매자에게 이전됩니다.</p>
+                  </div>
+                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-blue-800">유효시간: <strong>{{ item.reservation_hours || 24 }}시간</strong></p>
+                    <p class="text-xs text-blue-600 mt-1">유효시간 내에 연락하여 거래를 진행해주세요.</p>
+                  </div>
+                </div>
+                <div class="flex gap-2 mt-5">
+                  <button @click="showReserveModal = false"
+                    class="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition">취소</button>
+                  <button @click="doReserve" :disabled="reserving"
+                    class="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 disabled:opacity-50 transition">
+                    {{ reserving ? '처리중...' : '찜하기' }}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- 댓글/문의 섹션 -->
@@ -235,7 +347,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import axios from 'axios';
@@ -250,6 +362,8 @@ const selectedImageIndex = ref(0);
 const galleryOpen = ref(false);
 const galleryIndex = ref(0);
 const sidebarItems = ref([]);
+const showReserveModal = ref(false);
+const reserving = ref(false);
 
 const canEdit = computed(() =>
   authStore.user && (authStore.user.id === item.value?.user_id || authStore.user.is_admin)
@@ -334,6 +448,66 @@ function formatDate(d) {
   if (diff < 3600) return `${Math.floor(diff/60)}분 전`;
   if (diff < 86400) return `${Math.floor(diff/3600)}시간 전`;
   return date.toLocaleDateString('ko-KR');
+}
+
+function formatDateTime(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+const reservationTimeLeft = computed(() => {
+  if (!item.value?.reservation?.expires_at) return '';
+  const expires = new Date(item.value.reservation.expires_at);
+  const now = new Date();
+  const diff = (expires - now) / 1000;
+  if (diff <= 0) return '만료됨';
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  if (h > 0) return `${h}시간 ${m}분 남음`;
+  return `${m}분 남음`;
+});
+
+async function doReserve() {
+  reserving.value = true;
+  try {
+    await axios.post(`/api/market/${item.value.id}/reserve`);
+    showReserveModal.value = false;
+    // 새로고침
+    const { data } = await axios.get(`/api/market/${route.params.id}`);
+    item.value = data;
+    alert('찜이 완료되었습니다!');
+  } catch (e) {
+    alert(e.response?.data?.message || '찜하기 실패');
+  } finally { reserving.value = false; }
+}
+
+async function completeReservation() {
+  if (!item.value?.reservation?.id) return;
+  if (!confirm('거래를 완료하시겠습니까?')) return;
+  try {
+    await axios.post(`/api/market/reservations/${item.value.reservation.id}/complete`);
+    const { data } = await axios.get(`/api/market/${route.params.id}`);
+    item.value = data;
+    alert('거래가 완료되었습니다!');
+  } catch (e) {
+    alert(e.response?.data?.message || '거래 완료 처리 실패');
+  }
+}
+
+async function cancelReservation() {
+  if (!item.value?.reservation?.id) return;
+  const msg = item.value.reservation.points_held > 0
+    ? `찜을 취소하시겠습니까?\n보증금 ${item.value.reservation.points_held}P 중 50%만 반환됩니다.`
+    : '찜을 취소하시겠습니까?';
+  if (!confirm(msg)) return;
+  try {
+    await axios.post(`/api/market/reservations/${item.value.reservation.id}/cancel`);
+    const { data } = await axios.get(`/api/market/${route.params.id}`);
+    item.value = data;
+    alert('찜이 취소되었습니다.');
+  } catch (e) {
+    alert(e.response?.data?.message || '찜 취소 실패');
+  }
 }
 
 onMounted(async () => {

@@ -14,8 +14,22 @@
         </div>
       </div>
     </div>
-    <!-- Category tabs -->
+    <!-- 온라인/지역 필터 탭 -->
     <div class="max-w-[1200px] mx-auto px-4 mt-3">
+      <div class="flex gap-2 mb-2">
+        <button v-for="tab in filterTabs" :key="tab.value"
+          @click="onFilterTabChange(tab.value)"
+          class="px-4 py-2 rounded-full text-sm font-bold transition"
+          :class="selectedFilter === tab.value
+            ? 'bg-blue-600 text-white shadow-sm'
+            : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'">
+          {{ tab.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Category tabs -->
+    <div class="max-w-[1200px] mx-auto px-4 mt-1">
       <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width:none">
         <button v-for="cat in clubCategories" :key="cat.value"
           @click="selectedClubCategory = cat.value"
@@ -45,6 +59,17 @@
           class="h-28 relative"
           :style="{ background: `linear-gradient(135deg, ${club.gradientFrom}, ${club.gradientTo})` }"
         >
+          <!-- 온라인/지역 뱃지 -->
+          <div class="absolute top-3 left-3 flex gap-1.5">
+            <span v-if="club.isOnline"
+              class="bg-blue-500/90 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-medium">
+              🌐 온라인
+            </span>
+            <span v-else-if="club.regionLabel"
+              class="bg-green-500/90 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-medium">
+              📍 {{ club.regionLabel }}
+            </span>
+          </div>
           <!-- 승인제 뱃지 -->
           <span
             v-if="club.isApproval"
@@ -157,6 +182,51 @@
                 class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 resize-none" />
             </div>
 
+            <!-- 동호회 유형 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">동호회 유형</label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" :value="true" v-model="createForm.is_online" class="w-4 h-4 text-blue-600" />
+                  <span class="text-sm text-gray-700">🌐 온라인 동호회</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" :value="false" v-model="createForm.is_online" class="w-4 h-4 text-blue-600" />
+                  <span class="text-sm text-gray-700">📍 지역 동호회</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 지역 동호회 위치 입력 -->
+            <div v-if="!createForm.is_online" class="space-y-3 p-3 bg-green-50/50 rounded-xl border border-green-100">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">위치 입력 방식</label>
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" value="zip" v-model="locationInputType" class="w-4 h-4 text-green-600" />
+                    <span class="text-sm text-gray-600">집코드로 입력</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" value="address" v-model="locationInputType" class="w-4 h-4 text-green-600" />
+                    <span class="text-sm text-gray-600">상세 주소 입력</span>
+                  </label>
+                </div>
+              </div>
+              <div v-if="locationInputType === 'zip'">
+                <label class="block text-xs text-gray-500 mb-1 font-semibold">집코드 (Zip Code)</label>
+                <input v-model="createForm.zip_code" type="text" placeholder="예: 90001" maxlength="10"
+                  @blur="onZipCodeBlur"
+                  class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400" />
+                <p v-if="zipCodeResult" class="text-xs text-green-600 mt-1 font-medium">📍 {{ zipCodeResult }}</p>
+                <p v-if="zipCodeError" class="text-xs text-red-500 mt-1">{{ zipCodeError }}</p>
+              </div>
+              <div v-if="locationInputType === 'address'">
+                <label class="block text-xs text-gray-500 mb-1 font-semibold">상세 주소</label>
+                <input v-model="createForm.address" type="text" placeholder="예: 3731 Wilshire Blvd, Los Angeles, CA"
+                  class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400" />
+              </div>
+            </div>
+
             <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer">
               <input v-model="createForm.is_approval" type="checkbox" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
               <div>
@@ -194,9 +264,16 @@ const router = useRouter()
 const radius = ref(30);
 const search = ref('');
 const selectedClubCategory = ref('all');
+const selectedFilter = ref('all');
 const showCreateModal = ref(false);
 const creating = ref(false);
 const createError = ref('');
+
+const filterTabs = [
+  { value: 'all', label: '전체' },
+  { value: 'online', label: '🌐 온라인' },
+  { value: 'local', label: '📍 지역' },
+];
 
 const newClubPhoto = ref(null);
 const newClubPhotoPreview = ref('');
@@ -215,7 +292,29 @@ const createForm = ref({
   category: '',
   description: '',
   is_approval: false,
+  is_online: false,
+  zip_code: '',
+  address: '',
 });
+
+const locationInputType = ref('zip');
+const zipCodeResult = ref('');
+const zipCodeError = ref('');
+
+async function onZipCodeBlur() {
+  const zip = createForm.value.zip_code.trim();
+  zipCodeResult.value = '';
+  zipCodeError.value = '';
+  if (!zip || zip.length < 5) return;
+  try {
+    const { data } = await axios.get('/api/clubs/geocode-zip', { params: { zip_code: zip } });
+    if (data.city) {
+      zipCodeResult.value = `${data.city}, ${data.state || ''}`.trim();
+    }
+  } catch (e) {
+    zipCodeError.value = '유효하지 않은 집코드입니다.';
+  }
+}
 
 const clubCategories = [
   { value: 'all', label: '전체' },
@@ -257,6 +356,15 @@ async function submitCreateClub() {
     fd.append('category', createForm.value.category);
     fd.append('description', createForm.value.description);
     fd.append('is_approval', createForm.value.is_approval ? '1' : '0');
+    fd.append('is_online', createForm.value.is_online ? '1' : '0');
+    if (!createForm.value.is_online) {
+      if (locationInputType.value === 'zip' && createForm.value.zip_code) {
+        fd.append('zip_code', createForm.value.zip_code);
+      }
+      if (locationInputType.value === 'address' && createForm.value.address) {
+        fd.append('address', createForm.value.address);
+      }
+    }
     if (newClubPhoto.value) fd.append('cover_image', newClubPhoto.value);
     const { data } = await axios.post('/api/clubs', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 
@@ -284,9 +392,12 @@ async function submitCreateClub() {
     });
 
     // Reset form and close modal
-    createForm.value = { name: '', category: '', description: '', is_approval: false };
+    createForm.value = { name: '', category: '', description: '', is_approval: false, is_online: false, zip_code: '', address: '' };
     newClubPhoto.value = null;
     newClubPhotoPreview.value = '';
+    zipCodeResult.value = '';
+    zipCodeError.value = '';
+    locationInputType.value = 'zip';
     showCreateModal.value = false;
   } catch (e) {
     createError.value = e.response?.data?.message || '동호회 생성에 실패했습니다. 다시 시도해 주세요.';
@@ -295,9 +406,21 @@ async function submitCreateClub() {
   }
 }
 
+function onFilterTabChange(val) {
+  selectedFilter.value = val;
+  fetchClubs();
+}
+
 async function fetchClubs() {
   try {
-    const { data } = await axios.get('/api/clubs');
+    const params = {};
+    if (selectedFilter.value !== 'all') {
+      params.filter = selectedFilter.value;
+    }
+    if (search.value.trim()) {
+      params.search = search.value.trim();
+    }
+    const { data } = await axios.get('/api/clubs', { params });
     const list = data.data || data || [];
     const gradientColors = [
       { from: '#F472B6', to: '#A78BFA' },
@@ -310,6 +433,15 @@ async function fetchClubs() {
     ];
     clubs.value = list.map((c, i) => {
       const g = gradientColors[i % gradientColors.length];
+      // 지역 라벨 결정: region > zip_code > 없음
+      let regionLabel = '';
+      if (!c.is_online) {
+        if (c.region) {
+          regionLabel = c.region;
+        } else if (c.zip_code) {
+          regionLabel = c.zip_code;
+        }
+      }
       return {
         id: c.id,
         name: c.name,
@@ -318,6 +450,9 @@ async function fetchClubs() {
         description: c.description || '',
         memberCount: c.member_count || 0,
         isApproval: c.is_approval || false,
+        isOnline: c.is_online || false,
+        regionLabel,
+        zipCode: c.zip_code || '',
         gradientFrom: g.from,
         gradientTo: g.to,
         memberColors: [g.from, g.to, '#60A5FA'],

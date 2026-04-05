@@ -71,6 +71,26 @@ class CommentController extends Controller
         return response()->json(['message' => '댓글이 수정되었습니다.', 'comment' => $comment->load('user:id,name,username,avatar')]);
     }
 
+    public function accept($commentId)
+    {
+        $comment = Comment::with('post')->findOrFail($commentId);
+        $post = $comment->post;
+        if (!$post || $post->user_id !== Auth::id()) {
+            return response()->json(['message' => '작성자만 채택할 수 있습니다.'], 403);
+        }
+        // 기존 채택 해제
+        Comment::where('post_id', $post->id)->update(['is_accepted' => false]);
+        $comment->update(['is_accepted' => true]);
+        // 채택된 댓글 작성자에게 포인트 지급
+        if ($comment->user_id && $comment->user_id !== Auth::id()) {
+            try {
+                $commentUser = \App\Models\User::find($comment->user_id);
+                if ($commentUser) $commentUser->addPoints(20, 'answer_accepted', 'earn', $comment->id, '��변 채택');
+            } catch (\Exception $e) {}
+        }
+        return response()->json(['message' => '채택되었습니다.', 'comment' => $comment]);
+    }
+
     public function destroy(Comment $comment)
     {
         if ($comment->user_id !== Auth::id() && !Auth::user()->is_admin) abort(403);

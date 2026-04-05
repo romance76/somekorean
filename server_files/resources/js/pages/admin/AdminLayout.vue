@@ -233,9 +233,10 @@ const navGroups = [
     label: '운영',
     icon: '📢',
     items: [
-      { to: '/admin/site',    icon: '⚙️', label: '사이트 설정' },
-      { to: '/admin/banners', icon: '📢', label: '배너 / 광고' },
-      { to: '/admin/system',  icon: '🖥️', label: '시스템 로그' },
+      { to: '/admin/security', icon: '🛡️', label: '보안 관리' },
+      { to: '/admin/site',     icon: '⚙️', label: '사이트 설정' },
+      { to: '/admin/banners',  icon: '📢', label: '배너 / 광고' },
+      { to: '/admin/system',   icon: '🖥️', label: '시스템 로그' },
     ]
   },
 
@@ -294,6 +295,7 @@ const titleMap = {
   '/admin/mentor-admin':     '🎓 멘토링 관리',
   '/admin/games-admin':      '🎮 게임 관리',
   '/admin/payments':         '💰 결제 / 포인트 관리',
+  '/admin/security':         '🛡️ 보안 관리',
   '/admin/banners':          '📢 배너 / 광고 관리',
   '/admin/site':             '⚙️ 사이트 설정',
   '/admin/system':           '🖥️ 시스템 로그',

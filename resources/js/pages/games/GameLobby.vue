@@ -11,18 +11,23 @@
           </div>
           <div v-if="auth.isLoggedIn" class="text-right">
             <div class="text-xs text-indigo-200 mb-1">내 지갑</div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap justify-end">
               <span class="bg-white/20 px-2 py-1 rounded-lg text-sm font-bold">🪙 {{ wallet.coin.toLocaleString() }}</span>
+              <span class="bg-yellow-500/30 px-2 py-1 rounded-lg text-sm font-bold border border-yellow-400/40">🎰 {{ wallet.chip.toLocaleString() }}</span>
               <span v-if="wallet.gem > 0" class="bg-white/20 px-2 py-1 rounded-lg text-sm font-bold">💎 {{ wallet.gem.toLocaleString() }}</span>
               <span v-if="wallet.star > 0" class="bg-white/20 px-2 py-1 rounded-lg text-sm font-bold">⭐ {{ wallet.star.toLocaleString() }}</span>
             </div>
           </div>
         </div>
-        <!-- 일일 보너스 버튼 -->
-        <div v-if="auth.isLoggedIn" class="flex items-center gap-3">
+        <!-- 일일 보너스 + 룰렛 버튼 -->
+        <div v-if="auth.isLoggedIn" class="flex items-center gap-2 flex-wrap mt-2">
           <button @click="claimDaily" :disabled="dailyClaimed"
             class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-60 text-gray-900 px-4 py-2 rounded-xl text-sm font-bold transition">
-            🎁 {{ dailyClaimed ? '출석 완료 ✓' : '오늘의 출석 +50 COIN' }}
+            🎁 {{ dailyClaimed ? '출석 완료' : '출석 +50 COIN' }}
+          </button>
+          <button @click="showSpinModal = true"
+            class="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg animate-pulse-slow">
+            🎡 무료 게임머니
           </button>
           <button @click="showLeaderboard = !showLeaderboard" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition">
             🏆 리더보드
@@ -88,17 +93,23 @@
             <h3 class="text-sm font-bold text-gray-800 text-center mb-1 line-clamp-1">{{ game.name }}</h3>
             <!-- 설명 -->
             <p class="text-[11px] text-gray-400 text-center line-clamp-2 mb-2">{{ game.description }}</p>
-            <!-- 보상 + 타입 -->
+            <!-- 보상 + 타입 뱃지 -->
             <div class="flex items-center justify-between">
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+              <span v-if="isBettingGame(game)" class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-orange-500 text-white">
+                🎰 베팅
+              </span>
+              <span v-else-if="game.type === 'educational'" class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-purple-500 text-white">
+                📚 교육
+              </span>
+              <span v-else class="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                 :class="typeClass(game.type)">
                 {{ typeLabel(game.type) }}
               </span>
-              <span v-if="game.reward_base > 0" class="text-[11px] font-bold text-yellow-600">
-                +{{ game.reward_base }} {{ currencyIcon(game.currency) }}
+              <span v-if="isBettingGame(game)" class="text-[10px] font-bold text-orange-400">
+                게임머니
               </span>
-              <span v-if="game.min_bet > 0" class="text-[11px] font-bold text-orange-500">
-                베팅
+              <span v-else-if="game.reward_base > 0" class="text-[11px] font-bold text-yellow-600">
+                +{{ Math.min(5, Math.max(1, Math.floor(game.reward_base * 0.01) + 1)) }} 🪙
               </span>
             </div>
             <!-- NEW 배지 -->
@@ -133,13 +144,18 @@
           <div class="bg-yellow-50 rounded-xl p-3 text-center">
             <div class="text-2xl mb-1">🪙</div>
             <div class="font-bold text-yellow-600 text-sm">COIN</div>
-            <div class="text-xs text-yellow-500">성인 게임 기본단위</div>
+            <div class="text-xs text-yellow-500">일반 게임 보상</div>
           </div>
           <div class="bg-purple-50 rounded-xl p-3 text-center">
             <div class="text-2xl mb-1">🎰</div>
-            <div class="font-bold text-purple-600 text-sm">CHIP</div>
-            <div class="text-xs text-purple-400">고액 게임 전용</div>
+            <div class="font-bold text-purple-600 text-sm">게임머니</div>
+            <div class="text-xs text-purple-400">베팅 게임 전용</div>
           </div>
+        </div>
+        <div class="mt-3 text-xs text-gray-400 space-y-1">
+          <p>* 일반 게임: 게임 플레이 시 소량의 COIN 획득 (1~5 COIN)</p>
+          <p>* 베팅 게임 (고스톱/홀덤/블랙잭): 게임머니로 플레이</p>
+          <p>* 일일 룰렛로 무료 게임머니를 받을 수 있습니다</p>
         </div>
       </div>
 
@@ -150,12 +166,16 @@
   <div v-if="showComingSoon" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full text-sm z-50">
     🚧 이 게임은 준비 중입니다
   </div>
+
+  <!-- 일일 룰렛 모달 -->
+  <DailySpinModal :show="showSpinModal" @close="showSpinModal = false" @earned="onSpinEarned" />
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import DailySpinModal from '../../components/DailySpinModal.vue'
 import axios from 'axios'
 
 const router = useRouter()
@@ -166,6 +186,7 @@ const categories = ref([])
 const leaders = ref([])
 const showLeaderboard = ref(false)
 const showComingSoon = ref(false)
+const showSpinModal = ref(false)
 const dailyClaimed = ref(false)
 const wallet = ref({ star: 0, gem: 0, coin: 1000, chip: 0 })
 const activeAge = ref('arcade')
@@ -222,6 +243,14 @@ function currencyIcon(c) {
   return { star: '⭐', gem: '💎', coin: '🪙', chip: '🎰' }[c] || '🪙'
 }
 
+function isBettingGame(game) {
+  return game.type === 'betting' || game.min_bet > 0
+}
+
+function onSpinEarned({ points, balance }) {
+  wallet.value.chip = balance
+}
+
 async function loadWallet() {
   if (!auth.isLoggedIn) return
   try {
@@ -274,5 +303,9 @@ onMounted(async () => {
 .line-clamp-1 { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
 .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+.animate-pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
 </style>

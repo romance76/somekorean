@@ -56,15 +56,25 @@
         </button>
       </div>
 
-      <!-- 베팅 설정 -->
-      <div class="mt-8 bg-green-800 rounded-2xl p-4">
+      <!-- 게임머니 잔액 + 베팅 설정 -->
+      <div class="mt-8 bg-green-800 rounded-2xl p-4 space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-green-300 text-sm">베팅 포인트</span>
+          <span class="text-green-300 text-sm">🎰 게임머니 잔액</span>
+          <span class="text-yellow-300 font-bold text-lg">{{ chipBalance.toLocaleString() }}</span>
+        </div>
+        <div v-if="chipBalance === 0" class="bg-orange-600/30 border border-orange-500/50 rounded-xl p-3 text-center">
+          <p class="text-orange-200 text-sm mb-2">게임머니가 부족합니다</p>
+          <button @click="$router.push('/games')" class="bg-orange-500 hover:bg-orange-400 text-white text-sm px-4 py-1.5 rounded-lg font-bold">
+            🎡 룰렛 돌리러 가기
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-green-300 text-sm">베팅 게임머니</span>
           <select v-model="betPoints" class="bg-green-700 rounded-lg px-3 py-1 text-sm">
-            <option :value="50">50P (연습)</option>
-            <option :value="100">100P</option>
-            <option :value="500">500P</option>
-            <option :value="1000">1,000P</option>
+            <option :value="50">50 (연습)</option>
+            <option :value="100">100</option>
+            <option :value="500">500</option>
+            <option :value="1000">1,000</option>
           </select>
         </div>
       </div>
@@ -83,7 +93,7 @@
             <div class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
           </div>
         </div>
-        <p class="text-yellow-300 text-sm">베팅: {{ betPoints.toLocaleString() }}P</p>
+        <p class="text-yellow-300 text-sm">베팅: {{ betPoints.toLocaleString() }} 게임머니</p>
         <button @click="cancelMatch" class="bg-gray-600 hover:bg-gray-500 rounded-xl px-6 py-3 font-bold">
           취소
         </button>
@@ -139,7 +149,7 @@
           </div>
         </div>
 
-        <p class="text-yellow-300 text-sm">베팅: {{ (room?.bet_points || betPoints).toLocaleString() }}P</p>
+        <p class="text-yellow-300 text-sm">베팅: {{ (room?.bet_points || betPoints).toLocaleString() }} 게임머니</p>
       </div>
     </div>
 
@@ -254,7 +264,7 @@
             </div>
           </div>
           <div class="mt-4 text-yellow-300 font-bold">
-            {{ gameState.winner == myId ? `+${(room?.bet_points || betPoints) * 1}P 획득!` : `-${room?.bet_points || betPoints}P` }}
+            {{ gameState.winner == myId ? `+${(room?.bet_points || betPoints) * 1} 게임머니 획득!` : `-${room?.bet_points || betPoints} 게임머니` }}
           </div>
           <div class="mt-6 flex gap-2">
             <button @click="resetToMenu" class="flex-1 bg-red-600 rounded-xl py-3 font-bold">다시 하기</button>
@@ -295,6 +305,7 @@ const error        = ref('')
 const joinCode     = ref('')
 const betPoints    = ref(100)
 const copied       = ref(false)
+const chipBalance  = ref(0)
 let matchTimer     = null
 
 // ---- Computed (game play) ----
@@ -564,8 +575,17 @@ async function doStop() {
   }
 }
 
+// ---- 게임머니 잔액 로드 ----
+async function loadChipBalance() {
+  try {
+    const { data } = await axios.get('/api/wallet/balance')
+    chipBalance.value = data.chip || 0
+  } catch {}
+}
+
 // ---- URL 파라미터로 방 입장 ----
 onMounted(async () => {
+  loadChipBalance()
   const qRoom = route.query.room ? parseInt(route.query.room) : null
   if (qRoom) {
     roomId.value = qRoom

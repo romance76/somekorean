@@ -3,7 +3,7 @@
     <div class="max-w-[1200px] mx-auto px-4 pt-4">
       <!-- Header -->
       <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-5 rounded-2xl mb-4">
-        <h1 class="text-xl font-black">🏠 부동산 매물 등록</h1>
+        <h1 class="text-xl font-black">🏠 {{ isEdit ? '부동산 매물 수정' : '부동산 매물 등록' }}</h1>
         <p class="text-blue-100 text-sm mt-0.5">매물 정보를 입력해 주세요</p>
       </div>
 
@@ -134,7 +134,7 @@
           <button @click="$router.back()" class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-600 rounded-xl text-sm hover:bg-gray-50">취소</button>
           <button @click="submit" :disabled="submitting"
             class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
-            {{ submitting ? '등록 중...' : '매물 등록' }}
+            {{ submitting ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '매물 수정' : '매물 등록') }}
           </button>
         </div>
       </div>
@@ -143,14 +143,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import AddressInput from '../../components/AddressInput.vue'
 
+const route = useRoute()
 const router = useRouter()
 const submitting = ref(false)
 const error = ref('')
+const isEdit = ref(false)
+const editId = ref(null)
 const photosPreviews = ref([])
 const photosFiles = ref([])
 
@@ -206,14 +209,49 @@ async function submit() {
     Object.entries(form.value).forEach(([k, v]) => { if (k === 'addressObj') return; if (v !== '' && v !== null) fd.append(k, v) })
     photosFiles.value.forEach((file, i) => { if (file) fd.append(`photos[${i}]`, file) })
 
-    const { data } = await axios.post('/api/realestate', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    router.push(`/realestate/${data.listing?.id || data.id || ''}`)
+    let data
+    if (isEdit.value) {
+      fd.append('_method', 'PUT');
+      ({ data } = await axios.post(`/api/realestate/${editId.value}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }))
+      router.push(`/realestate/${editId.value}`)
+    } else {
+      ({ data } = await axios.post('/api/realestate', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }))
+      router.push(`/realestate/${data.listing?.id || data.id || ''}`)
+    }
   } catch (e) {
     error.value = e.response?.data?.message || '등록 실패. 다시 시도해 주세요.'
   } finally {
     submitting.value = false
   }
 }
+
+onMounted(async () => {
+  const id = route.query.edit
+  if (id) {
+    isEdit.value = true
+    editId.value = id
+    try {
+      const { data } = await axios.get(`/api/realestate/${id}`)
+      form.value.title = data.title || ''
+      form.value.type = data.type || ''
+      form.value.price = data.price ?? ''
+      form.value.address = data.address || ''
+      form.value.bedrooms = data.bedrooms ?? ''
+      form.value.bathrooms = data.bathrooms ?? ''
+      form.value.sqft = data.sqft ?? ''
+      form.value.description = data.description || ''
+      form.value.deposit = data.deposit ?? ''
+      form.value.move_in_date = data.move_in_date || ''
+      form.value.pet_policy = data.pet_policy || '협의'
+      form.value.phone = data.phone || ''
+      form.value.email = data.email || ''
+    } catch (e) {
+      error.value = '기존 매물 정보를 불러올 수 없습니다.'
+    }
+  }
+})
 </script>

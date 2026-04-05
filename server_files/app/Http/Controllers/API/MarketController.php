@@ -3,6 +3,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\MarketItem;
+use App\Models\MarketReservation;
 use App\Models\Bookmark;
 use App\Models\Comment;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class MarketController extends Controller
     public function index(Request $request)
     {
         $query = MarketItem::with('user:id,name,username,avatar')
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'reserved'])
             ->where('item_type', $request->type ?? 'used');
 
         if ($request->category) $query->where('category', $request->category);
@@ -40,7 +41,7 @@ class MarketController extends Controller
             'price'       => 'required|numeric|min:0',
             'item_type'   => 'in:used,real_estate,car',
         ]);
-        $item = MarketItem::create(array_merge($request->only(['title','description','price','price_negotiable','category','item_type','region','condition']), ['user_id' => Auth::id()]));
+        $item = MarketItem::create(array_merge($request->only(['title','description','price','price_negotiable','category','item_type','region','condition','reservation_points','reservation_hours']), ['user_id' => Auth::id()]));
         return response()->json(['message' => '등록되었습니다.', 'item' => $item], 201);
     }
 
@@ -78,13 +79,28 @@ class MarketController extends Controller
             ->latest()
             ->get();
 
+        // 찜/예약 정보
+        $activeReservation = MarketReservation::where('market_item_id', $item->id)
+            ->where('status', 'pending')
+            ->with(['buyer:id,name', 'seller:id,name'])
+            ->first();
+        $data['reservation'] = $activeReservation;
+        $data['reservation_points'] = (int) ($item->reservation_points ?? 0);
+        $data['reservation_hours'] = (int) ($item->reservation_hours ?? 24);
+
+        if (Auth::check() && $activeReservation) {
+            $data['my_reservation'] = $activeReservation->buyer_id === Auth::id();
+        } else {
+            $data['my_reservation'] = false;
+        }
+
         return response()->json($data);
     }
 
     public function update(Request $request, MarketItem $item)
     {
         if ($item->user_id !== Auth::id() && !Auth::user()->is_admin) abort(403);
-        $item->update($request->only(['title','description','price','price_negotiable','status','region','condition']));
+        $item->update($request->only(['title','description','price','price_negotiable','status','region','condition','reservation_points','reservation_hours']));
         return response()->json(['message' => '수정되었습니다.', 'item' => $item]);
     }
 

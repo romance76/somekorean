@@ -8,7 +8,7 @@
         </svg>
       </button>
       <h1 class="text-white font-bold">블랙잭 (vs 딜러)</h1>
-      <div class="ml-auto text-sm text-yellow-300 font-bold">💰 {{ chips.toLocaleString() }}P</div>
+      <div class="ml-auto text-sm text-yellow-300 font-bold">🎰 {{ chips.toLocaleString() }}</div>
     </div>
 
     <!-- 게임 결과 배너 -->
@@ -71,18 +71,28 @@
       </div>
     </div>
 
+    <!-- 게임머니 부족 안내 -->
+    <div v-if="phase==='betting' && chips <= 0" class="mx-4 mt-6 bg-orange-900/50 border border-orange-500/50 rounded-2xl p-5 text-center">
+      <div class="text-3xl mb-2">🎰</div>
+      <p class="text-orange-200 font-bold mb-2">게임머니가 부족합니다</p>
+      <p class="text-orange-300/70 text-sm mb-3">룰렛을 돌려 무료 게임머니를 받아보세요!</p>
+      <button @click="$router.push('/games')" class="bg-orange-500 hover:bg-orange-400 text-white px-5 py-2 rounded-xl font-bold text-sm transition">
+        🎡 룰렛 돌리러 가기
+      </button>
+    </div>
+
     <!-- 베팅 화면 -->
-    <div v-if="phase==='betting'" class="mx-4 mt-6 bg-black/30 rounded-2xl p-5">
+    <div v-if="phase==='betting' && chips > 0" class="mx-4 mt-6 bg-black/30 rounded-2xl p-5">
       <div class="text-white font-bold mb-3 text-center">베팅 금액 선택</div>
       <div class="grid grid-cols-4 gap-2 mb-4">
         <button v-for="b in betOptions" :key="b"
           @click="bet=b"
           class="py-2 rounded-xl font-bold text-sm transition"
           :class="bet===b ? 'bg-yellow-400 text-yellow-900' : 'bg-white/20 text-white hover:bg-white/30'">
-          {{ b.toLocaleString() }}P
+          {{ b.toLocaleString() }}
         </button>
       </div>
-      <div class="text-center text-white/60 text-sm mb-3">선택: <span class="text-yellow-300 font-bold">{{ bet.toLocaleString() }}P</span></div>
+      <div class="text-center text-white/60 text-sm mb-3">선택: <span class="text-yellow-300 font-bold">{{ bet.toLocaleString() }} 게임머���</span></div>
       <button @click="startRound" :disabled="bet > chips"
         class="w-full bg-yellow-500 text-yellow-900 font-black py-3 rounded-xl text-lg hover:bg-yellow-400 disabled:opacity-40 transition">
         딜!
@@ -120,7 +130,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 // ── 사운드 ───────────────────────────────────────────────────────────────────
 let _ac = null
@@ -234,11 +245,11 @@ const resultText = computed(() => ({
 }[result.value] ?? ''))
 
 const resultDetail = computed(() => {
-  if (result.value === 'blackjack') return `+${Math.floor(bet.value*1.5).toLocaleString()}P 획득!`
-  if (result.value === 'win') return `+${bet.value.toLocaleString()}P 획득!`
+  if (result.value === 'blackjack') return `+${Math.floor(bet.value*1.5).toLocaleString()} 게임머니 획득!`
+  if (result.value === 'win') return `+${bet.value.toLocaleString()} 게임머니 획득!`
   if (result.value === 'push') return '베팅금 반환'
-  if (result.value === 'lose') return `-${bet.value.toLocaleString()}P`
-  if (result.value === 'bust') return `-${bet.value.toLocaleString()}P`
+  if (result.value === 'lose') return `-${bet.value.toLocaleString()} 게임머니`
+  if (result.value === 'bust') return `-${bet.value.toLocaleString()} 게임머니`
   return ''
 })
 
@@ -317,7 +328,7 @@ function settle(res) {
   else if (res === 'win') chips.value += bet.value
   else if (res === 'lose' || res === 'bust') chips.value -= bet.value
   // push: 환불 (이미 차감 안 했으므로 그대로)
-  if (chips.value <= 0) chips.value = 200 // 파산 시 리셋
+  if (chips.value <= 0) chips.value = 0 // 파산 시 0으로 (룰렛으로 게임머니 획득 유도)
   bet.value = Math.min(bet.value, chips.value)
 }
 
@@ -329,4 +340,25 @@ function resetGame() {
   playerHand.value = []
   dealerHand.value = []
 }
+
+// 게임머니 잔액 로드
+async function loadChipBalance() {
+  try {
+    const { data } = await axios.get('/api/wallet/balance')
+    if (data.chip > 0) {
+      chips.value = data.chip
+    }
+  } catch {}
+}
+
+// 게임머니 변동 저장
+async function syncChipBalance() {
+  try {
+    // 잔액을 서버에 동기화 (간단하게 잔액을 직접 세팅하지 않고 결과를 로드만 함)
+  } catch {}
+}
+
+onMounted(() => {
+  loadChipBalance()
+})
 </script>

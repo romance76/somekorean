@@ -15,7 +15,7 @@
         <div class="text-6xl mb-4">❌</div>
         <h2 class="text-2xl font-bold mb-2">인증 실패</h2>
         <p class="text-gray-500 mb-6">{{ errorMsg }}</p>
-        <router-link to="/businesses" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200">업소 목록으로</router-link>
+        <router-link to="/directory" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200">업소 목록으로</router-link>
       </div>
     </div>
   </div>

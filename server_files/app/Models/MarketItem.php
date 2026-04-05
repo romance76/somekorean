@@ -11,6 +11,7 @@ class MarketItem extends Model
     protected $fillable = [
         'user_id', 'title', 'description', 'price', 'price_negotiable',
         'images', 'category', 'item_type', 'region', 'condition', 'status',
+        'reservation_points', 'reservation_hours',
     ];
 
     protected $casts = [
@@ -21,4 +22,5 @@ class MarketItem extends Model
 
     public function user() { return $this->belongsTo(User::class); }
     public function bookmarks() { return $this->morphMany(Bookmark::class, 'bookmarkable'); }
+    public function reservations() { return $this->hasMany(MarketReservation::class); }
 }

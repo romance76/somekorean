@@ -890,4 +890,254 @@ class AdminController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // ─── 보안: IP 차단 관리 ──────────────────────────────────────
+
+    public function ipBans(Request $request)
+    {
+        try {
+            $q = DB::table('ip_bans')->orderByDesc('created_at');
+
+            if ($request->search) {
+                $q->where('ip_address', 'like', '%'.$request->search.'%')
+                  ->orWhere('reason', 'like', '%'.$request->search.'%');
+            }
+
+            if ($request->type === 'auto') {
+                $q->where('reason', 'like', '%자동%');
+            } elseif ($request->type === 'manual') {
+                $q->where('reason', 'not like', '%자동%');
+            }
+
+            if ($request->status === 'active') {
+                $q->where(function ($qq) {
+                    $qq->whereNull('expires_at')
+                       ->orWhere('expires_at', '>', now());
+                });
+            } elseif ($request->status === 'expired') {
+                $q->where('expires_at', '<=', now());
+            }
+
+            $bans = $q->paginate(25);
+
+            // 통계
+            $stats = [
+                'total'        => DB::table('ip_bans')->count(),
+                'active'       => DB::table('ip_bans')->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })->count(),
+                'auto_blocked' => DB::table('ip_bans')->where('reason', 'like', '%자동%')->count(),
+                'permanent'    => DB::table('ip_bans')->whereNull('expires_at')->count(),
+            ];
+
+            return response()->json(['bans' => $bans, 'stats' => $stats]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'bans'  => ['data' => [], 'total' => 0],
+                'stats' => ['total' => 0, 'active' => 0, 'auto_blocked' => 0, 'permanent' => 0],
+            ]);
+        }
+    }
+
+    public function addIpBan(Request $request)
+    {
+        $request->validate([
+            'ip_address' => 'required|string',
+            'reason'     => 'required|string|max:500',
+            'duration'   => 'required|in:1h,1d,7d,30d,permanent',
+        ]);
+
+        $expiresAt = match ($request->duration) {
+            '1h'        => now()->addHour(),
+            '1d'        => now()->addDay(),
+            '7d'        => now()->addDays(7),
+            '30d'       => now()->addDays(30),
+            'permanent' => null,
+        };
+
+        try {
+            DB::table('ip_bans')->insert([
+                'ip_address' => $request->ip_address,
+                'reason'     => $request->reason,
+                'banned_by'  => auth()->id(),
+                'expires_at' => $expiresAt,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'IP 차단 추가 실패'], 500);
+        }
+
+        return response()->json(['message' => 'IP가 차단되었습니다.']);
+    }
+
+    public function removeIpBan($id)
+    {
+        try {
+            DB::table('ip_bans')->where('id', $id)->delete();
+        } catch (\Exception $e) {
+            return response()->json(['error' => '삭제 실패'], 500);
+        }
+        return response()->json(['message' => 'IP 차단이 해제되었습니다.']);
+    }
+
+    // ─── 보안: 신고 관리 (강화) ──────────────────────────────────
+
+    public function securityReports(Request $request)
+    {
+        try {
+            $q = DB::table('reports')
+                ->leftJoin('users', 'reports.reporter_id', '=', 'users.id')
+                ->select(
+                    'reports.*',
+                    'users.name as reporter_name',
+                    'users.username as reporter_username'
+                );
+
+            if ($request->status) {
+                $q->where('reports.status', $request->status);
+            }
+
+            if ($request->type) {
+                $q->where('reports.reportable_type', 'like', '%'.$request->type.'%');
+            }
+
+            $reports = $q->orderByDesc('reports.created_at')->paginate(25);
+
+            // 통계
+            $stats = [
+                'total'   => DB::table('reports')->count(),
+                'pending' => DB::table('reports')->where('status', 'pending')->count(),
+                'today'   => DB::table('reports')->whereDate('created_at', today())->count(),
+            ];
+
+            return response()->json(['reports' => $reports, 'stats' => $stats]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'reports' => ['data' => [], 'total' => 0],
+                'stats'   => ['total' => 0, 'pending' => 0, 'today' => 0],
+            ]);
+        }
+    }
+
+    public function processReport(Request $request, $id)
+    {
+        $request->validate([
+            'action' => 'required|in:dismiss,hide,delete,ban_user',
+        ]);
+
+        try {
+            $report = DB::table('reports')->where('id', $id)->first();
+            if (!$report) {
+                return response()->json(['error' => '신고를 찾을 수 없습니다.'], 404);
+            }
+
+            // 신고 상태 업데이트
+            DB::table('reports')->where('id', $id)->update([
+                'status'          => 'resolved',
+                'resolved_action' => $request->action,
+                'reviewed_by'     => auth()->id(),
+                'updated_at'      => now(),
+            ]);
+
+            // 액션 실행
+            switch ($request->action) {
+                case 'hide':
+                    $this->hideReportedContent($report->reportable_type, $report->reportable_id);
+                    break;
+                case 'delete':
+                    $this->deleteReportedContent($report->reportable_type, $report->reportable_id);
+                    break;
+                case 'ban_user':
+                    $this->banContentAuthor($report->reportable_type, $report->reportable_id);
+                    break;
+            }
+
+            return response()->json(['message' => '신고가 처리되었습니다.']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => '처리 실패: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function hideReportedContent($type, $id)
+    {
+        $table = $this->getTableFromType($type);
+        if ($table) {
+            DB::table($table)->where('id', $id)->update(['status' => 'hidden']);
+        }
+    }
+
+    private function deleteReportedContent($type, $id)
+    {
+        $table = $this->getTableFromType($type);
+        if ($table) {
+            DB::table($table)->where('id', $id)->delete();
+        }
+    }
+
+    private function banContentAuthor($type, $id)
+    {
+        $table = $this->getTableFromType($type);
+        if ($table) {
+            $content = DB::table($table)->where('id', $id)->first();
+            $userIdCol = 'user_id';
+            if ($content && isset($content->$userIdCol)) {
+                User::where('id', $content->$userIdCol)->update(['status' => 'banned']);
+            }
+        }
+    }
+
+    private function getTableFromType($type)
+    {
+        // reportable_type은 모델 클래스명 또는 짧은 이름
+        $map = [
+            'App\\Models\\Post'       => 'posts',
+            'App\\Models\\Comment'    => 'comments',
+            'App\\Models\\MarketItem' => 'market_items',
+            'App\\Models\\JobPost'    => 'jobs',
+            'App\\Models\\Business'   => 'businesses',
+            'post'                    => 'posts',
+            'comment'                 => 'comments',
+            'market_item'             => 'market_items',
+            'job'                     => 'jobs',
+        ];
+        return $map[$type] ?? null;
+    }
+
+    // ─── 보안: 봇 활동 로그 ──────────────────────────────────────
+
+    public function botActivity(Request $request)
+    {
+        try {
+            $q = DB::table('ip_bans')
+                ->where('reason', 'like', '%자동%')
+                ->orderByDesc('created_at');
+
+            $logs = $q->paginate(25);
+
+            $stats = [
+                'total_auto'     => DB::table('ip_bans')->where('reason', 'like', '%자동%')->count(),
+                'last_hour'      => DB::table('ip_bans')
+                    ->where('reason', 'like', '%자동%')
+                    ->where('created_at', '>=', now()->subHour())
+                    ->count(),
+                'last_24h'       => DB::table('ip_bans')
+                    ->where('reason', 'like', '%자동%')
+                    ->where('created_at', '>=', now()->subDay())
+                    ->count(),
+                'honeypot_count' => DB::table('ip_bans')
+                    ->where('reason', 'like', '%Honeypot%')
+                    ->count(),
+                'rate_limit_count' => DB::table('ip_bans')
+                    ->where('reason', 'like', '%글쓰기%')
+                    ->count(),
+            ];
+
+            return response()->json(['logs' => $logs, 'stats' => $stats]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'logs'  => ['data' => [], 'total' => 0],
+                'stats' => ['total_auto' => 0, 'last_hour' => 0, 'last_24h' => 0, 'honeypot_count' => 0, 'rate_limit_count' => 0],
+            ]);
+        }
+    }
 }

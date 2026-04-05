@@ -1,49 +1,63 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-20">
-    <div class="max-w-[1200px] mx-auto px-4 pt-4">
+  <div class="min-h-screen bg-gray-50 pb-24">
+    <div class="max-w-[800px] mx-auto px-4 pt-4">
     <!-- Header Banner -->
-    <div class="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-5 rounded-2xl">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-6 rounded-2xl shadow-lg">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-black">💙 노인 안심 서비스</h1>
-          <p class="text-sm opacity-80 mt-0.5">매일 체크인으로 보호자에게 안전 알림</p>
+          <h1 class="text-2xl font-black flex items-center gap-2">안심서비스</h1>
+          <p class="text-base opacity-80 mt-1">매일 체크인으로 보호자에게 안전 알림</p>
         </div>
+        <button
+          @click="showSettingsModal = true"
+          class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-xl px-4 py-2 text-base font-bold transition"
+        >
+          설정
+        </button>
       </div>
     </div>
     </div>
 
-    <div class="max-w-lg mx-auto px-4 mt-6 space-y-5">
-      <!-- Card 1: Today Checkin -->
-      <div class="bg-white rounded-2xl shadow-md p-6">
-        <div class="flex items-center gap-4 mb-3">
-          <span class="text-5xl">{{ todayCheckedIn ? '✅' : '⬜' }}</span>
-          <div>
-            <h2 class="text-xl font-bold text-gray-800">오늘 체크인</h2>
-            <p class="text-base text-gray-500">매일 체크인하면 포인트 5점을 드려요</p>
-          </div>
-        </div>
-        <div v-if="todayCheckedIn" class="mb-3 text-center">
-          <p class="text-green-600 font-bold text-lg">✅ 오늘 체크인 완료!</p>
-          <p class="text-gray-500 text-base">{{ formatTime(settings.last_checkin_at) }}</p>
+    <div class="max-w-[800px] mx-auto px-4 mt-6 space-y-5">
+      <!-- Greeting + Date/Time -->
+      <div class="bg-white rounded-2xl shadow-md p-6 text-center">
+        <p class="text-3xl font-bold text-gray-800 mb-2">
+          안녕하세요, {{ auth.user?.name || auth.user?.nickname || '회원' }}님
+        </p>
+        <p class="text-xl text-gray-500">{{ currentDateTime }}</p>
+      </div>
+
+      <!-- Card 1: Checkin -->
+      <div class="bg-white rounded-2xl shadow-md p-6 text-center">
+        <div v-if="todayCheckedIn" class="mb-3">
+          <p class="text-green-600 font-bold text-xl mb-1">오늘 체크인 완료!</p>
+          <p class="text-lg text-gray-500">{{ formatTime(settings.last_checkin_at) }}</p>
         </div>
         <router-link
           to="/elder/checkin"
-          class="block w-full text-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl py-4 rounded-xl transition"
+          class="block w-full text-center font-bold text-xl py-5 rounded-2xl transition shadow-md"
+          :class="todayCheckedIn
+            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+            : 'bg-green-500 hover:bg-green-600 text-white'"
         >
-          체크인 하러 가기
+          {{ todayCheckedIn ? '오늘도 안전합니다' : '체크인 하러 가기' }}
         </router-link>
+        <p v-if="!todayCheckedIn" class="text-base text-gray-400 mt-3">매일 체크인하면 포인트 5점 적립</p>
+        <p v-if="settings.last_checkin_at && !todayCheckedIn" class="text-base text-gray-400 mt-1">
+          마지막 체크인: {{ formatTime(settings.last_checkin_at) }}
+        </p>
       </div>
 
-      <!-- Card 2: SOS -->
+      <!-- Card 2: SOS Emergency -->
       <div class="bg-white rounded-2xl shadow-md p-6 text-center">
-        <h2 class="text-xl font-bold text-red-600 mb-2">🚨 긴급 SOS</h2>
-        <p class="text-base text-gray-500 mb-4">3초 꾹 누르면 보호자에게 긴급 연락</p>
+        <h2 class="text-xl font-bold text-red-600 mb-2">긴급 SOS</h2>
+        <p class="text-lg text-gray-500 mb-4">3초 꾹 누르면 보호자에게 긴급 연락</p>
 
         <!-- SOS Button -->
         <div class="flex justify-center mb-4">
           <div class="relative">
             <!-- Progress ring -->
-            <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+            <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
               <circle cx="60" cy="60" r="54" fill="none" stroke="#fee2e2" stroke-width="8" />
               <circle
                 cx="60" cy="60" r="54" fill="none"
@@ -55,7 +69,7 @@
               />
             </svg>
             <button
-              class="absolute inset-0 m-auto w-24 h-24 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-2xl shadow-lg active:scale-95 transition select-none"
+              class="absolute inset-0 m-auto w-28 h-28 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-3xl shadow-lg active:scale-95 transition select-none"
               @mousedown="startSOS"
               @mouseup="cancelSOS"
               @mouseleave="cancelSOS"
@@ -70,32 +84,157 @@
 
         <!-- SOS Active State -->
         <div v-if="sosActive" class="bg-red-50 border border-red-200 rounded-xl p-4 mt-3">
-          <p class="text-red-700 font-bold text-lg">🚨 SOS 발동됨!</p>
-          <p class="text-red-600 text-base">보호자에게 알림이 전송되었습니다</p>
-          <p v-if="sosLocation" class="text-gray-500 text-sm mt-1">
+          <p class="text-red-700 font-bold text-xl">SOS 발동됨!</p>
+          <p class="text-red-600 text-lg">보호자에게 알림이 전송되었습니다</p>
+          <p v-if="sosLocation" class="text-gray-500 text-base mt-1">
             위치: {{ sosLocation.lat.toFixed(5) }}, {{ sosLocation.lng.toFixed(5) }}
           </p>
-          <p class="text-gray-500 text-sm">시간: {{ sosTime }}</p>
+          <p class="text-gray-500 text-base">시간: {{ sosTime }}</p>
           <button
             v-if="sosCancelable"
             @click="cancelSOSAlert"
-            class="mt-3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg text-base"
+            class="mt-3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-lg"
           >
             취소 ({{ sosCancelCountdown }}초)
           </button>
         </div>
       </div>
 
-      <!-- Card 3: Guardian Settings -->
+      <!-- Card 3: Health Record -->
       <div class="bg-white rounded-2xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-3">👨‍👩‍👧 보호자 설정</h2>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">건강 기록</h2>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-lg text-gray-600 mb-1">혈압 (수축기)</label>
+            <input
+              v-model.number="healthForm.blood_pressure_systolic"
+              type="number"
+              placeholder="120"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label class="block text-lg text-gray-600 mb-1">혈압 (이완기)</label>
+            <input
+              v-model.number="healthForm.blood_pressure_diastolic"
+              type="number"
+              placeholder="80"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label class="block text-lg text-gray-600 mb-1">혈당 (mg/dL)</label>
+            <input
+              v-model.number="healthForm.blood_sugar"
+              type="number"
+              placeholder="100"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label class="block text-lg text-gray-600 mb-1">체중 (kg)</label>
+            <input
+              v-model.number="healthForm.weight"
+              type="number"
+              step="0.1"
+              placeholder="65"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            />
+          </div>
+        </div>
+        <button
+          @click="saveHealthRecord"
+          :disabled="healthSaving"
+          class="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold text-lg py-4 rounded-xl transition"
+        >
+          {{ healthSaving ? '저장 중...' : '기록하기' }}
+        </button>
+        <p v-if="healthSaveMsg" class="text-center text-green-600 font-bold text-lg mt-2">{{ healthSaveMsg }}</p>
+
+        <!-- Recent Health Records -->
+        <div v-if="recentHealthRecords.length" class="mt-5 border-t pt-4">
+          <h3 class="text-lg font-bold text-gray-700 mb-3">최근 기록</h3>
+          <div class="space-y-2">
+            <div
+              v-for="record in recentHealthRecords.slice(0, 5)"
+              :key="record.id"
+              class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3"
+            >
+              <span class="text-base text-gray-600">{{ formatDate(record.recorded_at) }}</span>
+              <div class="flex gap-3 text-base">
+                <span v-if="record.blood_pressure_systolic" class="text-red-600">
+                  {{ record.blood_pressure_systolic }}/{{ record.blood_pressure_diastolic }}
+                </span>
+                <span v-if="record.blood_sugar" class="text-purple-600">
+                  {{ record.blood_sugar }}mg
+                </span>
+                <span v-if="record.weight" class="text-blue-600">
+                  {{ record.weight }}kg
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Medication Reminders -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-800">복약 알림</h2>
+          <button
+            @click="showMedicationModal = true"
+            class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold text-base px-4 py-2 rounded-xl transition"
+          >
+            + 알림 추가
+          </button>
+        </div>
+
+        <div v-if="medications.length === 0" class="text-center py-4 text-gray-400 text-lg">
+          등록된 복약 알림이 없습니다
+        </div>
+        <div v-else class="space-y-3">
+          <div
+            v-for="med in medications"
+            :key="med.id"
+            class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-4"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">{{ isMedicationTaken(med.id) ? '&#x2705;' : '&#x1F48A;' }}</span>
+              <div>
+                <p class="text-lg font-bold text-gray-800">{{ med.name }}</p>
+                <p class="text-base text-gray-500">{{ med.time }} | {{ formatDays(med.days) }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="!isMedicationTaken(med.id)"
+                @click="takeMedication(med.id)"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold text-base px-4 py-2 rounded-xl transition"
+              >
+                복용 완료
+              </button>
+              <span v-else class="text-green-600 font-bold text-base">복용함</span>
+              <button
+                @click="removeMedication(med.id)"
+                class="text-red-400 hover:text-red-600 text-xl ml-2"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: Guardian Settings -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-3">보호자 설정</h2>
         <div v-if="settings.guardian_name" class="space-y-2">
           <div class="flex items-center gap-2">
-            <span class="text-green-500 text-lg">●</span>
+            <span class="text-green-500 text-lg">&#x25CF;</span>
             <span class="text-lg text-gray-700">{{ settings.guardian_name }} ({{ settings.guardian_phone }})</span>
           </div>
           <div v-if="settings.guardian2_name" class="flex items-center gap-2">
-            <span class="text-blue-500 text-lg">●</span>
+            <span class="text-blue-500 text-lg">&#x25CF;</span>
             <span class="text-lg text-gray-700">{{ settings.guardian2_name }} ({{ settings.guardian2_phone }})</span>
           </div>
         </div>
@@ -104,33 +243,33 @@
         </div>
         <button
           @click="showSettingsModal = true"
-          class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold text-lg py-3 rounded-xl transition"
+          class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold text-lg py-4 rounded-xl transition"
         >
           설정 변경
         </button>
       </div>
 
-      <!-- Card 4: Guardian Dashboard -->
+      <!-- Card 6: Guardian Dashboard Link -->
       <div class="bg-white rounded-2xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-2">📊 보호자 대시보드</h2>
-        <p class="text-base text-gray-500 mb-4">가족의 안전 상태를 확인하세요</p>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">보호자 대시보드</h2>
+        <p class="text-lg text-gray-500 mb-4">가족의 안전 상태를 확인하세요</p>
         <router-link
           to="/elder/guardian"
-          class="block w-full text-center bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-lg py-3 rounded-xl transition"
+          class="block w-full text-center bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-lg py-4 rounded-xl transition"
         >
           보호자 화면 보기
         </router-link>
       </div>
 
-      <!-- Checkin Calendar (30 days) -->
+      <!-- Card 7: Checkin Calendar (30 days) -->
       <div class="bg-white rounded-2xl shadow-md p-6">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-gray-800">📅 체크인 달력</h2>
-          <span v-if="streakDays > 0" class="text-orange-500 font-bold text-base">
-            🔥 연속 {{ streakDays }}일
+          <h2 class="text-xl font-bold text-gray-800">체크인 달력</h2>
+          <span v-if="streakDays > 0" class="text-orange-500 font-bold text-lg">
+            연속 {{ streakDays }}일
           </span>
         </div>
-        <div class="grid grid-cols-7 gap-1 text-center text-sm mb-2">
+        <div class="grid grid-cols-7 gap-1 text-center text-base mb-2">
           <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="text-gray-400 font-medium py-1">{{ d }}</span>
         </div>
         <div class="grid grid-cols-7 gap-1 text-center">
@@ -139,7 +278,7 @@
           <span
             v-for="day in calendarDays"
             :key="day.date"
-            class="py-1 rounded-lg text-sm"
+            class="py-2 rounded-lg text-base"
             :class="{
               'bg-green-100 text-green-700': day.status === 'checked',
               'bg-red-100 text-red-600': day.status === 'missed',
@@ -148,8 +287,31 @@
             :title="day.date"
           >
             {{ day.day }}
-            <span class="block text-xs">{{ day.status === 'checked' ? '✅' : day.status === 'missed' ? '❌' : '⬜' }}</span>
           </span>
+        </div>
+      </div>
+
+      <!-- Card 8: Senior Community Preview -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-800">시니어 커뮤니티</h2>
+          <router-link to="/board/senior" class="text-blue-500 font-bold text-base hover:underline">
+            더보기 &rarr;
+          </router-link>
+        </div>
+        <div v-if="communityPosts.length === 0" class="text-center py-4 text-gray-400 text-lg">
+          아직 글이 없습니다
+        </div>
+        <div v-else class="space-y-3">
+          <router-link
+            v-for="post in communityPosts.slice(0, 3)"
+            :key="post.id"
+            :to="`/board/senior/${post.id}`"
+            class="block bg-gray-50 hover:bg-blue-50 rounded-xl px-4 py-3 transition"
+          >
+            <p class="text-lg font-medium text-gray-800 truncate">{{ post.title }}</p>
+            <p class="text-base text-gray-400 mt-1">{{ formatDate(post.created_at) }}</p>
+          </router-link>
         </div>
       </div>
     </div>
@@ -281,6 +443,56 @@
       </div>
     </div>
 
+    <!-- Medication Add Modal -->
+    <div v-if="showMedicationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white rounded-2xl w-full max-w-md">
+        <div class="px-6 py-4 border-b flex items-center justify-between rounded-t-2xl">
+          <h2 class="text-xl font-bold">복약 알림 추가</h2>
+          <button @click="showMedicationModal = false" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-lg text-gray-600 mb-1">약 이름</label>
+            <input
+              v-model="medForm.name"
+              type="text"
+              placeholder="예: 혈압약"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label class="block text-lg text-gray-600 mb-1">복용 시간</label>
+            <input
+              v-model="medForm.time"
+              type="time"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label class="block text-lg text-gray-600 mb-2">복용 요일</label>
+            <div class="flex gap-2 flex-wrap">
+              <button
+                v-for="day in allDays"
+                :key="day.value"
+                @click="toggleMedDay(day.value)"
+                class="px-4 py-2 rounded-xl text-base font-bold border-2 transition"
+                :class="medForm.days.includes(day.value) ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-300'"
+              >
+                {{ day.label }}
+              </button>
+            </div>
+          </div>
+          <button
+            @click="saveMedication"
+            :disabled="medSaving || !medForm.name || !medForm.time"
+            class="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-bold text-lg py-4 rounded-xl transition"
+          >
+            {{ medSaving ? '저장 중...' : '알림 추가' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Call Message -->
     <div v-if="callMessage" class="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg text-lg font-bold">
       {{ callMessage }}
@@ -307,19 +519,19 @@
     <!-- SOS Confirm Modal -->
     <div v-if="showSOSConfirm" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl w-full max-w-sm p-6 text-center">
-        <p class="text-4xl mb-3">🚨</p>
+        <p class="text-5xl mb-3">&#x1F6A8;</p>
         <h2 class="text-2xl font-bold text-red-600 mb-2">긴급상황인가요?</h2>
         <p class="text-lg text-gray-600 mb-6">보호자에게 긴급 알림이 전송됩니다</p>
         <div class="flex gap-3">
           <button
             @click="showSOSConfirm = false"
-            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-lg py-3 rounded-xl"
+            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-lg py-4 rounded-xl"
           >
             아니요
           </button>
           <button
             @click="confirmSOS"
-            class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-lg py-3 rounded-xl"
+            class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-lg py-4 rounded-xl"
           >
             네, 긴급이에요!
           </button>
@@ -357,6 +569,7 @@ const settings = reactive({
   missed_count: 0,
   recent_logs: [],
   timezone: 'America/New_York',
+  medication_times: '[]',
 })
 const loading = ref(true)
 const showSettingsModal = ref(false)
@@ -392,6 +605,36 @@ let sosProgressInterval = null
 let sosCancelTimer = null
 let sosCancelInterval = null
 
+// Health Records
+const healthForm = reactive({
+  blood_pressure_systolic: null,
+  blood_pressure_diastolic: null,
+  blood_sugar: null,
+  weight: null,
+})
+const healthSaving = ref(false)
+const healthSaveMsg = ref('')
+const recentHealthRecords = ref([])
+
+// Medications
+const medications = ref([])
+const takenMedications = ref(new Set())
+const showMedicationModal = ref(false)
+const medForm = reactive({ name: '', time: '09:00', days: ['mon','tue','wed','thu','fri','sat','sun'] })
+const medSaving = ref(false)
+const allDays = [
+  { value: 'mon', label: '월' },
+  { value: 'tue', label: '화' },
+  { value: 'wed', label: '수' },
+  { value: 'thu', label: '목' },
+  { value: 'fri', label: '금' },
+  { value: 'sat', label: '토' },
+  { value: 'sun', label: '일' },
+]
+
+// Community posts
+const communityPosts = ref([])
+
 // WebRTC & Socket
 const { isConnected: socketConnected, connect: socketConnect, emit: socketEmit, on: socketOn, off: socketOff, socket: getSocket } = useSocket()
 const {
@@ -408,6 +651,17 @@ const callMessage = ref('')
 // Calendar
 const checkinHistory = ref([])
 const streakDays = ref(0)
+
+// Current date/time
+const currentDateTime = ref('')
+let clockInterval = null
+
+function updateClock() {
+  const now = new Date()
+  currentDateTime.value = now.toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
+  }) + ' ' + now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+}
 
 // Computed
 const todayCheckedIn = computed(() => {
@@ -462,6 +716,23 @@ function formatTime(dt) {
   return d.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+function formatDate(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDays(days) {
+  if (!days || !days.length) return '매일'
+  const dayMap = { mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일' }
+  if (days.length === 7) return '매일'
+  return days.map(d => dayMap[d] || d).join(', ')
+}
+
+function isMedicationTaken(medId) {
+  return takenMedications.value.has(medId)
+}
+
 async function loadSettings() {
   try {
     const { data } = await axios.get('/api/elder/settings', { headers })
@@ -478,6 +749,13 @@ async function loadSettings() {
       sos_enabled: s.sos_enabled ?? true,
       timezone: s.timezone || 'America/New_York',
     })
+    // Load medications from settings
+    try {
+      const meds = JSON.parse(s.medication_times || '[]')
+      medications.value = Array.isArray(meds) ? meds : []
+    } catch (e) {
+      medications.value = []
+    }
   } catch (e) {
     console.error('Failed to load elder settings', e)
   } finally {
@@ -488,10 +766,38 @@ async function loadSettings() {
 async function loadCheckinHistory() {
   try {
     const { data } = await axios.get('/api/elder/checkin-history', { headers })
-    checkinHistory.value = data.data || data || []
+    checkinHistory.value = data.data || data.logs || data || []
     calculateStreak()
   } catch (e) {
     console.error('Failed to load checkin history', e)
+  }
+}
+
+async function loadHealthRecords() {
+  try {
+    const { data } = await axios.get('/api/elder/health-records', { headers })
+    recentHealthRecords.value = data.data || data || []
+  } catch (e) {
+    console.error('Failed to load health records', e)
+  }
+}
+
+async function loadMedicationLogs() {
+  try {
+    const { data } = await axios.get('/api/elder/medications', { headers })
+    const todayLogs = data.today_logs || []
+    takenMedications.value = new Set(todayLogs.map(l => l.medication_id))
+  } catch (e) {
+    console.error('Failed to load medication logs', e)
+  }
+}
+
+async function loadCommunityPosts() {
+  try {
+    const { data } = await axios.get('/api/posts', { headers, params: { board: 'senior', per_page: 3 } })
+    communityPosts.value = data.data || data || []
+  } catch (e) {
+    // Silently fail - community posts are not critical
   }
 }
 
@@ -559,6 +865,80 @@ async function selectGuardian(user) {
   }
 }
 
+// Health Records
+async function saveHealthRecord() {
+  if (!healthForm.blood_pressure_systolic && !healthForm.blood_sugar && !healthForm.weight) {
+    alert('최소 하나의 항목을 입력해주세요')
+    return
+  }
+  healthSaving.value = true
+  healthSaveMsg.value = ''
+  try {
+    await axios.post('/api/elder/health-record', { ...healthForm }, { headers })
+    healthSaveMsg.value = '저장되었습니다!'
+    setTimeout(() => { healthSaveMsg.value = '' }, 3000)
+    // Reset form
+    healthForm.blood_pressure_systolic = null
+    healthForm.blood_pressure_diastolic = null
+    healthForm.blood_sugar = null
+    healthForm.weight = null
+    // Reload records
+    loadHealthRecords()
+  } catch (e) {
+    alert('건강 기록 저장에 실패했습니다')
+  } finally {
+    healthSaving.value = false
+  }
+}
+
+// Medications
+function toggleMedDay(day) {
+  const idx = medForm.days.indexOf(day)
+  if (idx >= 0) medForm.days.splice(idx, 1)
+  else medForm.days.push(day)
+}
+
+async function saveMedication() {
+  medSaving.value = true
+  try {
+    await axios.post('/api/elder/medications', {
+      name: medForm.name,
+      time: medForm.time,
+      days: medForm.days,
+    }, { headers })
+    showMedicationModal.value = false
+    medForm.name = ''
+    medForm.time = '09:00'
+    medForm.days = ['mon','tue','wed','thu','fri','sat','sun']
+    // Reload settings to get updated medications
+    await loadSettings()
+  } catch (e) {
+    alert('복약 알림 추가에 실패했습니다')
+  } finally {
+    medSaving.value = false
+  }
+}
+
+async function takeMedication(medId) {
+  try {
+    await axios.post(`/api/elder/medications/${medId}/taken`, {}, { headers })
+    takenMedications.value.add(medId)
+    takenMedications.value = new Set(takenMedications.value)
+  } catch (e) {
+    alert('복약 완료 처리에 실패했습니다')
+  }
+}
+
+async function removeMedication(medId) {
+  if (!confirm('이 복약 알림을 삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/elder/medications/${medId}`, { headers })
+    await loadSettings()
+  } catch (e) {
+    alert('삭제에 실패했습니다')
+  }
+}
+
 // SOS Long Press
 function startSOS() {
   sosProgress.value = 0
@@ -586,7 +966,7 @@ async function confirmSOS() {
   showSOSConfirm.value = false
   sosProgress.value = 0
 
-  let lat = null, lng = null
+  let lat = null, lng = null, address = null
   try {
     const pos = await new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
@@ -598,7 +978,7 @@ async function confirmSOS() {
   }
 
   try {
-    await axios.post('/api/elder/sos', { lat, lng }, { headers })
+    await axios.post('/api/elder/sos', { latitude: lat, longitude: lng, address }, { headers })
     sosActive.value = true
     sosLocation.value = lat ? { lat, lng } : null
     sosTime.value = new Date().toLocaleString('ko-KR')
@@ -621,7 +1001,6 @@ async function confirmSOS() {
         lat, lng,
       })
 
-      // Check guardian online status and start call
       try {
         const { data: onlineData } = await axios.get('/api/socket/online/' + settings.guardian_user_id)
         if (onlineData.online) {
@@ -642,7 +1021,7 @@ async function confirmSOS() {
       }
     }
   } catch (e) {
-    alert('SOS 전송에 실패했습니다. 직접 112에 연락해주세요.')
+    alert('SOS 전송에 실패했습니다. 직접 911에 연락해주세요.')
   }
 }
 
@@ -654,10 +1033,16 @@ function cancelSOSAlert() {
 
 // Lifecycle
 onMounted(() => {
+  updateClock()
+  clockInterval = setInterval(updateClock, 60000)
+
   loadSettings()
   loadCheckinHistory()
+  loadHealthRecords()
+  loadMedicationLogs()
+  loadCommunityPosts()
 
-  // 푸시 알림 구독
+  // Push notification subscription
   requestPermission().then(perm => {
     if (perm === 'granted' && auth.user?.id) {
       pushSubscribe(auth.user.id)
@@ -681,6 +1066,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (sosProgressInterval) clearInterval(sosProgressInterval)
   if (sosCancelInterval) clearInterval(sosCancelInterval)
+  if (clockInterval) clearInterval(clockInterval)
   removeSocketListeners()
 })
 </script>

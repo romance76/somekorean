@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 pb-24">
     <div class="bg-white shadow-sm px-4 py-3 flex items-center gap-3">
       <button @click="$router.back()" class="text-gray-500 text-xl">←</button>
-      <h1 class="font-bold text-gray-800">이벤트 등록</h1>
+      <h1 class="font-bold text-gray-800">{{ editId ? '이벤트 수정' : '이벤트 등록' }}</h1>
     </div>
 
     <div class="px-4 pt-4 space-y-4">
@@ -66,19 +66,21 @@
       </div>
 
       <button @click="submit" :disabled="submitting" class="w-full bg-blue-500 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50">
-        {{ submitting ? '등록 중...' : '이벤트 등록하기' }}
+        {{ submitting ? (editId ? '수정 중...' : '등록 중...') : (editId ? '이벤트 수정하기' : '이벤트 등록하기') }}
       </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 
 const router     = useRouter()
+const route      = useRoute()
 const submitting = ref(false)
+const editId     = ref(null)
 const regions    = ['LA','NY','Atlanta','Chicago','Seattle','Dallas','Houston','SF','Boston','Miami']
 
 const form = ref({
@@ -86,11 +88,35 @@ const form = ref({
   location: '', region: '', price: 0, max_attendees: '',  description: '',
 })
 
+onMounted(async () => {
+  const id = route.query.edit
+  if (id) {
+    editId.value = id
+    try {
+      const { data } = await axios.get(`/api/events/${id}`)
+      form.value.title = data.title || ''
+      form.value.category = data.category || 'general'
+      form.value.event_date = data.event_date ? data.event_date.slice(0, 16) : ''
+      form.value.is_online = !!data.is_online
+      form.value.location = data.location || ''
+      form.value.region = data.region || ''
+      form.value.price = data.price || 0
+      form.value.max_attendees = data.max_attendees || ''
+      form.value.description = data.description || ''
+    } catch {}
+  }
+})
+
 async function submit() {
   submitting.value = true
   try {
-    const { data } = await axios.post('/api/events', form.value)
-    router.push(`/events/${data.id}`)
+    if (editId.value) {
+      await axios.put(`/api/events/${editId.value}`, form.value)
+      router.push(`/events/${editId.value}`)
+    } else {
+      const { data } = await axios.post('/api/events', form.value)
+      router.push(`/events/${data.id}`)
+    }
   } catch (e) {
     const errs = e?.response?.data?.errors
     alert(errs ? Object.values(errs).flat().join('\n') : '오류가 발생했습니다')

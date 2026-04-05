@@ -221,19 +221,16 @@ export default {
       }
     },
 
-    async toggleDislike(short) {
-      try {
-        const res = await axios.post('/api/shorts/' + short.id + '/dislike');
-        short.is_disliked = !short.is_disliked;
-        short.dislikes_count = res.data.dislikes_count != null ? res.data.dislikes_count : (short.is_disliked ? (short.dislikes_count || 0) + 1 : (short.dislikes_count || 1) - 1);
-        if (short.is_disliked) short.is_liked = false;
-      } catch (e) {
-        console.error('Dislike failed:', e);
-      }
+    toggleDislike(short) {
+      // 싫어요 API가 아직 없으므로 클라이언트에서만 토글
+      short.is_disliked = !short.is_disliked;
+      short.dislikes_count = short.is_disliked ? (short.dislikes_count || 0) + 1 : Math.max((short.dislikes_count || 1) - 1, 0);
+      if (short.is_disliked) short.is_liked = false;
     },
 
     openComments(short) {
-      this.$router.push({ name: 'shorts.show', params: { id: short.id } });
+      // 숏츠 상세 페이지가 없으므로 알림 표시
+      alert('댓글 기능은 준비 중입니다.');
     },
 
     async shareShort(short) {
@@ -246,7 +243,7 @@ export default {
         await navigator.clipboard.writeText(url);
         alert('Link copied!');
       }
-      try { await axios.post('/api/shorts/' + short.id + '/share'); } catch (e) { /* ignore */ }
+      // share API가 아직 없으므로 생략
     },
 
     async trackView(short) {

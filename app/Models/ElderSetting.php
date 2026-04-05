@@ -11,7 +11,7 @@ class ElderSetting extends Model
         'guardian2_name', 'guardian2_phone', 'checkin_interval', 'checkin_time',
         'checkin_enabled', 'sos_enabled', 'auto_call_enabled',
         'last_checkin_at', 'last_sos_at', 'alert_sent', 'missed_count',
-        'timezone', 'notes',
+        'timezone', 'notes', 'medication_times',
     ];
 
     protected $casts = [

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
+use App\Models\GameSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -96,6 +97,42 @@ class WalletController extends Controller
         ]]);
     }
 
+    public function stars()
+    {
+        $userId = Auth::id();
+        $wallet = $this->getOrCreateWallet($userId);
+        return response()->json(['stars' => (int)$wallet->star_balance]);
+    }
+
+    public function earnStars(Request $request)
+    {
+        $userId = Auth::id();
+        $stars = (int)$request->input('stars', 0);
+        $game = $request->input('game', 'unknown');
+        $score = (int)$request->input('score', 0);
+
+        if ($stars <= 0) return response()->json(['error' => '별이 없습니다'], 400);
+        if ($stars > 100) $stars = 100; // cap
+
+        $wallet = $this->getOrCreateWallet($userId);
+        DB::table('user_wallets')->where('user_id', $userId)->update([
+            'star_balance' => $wallet->star_balance + $stars,
+            'lifetime_earned' => $wallet->lifetime_earned + $stars,
+            'updated_at' => now(),
+        ]);
+        DB::table('wallet_transactions')->insert([
+            'user_id' => $userId, 'type' => 'earn', 'currency' => 'star',
+            'amount' => $stars, 'balance_after' => $wallet->star_balance + $stars,
+            'description' => "{$game} 게임 보상 (점수: {$score})",
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        return response()->json([
+            'success' => true,
+            'stars' => $wallet->star_balance + $stars,
+            'message' => "+{$stars} STAR!",
+        ]);
+    }
+
     public static function reward($userId, $currency, $amount, $description, $gameId = null)
     {
         $wallet = DB::table('user_wallets')->where('user_id', $userId)->first();
@@ -111,6 +148,89 @@ class WalletController extends Controller
             'amount' => $amount, 'balance_after' => $newBalance,
             'game_id' => $gameId, 'description' => $description,
             'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    // POST /api/games/daily-spin — 일일 룰렛 돌리기
+    public function dailySpin(Request $request)
+    {
+        $user = auth()->user();
+        $today = now()->toDateString();
+
+        // 오늘 이미 돌렸는지 확인
+        $existing = DB::table('user_daily_spins')
+            ->where('user_id', $user->id)
+            ->where('spun_at', $today)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'error' => '오늘 이미 룰렛을 돌렸습니다',
+                'already_spun' => true,
+            ], 400);
+        }
+
+        // 지갑 확보
+        $this->getOrCreateWallet($user->id);
+
+        // 랜덤 보상 계산 (관리자 설정값 사용)
+        $min = (int) GameSetting::get('spin_min', 0);
+        $max = (int) GameSetting::get('spin_max', 100);
+        $jackpotMax = (int) GameSetting::get('spin_jackpot_max', 300);
+        $jackpotChance = (int) GameSetting::get('spin_jackpot_chance', 5);
+
+        $isJackpot = rand(1, 100) <= $jackpotChance;
+        if ($isJackpot) {
+            $points = rand($max + 1, $jackpotMax);
+        } else {
+            $points = rand($min, $max);
+        }
+
+        // 게임머니(chip_balance)로 지급
+        DB::table('user_wallets')->where('user_id', $user->id)
+            ->increment('chip_balance', $points);
+
+        // 트랜잭션 기록
+        $newBalance = (int) DB::table('user_wallets')->where('user_id', $user->id)->value('chip_balance');
+        DB::table('wallet_transactions')->insert([
+            'user_id' => $user->id,
+            'type' => 'spin',
+            'currency' => 'chip',
+            'amount' => $points,
+            'balance_after' => $newBalance,
+            'description' => $isJackpot ? "일일 룰렛 잭팟! +{$points} 게임머니" : "일일 룰렛 +{$points} 게임머니",
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 스핀 기록
+        DB::table('user_daily_spins')->insert([
+            'user_id' => $user->id,
+            'spun_at' => $today,
+            'points_awarded' => $points,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'points' => $points,
+            'is_jackpot' => $isJackpot,
+            'new_balance' => $newBalance,
+        ]);
+    }
+
+    // GET /api/games/daily-spin/status — 오늘 룰렛 상태
+    public function spinStatus()
+    {
+        $today = now()->toDateString();
+        $spin = DB::table('user_daily_spins')
+            ->where('user_id', auth()->id())
+            ->where('spun_at', $today)
+            ->first();
+
+        return response()->json([
+            'already_spun' => (bool) $spin,
+            'points_awarded' => $spin?->points_awarded ?? 0,
         ]);
     }
 }

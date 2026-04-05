@@ -32,7 +32,7 @@
           <span>💬</span> 게시글 ({{ results.posts.length }})
         </h2>
         <div class="space-y-2">
-          <RouterLink v-for="p in results.posts" :key="'p'+p.id" :to="`/community/post/${p.id}`"
+          <RouterLink v-for="p in results.posts" :key="'p'+p.id" :to="`/community/${p.board?.slug || 'general'}/${p.id}`"
             class="bg-white rounded-xl p-3 flex gap-3 shadow-sm hover:shadow transition block">
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium text-gray-800 truncate" v-html="highlight(p.title)"></div>

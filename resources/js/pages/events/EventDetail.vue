@@ -24,7 +24,7 @@
               </button>
               <!-- 수정/삭제 (주최자 본인) -->
               <template v-if="canEdit">
-                <router-link :to="`/events/write?edit=${event.id}`" class="text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">수정</router-link>
+                <router-link :to="`/events/create?edit=${event.id}`" class="text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">수정</router-link>
                 <button @click="deleteEvent" class="text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">삭제</button>
               </template>
             </div>

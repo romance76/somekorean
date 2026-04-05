@@ -488,7 +488,93 @@
       <!-- ========================= TAB 5: 결제/알림 설정 ========================= -->
       <div v-show="activeTab === 'notifications'">
 
-        <!-- 결제 시스템 연결 -->
+        <!-- Stripe 결제 키 설정 -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <span class="text-lg font-bold text-indigo-600">S</span>
+              </div>
+              <div>
+                <h2 class="text-base font-semibold text-gray-800">Stripe API 키 설정</h2>
+                <p class="text-xs text-gray-400">결제 처리를 위한 Stripe API 키 관리</p>
+              </div>
+            </div>
+            <span :class="[
+              'text-xs font-medium px-3 py-1 rounded-full',
+              payment.stripe_publishable_key ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+            ]">
+              {{ payment.stripe_publishable_key ? 'API 키 설정됨' : '미설정' }}
+            </span>
+          </div>
+
+          <!-- 테스트/라이브 모드 토글 -->
+          <div class="flex items-center gap-4 mb-5 p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600 font-medium">결제 모드:</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="payment.stripe_test_mode" class="sr-only peer" />
+              <div class="w-11 h-6 bg-green-500 peer-checked:bg-yellow-400 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] peer-checked:after:translate-x-full after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            </label>
+            <span :class="[
+              'text-xs font-medium px-2.5 py-1 rounded-full',
+              payment.stripe_test_mode ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+            ]">
+              {{ payment.stripe_test_mode ? '테스트 모드' : '라이브 (실결제)' }}
+            </span>
+          </div>
+
+          <!-- Stripe API 키 입력 -->
+          <div class="space-y-4 mb-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Publishable Key</label>
+              <input
+                v-model="payment.stripe_publishable_key"
+                type="text"
+                class="input-field font-mono text-sm"
+                :placeholder="payment.stripe_test_mode ? 'pk_test_...' : 'pk_live_...'"
+              />
+              <p class="text-xs text-gray-400 mt-1">프론트엔드에서 사용되는 공개 키입니다</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Secret Key</label>
+              <div class="relative">
+                <input
+                  v-model="payment.stripe_secret_key"
+                  :type="showStripeSecret ? 'text' : 'password'"
+                  class="input-field font-mono text-sm pr-20"
+                  :placeholder="payment.stripe_test_mode ? 'sk_test_...' : 'sk_live_...'"
+                />
+                <button
+                  type="button"
+                  @click="showStripeSecret = !showStripeSecret"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded"
+                >
+                  {{ showStripeSecret ? '숨기기' : '보기' }}
+                </button>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">서버에서 사용되는 비밀 키입니다 (절대 노출하지 마세요)</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Webhook Secret <span class="text-gray-400">(선택)</span></label>
+              <input
+                v-model="payment.stripe_webhook_secret"
+                type="password"
+                class="input-field font-mono text-sm"
+                placeholder="whsec_..."
+              />
+              <p class="text-xs text-gray-400 mt-1">Webhook 이벤트 검증용 (설정 시 보안 강화)</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button @click="saveStripeKeys" :disabled="savingStripe" class="btn-primary">
+              <span v-if="savingStripe" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+              Stripe 키 저장
+            </button>
+          </div>
+        </div>
+
+        <!-- 결제 일반 설정 -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
           <div class="flex items-center justify-between mb-5">
             <h2 class="text-base font-semibold text-gray-800">결제 시스템 연결</h2>
@@ -928,6 +1014,8 @@ const activeTab = ref('company')
 const activeTermsTab = ref('terms')
 const logoError = ref(false)
 const lastLoaded = ref('—')
+const showStripeSecret = ref(false)
+const savingStripe = ref(false)
 
 const tabs = [
   { key: 'company', label: '회사 정보' },
@@ -1045,6 +1133,10 @@ const newAnnouncement = reactive({
 // ─── Payment Data ─────────────────────────────────────────────────────────────
 const payment = reactive({
   stripe_connected: false,
+  stripe_publishable_key: '',
+  stripe_secret_key: '',
+  stripe_webhook_secret: '',
+  stripe_test_mode: true,
   mode: 'test',
   card_enabled: true,
   apple_pay_enabled: false,
@@ -1115,6 +1207,11 @@ function applySettings(data) {
     if (data.notifications.push) Object.assign(notifications.push, data.notifications.push)
   }
   if (data.payment) Object.assign(payment, data.payment)
+  // Stripe 키 로드 (site_settings에서 직접)
+  if (data.stripe_publishable_key) payment.stripe_publishable_key = data.stripe_publishable_key
+  if (data.stripe_secret_key) payment.stripe_secret_key = data.stripe_secret_key
+  if (data.stripe_webhook_secret) payment.stripe_webhook_secret = data.stripe_webhook_secret
+  if (data.stripe_test_mode !== undefined) payment.stripe_test_mode = data.stripe_test_mode === '1' || data.stripe_test_mode === true
   if (data.seo) Object.assign(seo, data.seo)
 }
 
@@ -1186,6 +1283,23 @@ async function saveNotifications() {
     showToast('저장에 실패했습니다.', 'error')
   } finally {
     saving.value = false
+  }
+}
+
+async function saveStripeKeys() {
+  savingStripe.value = true
+  try {
+    await axios.post('/api/admin/settings/stripe', {
+      stripe_publishable_key: payment.stripe_publishable_key,
+      stripe_secret_key: payment.stripe_secret_key,
+      stripe_webhook_secret: payment.stripe_webhook_secret,
+      stripe_test_mode: payment.stripe_test_mode,
+    })
+    showToast('Stripe 키가 저장되었습니다.')
+  } catch {
+    showToast('Stripe 키 저장에 실패했습니다.', 'error')
+  } finally {
+    savingStripe.value = false
   }
 }
 

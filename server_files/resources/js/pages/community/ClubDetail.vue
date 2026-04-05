@@ -17,17 +17,27 @@
                 </div>
                 <div class="text-white pb-1">
                   <h1 class="text-xl sm:text-2xl font-black">{{ club.name }}</h1>
-                  <div class="flex items-center gap-2 text-sm text-white/80 mt-0.5">
+                  <div class="flex items-center gap-2 text-sm text-white/80 mt-0.5 flex-wrap">
                     <span class="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs">{{ club.category }}</span>
                     <span>👤 {{ club.member_count || members.length }}명</span>
                     <span v-if="club.is_approval" class="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs">🔒 승인제</span>
+                    <span v-if="club.is_online" class="bg-blue-400/80 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-medium">🌐 온라인</span>
+                    <span v-else-if="club.region || club.zip_code" class="bg-green-400/80 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-medium">📍 {{ club.region || club.zip_code }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <!-- 클럽 설명 + 가입 버튼 -->
+          <!-- 클럽 설명 + 위치 + 가입 버튼 -->
           <div class="bg-white p-5">
+            <!-- 온라인/지역 안내 -->
+            <div v-if="club.is_online" class="flex items-center gap-2 mb-3 p-2.5 bg-blue-50 rounded-lg">
+              <span class="text-blue-600 text-sm font-medium">🌐 온라인 동호회 - 어디서든 참여 가능</span>
+            </div>
+            <div v-else-if="club.region || club.zip_code" class="flex items-center gap-2 mb-3 p-2.5 bg-green-50 rounded-lg">
+              <span class="text-green-700 text-sm font-medium">📍 {{ club.region || '' }} {{ club.zip_code ? '(' + club.zip_code + ')' : '' }}</span>
+              <span v-if="club.address" class="text-gray-500 text-xs ml-1">| {{ club.address }}</span>
+            </div>
             <div class="flex items-start justify-between gap-4">
               <p class="text-sm text-gray-600 leading-relaxed flex-1">{{ club.description }}</p>
               <div class="flex-shrink-0">
@@ -192,6 +202,49 @@
                     <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                   </select>
                 </div>
+                <!-- 동호회 유형 -->
+                <div>
+                  <label class="text-xs text-gray-500 mb-1 block">동호회 유형</label>
+                  <div class="flex gap-4 mt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" :value="true" v-model="editForm.is_online" class="w-4 h-4 text-blue-600" />
+                      <span class="text-sm text-gray-700">🌐 온라인</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" :value="false" v-model="editForm.is_online" class="w-4 h-4 text-blue-600" />
+                      <span class="text-sm text-gray-700">📍 지역</span>
+                    </label>
+                  </div>
+                </div>
+                <!-- 지역 동호회 위치 -->
+                <div v-if="!editForm.is_online" class="space-y-3 p-3 bg-green-50/50 rounded-lg border border-green-100">
+                  <div>
+                    <label class="text-xs text-gray-500 mb-1 block font-semibold">위치 입력 방식</label>
+                    <div class="flex gap-4">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" value="zip" v-model="editLocationInputType" class="w-4 h-4 text-green-600" />
+                        <span class="text-sm text-gray-600">집코드</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" value="address" v-model="editLocationInputType" class="w-4 h-4 text-green-600" />
+                        <span class="text-sm text-gray-600">상세 주소</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div v-if="editLocationInputType === 'zip'">
+                    <label class="text-xs text-gray-500 mb-1 block">집코드 (Zip Code)</label>
+                    <input v-model="editForm.zip_code" type="text" placeholder="예: 90001" maxlength="10"
+                      @blur="onEditZipCodeBlur"
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    <p v-if="editZipCodeResult" class="text-xs text-green-600 mt-1 font-medium">📍 {{ editZipCodeResult }}</p>
+                    <p v-if="editZipCodeError" class="text-xs text-red-500 mt-1">{{ editZipCodeError }}</p>
+                  </div>
+                  <div v-if="editLocationInputType === 'address'">
+                    <label class="text-xs text-gray-500 mb-1 block">상세 주소</label>
+                    <input v-model="editForm.address" type="text" placeholder="예: 3731 Wilshire Blvd, Los Angeles, CA"
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  </div>
+                </div>
                 <button @click="updateClub"
                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">저장</button>
               </div>
@@ -307,7 +360,25 @@ const selectedPost = ref(null);
 
 const postForm = ref({ title: '', content: '' });
 const noticeForm = ref({ title: '', content: '' });
-const editForm = ref({ name: '', description: '', category: '' });
+const editForm = ref({ name: '', description: '', category: '', is_online: false, zip_code: '', address: '' });
+const editLocationInputType = ref('zip');
+const editZipCodeResult = ref('');
+const editZipCodeError = ref('');
+
+async function onEditZipCodeBlur() {
+  const zip = editForm.value.zip_code?.trim();
+  editZipCodeResult.value = '';
+  editZipCodeError.value = '';
+  if (!zip || zip.length < 5) return;
+  try {
+    const { data } = await axios.get('/api/clubs/geocode-zip', { params: { zip_code: zip } });
+    if (data.city) {
+      editZipCodeResult.value = `${data.city}, ${data.state || ''}`.trim();
+    }
+  } catch (e) {
+    editZipCodeError.value = '유효하지 않은 집코드입니다.';
+  }
+}
 
 const categories = ['스포츠', '음식/요리', '육아/교육', '취미/여가', '종교', '비즈니스', '기타'];
 
@@ -397,7 +468,21 @@ async function submitNotice() {
 
 async function updateClub() {
   try {
-    await axios.put(`/api/clubs/${club.value.id}`, editForm.value);
+    const payload = {
+      name: editForm.value.name,
+      description: editForm.value.description,
+      category: editForm.value.category,
+      is_online: editForm.value.is_online ? '1' : '0',
+    };
+    if (!editForm.value.is_online) {
+      if (editLocationInputType.value === 'zip' && editForm.value.zip_code) {
+        payload.zip_code = editForm.value.zip_code;
+      }
+      if (editLocationInputType.value === 'address' && editForm.value.address) {
+        payload.address = editForm.value.address;
+      }
+    }
+    await axios.put(`/api/clubs/${club.value.id}`, payload);
     await fetchClub();
     alert('저장되었습니다.');
   } catch (e) {
@@ -454,7 +539,19 @@ async function fetchClub() {
   const c = data.club || data;
   club.value = c;
   if (c.members && c.members.length) { members.value = c.members; }
-  editForm.value = { name: c.name, description: c.description, category: c.category };
+  editForm.value = {
+    name: c.name,
+    description: c.description,
+    category: c.category,
+    is_online: c.is_online || false,
+    zip_code: c.zip_code || '',
+    address: c.address || '',
+  };
+  // 위치 입력 방식 자동 결정
+  editLocationInputType.value = c.zip_code ? 'zip' : (c.address ? 'address' : 'zip');
+  if (c.region && c.zip_code) {
+    editZipCodeResult.value = c.region;
+  }
 }
 
 async function fetchMembers() {

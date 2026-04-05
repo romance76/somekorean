@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
+use App\Models\GameSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -22,9 +23,21 @@ class GameScoreController extends Controller
             return response()->json(['error' => '게임을 찾을 수 없습니다'], 404);
         }
 
-        // reward 계산 (점수 * 0.1 + 기본 보상)
-        $reward = max(1, (int)($score * 0.1) + ($game->reward_base ?? 10));
-        if ($result === 'lose') $reward = (int)($reward * 0.3);
+        // 게임 타입별 포인트 차등화
+        $gameType = $game->type ?? 'single';
+        $isBettingGame = in_array($gameType, ['betting', 'multi']);
+        $isNormalGame = in_array($gameType, ['educational', 'puzzle', 'arcade', 'single']);
+
+        if ($isBettingGame) {
+            // 베팅 게임: 게임머니(CHIP) 기반 — 별도 처리 (프론트에서 직접 관리)
+            // 베팅 게임은 saveScore를 통한 보상 지급 없음
+            $reward = 0;
+        } else {
+            // 일반 게임 (교육/퍼즐/아케이드 등): 매우 소량 (1~5 COIN)
+            $normalMultiplier = (float) GameSetting::get('normal_game_reward_multiplier', 0.01);
+            $reward = max(1, min(5, (int)($score * $normalMultiplier) + 1));
+            if ($result === 'lose') $reward = max(1, (int)($reward * 0.3));
+        }
 
         // game_sessions 저장
         $sessionId = DB::table('game_sessions')->insertGetId([
@@ -34,28 +47,79 @@ class GameScoreController extends Controller
             'result'     => $result,
             'duration'   => $duration,
             'reward'     => $reward,
-            'meta'       => json_encode(['level' => $level]),
+            'meta'       => json_encode(['level' => $level, 'game_type' => $gameType]),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // 코인 지급 (user_wallets 테이블)
-        DB::table('user_wallets')
-            ->where('user_id', $user->id)
-            ->increment('coin_balance', $reward);
-        DB::table('user_wallets')
-            ->where('user_id', $user->id)
-            ->increment('lifetime_earned', $reward);
+        // 일반 게임만 코인 지급
+        if ($reward > 0) {
+            DB::table('user_wallets')
+                ->where('user_id', $user->id)
+                ->increment('coin_balance', $reward);
+            DB::table('user_wallets')
+                ->where('user_id', $user->id)
+                ->increment('lifetime_earned', $reward);
+        }
 
         // play_count 증가
         DB::table('games')->where('id', $gameId)->increment('play_count');
 
+        $currencyLabel = $isBettingGame ? '게임머니' : '코인';
         return response()->json([
             'success'    => true,
             'session_id' => $sessionId,
             'score'      => $score,
             'reward'     => $reward,
-            'message'    => "{$reward}코인을 받았어요!",
+            'is_betting' => $isBettingGame,
+            'message'    => $reward > 0 ? "{$reward}{$currencyLabel}을 받았어요!" : '게임 기록이 저장되었습니다.',
+        ]);
+    }
+
+    // POST /api/games/convert-to-game-money — COIN을 게임머니(CHIP)로 변환 (일방통행)
+    public function convertToGameMoney(Request $req)
+    {
+        $user = Auth::user();
+        $amount = (int) $req->input('amount', 0);
+        $rate = (int) GameSetting::get('coin_to_game_money_rate', 50);
+
+        if ($amount <= 0) {
+            return response()->json(['error' => '변환할 코인 수를 입력하세요'], 400);
+        }
+
+        $wallet = DB::table('user_wallets')->where('user_id', $user->id)->first();
+        if (!$wallet || (int) $wallet->coin_balance < $amount) {
+            return response()->json(['error' => '코인이 부족합니다'], 400);
+        }
+
+        $gameMoney = $amount * $rate;
+
+        DB::table('user_wallets')->where('user_id', $user->id)->update([
+            'coin_balance' => DB::raw("coin_balance - {$amount}"),
+            'chip_balance' => DB::raw("chip_balance + {$gameMoney}"),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('wallet_transactions')->insert([
+            'user_id' => $user->id,
+            'type' => 'convert',
+            'currency' => 'chip',
+            'amount' => $gameMoney,
+            'balance_after' => (int) $wallet->chip_balance + $gameMoney,
+            'description' => "{$amount} COIN → {$gameMoney} 게임머니 변환 (x{$rate})",
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $newWallet = DB::table('user_wallets')->where('user_id', $user->id)->first();
+
+        return response()->json([
+            'success' => true,
+            'converted' => $gameMoney,
+            'rate' => $rate,
+            'coin_balance' => (int) $newWallet->coin_balance,
+            'chip_balance' => (int) $newWallet->chip_balance,
+            'message' => "{$amount} COIN → {$gameMoney} 게임머니로 변환되었습니다!",
         ]);
     }
 

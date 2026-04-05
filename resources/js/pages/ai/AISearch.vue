@@ -74,7 +74,7 @@
           <span class="text-xs font-normal text-gray-400">{{ results.posts.length }}건</span>
         </h2>
         <div class="space-y-2">
-          <RouterLink v-for="p in results.posts" :key="p.id" :to="`/community/posts/${p.id}`"
+          <RouterLink v-for="p in results.posts" :key="p.id" :to="`/community/${p.board_slug || 'free'}/${p.id}`"
             class="bg-white rounded-xl px-4 py-3 flex justify-between items-start hover:shadow-md transition cursor-pointer block">
             <div>
               <p class="font-semibold text-gray-800 text-sm mb-1">{{ p.title }}</p>
@@ -92,7 +92,7 @@
           <span class="text-xs font-normal text-gray-400">{{ results.businesses.length }}건</span>
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <RouterLink v-for="b in results.businesses" :key="b.id" :to="`/businesses/${b.id}`"
+          <RouterLink v-for="b in results.businesses" :key="b.id" :to="`/directory/${b.id}`"
             class="bg-white rounded-xl p-4 hover:shadow-md transition cursor-pointer block">
             <p class="font-bold text-gray-800 text-sm">{{ b.name }}</p>
             <p class="text-xs text-gray-500 mt-1">{{ b.category }} · {{ b.city }}</p>

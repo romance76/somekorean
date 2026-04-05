@@ -69,6 +69,47 @@ class AdminSettingsController extends Controller
         return response()->json(['message'=>'결제 설정이 저장되었습니다.']);
     }
 
+    // POST /api/admin/settings/stripe
+    public function saveStripeKeys(Request $r) {
+        $fields = [
+            'stripe_publishable_key' => $r->input('stripe_publishable_key'),
+            'stripe_secret_key'      => $r->input('stripe_secret_key'),
+            'stripe_webhook_secret'  => $r->input('stripe_webhook_secret'),
+            'stripe_test_mode'       => $r->input('stripe_test_mode', true) ? '1' : '0',
+        ];
+        foreach ($fields as $key => $val) {
+            if ($val !== null) {
+                DB::table('site_settings')->updateOrInsert(['key' => $key], ['value' => $val, 'updated_at' => now()]);
+            }
+        }
+
+        // .env 파일도 업데이트 (서버 환경에서만)
+        try {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $envMap = [
+                    'STRIPE_KEY'    => $r->input('stripe_publishable_key'),
+                    'STRIPE_SECRET' => $r->input('stripe_secret_key'),
+                    'STRIPE_WEBHOOK_SECRET' => $r->input('stripe_webhook_secret'),
+                ];
+                foreach ($envMap as $envKey => $envVal) {
+                    if ($envVal === null) continue;
+                    if (preg_match("/^{$envKey}=.*/m", $envContent)) {
+                        $envContent = preg_replace("/^{$envKey}=.*/m", "{$envKey}={$envVal}", $envContent);
+                    } else {
+                        $envContent .= "\n{$envKey}={$envVal}";
+                    }
+                }
+                file_put_contents($envPath, $envContent);
+            }
+        } catch (\Exception $e) {
+            // .env 업데이트 실패해도 site_settings에는 저장됨
+        }
+
+        return response()->json(['message' => 'Stripe 설정이 저장되었습니다.']);
+    }
+
     // POST /api/admin/settings/notifications
     public function saveNotifications(Request $r) {
         DB::table('site_settings')->updateOrInsert(['key'=>'notification_settings'], ['value'=>json_encode($r->all()), 'updated_at'=>now()]);
@@ -284,6 +325,30 @@ class AdminSettingsController extends Controller
         // 실제 구현에서는 토큰 무효화 등
         DB::table('personal_access_tokens')->where('tokenable_id', $id)->delete();
         return response()->json(['message' => '강제 로그아웃 되었습니다.']);
+    }
+
+    // POST /api/admin/settings/logo — 로고 업로드
+    public function uploadLogo(Request $request)
+    {
+        $request->validate(['logo' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:5120']);
+
+        $file = $request->file('logo');
+        $file->move(public_path('images'), 'logo.jpg');
+
+        $url = '/images/logo.jpg?v=' . time();
+        DB::table('site_settings')->updateOrInsert(
+            ['key' => 'logo_url'],
+            ['value' => $url, 'updated_at' => now()]
+        );
+
+        return response()->json(['message' => '로고가 업로드되었습니다.', 'logo_url' => $url]);
+    }
+
+    // GET /api/site-settings/logo — 현재 로고 URL 반환
+    public function getLogo()
+    {
+        $url = DB::table('site_settings')->where('key', 'logo_url')->value('value');
+        return response()->json(['logo_url' => $url ?: '/images/logo.jpg']);
     }
 
     // GET /api/admin/wallets

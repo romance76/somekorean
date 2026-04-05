@@ -17,7 +17,7 @@
         <div v-if="!isLoggedIn" class="text-center py-8">
           <div class="text-5xl mb-4">🔐</div>
           <p class="text-gray-600 mb-4">소유권 신청을 위해 로그인이 필요합니다</p>
-          <router-link to="/login" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700">로그인하기</router-link>
+          <router-link to="/auth/login" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700">로그인하기</router-link>
         </div>
         <div v-else>
           <div class="border rounded-xl p-4 mb-6 bg-gray-50">
@@ -85,7 +85,7 @@
         <div class="text-6xl mb-4">🎉</div>
         <h2 class="text-2xl font-bold mb-2">소유권 승인 완료!</h2>
         <p class="text-gray-500 mb-6">이제 내 업소를 직접 관리할 수 있습니다</p>
-        <router-link to="/my-business" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700">내 업소 관리하기 →</router-link>
+        <router-link to="/dashboard" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700">내 업소 관리하기 →</router-link>
       </div>
     </div>
   </div>

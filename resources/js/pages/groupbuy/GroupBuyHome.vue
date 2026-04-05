@@ -222,6 +222,7 @@ const categories = [
 ]
 
 const activeCat = ref('all')
+const searchKeyword = ref('')
 const items     = ref([])
 const loading   = ref(true)
 const selected  = ref(null)

@@ -284,13 +284,16 @@ async function load(page = 1) {
 watch(radius, () => load(1));
 
 // LocationBar handlers
-function onLocationSearch(keyword) {
+function onLocationSearch({ keyword, city, radius: r }) {
   search.value = keyword
+  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
+  if (r && r !== '전국') userRadius.value = parseInt(r)
   load()
 }
 
-function onLocationChange(location) {
-  console.log('Location changed:', location)
+function onLocationChange({ city, radius: r }) {
+  if (city?.lat) { userLat.value = city.lat; userLng.value = city.lng }
+  if (r !== undefined) userRadius.value = r === '전국' ? 0 : parseInt(r)
   load()
 }
 

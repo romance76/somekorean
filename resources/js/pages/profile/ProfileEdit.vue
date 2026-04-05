@@ -13,7 +13,7 @@
           </div>
           <div>
             <input type="file" ref="avatarInput" accept="image/*" class="hidden" @change="onAvatarChange" />
-            <button @click="$refsavatarInput.click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">사진 변경</button>
+            <button @click="$refs.avatarInput.click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">사진 변경</button>
             <p class="text-xs text-gray-400 mt-1">JPG, PNG (최대 2MB)</p>
           </div>
         </div>
@@ -83,6 +83,32 @@
               <label class="block text-xs text-gray-500 mb-1">우편번호</label>
               <input v-model="form.zip_code" type="text" placeholder="90001" maxlength="10" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 소셜 계정 연동 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+        <h2 class="text-sm font-bold text-gray-800 mb-4">💬 소셜 계정 연동</h2>
+        <p class="text-xs text-gray-400 mb-4">친구에게 카카오톡/텔레그램으로 연락할 수 있도록 ID를 등록하세요</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">카카오톡 ID</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-lg">📱</span>
+              <input v-model="form.kakao_id" type="text" placeholder="카카오톡 ID" maxlength="100"
+                class="w-full border border-gray-200 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1">카카오톡 > 설정 > 카카오계정에서 확인</p>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">텔레그램 ID</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-lg">✈️</span>
+              <input v-model="form.telegram_id" type="text" placeholder="@username" maxlength="100"
+                class="w-full border border-gray-200 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-400 focus:border-transparent outline-none" />
+            </div>
+            <p class="text-xs text-gray-400 mt-1">텔레그램 > 설정 > 사용자 이름</p>
           </div>
         </div>
       </div>
@@ -157,7 +183,7 @@
       <!-- 저장 버튼 (고정) -->
       <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
         <div class="max-w-3xl mx-auto flex gap-3">
-          <router-link to="/profile" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold text-center hover:bg-gray-200 transition">취소</router-link>
+          <router-link to="/dashboard" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold text-center hover:bg-gray-200 transition">취소</router-link>
           <button @click="saveProfile" :disabled="saving"
             class="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition">
             {{ saving ? '저장 중...' : '💾 저장하기' }}
@@ -188,6 +214,7 @@ const form = ref({
   address: '', address2: '', city: '', state: '', zip_code: '',
   lang: 'ko', default_radius: 30, avatar: '',
   payment_method: '', payment_last4: '',
+  kakao_id: '', telegram_id: '',
 })
 
 const pwForm = ref({ current_password: '', password: '', password_confirmation: '' })
@@ -229,6 +256,7 @@ async function loadProfile() {
       lang: u.lang || 'ko', default_radius: u.default_radius || 30,
       avatar: u.avatar || '',
       payment_method: u.payment_method || '', payment_last4: u.payment_last4 || '',
+      kakao_id: u.kakao_id || '', telegram_id: u.telegram_id || '',
     }
   } catch (e) {
     console.error('프로필 로딩 실패', e)
@@ -251,7 +279,7 @@ async function saveProfile() {
 
 async function changePassword() {
   try {
-    await axios.put('/api/profile/password', pwForm.value, { headers: getAuthHeaders() })
+    await axios.post('/api/profile/password', pwForm.value, { headers: getAuthHeaders() })
     alert('비밀번호가 변경되었습니다!')
     pwForm.value = { current_password: '', password: '', password_confirmation: '' }
   } catch (e) {

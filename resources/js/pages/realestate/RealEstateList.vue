@@ -164,52 +164,30 @@ function getUserLocation() {
     );
   }
 }
-const loading = ref(false)
+const loading = ref(true)
 const items = ref([])
 const page = ref(1)
 const totalPages = ref(1)
 
-// Mock data
-const mockListings = [
-  { id: 1, title: 'LA 한인타운 1BR 아파트', type: '렌트', price: 2200, address: '3456 Wilshire Blvd, Los Angeles, CA 90010', bedrooms: 2, bathrooms: 1, sqft: 950, region: 'Los Angeles', photos: [], created_at: '2026-03-20', deposit: 2200, pet_policy: '협의', description: '에이버 지역 깨끗한 아파트, 주차 포함' },
-  { id: 2, title: '풀러턴 타운하우스 매매', type: '매매', price: 685000, address: '125 Peachtree St NE, Atlanta, GA 30303', bedrooms: 3, bathrooms: 2, sqft: 1800, region: 'Atlanta', photos: [], created_at: '2026-03-18', deposit: 0, pet_policy: '가능', description: '풀러턴 지역 타운하우스, 복층 구조' },
-  { id: 3, title: '플러싱 룸메이트 구합니다', type: '룸메이트', price: 900, address: '456 Main St, Flushing, NY 11355', bedrooms: 1, bathrooms: 1, sqft: 0, region: 'New York', photos: [], created_at: '2026-03-22', deposit: 900, pet_policy: '불가', description: '플러싱 한인타운 바로 앞, 마스터룸 사용' },
-  { id: 4, title: 'LA 한인타운 상가 임대', type: '상가', price: 4500, address: '621 S Western Ave, Los Angeles, CA 90005', bedrooms: 0, bathrooms: 1, sqft: 1200, region: 'Los Angeles', photos: [], created_at: '2026-03-15', deposit: 9000, pet_policy: '불가', description: '한인타운 메인 거리 상가, 주차 포함' },
-  { id: 5, title: '뉴저지 포트리 1BR 렌트', type: '렌트', price: 1800, address: '300 Summit Ave, Fort Lee, NJ 07024', bedrooms: 1, bathrooms: 1, sqft: 750, region: 'New Jersey', photos: [], created_at: '2026-03-21', deposit: 1800, pet_policy: '불가', description: 'GW 브릿지 앞 깨끗한 아파트' },
-  { id: 6, title: '애틀랜타 풀옵션 스튜디오', type: '렌트', price: 1500, address: '3200 Buford Hwy, Duluth, GA 30096', bedrooms: 0, bathrooms: 1, sqft: 450, region: 'Atlanta', photos: [], created_at: '2026-03-25', deposit: 1500, pet_policy: '불가', description: '뷰포드하이웨이 한인타운 인접, 가구 포함' },
-  { id: 7, title: '뉴욕 퀸즈 2BR 콘도', type: '매매', price: 550000, address: '1000 1st Ave, Queens, NY 11101', bedrooms: 2, bathrooms: 1, sqft: 1050, region: 'New York', photos: [], created_at: '2026-03-16', deposit: 0, pet_policy: '협의', description: '퀸즈 지역 전망 좋은 콘도' },
-  { id: 8, title: '달라스 한인 마트 근처 3BR', type: '렌트', price: 1600, address: '2310 Royal Ln, Dallas, TX 75229', bedrooms: 3, bathrooms: 2, sqft: 1400, region: 'Dallas', photos: [], created_at: '2026-03-17', deposit: 1600, pet_policy: '가능', description: '한인 마트 근처 넓은 집' },
-  { id: 9, title: '시애틀 다운타운 콘도 매매', type: '매매', price: 520000, address: '1000 1st Ave, Seattle, WA 98104', bedrooms: 2, bathrooms: 1, sqft: 1050, region: 'Seattle', photos: [], created_at: '2026-03-16', deposit: 0, pet_policy: '협의', description: '다운타운 시애틀 조망 좋은 콘도' },
-  { id: 10, title: '시카고 링컨빌 룸메이트', type: '룸메이트', price: 750, address: '4500 N Lincoln Ave, Chicago, IL 60625', bedrooms: 1, bathrooms: 1, sqft: 0, region: 'Chicago', photos: [], created_at: '2026-03-24', deposit: 750, pet_policy: '불가', description: '링컨빌 한인타운 근처, 각방 사용' },
-  { id: 11, title: '비버리힐즈 상가 임대 (식당용)', type: '상가', price: 5500, address: '9450 S Western Ave, Los Angeles, CA 90047', bedrooms: 0, bathrooms: 2, sqft: 2000, region: 'Los Angeles', photos: [], created_at: '2026-03-14', deposit: 11000, pet_policy: '불가', description: '식당 운영 가능, 주방 설비 포함' },
-  { id: 12, title: '보스턴 케임브리지 2BR 렌트', type: '렌트', price: 2500, address: '100 Cambridge St, Cambridge, MA 02141', bedrooms: 2, bathrooms: 1, sqft: 900, region: 'Boston', photos: [], created_at: '2026-03-20', deposit: 2500, pet_policy: '협의', description: 'MIT 근처 학생 및 직장인에게 좋은 위치' },
-  { id: 13, title: '휴스턴 스프링브랜치 4BR 매매', type: '매매', price: 380000, address: '15700 Woodforest Blvd, Houston, TX 77049', bedrooms: 4, bathrooms: 3, sqft: 2800, region: 'Houston', photos: [], created_at: '2026-03-13', deposit: 0, pet_policy: '가능', description: '한인 마트 및 학교 근처, 넓은 마당' },
-  { id: 14, title: '버지니아 타운하우스 렌트', type: '렌트', price: 2100, address: '7000 Columbia Pike, Annandale, VA 22003', bedrooms: 3, bathrooms: 2, sqft: 1600, region: 'Virginia', photos: [], created_at: '2026-03-22', deposit: 2100, pet_policy: '가능', description: '애난데일 한인타운 바로 앞' },
-  { id: 15, title: '마이애미 비치 콘도 매매', type: '매매', price: 520000, address: '1500 Collins Ave, Miami Beach, FL 33139', bedrooms: 2, bathrooms: 2, sqft: 1100, region: 'Miami', photos: [], created_at: '2026-03-11', deposit: 0, pet_policy: '협의', description: '오션뷰 콘도, 풀 및 헬스장 이용 가능' },
-  { id: 16, title: '맨해튼 스튜디오 렌트', type: '렌트', price: 2800, address: '350 W 42nd St, New York, NY 10036', bedrooms: 0, bathrooms: 1, sqft: 500, region: 'New York', photos: [], created_at: '2026-03-23', deposit: 5600, pet_policy: '불가', description: '타임스스퀘어 인접, 새 리모델링' },
-]
-
-function load(p = 1) {
+async function load(p = 1) {
   loading.value = true
   page.value = p
-
-  setTimeout(() => {
-    let filtered = [...mockListings]
-    if (category.value) filtered = filtered.filter(i => i.type === category.value)
-    if (search.value) {
-      const q = search.value.toLowerCase()
-      filtered = filtered.filter(i =>
-        i.title.toLowerCase().includes(q) ||
-        i.address.toLowerCase().includes(q) ||
-        i.region.toLowerCase().includes(q)
-      )
-    }
-    if (region.value) filtered = filtered.filter(i => i.region === region.value)
-
-    items.value = filtered
-    totalPages.value = Math.max(1, Math.ceil(filtered.length / 12))
-    loading.value = false
-  }, 300)
+  try {
+    const { data } = await axios.get('/api/realestate', {
+      params: {
+        page: p,
+        search: search.value,
+        type: category.value,
+        region: region.value,
+        lat: userLat.value,
+        lng: userLng.value,
+        radius: radius.value,
+      }
+    })
+    items.value = data.data || data
+    totalPages.value = data.last_page || 1
+  } catch {}
+  loading.value = false
 }
 
 function formatDate(d) {

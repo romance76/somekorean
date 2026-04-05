@@ -18,7 +18,7 @@
       <div class="text-5xl mb-4">🏪</div>
       <h2 class="text-2xl font-bold mb-2">등록된 업소가 없습니다</h2>
       <p class="text-gray-500 mb-6">소유권 신청을 통해 내 업소를 등록하세요</p>
-      <router-link to="/businesses" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700">업소 찾기</router-link>
+      <router-link to="/directory" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700">업소 찾기</router-link>
     </div>
 
     <div v-else class="max-w-6xl mx-auto px-4 py-6">
@@ -30,7 +30,7 @@
           <p class="text-gray-500 text-sm">{{ business.address }}</p>
           <p class="text-blue-600 text-sm">{{ business.phone }}</p>
         </div>
-        <router-link :to="`/businesses/${business.id}`" class="text-blue-600 text-sm hover:underline">업소 보기 →</router-link>
+        <router-link :to="`/directory/${business.id}`" class="text-blue-600 text-sm hover:underline">업소 보기 →</router-link>
       </div>
 
       <!-- Tabs -->
@@ -100,7 +100,7 @@
         <input ref="photoInput" type="file" multiple accept="image/*" class="hidden" @change="uploadPhotos"/>
         <div v-if="!business.is_premium" class="bg-yellow-50 rounded-xl p-4 text-sm">
           💡 프리미엄 업그레이드 시 최대 20장의 사진을 등록할 수 있습니다.
-          <router-link to="/premium" class="text-blue-600 ml-1 hover:underline">업그레이드 →</router-link>
+          <router-link to="/premium-upgrade" class="text-blue-600 ml-1 hover:underline">업그레이드 →</router-link>
         </div>
       </div>
 
@@ -140,7 +140,7 @@
         </div>
         <div v-if="!business.is_premium" class="bg-yellow-50 rounded-xl p-4 text-sm mb-4">
           ⭐ 이벤트 기능은 프리미엄 플랜에서 이용 가능합니다.
-          <router-link to="/premium" class="text-blue-600 ml-1 hover:underline">업그레이드 →</router-link>
+          <router-link to="/premium-upgrade" class="text-blue-600 ml-1 hover:underline">업그레이드 →</router-link>
         </div>
         <div v-if="showEventForm && business.is_premium" class="border rounded-xl p-4 mb-4 bg-gray-50">
           <div class="grid grid-cols-2 gap-3 mb-3">
@@ -172,7 +172,7 @@
         </div>
         <div v-if="!business.is_premium" class="bg-yellow-50 rounded-xl p-4 text-sm">
           ⭐ 상세 통계는 프리미엄 플랜에서 이용 가능합니다.
-          <router-link to="/premium" class="text-blue-600 ml-1 hover:underline">업그레이드 →</router-link>
+          <router-link to="/premium-upgrade" class="text-blue-600 ml-1 hover:underline">업그레이드 →</router-link>
         </div>
       </div>
 

@@ -52,9 +52,11 @@ class ProfileController extends Controller
             'lang'     => 'nullable|in:ko,en,both',
             'default_radius' => 'nullable|integer|min:0|max:500',
             'avatar'   => 'nullable|image|max:2048',
+            'kakao_id'    => 'nullable|string|max:100',
+            'telegram_id' => 'nullable|string|max:100',
         ]);
 
-        $data = $request->only(['name', 'nickname', 'username', 'bio', 'phone', 'address', 'address2', 'city', 'state', 'zip_code', 'region', 'lang', 'default_radius']);
+        $data = $request->only(['name', 'nickname', 'username', 'bio', 'phone', 'address', 'address2', 'city', 'state', 'zip_code', 'region', 'lang', 'default_radius', 'kakao_id', 'telegram_id']);
 
         if ($request->hasFile('avatar')) {
             if ($user->avatar) Storage::disk('public')->delete($user->avatar);

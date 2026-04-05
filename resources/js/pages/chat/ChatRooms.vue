@@ -682,7 +682,7 @@ async function createRoom() {
   if (!newRoom.value.name.trim()) return; creating.value = true
   try {
     const { data } = await axios.post('/api/chat/rooms', { name: newRoom.value.name, type: 'friend', invite_users: selectedFriends.value.map(f => f.id) })
-    for (const f of selectedFriends.value) { try { await axios.post('/api/messages', { recipient_id: f.id, content: `💬 "${newRoom.value.name}" 채팅방에 초대되었습니다!` }) } catch {} }
+    for (const f of selectedFriends.value) { try { await axios.post('/api/messages', { receiver_id: f.id, content: `💬 "${newRoom.value.name}" 채팅방에 초대되었습니다!` }) } catch {} }
     if (data) { rooms.value.unshift(data); openRoom(data) }
     showCreateModal.value = false; newRoom.value = { name: '' }; selectedFriends.value = []
   } catch (e) { alert(e?.response?.data?.message || '채팅방 개설 실패') }

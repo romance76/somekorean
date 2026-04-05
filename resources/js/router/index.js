@@ -39,6 +39,8 @@ const routes = [
     { path: '/directory',           component: () => import('../pages/directory/BusinessList.vue'),     name: 'directory' },
     { path: '/directory/register',  component: () => import('../pages/directory/BusinessRegister.vue'), name: 'business-register', meta: { auth: true } },
     { path: '/directory/:id',       component: () => import('../pages/directory/BusinessDetail.vue'),   name: 'business-detail' },
+    { path: '/directory/:id/claim', component: () => import('../pages/ClaimBusiness.vue'),              name: 'claim-business', meta: { auth: true } },
+    { path: '/email-verify-business/:token', component: () => import('../pages/EmailVerifyBusiness.vue'), name: 'email-verify-business' },
 
     // 포인트
     { path: '/points', component: () => import('../pages/points/PointDashboard.vue'), name: 'points', meta: { auth: true } },
@@ -143,6 +145,7 @@ const routes = [
             { path: 'banners', name: 'admin-banners', component: () => import('../pages/admin/Banners.vue') },
             { path: 'members-list', name: 'admin-members-list', component: () => import('../pages/admin/Members.vue') },
             { path: 'wallet-payments', name: 'admin-wallet-payments', component: () => import('../pages/admin/Payments.vue') },
+            { path: 'security', name: 'admin-security', component: () => import('../pages/admin/AdminSecurity.vue') },
         ]
     },
 
@@ -198,6 +201,10 @@ const routes = [
   { path: '/games/slots', name: 'game-slots', component: () => import('../pages/games/GameSlots.vue') },
   { path: '/games/hextris', name: 'game-hextris', component: () => import('../pages/games/GameHextris.vue') },
   { path: '/games/mahjong', name: 'game-mahjong', component: () => import('../pages/games/GameMahjong.vue') },
+  { path: '/games/hanja', name: 'game-hanja', component: () => import('../pages/games/GameHanja.vue') },
+  { path: '/games/health', name: 'game-health', component: () => import('../pages/games/GameHealth.vue') },
+  { path: '/games/history', name: 'game-history', component: () => import('../pages/games/GameHistory.vue') },
+  { path: '/games/leaderboard', name: 'game-leaderboard', component: () => import('../pages/games/Leaderboard.vue') },
 
     // 알림
     { path: '/notifications',    component: () => import('../pages/Notifications.vue'),        name: 'notifications', meta: { auth: true } },
@@ -225,6 +232,12 @@ const routes = [
 
     // 쇼핑정보
     { path: '/shopping', component: () => import('../pages/shopping/ShoppingHome.vue'), name: 'shopping' },
+
+    // 업소 오너 대시보드
+    { path: '/owner-dashboard', component: () => import('../pages/OwnerDashboard.vue'), name: 'owner-dashboard', meta: { auth: true } },
+
+    // 프리미엄 업그레이드
+    { path: '/premium-upgrade', component: () => import('../pages/PremiumUpgrade.vue'), name: 'premium-upgrade' },
 
     // 코인 규칙
     { path: '/rules', component: () => import('../pages/PointRules.vue'), name: 'rules' },

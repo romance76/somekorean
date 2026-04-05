@@ -389,6 +389,8 @@ onMounted(async () => {
 })
 
 // LocationBar handlers
+const searchKeyword = ref('')
+
 function onLocationSearch(keyword) {
   searchKeyword.value = keyword
   loadStores()

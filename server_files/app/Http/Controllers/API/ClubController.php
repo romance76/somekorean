@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HasDistanceFilter;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -19,6 +20,27 @@ class ClubController extends Controller
     public function index(Request $request)
     {
         $query = Club::with('creator:id,name,username,avatar');
+
+        // 온라인/지역 필터
+        if ($request->filter === 'online') {
+            $query->where('is_online', true);
+        } elseif ($request->filter === 'local') {
+            $query->where('is_online', false);
+            // 지역 동호회만 거리 필터 적용
+            $this->applyDistanceFilter($query, $request, "latitude", "longitude");
+        } else {
+            // filter가 없으면 모두 표시, 지역 동호회에만 거리 필터 적용
+            if ($request->lat && $request->lng && $request->radius) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('is_online', true)
+                      ->orWhere(function ($q2) use ($request) {
+                          $q2->where('is_online', false);
+                          $this->applyDistanceFilter($q2, $request, "latitude", "longitude");
+                      });
+                });
+            }
+        }
+
         if ($request->category) {
             $query->where('category', $request->category);
         }
@@ -31,7 +53,6 @@ class ClubController extends Controller
         if ($request->region) {
             $query->where('region', $request->region);
         }
-        $this->applyDistanceFilter($query, $request, "latitude", "longitude");
         $clubs = $query->orderByDesc('created_at')->paginate(20);
         return response()->json($clubs);
     }
@@ -67,6 +88,8 @@ class ClubController extends Controller
             'region'      => 'nullable|string|max:100',
             'cover_image' => 'nullable|image|max:3072',
             'is_approval' => 'nullable',
+            'is_online'   => 'nullable',
+            'zip_code'    => 'nullable|string|max:10',
             'address'     => 'nullable|string|max:255',
             'latitude'    => 'nullable|numeric',
             'longitude'   => 'nullable|numeric',
@@ -81,18 +104,46 @@ class ClubController extends Controller
             $coverPath = $request->file('cover_image')->store('clubs', 'public');
         }
 
+        $isOnline = filter_var($request->is_online, FILTER_VALIDATE_BOOLEAN);
+        $latitude = $request->latitude;
+        $longitude = $request->longitude;
+        $region = $request->region;
+
+        // 지역 동호회이고 zip_code가 있으면 위/경도 변환
+        if (!$isOnline && $request->zip_code) {
+            $coords = $this->geocodeZipCode($request->zip_code);
+            if ($coords) {
+                $latitude = $coords['lat'];
+                $longitude = $coords['lng'];
+                if (!$region && isset($coords['city'])) {
+                    $region = $coords['city'] . ($coords['state'] ? ', ' . $coords['state'] : '');
+                }
+            }
+        }
+
+        // 상세 주소가 있고 zip_code가 없으면 주소로 geocoding
+        if (!$isOnline && $request->address && !$request->zip_code) {
+            $coords = $this->geocodeAddress($request->address);
+            if ($coords) {
+                $latitude = $coords['lat'];
+                $longitude = $coords['lng'];
+            }
+        }
+
         $club = Club::create([
             'creator_id'  => Auth::id(),
             'name'        => $request->name,
             'category'    => $request->category,
             'description' => $request->description,
-            'region'      => $request->region,
+            'region'      => $region,
             'cover_image' => $coverPath,
             'is_approval' => filter_var($request->is_approval, FILTER_VALIDATE_BOOLEAN),
             'member_count' => 1,
+            'is_online'   => $isOnline,
+            'zip_code'    => $request->zip_code,
             'address'     => $request->address,
-            'latitude'    => $request->latitude,
-            'longitude'   => $request->longitude,
+            'latitude'    => $latitude,
+            'longitude'   => $longitude,
         ]);
 
         ClubMember::create([
@@ -122,6 +173,9 @@ class ClubController extends Controller
             'region'      => 'nullable|string|max:100',
             'cover_image' => 'nullable|image|max:3072',
             'is_approval' => 'nullable',
+            'is_online'   => 'nullable',
+            'zip_code'    => 'nullable|string|max:10',
+            'address'     => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -139,6 +193,45 @@ class ClubController extends Controller
         if ($request->has('is_approval')) {
             $club->is_approval = filter_var($request->is_approval, FILTER_VALIDATE_BOOLEAN);
         }
+        if ($request->has('is_online')) {
+            $club->is_online = filter_var($request->is_online, FILTER_VALIDATE_BOOLEAN);
+        }
+        if ($request->has('zip_code')) {
+            $club->zip_code = $request->zip_code;
+        }
+        if ($request->has('address')) {
+            $club->address = $request->address;
+        }
+
+        // 지역 동호회이고 zip_code가 변경되었으면 재 geocoding
+        if (!$club->is_online && $request->zip_code) {
+            $coords = $this->geocodeZipCode($request->zip_code);
+            if ($coords) {
+                $club->latitude = $coords['lat'];
+                $club->longitude = $coords['lng'];
+                if (isset($coords['city'])) {
+                    $club->region = $coords['city'] . ($coords['state'] ? ', ' . $coords['state'] : '');
+                }
+            }
+        }
+
+        // 주소로 geocoding
+        if (!$club->is_online && $request->address && !$request->zip_code) {
+            $coords = $this->geocodeAddress($request->address);
+            if ($coords) {
+                $club->latitude = $coords['lat'];
+                $club->longitude = $coords['lng'];
+            }
+        }
+
+        // 온라인 동호회로 변경 시 위치 정보 초기화
+        if ($club->is_online) {
+            $club->latitude = null;
+            $club->longitude = null;
+            $club->zip_code = null;
+            $club->address = null;
+        }
+
         $club->save();
 
         return response()->json(['message' => '수정되었습니다.', 'club' => $club]);
@@ -464,5 +557,68 @@ class ClubController extends Controller
         $club->update(['creator_id' => $userId]);
 
         return response()->json(['message' => '방장이 양도되었습니다.']);
+    }
+
+    // ===== 집코드/주소 Geocoding =====
+
+    /**
+     * 집코드 → 위/경도 변환 API (프론트엔드에서 호출)
+     */
+    public function geocodeZip(Request $request)
+    {
+        $request->validate(['zip_code' => 'required|string|max:10']);
+        $result = $this->geocodeZipCode($request->zip_code);
+        if ($result) {
+            return response()->json($result);
+        }
+        return response()->json(['message' => '유효하지 않은 집코드입니다.'], 422);
+    }
+
+    /**
+     * 집코드 → 위/경도 변환 (Zippopotam.us 무료 API)
+     */
+    private function geocodeZipCode($zipCode)
+    {
+        try {
+            $response = Http::timeout(5)->get("https://api.zippopotam.us/us/{$zipCode}");
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'lat' => (float)$data['places'][0]['latitude'],
+                    'lng' => (float)$data['places'][0]['longitude'],
+                    'city' => $data['places'][0]['place name'] ?? null,
+                    'state' => $data['places'][0]['state abbreviation'] ?? null,
+                ];
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Zip code geocoding failed: ' . $e->getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 주소 → 위/경도 변환 (Google Geocoding API)
+     */
+    private function geocodeAddress($address)
+    {
+        $key = config('services.google.maps_key', env('GOOGLE_MAPS_KEY'));
+        if (!$key) return null;
+
+        try {
+            $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $address,
+                'key' => $key,
+            ]);
+            if ($response->successful()) {
+                $results = $response->json('results');
+                if (!empty($results)) {
+                    $location = $results[0]['geometry']['location'];
+                    return ['lat' => $location['lat'], 'lng' => $location['lng']];
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Address geocoding failed: ' . $e->getMessage());
+        }
+        return null;
     }
 }

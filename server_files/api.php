@@ -77,6 +77,7 @@ use App\Http\Controllers\API\QaController;
 
 use App\Http\Controllers\API\RecipeController;
 use App\Http\Controllers\API\UserLocationController;
+use App\Http\Controllers\API\MarketReservationController;
 
 use App\Http\Controllers\API\MusicController;
 
@@ -85,6 +86,8 @@ use App\Http\Controllers\API\AdminQaController;
 use App\Http\Controllers\API\AdminRecipeController;
 
 use App\Http\Controllers\API\GameScoreController;
+
+use App\Http\Controllers\API\PaymentController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -108,6 +111,8 @@ Route::prefix('auth')->group(function () {
 // 공개 사이트 설정 (프론트엔드 메뉴/사이트명 등)
 
 Route::get('settings/public', [AdminSettingsController::class, 'getPublicSettings']);
+
+Route::get('site-settings/logo', [AdminSettingsController::class, 'getLogo']);
 
 
 
@@ -185,9 +190,11 @@ Route::get('chat/rooms/{slug}', [ChatController::class, 'room']);
 // News (공개)
 
 Route::get('news',                    [NewsController::class, 'index']);
-
+Route::get('news/categories',         [NewsController::class, 'categories']);
+Route::get('news/digest',             [NewsController::class, 'digest']);
+Route::get('news/featured',           [NewsController::class, 'featured']);
 Route::get('news/yesterday-summary',  [NewsController::class, 'yesterdaySummary']);
-
+Route::get('news/category/{slug}',    [NewsController::class, 'byCategory']);
 Route::get('news/{id}',               [NewsController::class, 'show']);
 
 
@@ -227,6 +234,7 @@ Route::get('events/{id}',  [EventController::class, 'show']);
 // 동호회 (공개)
 
 Route::get('clubs',      [ClubController::class, 'index']);
+Route::get('clubs/geocode-zip', [ClubController::class, 'geocodeZip']);
 
 Route::get('clubs/{id}', [ClubController::class, 'show']);
 Route::get('clubs/{id}/posts', [ClubController::class, 'posts']);
@@ -321,6 +329,20 @@ Route::middleware('auth:api')->group(function () {
     Route::post('games/earn-stars',       [App\Http\Controllers\API\WalletController::class, 'earnStars']);
 
 
+    // 결제 (Stripe)
+    Route::get('payments/packages',       [PaymentController::class, 'packages']);
+    Route::post('payments/create-intent', [PaymentController::class, 'createIntent']);
+    Route::post('payments/confirm',       [PaymentController::class, 'confirm']);
+    Route::get('payments/history',        [PaymentController::class, 'history']);
+
+    // 일일 룰렛 (게임머니)
+    Route::post('games/daily-spin',        [App\Http\Controllers\API\WalletController::class, 'dailySpin']);
+    Route::get('games/daily-spin/status',  [App\Http\Controllers\API\WalletController::class, 'spinStatus']);
+
+    // COIN → 게임머니 변환
+    Route::post('games/convert-to-game-money', [App\Http\Controllers\API\GameScoreController::class, 'convertToGameMoney']);
+
+
 
     // Profile
 
@@ -394,6 +416,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('market/{id}/bookmark',  [MarketController::class, 'bookmark']);
 
     Route::post('market/{id}/comments',  [MarketController::class, 'comment']);
+
+    // Market Reservations (찜/예약/에스크로)
+    Route::post('market/{id}/reserve',             [MarketReservationController::class, 'reserve']);
+    Route::post('market/reservations/{id}/complete', [MarketReservationController::class, 'complete']);
+    Route::post('market/reservations/{id}/cancel',   [MarketReservationController::class, 'cancel']);
+    Route::get('market/reservations/my',           [MarketReservationController::class, 'myReservations']);
 
     // Real Estate
     Route::post('realestate',                   [RealEstateController::class, 'store']);
@@ -635,19 +663,23 @@ Route::middleware('auth:api')->group(function () {
 
     // 친구
 
-    Route::get('friends',                  [FriendController::class, 'myFriends']);
+    Route::get('friends',                    [FriendController::class, 'myFriends']);
 
-    Route::get('friends/pending',          [FriendController::class, 'pendingRequests']);
+    Route::get('friends/pending',            [FriendController::class, 'pendingRequests']);
 
-    Route::get('friends/search',           [FriendController::class, 'search']);
+    Route::get('friends/sent',               [FriendController::class, 'sentRequests']);
 
-    Route::post('friends/request/{userId}',[FriendController::class, 'sendRequest']);
+    Route::get('friends/search',             [FriendController::class, 'search']);
 
-    Route::post('friends/accept/{userId}', [FriendController::class, 'acceptRequest']);
+    Route::get('friends/check/{userId}',     [FriendController::class, 'checkFriendship']);
 
-    Route::post('friends/reject/{userId}', [FriendController::class, 'rejectRequest']);
+    Route::post('friends/request/{userId}',  [FriendController::class, 'sendRequest']);
 
-    Route::delete('friends/{userId}',      [FriendController::class, 'removeFriend']);
+    Route::post('friends/accept/{userId}',   [FriendController::class, 'acceptRequest']);
+
+    Route::post('friends/reject/{userId}',   [FriendController::class, 'rejectRequest']);
+
+    Route::delete('friends/{userId}',        [FriendController::class, 'removeFriend']);
 
 
 
@@ -693,6 +725,8 @@ Route::middleware('auth:api')->group(function () {
     // WebRTC 통화 시그널링
 
     Route::post('call/signal', [CallController::class, 'signal']);
+
+    Route::post('calls/request', [CallController::class, 'requestCall']);
 
 
 
@@ -1003,6 +1037,8 @@ Route::middleware('auth:api')->group(function () {
 
         Route::post('settings/payment-gateway/test', [AdminSettingsController::class, 'testPaymentGateway']);
 
+        Route::post('settings/stripe',               [AdminSettingsController::class, 'saveStripeKeys']);
+
         Route::post('settings/payment',              [AdminSettingsController::class, 'savePayment']);
 
         Route::post('settings/seo',                  [AdminSettingsController::class, 'saveSeo']);
@@ -1028,6 +1064,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('settings/menus/{key}',          [AdminSettingsController::class, 'saveMenusBatch']);
 
         Route::post('settings/boards/{key}',         [AdminSettingsController::class, 'saveBoard']);
+
+        Route::post('settings/logo',                 [AdminSettingsController::class, 'uploadLogo']);
 
 
 
@@ -1117,7 +1155,13 @@ Route::middleware('auth:api')->group(function () {
 
         Route::post('reports/{id}/resolve',          [AdminController::class, 'resolveReport']);
 
-
+        // ── 보안 관리 ─────────────────────────────────────────────
+        Route::get('security/ip-bans',               [AdminController::class, 'ipBans']);
+        Route::post('security/ip-bans',              [AdminController::class, 'addIpBan']);
+        Route::delete('security/ip-bans/{id}',       [AdminController::class, 'removeIpBan']);
+        Route::get('security/reports',               [AdminController::class, 'securityReports']);
+        Route::post('security/reports/{id}/process', [AdminController::class, 'processReport']);
+        Route::get('security/bot-activity',          [AdminController::class, 'botActivity']);
 
         // Q&A 관리
 
