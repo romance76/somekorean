@@ -1,8 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-// Lazy-load helper
-const p = (path) => () => import(`../pages/${path}.vue`)
+// Eager-load all page components via Vite glob
+const pages = import.meta.glob('../pages/**/*.vue')
+
+// Lazy-load helper using glob manifest
+const p = (path) => {
+  const key = `../pages/${path}.vue`
+  if (!pages[key]) {
+    console.warn(`[Router] Page not found: ${key}`)
+    return () => import('../pages/NotFound.vue')
+  }
+  return pages[key]
+}
 
 const routes = [
   // ── Home ──

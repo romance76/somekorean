@@ -1,14 +1,66 @@
 {
-  "_pusher-Rc4Q-Dfz.js": {
-    "file": "assets/pusher-Rc4Q-Dfz.js",
+  "_DetailTemplate-CXL-a8gK.js": {
+    "file": "assets/DetailTemplate-CXL-a8gK.js",
+    "name": "DetailTemplate",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "_ListTemplate-BjQuCT8S.js": {
+    "file": "assets/ListTemplate-BjQuCT8S.js",
+    "name": "ListTemplate",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "_WriteTemplate-B0wGibrK.js": {
+    "file": "assets/WriteTemplate-B0wGibrK.js",
+    "name": "WriteTemplate",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "__commonjsHelpers-CqkleIqs.js": {
+    "file": "assets/_commonjsHelpers-CqkleIqs.js",
+    "name": "_commonjsHelpers"
+  },
+  "_leaflet-src-Bbfz3w4-.js": {
+    "file": "assets/leaflet-src-Bbfz3w4-.js",
+    "name": "leaflet-src",
+    "isDynamicEntry": true,
+    "imports": [
+      "__commonjsHelpers-CqkleIqs.js"
+    ]
+  },
+  "_pusher-D7ZrQ-9T.js": {
+    "file": "assets/pusher-D7ZrQ-9T.js",
     "name": "pusher",
-    "isDynamicEntry": true
+    "isDynamicEntry": true,
+    "imports": [
+      "__commonjsHelpers-CqkleIqs.js"
+    ]
   },
   "node_modules/laravel-echo/dist/echo.js": {
     "file": "assets/echo-DCHnC3kb.js",
     "name": "echo",
     "src": "node_modules/laravel-echo/dist/echo.js",
     "isDynamicEntry": true
+  },
+  "node_modules/leaflet/dist/images/layers-2x.png": {
+    "file": "assets/layers-2x-Bpkbi35X.png",
+    "src": "node_modules/leaflet/dist/images/layers-2x.png"
+  },
+  "node_modules/leaflet/dist/images/layers.png": {
+    "file": "assets/layers-BWBAp2CZ.png",
+    "src": "node_modules/leaflet/dist/images/layers.png"
+  },
+  "node_modules/leaflet/dist/images/marker-icon.png": {
+    "file": "assets/marker-icon-hN30_KVU.png",
+    "src": "node_modules/leaflet/dist/images/marker-icon.png"
+  },
+  "node_modules/leaflet/dist/leaflet.css": {
+    "file": "assets/leaflet-CG6DamIu.css",
+    "src": "node_modules/leaflet/dist/leaflet.css"
   },
   "resources/css/app.css": {
     "file": "assets/app-Bbjs-ULg.css",
@@ -20,7 +72,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BroKHeoW.js",
+    "file": "assets/app-DGxdtLEZ.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -31,15 +83,161 @@
       "resources/js/pages/Notifications.vue",
       "resources/js/pages/PointRules.vue",
       "resources/js/pages/Search.vue",
+      "resources/js/pages/admin/AdminClubs.vue",
+      "resources/js/pages/admin/AdminEvents.vue",
+      "resources/js/pages/admin/AdminFriends.vue",
+      "resources/js/pages/admin/AdminGames.vue",
+      "resources/js/pages/admin/AdminJobs.vue",
+      "resources/js/pages/admin/AdminLayout.vue",
+      "resources/js/pages/admin/AdminMarket.vue",
+      "resources/js/pages/admin/AdminMusic.vue",
+      "resources/js/pages/admin/AdminNews.vue",
+      "resources/js/pages/admin/AdminQa.vue",
+      "resources/js/pages/admin/AdminRealestate.vue",
+      "resources/js/pages/admin/AdminRecipes.vue",
+      "resources/js/pages/admin/AdminSecurity.vue",
+      "resources/js/pages/admin/AdminShopping.vue",
+      "resources/js/pages/admin/AdminShorts.vue",
+      "resources/js/pages/admin/Banners.vue",
+      "resources/js/pages/admin/BoardManager.vue",
+      "resources/js/pages/admin/Business.vue",
+      "resources/js/pages/admin/Chats.vue",
+      "resources/js/pages/admin/Content.vue",
+      "resources/js/pages/admin/Dashboard.vue",
+      "resources/js/pages/admin/Elder.vue",
+      "resources/js/pages/admin/GroupBuy.vue",
+      "resources/js/pages/admin/Members.vue",
+      "resources/js/pages/admin/MenuManager.vue",
+      "resources/js/pages/admin/Overview.vue",
+      "resources/js/pages/admin/Payments.vue",
+      "resources/js/pages/admin/SiteSettings.vue",
+      "resources/js/pages/admin/System.vue",
+      "resources/js/pages/admin/Users.vue",
+      "resources/js/pages/auth/Login.vue",
+      "resources/js/pages/auth/Register.vue",
+      "resources/js/pages/chat/ChatRoom.vue",
+      "resources/js/pages/chat/ChatRooms.vue",
+      "resources/js/pages/community/BoardList.vue",
+      "resources/js/pages/community/ClubDetail.vue",
+      "resources/js/pages/community/ClubList.vue",
+      "resources/js/pages/community/CommunityCategory.vue",
+      "resources/js/pages/community/CommunityHome.vue",
+      "resources/js/pages/community/CommunityPost.vue",
+      "resources/js/pages/community/CommunityWrite.vue",
+      "resources/js/pages/community/PostDetail.vue",
+      "resources/js/pages/community/PostList.vue",
+      "resources/js/pages/community/PostWrite.vue",
+      "resources/js/pages/community/QnAHome.vue",
+      "resources/js/pages/directory/BusinessDetail.vue",
+      "resources/js/pages/directory/BusinessList.vue",
+      "resources/js/pages/directory/BusinessRegister.vue",
+      "resources/js/pages/elder/ElderCheckin.vue",
+      "resources/js/pages/elder/ElderHome.vue",
+      "resources/js/pages/elder/GuardianDashboard.vue",
+      "resources/js/pages/events/EventCreate.vue",
+      "resources/js/pages/events/EventDetail.vue",
+      "resources/js/pages/events/EventList.vue",
+      "resources/js/pages/friends/FriendList.vue",
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/pages/games/BingoGame.vue",
+      "resources/js/pages/games/Blackjack.vue",
+      "resources/js/pages/games/Game2048.vue",
+      "resources/js/pages/games/GameAlphabet.vue",
+      "resources/js/pages/games/GameAnimals.vue",
+      "resources/js/pages/games/GameBingo.vue",
+      "resources/js/pages/games/GameBreathing.vue",
+      "resources/js/pages/games/GameCarJump.vue",
+      "resources/js/pages/games/GameCodingQuiz.vue",
+      "resources/js/pages/games/GameColors.vue",
+      "resources/js/pages/games/GameCounting.vue",
+      "resources/js/pages/games/GameDuckHunt.vue",
+      "resources/js/pages/games/GameEngCard.vue",
+      "resources/js/pages/games/GameFlag.vue",
+      "resources/js/pages/games/GameFlappy.vue",
+      "resources/js/pages/games/GameHangul.vue",
+      "resources/js/pages/games/GameHanja.vue",
+      "resources/js/pages/games/GameHealth.vue",
+      "resources/js/pages/games/GameHextris.vue",
+      "resources/js/pages/games/GameHistory.vue",
+      "resources/js/pages/games/GameIdiom.vue",
+      "resources/js/pages/games/GameLobby.vue",
+      "resources/js/pages/games/GameMahjong.vue",
+      "resources/js/pages/games/GameMathBasic.vue",
+      "resources/js/pages/games/GameMathChallenge.vue",
+      "resources/js/pages/games/GameMaze.vue",
+      "resources/js/pages/games/GameMemory.vue",
+      "resources/js/pages/games/GameMultiplication.vue",
+      "resources/js/pages/games/GameNumberMemory.vue",
+      "resources/js/pages/games/GamePacman.vue",
+      "resources/js/pages/games/GameProverb.vue",
+      "resources/js/pages/games/GamePuzzle.vue",
+      "resources/js/pages/games/GameSATWords.vue",
+      "resources/js/pages/games/GameSeniorMemory.vue",
+      "resources/js/pages/games/GameShapes.vue",
+      "resources/js/pages/games/GameSlots.vue",
+      "resources/js/pages/games/GameSnake.vue",
+      "resources/js/pages/games/GameSpeedCalc.vue",
+      "resources/js/pages/games/GameSpelling.vue",
+      "resources/js/pages/games/GameStockSim.vue",
+      "resources/js/pages/games/GameStroop.vue",
+      "resources/js/pages/games/GameTowerDefense.vue",
+      "resources/js/pages/games/GameTyping.vue",
+      "resources/js/pages/games/GameUSLife.vue",
+      "resources/js/pages/games/GameWordBlank.vue",
+      "resources/js/pages/games/GameWordCard.vue",
+      "resources/js/pages/games/GameWordChain.vue",
+      "resources/js/pages/games/GameWordle.vue",
+      "resources/js/pages/games/GameWorldGeo.vue",
+      "resources/js/pages/games/GoStop.vue",
+      "resources/js/pages/games/GoStopSolo.vue",
+      "resources/js/pages/games/HoldemSolo.vue",
+      "resources/js/pages/games/Leaderboard.vue",
+      "resources/js/pages/games/MemoryGame.vue",
+      "resources/js/pages/games/OmokGame.vue",
+      "resources/js/pages/games/PointShop.vue",
+      "resources/js/pages/games/Poker.vue",
+      "resources/js/pages/games/QuizGame.vue",
+      "resources/js/pages/groupbuy/GroupBuyHome.vue",
+      "resources/js/pages/jobs/JobDetail.vue",
+      "resources/js/pages/jobs/JobList.vue",
+      "resources/js/pages/jobs/JobWrite.vue",
+      "resources/js/pages/market/MarketDetail.vue",
+      "resources/js/pages/market/MarketList.vue",
+      "resources/js/pages/market/MarketWrite.vue",
+      "resources/js/pages/messages/MessageInbox.vue",
+      "resources/js/pages/music/MusicHome.vue",
+      "resources/js/pages/news/NewsDetail.vue",
+      "resources/js/pages/news/NewsList.vue",
+      "resources/js/pages/points/PointDashboard.vue",
+      "resources/js/pages/profile/ProfileEdit.vue",
+      "resources/js/pages/profile/UserDashboard.vue",
+      "resources/js/pages/profile/UserProfile.vue",
+      "resources/js/pages/qa/QACategory.vue",
+      "resources/js/pages/qa/QAHome.vue",
+      "resources/js/pages/qa/QAQuestion.vue",
+      "resources/js/pages/qa/QAWrite.vue",
+      "resources/js/pages/qa/QaDetail.vue",
+      "resources/js/pages/qa/QaList.vue",
+      "resources/js/pages/qa/UserResolved.vue",
+      "resources/js/pages/realestate/RealEstateDetail.vue",
+      "resources/js/pages/realestate/RealEstateList.vue",
+      "resources/js/pages/realestate/RealEstateWrite.vue",
+      "resources/js/pages/recipes/RecipeCreate.vue",
+      "resources/js/pages/recipes/RecipeDetail.vue",
+      "resources/js/pages/recipes/RecipeList.vue",
+      "resources/js/pages/shopping/ShoppingHome.vue",
+      "resources/js/pages/shorts/ShortsHome.vue",
+      "resources/js/pages/shorts/ShortsUpload.vue",
+      "resources/js/pages/NotFound.vue",
       "node_modules/laravel-echo/dist/echo.js",
-      "_pusher-Rc4Q-Dfz.js"
+      "_pusher-D7ZrQ-9T.js"
     ],
     "css": [
       "assets/app-Bejc7v8d.css"
     ]
   },
   "resources/js/pages/EmailVerifyBusiness.vue": {
-    "file": "assets/EmailVerifyBusiness-DZUhYGx0.js",
+    "file": "assets/EmailVerifyBusiness-B81RdiBp.js",
     "name": "EmailVerifyBusiness",
     "src": "resources/js/pages/EmailVerifyBusiness.vue",
     "isDynamicEntry": true,
@@ -48,7 +246,7 @@
     ]
   },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-BolpV_C3.js",
+    "file": "assets/Home-BxxAQj6j.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,
@@ -57,7 +255,7 @@
     ]
   },
   "resources/js/pages/NotFound.vue": {
-    "file": "assets/NotFound-DlATVkMk.js",
+    "file": "assets/NotFound-M4QVAt9J.js",
     "name": "NotFound",
     "src": "resources/js/pages/NotFound.vue",
     "isDynamicEntry": true,
@@ -66,7 +264,7 @@
     ]
   },
   "resources/js/pages/Notifications.vue": {
-    "file": "assets/Notifications-cb2VRDk0.js",
+    "file": "assets/Notifications-DTLvJapG.js",
     "name": "Notifications",
     "src": "resources/js/pages/Notifications.vue",
     "isDynamicEntry": true,
@@ -75,7 +273,7 @@
     ]
   },
   "resources/js/pages/PointRules.vue": {
-    "file": "assets/PointRules-BUIjD92p.js",
+    "file": "assets/PointRules-DdQ3y8zv.js",
     "name": "PointRules",
     "src": "resources/js/pages/PointRules.vue",
     "isDynamicEntry": true,
@@ -84,9 +282,1493 @@
     ]
   },
   "resources/js/pages/Search.vue": {
-    "file": "assets/Search-DwePPxas.js",
+    "file": "assets/Search-Dv-rFgen.js",
     "name": "Search",
     "src": "resources/js/pages/Search.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminClubs.vue": {
+    "file": "assets/AdminClubs-B9CiC8r8.js",
+    "name": "AdminClubs",
+    "src": "resources/js/pages/admin/AdminClubs.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminEvents.vue": {
+    "file": "assets/AdminEvents-DHkpl8iB.js",
+    "name": "AdminEvents",
+    "src": "resources/js/pages/admin/AdminEvents.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminFriends.vue": {
+    "file": "assets/AdminFriends-D70Z1mxU.js",
+    "name": "AdminFriends",
+    "src": "resources/js/pages/admin/AdminFriends.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminGames.vue": {
+    "file": "assets/AdminGames-BdjhUL_3.js",
+    "name": "AdminGames",
+    "src": "resources/js/pages/admin/AdminGames.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminJobs.vue": {
+    "file": "assets/AdminJobs-DQupp7rh.js",
+    "name": "AdminJobs",
+    "src": "resources/js/pages/admin/AdminJobs.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminLayout.vue": {
+    "file": "assets/AdminLayout-DFhfK8vp.js",
+    "name": "AdminLayout",
+    "src": "resources/js/pages/admin/AdminLayout.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminMarket.vue": {
+    "file": "assets/AdminMarket-D5XQJdij.js",
+    "name": "AdminMarket",
+    "src": "resources/js/pages/admin/AdminMarket.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminMusic.vue": {
+    "file": "assets/AdminMusic-Blfg-KLx.js",
+    "name": "AdminMusic",
+    "src": "resources/js/pages/admin/AdminMusic.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminNews.vue": {
+    "file": "assets/AdminNews-Np5Ere0c.js",
+    "name": "AdminNews",
+    "src": "resources/js/pages/admin/AdminNews.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminQa.vue": {
+    "file": "assets/AdminQa-Q1lzJJE1.js",
+    "name": "AdminQa",
+    "src": "resources/js/pages/admin/AdminQa.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminRealestate.vue": {
+    "file": "assets/AdminRealestate-NME4P9UM.js",
+    "name": "AdminRealestate",
+    "src": "resources/js/pages/admin/AdminRealestate.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminRecipes.vue": {
+    "file": "assets/AdminRecipes-DSvEFROr.js",
+    "name": "AdminRecipes",
+    "src": "resources/js/pages/admin/AdminRecipes.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminSecurity.vue": {
+    "file": "assets/AdminSecurity-g7IqadlX.js",
+    "name": "AdminSecurity",
+    "src": "resources/js/pages/admin/AdminSecurity.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminShopping.vue": {
+    "file": "assets/AdminShopping-B4vOMT92.js",
+    "name": "AdminShopping",
+    "src": "resources/js/pages/admin/AdminShopping.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/AdminShorts.vue": {
+    "file": "assets/AdminShorts-Bg8niF6b.js",
+    "name": "AdminShorts",
+    "src": "resources/js/pages/admin/AdminShorts.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Banners.vue": {
+    "file": "assets/Banners-B61UOyJL.js",
+    "name": "Banners",
+    "src": "resources/js/pages/admin/Banners.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/BoardManager.vue": {
+    "file": "assets/BoardManager-D0SBCEpS.js",
+    "name": "BoardManager",
+    "src": "resources/js/pages/admin/BoardManager.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Business.vue": {
+    "file": "assets/Business-D9sgcRuM.js",
+    "name": "Business",
+    "src": "resources/js/pages/admin/Business.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Chats.vue": {
+    "file": "assets/Chats-c8IYd0eM.js",
+    "name": "Chats",
+    "src": "resources/js/pages/admin/Chats.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Content.vue": {
+    "file": "assets/Content-_0PV8VYE.js",
+    "name": "Content",
+    "src": "resources/js/pages/admin/Content.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Dashboard.vue": {
+    "file": "assets/Dashboard-BmChGVoV.js",
+    "name": "Dashboard",
+    "src": "resources/js/pages/admin/Dashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Elder.vue": {
+    "file": "assets/Elder-BeKtxRMj.js",
+    "name": "Elder",
+    "src": "resources/js/pages/admin/Elder.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/GroupBuy.vue": {
+    "file": "assets/GroupBuy-Bx5nPEht.js",
+    "name": "GroupBuy",
+    "src": "resources/js/pages/admin/GroupBuy.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Members.vue": {
+    "file": "assets/Members-G_japbu0.js",
+    "name": "Members",
+    "src": "resources/js/pages/admin/Members.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/MenuManager.vue": {
+    "file": "assets/MenuManager-Df46Nqv7.js",
+    "name": "MenuManager",
+    "src": "resources/js/pages/admin/MenuManager.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Overview.vue": {
+    "file": "assets/Overview-DjRjIKMs.js",
+    "name": "Overview",
+    "src": "resources/js/pages/admin/Overview.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Payments.vue": {
+    "file": "assets/Payments-CrLni-uv.js",
+    "name": "Payments",
+    "src": "resources/js/pages/admin/Payments.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/SiteSettings.vue": {
+    "file": "assets/SiteSettings-C-_CKxb3.js",
+    "name": "SiteSettings",
+    "src": "resources/js/pages/admin/SiteSettings.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/System.vue": {
+    "file": "assets/System-Ch9v91MK.js",
+    "name": "System",
+    "src": "resources/js/pages/admin/System.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/admin/Users.vue": {
+    "file": "assets/Users-CfsiEzm0.js",
+    "name": "Users",
+    "src": "resources/js/pages/admin/Users.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/auth/Login.vue": {
+    "file": "assets/Login-BgEKbqir.js",
+    "name": "Login",
+    "src": "resources/js/pages/auth/Login.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/auth/Register.vue": {
+    "file": "assets/Register-DKskqNGB.js",
+    "name": "Register",
+    "src": "resources/js/pages/auth/Register.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/chat/ChatRoom.vue": {
+    "file": "assets/ChatRoom-DXakIfH2.js",
+    "name": "ChatRoom",
+    "src": "resources/js/pages/chat/ChatRoom.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/chat/ChatRooms.vue": {
+    "file": "assets/ChatRooms-DTd9r1oZ.js",
+    "name": "ChatRooms",
+    "src": "resources/js/pages/chat/ChatRooms.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/community/BoardList.vue": {
+    "file": "assets/BoardList-DeN7w7-v.js",
+    "name": "BoardList",
+    "src": "resources/js/pages/community/BoardList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/community/ClubDetail.vue": {
+    "file": "assets/ClubDetail-Br9uZYpI.js",
+    "name": "ClubDetail",
+    "src": "resources/js/pages/community/ClubDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/community/ClubList.vue": {
+    "file": "assets/ClubList-D9Iz25Tk.js",
+    "name": "ClubList",
+    "src": "resources/js/pages/community/ClubList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/community/CommunityCategory.vue": {
+    "file": "assets/CommunityCategory-BvS7TjQZ.js",
+    "name": "CommunityCategory",
+    "src": "resources/js/pages/community/CommunityCategory.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/community/CommunityHome.vue": {
+    "file": "assets/CommunityHome-C_jpOhpQ.js",
+    "name": "CommunityHome",
+    "src": "resources/js/pages/community/CommunityHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/community/CommunityPost.vue": {
+    "file": "assets/CommunityPost-CSjFj7kN.js",
+    "name": "CommunityPost",
+    "src": "resources/js/pages/community/CommunityPost.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/community/CommunityWrite.vue": {
+    "file": "assets/CommunityWrite-DVUD2vlI.js",
+    "name": "CommunityWrite",
+    "src": "resources/js/pages/community/CommunityWrite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/community/PostDetail.vue": {
+    "file": "assets/PostDetail-B9uIHVmw.js",
+    "name": "PostDetail",
+    "src": "resources/js/pages/community/PostDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ]
+  },
+  "resources/js/pages/community/PostList.vue": {
+    "file": "assets/PostList-C9549N2J.js",
+    "name": "PostList",
+    "src": "resources/js/pages/community/PostList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/PostList-OEpTKTPc.css"
+    ]
+  },
+  "resources/js/pages/community/PostWrite.vue": {
+    "file": "assets/PostWrite-Bl0s5I2I.js",
+    "name": "PostWrite",
+    "src": "resources/js/pages/community/PostWrite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/community/QnAHome.vue": {
+    "file": "assets/QnAHome-4ebUp5JL.js",
+    "name": "QnAHome",
+    "src": "resources/js/pages/community/QnAHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/QnAHome-CPN20WP4.css"
+    ]
+  },
+  "resources/js/pages/directory/BusinessDetail.vue": {
+    "file": "assets/BusinessDetail-DBsW9il_.js",
+    "name": "BusinessDetail",
+    "src": "resources/js/pages/directory/BusinessDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ],
+    "dynamicImports": [
+      "_leaflet-src-Bbfz3w4-.js"
+    ]
+  },
+  "resources/js/pages/directory/BusinessList.vue": {
+    "file": "assets/BusinessList-Sk2PQf5P.js",
+    "name": "BusinessList",
+    "src": "resources/js/pages/directory/BusinessList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/directory/BusinessRegister.vue": {
+    "file": "assets/BusinessRegister-2rBYSTBo.js",
+    "name": "BusinessRegister",
+    "src": "resources/js/pages/directory/BusinessRegister.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/elder/ElderCheckin.vue": {
+    "file": "assets/ElderCheckin-C33Ozqt5.js",
+    "name": "ElderCheckin",
+    "src": "resources/js/pages/elder/ElderCheckin.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/elder/ElderHome.vue": {
+    "file": "assets/ElderHome-ra-hkZfm.js",
+    "name": "ElderHome",
+    "src": "resources/js/pages/elder/ElderHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/elder/GuardianDashboard.vue": {
+    "file": "assets/GuardianDashboard-DO-cLMsv.js",
+    "name": "GuardianDashboard",
+    "src": "resources/js/pages/elder/GuardianDashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/events/EventCreate.vue": {
+    "file": "assets/EventCreate-Bnb3b2up.js",
+    "name": "EventCreate",
+    "src": "resources/js/pages/events/EventCreate.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/events/EventDetail.vue": {
+    "file": "assets/EventDetail-BBwf1UDI.js",
+    "name": "EventDetail",
+    "src": "resources/js/pages/events/EventDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ]
+  },
+  "resources/js/pages/events/EventList.vue": {
+    "file": "assets/EventList-D91ZJJZS.js",
+    "name": "EventList",
+    "src": "resources/js/pages/events/EventList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/friends/FriendList.vue": {
+    "file": "assets/FriendList-D66ZOa2W.js",
+    "name": "FriendList",
+    "src": "resources/js/pages/friends/FriendList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/ArcadeGame.vue": {
+    "file": "assets/ArcadeGame-DlCXUsBU.js",
+    "name": "ArcadeGame",
+    "src": "resources/js/pages/games/ArcadeGame.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/ArcadeGame-XdrHkr3t.css"
+    ]
+  },
+  "resources/js/pages/games/BingoGame.vue": {
+    "file": "assets/BingoGame-CUDYv6he.js",
+    "name": "BingoGame",
+    "src": "resources/js/pages/games/BingoGame.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/BingoGame-DNawkGnK.css"
+    ]
+  },
+  "resources/js/pages/games/Blackjack.vue": {
+    "file": "assets/Blackjack-C7dyCIGp.js",
+    "name": "Blackjack",
+    "src": "resources/js/pages/games/Blackjack.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/Game2048.vue": {
+    "file": "assets/Game2048-BKrkFVNs.js",
+    "name": "Game2048",
+    "src": "resources/js/pages/games/Game2048.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameAlphabet.vue": {
+    "file": "assets/GameAlphabet-Cyqu7LVq.js",
+    "name": "GameAlphabet",
+    "src": "resources/js/pages/games/GameAlphabet.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameAlphabet-CTWQaKe5.css"
+    ]
+  },
+  "resources/js/pages/games/GameAnimals.vue": {
+    "file": "assets/GameAnimals-jkrtVnol.js",
+    "name": "GameAnimals",
+    "src": "resources/js/pages/games/GameAnimals.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameAnimals-DR_GN10Q.css"
+    ]
+  },
+  "resources/js/pages/games/GameBingo.vue": {
+    "file": "assets/GameBingo-QhWWm_8S.js",
+    "name": "GameBingo",
+    "src": "resources/js/pages/games/GameBingo.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameBingo-DIzpcFhP.css"
+    ]
+  },
+  "resources/js/pages/games/GameBreathing.vue": {
+    "file": "assets/GameBreathing-BRF-Eyhr.js",
+    "name": "GameBreathing",
+    "src": "resources/js/pages/games/GameBreathing.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameBreathing-DOX_bS3_.css"
+    ]
+  },
+  "resources/js/pages/games/GameCarJump.vue": {
+    "file": "assets/GameCarJump-B-OKWLMo.js",
+    "name": "GameCarJump",
+    "src": "resources/js/pages/games/GameCarJump.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameCodingQuiz.vue": {
+    "file": "assets/GameCodingQuiz-CClUDEyt.js",
+    "name": "GameCodingQuiz",
+    "src": "resources/js/pages/games/GameCodingQuiz.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameCodingQuiz-DeeZr7xo.css"
+    ]
+  },
+  "resources/js/pages/games/GameColors.vue": {
+    "file": "assets/GameColors-B0MZ4k1a.js",
+    "name": "GameColors",
+    "src": "resources/js/pages/games/GameColors.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameColors-jw9CVv5G.css"
+    ]
+  },
+  "resources/js/pages/games/GameCounting.vue": {
+    "file": "assets/GameCounting-B1ArAt7C.js",
+    "name": "GameCounting",
+    "src": "resources/js/pages/games/GameCounting.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameCounting-DJ4hJ2UP.css"
+    ]
+  },
+  "resources/js/pages/games/GameDuckHunt.vue": {
+    "file": "assets/GameDuckHunt-vE8UlO_V.js",
+    "name": "GameDuckHunt",
+    "src": "resources/js/pages/games/GameDuckHunt.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameEngCard.vue": {
+    "file": "assets/GameEngCard-CUUdiQb5.js",
+    "name": "GameEngCard",
+    "src": "resources/js/pages/games/GameEngCard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameEngCard-BBYQMHlI.css"
+    ]
+  },
+  "resources/js/pages/games/GameFlag.vue": {
+    "file": "assets/GameFlag-BhdYi5qz.js",
+    "name": "GameFlag",
+    "src": "resources/js/pages/games/GameFlag.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameFlappy.vue": {
+    "file": "assets/GameFlappy-CkQ9am8c.js",
+    "name": "GameFlappy",
+    "src": "resources/js/pages/games/GameFlappy.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameHangul.vue": {
+    "file": "assets/GameHangul-BCG_hBll.js",
+    "name": "GameHangul",
+    "src": "resources/js/pages/games/GameHangul.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameHangul-2dfdgG_J.css"
+    ]
+  },
+  "resources/js/pages/games/GameHanja.vue": {
+    "file": "assets/GameHanja-D7WlVoJJ.js",
+    "name": "GameHanja",
+    "src": "resources/js/pages/games/GameHanja.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameHanja-6Lcs8yrm.css"
+    ]
+  },
+  "resources/js/pages/games/GameHealth.vue": {
+    "file": "assets/GameHealth-D5qno0YS.js",
+    "name": "GameHealth",
+    "src": "resources/js/pages/games/GameHealth.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameHealth-Cc96mTH5.css"
+    ]
+  },
+  "resources/js/pages/games/GameHextris.vue": {
+    "file": "assets/GameHextris-LuK-mjYV.js",
+    "name": "GameHextris",
+    "src": "resources/js/pages/games/GameHextris.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameHistory.vue": {
+    "file": "assets/GameHistory-Dh7kowAp.js",
+    "name": "GameHistory",
+    "src": "resources/js/pages/games/GameHistory.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameHistory-CKp22IM1.css"
+    ]
+  },
+  "resources/js/pages/games/GameIdiom.vue": {
+    "file": "assets/GameIdiom-Bni6c03f.js",
+    "name": "GameIdiom",
+    "src": "resources/js/pages/games/GameIdiom.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameLobby.vue": {
+    "file": "assets/GameLobby-lJcaQpQ_.js",
+    "name": "GameLobby",
+    "src": "resources/js/pages/games/GameLobby.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameLobby-TYT6u-B9.css"
+    ]
+  },
+  "resources/js/pages/games/GameMahjong.vue": {
+    "file": "assets/GameMahjong-pTPgEGQW.js",
+    "name": "GameMahjong",
+    "src": "resources/js/pages/games/GameMahjong.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameMathBasic.vue": {
+    "file": "assets/GameMathBasic-DOfs2_7_.js",
+    "name": "GameMathBasic",
+    "src": "resources/js/pages/games/GameMathBasic.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameMathBasic-VmNofp3C.css"
+    ]
+  },
+  "resources/js/pages/games/GameMathChallenge.vue": {
+    "file": "assets/GameMathChallenge--d1xgsdE.js",
+    "name": "GameMathChallenge",
+    "src": "resources/js/pages/games/GameMathChallenge.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameMathChallenge-CEw7yOUx.css"
+    ]
+  },
+  "resources/js/pages/games/GameMaze.vue": {
+    "file": "assets/GameMaze-i9BqBsEB.js",
+    "name": "GameMaze",
+    "src": "resources/js/pages/games/GameMaze.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameMaze-BoQSTaZt.css"
+    ]
+  },
+  "resources/js/pages/games/GameMemory.vue": {
+    "file": "assets/GameMemory-DsLsREAD.js",
+    "name": "GameMemory",
+    "src": "resources/js/pages/games/GameMemory.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameMemory-C1JATAF7.css"
+    ]
+  },
+  "resources/js/pages/games/GameMultiplication.vue": {
+    "file": "assets/GameMultiplication-BCin2MWH.js",
+    "name": "GameMultiplication",
+    "src": "resources/js/pages/games/GameMultiplication.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameMultiplication-CU-w53Xh.css"
+    ]
+  },
+  "resources/js/pages/games/GameNumberMemory.vue": {
+    "file": "assets/GameNumberMemory-lkxiu9ae.js",
+    "name": "GameNumberMemory",
+    "src": "resources/js/pages/games/GameNumberMemory.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GamePacman.vue": {
+    "file": "assets/GamePacman-C4smJPNu.js",
+    "name": "GamePacman",
+    "src": "resources/js/pages/games/GamePacman.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameProverb.vue": {
+    "file": "assets/GameProverb--0EEfMgK.js",
+    "name": "GameProverb",
+    "src": "resources/js/pages/games/GameProverb.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameProverb-BblI5AfK.css"
+    ]
+  },
+  "resources/js/pages/games/GamePuzzle.vue": {
+    "file": "assets/GamePuzzle-DTO-dkhG.js",
+    "name": "GamePuzzle",
+    "src": "resources/js/pages/games/GamePuzzle.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GamePuzzle-CR8eMr_s.css"
+    ]
+  },
+  "resources/js/pages/games/GameSATWords.vue": {
+    "file": "assets/GameSATWords-DUA-F_Yi.js",
+    "name": "GameSATWords",
+    "src": "resources/js/pages/games/GameSATWords.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameSATWords-CrpdPWn7.css"
+    ]
+  },
+  "resources/js/pages/games/GameSeniorMemory.vue": {
+    "file": "assets/GameSeniorMemory-D238nWSs.js",
+    "name": "GameSeniorMemory",
+    "src": "resources/js/pages/games/GameSeniorMemory.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameSeniorMemory-BcpNv2NL.css"
+    ]
+  },
+  "resources/js/pages/games/GameShapes.vue": {
+    "file": "assets/GameShapes-BWlA4miX.js",
+    "name": "GameShapes",
+    "src": "resources/js/pages/games/GameShapes.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameShapes-C5r2FepJ.css"
+    ]
+  },
+  "resources/js/pages/games/GameSlots.vue": {
+    "file": "assets/GameSlots-DK2YfLCj.js",
+    "name": "GameSlots",
+    "src": "resources/js/pages/games/GameSlots.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameSnake.vue": {
+    "file": "assets/GameSnake-B-LUC1ez.js",
+    "name": "GameSnake",
+    "src": "resources/js/pages/games/GameSnake.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/pages/games/ArcadeGame.vue",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameSpeedCalc.vue": {
+    "file": "assets/GameSpeedCalc-U7S6yQvL.js",
+    "name": "GameSpeedCalc",
+    "src": "resources/js/pages/games/GameSpeedCalc.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameSpeedCalc-CRLeZLJN.css"
+    ]
+  },
+  "resources/js/pages/games/GameSpelling.vue": {
+    "file": "assets/GameSpelling-CBRTTtiz.js",
+    "name": "GameSpelling",
+    "src": "resources/js/pages/games/GameSpelling.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameSpelling-DtiBr6xZ.css"
+    ]
+  },
+  "resources/js/pages/games/GameStockSim.vue": {
+    "file": "assets/GameStockSim-seynC5Rl.js",
+    "name": "GameStockSim",
+    "src": "resources/js/pages/games/GameStockSim.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameStockSim-CdNez0wH.css"
+    ]
+  },
+  "resources/js/pages/games/GameStroop.vue": {
+    "file": "assets/GameStroop-DBzKyz4e.js",
+    "name": "GameStroop",
+    "src": "resources/js/pages/games/GameStroop.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameStroop-vbI6MVqZ.css"
+    ]
+  },
+  "resources/js/pages/games/GameTowerDefense.vue": {
+    "file": "assets/GameTowerDefense-D46SwW2z.js",
+    "name": "GameTowerDefense",
+    "src": "resources/js/pages/games/GameTowerDefense.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameTowerDefense-DTuXg0nG.css"
+    ]
+  },
+  "resources/js/pages/games/GameTyping.vue": {
+    "file": "assets/GameTyping-BCXms5yB.js",
+    "name": "GameTyping",
+    "src": "resources/js/pages/games/GameTyping.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameTyping-BjOHsgKH.css"
+    ]
+  },
+  "resources/js/pages/games/GameUSLife.vue": {
+    "file": "assets/GameUSLife-Fq3Wgw9o.js",
+    "name": "GameUSLife",
+    "src": "resources/js/pages/games/GameUSLife.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameUSLife--Q8agMkE.css"
+    ]
+  },
+  "resources/js/pages/games/GameWordBlank.vue": {
+    "file": "assets/GameWordBlank-D6lCFiK4.js",
+    "name": "GameWordBlank",
+    "src": "resources/js/pages/games/GameWordBlank.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameWordBlank-DFNT3u9F.css"
+    ]
+  },
+  "resources/js/pages/games/GameWordCard.vue": {
+    "file": "assets/GameWordCard-CoOFeHUO.js",
+    "name": "GameWordCard",
+    "src": "resources/js/pages/games/GameWordCard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameWordCard-BkLPIO7k.css"
+    ]
+  },
+  "resources/js/pages/games/GameWordChain.vue": {
+    "file": "assets/GameWordChain-DuH-LR45.js",
+    "name": "GameWordChain",
+    "src": "resources/js/pages/games/GameWordChain.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameWordChain-CxcBP_37.css"
+    ]
+  },
+  "resources/js/pages/games/GameWordle.vue": {
+    "file": "assets/GameWordle-Ix4sm1K7.js",
+    "name": "GameWordle",
+    "src": "resources/js/pages/games/GameWordle.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GameWorldGeo.vue": {
+    "file": "assets/GameWorldGeo-E16a4AhW.js",
+    "name": "GameWorldGeo",
+    "src": "resources/js/pages/games/GameWorldGeo.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GameWorldGeo-DZO1L0li.css"
+    ]
+  },
+  "resources/js/pages/games/GoStop.vue": {
+    "file": "assets/GoStop-Dj5fLEu_.js",
+    "name": "GoStop",
+    "src": "resources/js/pages/games/GoStop.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/GoStopSolo.vue": {
+    "file": "assets/GoStopSolo-DHbhYkCj.js",
+    "name": "GoStopSolo",
+    "src": "resources/js/pages/games/GoStopSolo.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GoStopSolo-BZlQScZA.css"
+    ]
+  },
+  "resources/js/pages/games/HoldemSolo.vue": {
+    "file": "assets/HoldemSolo-CcQp5xnu.js",
+    "name": "HoldemSolo",
+    "src": "resources/js/pages/games/HoldemSolo.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/HoldemSolo-x1M0p1Vv.css"
+    ]
+  },
+  "resources/js/pages/games/Leaderboard.vue": {
+    "file": "assets/Leaderboard-CqxUewKt.js",
+    "name": "Leaderboard",
+    "src": "resources/js/pages/games/Leaderboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/MemoryGame.vue": {
+    "file": "assets/MemoryGame-CQJKULLT.js",
+    "name": "MemoryGame",
+    "src": "resources/js/pages/games/MemoryGame.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/MemoryGame-D1tOXhl6.css"
+    ]
+  },
+  "resources/js/pages/games/OmokGame.vue": {
+    "file": "assets/OmokGame-DmXRWDjZ.js",
+    "name": "OmokGame",
+    "src": "resources/js/pages/games/OmokGame.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/OmokGame-BVSW2V9j.css"
+    ]
+  },
+  "resources/js/pages/games/PointShop.vue": {
+    "file": "assets/PointShop-Dzffd7eX.js",
+    "name": "PointShop",
+    "src": "resources/js/pages/games/PointShop.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/Poker.vue": {
+    "file": "assets/Poker-BX_QvcL0.js",
+    "name": "Poker",
+    "src": "resources/js/pages/games/Poker.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/games/QuizGame.vue": {
+    "file": "assets/QuizGame-DJWd9AXN.js",
+    "name": "QuizGame",
+    "src": "resources/js/pages/games/QuizGame.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/groupbuy/GroupBuyHome.vue": {
+    "file": "assets/GroupBuyHome-BSJKvei4.js",
+    "name": "GroupBuyHome",
+    "src": "resources/js/pages/groupbuy/GroupBuyHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ],
+    "css": [
+      "assets/GroupBuyHome-YGg6NQme.css"
+    ]
+  },
+  "resources/js/pages/jobs/JobDetail.vue": {
+    "file": "assets/JobDetail-DZxkiJES.js",
+    "name": "JobDetail",
+    "src": "resources/js/pages/jobs/JobDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ]
+  },
+  "resources/js/pages/jobs/JobList.vue": {
+    "file": "assets/JobList-CbTbh7Mj.js",
+    "name": "JobList",
+    "src": "resources/js/pages/jobs/JobList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/jobs/JobWrite.vue": {
+    "file": "assets/JobWrite-RI-bJRv6.js",
+    "name": "JobWrite",
+    "src": "resources/js/pages/jobs/JobWrite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/market/MarketDetail.vue": {
+    "file": "assets/MarketDetail-GbDNalsP.js",
+    "name": "MarketDetail",
+    "src": "resources/js/pages/market/MarketDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ]
+  },
+  "resources/js/pages/market/MarketList.vue": {
+    "file": "assets/MarketList-sHl574iL.js",
+    "name": "MarketList",
+    "src": "resources/js/pages/market/MarketList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/market/MarketWrite.vue": {
+    "file": "assets/MarketWrite-qJqFvrdM.js",
+    "name": "MarketWrite",
+    "src": "resources/js/pages/market/MarketWrite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/messages/MessageInbox.vue": {
+    "file": "assets/MessageInbox-Dw2zIkKt.js",
+    "name": "MessageInbox",
+    "src": "resources/js/pages/messages/MessageInbox.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/music/MusicHome.vue": {
+    "file": "assets/MusicHome-ClWzgSI-.js",
+    "name": "MusicHome",
+    "src": "resources/js/pages/music/MusicHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/news/NewsDetail.vue": {
+    "file": "assets/NewsDetail-Bf2fWiBI.js",
+    "name": "NewsDetail",
+    "src": "resources/js/pages/news/NewsDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ],
+    "css": [
+      "assets/NewsDetail-Dr8lV1Of.css"
+    ]
+  },
+  "resources/js/pages/news/NewsList.vue": {
+    "file": "assets/NewsList-MiA9DEeh.js",
+    "name": "NewsList",
+    "src": "resources/js/pages/news/NewsList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/NewsList-C-9Exd6P.css"
+    ]
+  },
+  "resources/js/pages/points/PointDashboard.vue": {
+    "file": "assets/PointDashboard-q2SsDENq.js",
+    "name": "PointDashboard",
+    "src": "resources/js/pages/points/PointDashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/profile/ProfileEdit.vue": {
+    "file": "assets/ProfileEdit-NRR_aHIj.js",
+    "name": "ProfileEdit",
+    "src": "resources/js/pages/profile/ProfileEdit.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/ProfileEdit-Clp4EYzb.css"
+    ]
+  },
+  "resources/js/pages/profile/UserDashboard.vue": {
+    "file": "assets/UserDashboard-YoVf2oe3.js",
+    "name": "UserDashboard",
+    "src": "resources/js/pages/profile/UserDashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/profile/UserProfile.vue": {
+    "file": "assets/UserProfile-K-gMZD-p.js",
+    "name": "UserProfile",
+    "src": "resources/js/pages/profile/UserProfile.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/qa/QACategory.vue": {
+    "file": "assets/QACategory-1S3rydCM.js",
+    "name": "QACategory",
+    "src": "resources/js/pages/qa/QACategory.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/qa/QAHome.vue": {
+    "file": "assets/QAHome-jFhGU0IJ.js",
+    "name": "QAHome",
+    "src": "resources/js/pages/qa/QAHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/qa/QAQuestion.vue": {
+    "file": "assets/QAQuestion-C89bfRRH.js",
+    "name": "QAQuestion",
+    "src": "resources/js/pages/qa/QAQuestion.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/qa/QAWrite.vue": {
+    "file": "assets/QAWrite-DS1QfQT9.js",
+    "name": "QAWrite",
+    "src": "resources/js/pages/qa/QAWrite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/qa/QaDetail.vue": {
+    "file": "assets/QaDetail-Br1QNCmI.js",
+    "name": "QaDetail",
+    "src": "resources/js/pages/qa/QaDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/qa/QaList.vue": {
+    "file": "assets/QaList-YE32MTFL.js",
+    "name": "QaList",
+    "src": "resources/js/pages/qa/QaList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/qa/UserResolved.vue": {
+    "file": "assets/UserResolved-rFv2Buou.js",
+    "name": "UserResolved",
+    "src": "resources/js/pages/qa/UserResolved.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/realestate/RealEstateDetail.vue": {
+    "file": "assets/RealEstateDetail-DrpEaR0v.js",
+    "name": "RealEstateDetail",
+    "src": "resources/js/pages/realestate/RealEstateDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ]
+  },
+  "resources/js/pages/realestate/RealEstateList.vue": {
+    "file": "assets/RealEstateList-BLeEDxla.js",
+    "name": "RealEstateList",
+    "src": "resources/js/pages/realestate/RealEstateList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_ListTemplate-BjQuCT8S.js"
+    ]
+  },
+  "resources/js/pages/realestate/RealEstateWrite.vue": {
+    "file": "assets/RealEstateWrite-B0aW7uHm.js",
+    "name": "RealEstateWrite",
+    "src": "resources/js/pages/realestate/RealEstateWrite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_WriteTemplate-B0wGibrK.js"
+    ]
+  },
+  "resources/js/pages/recipes/RecipeCreate.vue": {
+    "file": "assets/RecipeCreate-Cib7A2cb.js",
+    "name": "RecipeCreate",
+    "src": "resources/js/pages/recipes/RecipeCreate.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/recipes/RecipeDetail.vue": {
+    "file": "assets/RecipeDetail-C32KmPHa.js",
+    "name": "RecipeDetail",
+    "src": "resources/js/pages/recipes/RecipeDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_DetailTemplate-CXL-a8gK.js"
+    ]
+  },
+  "resources/js/pages/recipes/RecipeList.vue": {
+    "file": "assets/RecipeList-C6k0mfpH.js",
+    "name": "RecipeList",
+    "src": "resources/js/pages/recipes/RecipeList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_ListTemplate-BjQuCT8S.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/pages/shopping/ShoppingHome.vue": {
+    "file": "assets/ShoppingHome-Cvun-7-L.js",
+    "name": "ShoppingHome",
+    "src": "resources/js/pages/shopping/ShoppingHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/ShoppingHome-C7MDP8FG.css"
+    ]
+  },
+  "resources/js/pages/shorts/ShortsHome.vue": {
+    "file": "assets/ShortsHome-BQGRbJBP.js",
+    "name": "ShortsHome",
+    "src": "resources/js/pages/shorts/ShortsHome.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/ShortsHome-BzTOcBDQ.css"
+    ]
+  },
+  "resources/js/pages/shorts/ShortsUpload.vue": {
+    "file": "assets/ShortsUpload-B2Wi8dZa.js",
+    "name": "ShortsUpload",
+    "src": "resources/js/pages/shorts/ShortsUpload.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js"
