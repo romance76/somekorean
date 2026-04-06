@@ -86,7 +86,6 @@ const menuGroups = [
     title: '콘텐츠',
     items: [
       { to: '/admin/content', icon: '📝', label: '게시글' },
-      { to: '/admin/boards', icon: '📋', label: '게시판' },
       { to: '/admin/news', icon: '📰', label: '뉴스' },
       { to: '/admin/jobs', icon: '💼', label: '구인구직' },
       { to: '/admin/market', icon: '🛒', label: '장터' },
@@ -116,7 +115,8 @@ const menuGroups = [
       { to: '/admin/banners', icon: '🖼️', label: '배너' },
       { to: '/admin/payments', icon: '💳', label: '결제' },
       { to: '/admin/security', icon: '🔒', label: '보안' },
-      { to: '/admin/settings', icon: '⚙️', label: '설정' },
+      { to: '/admin/settings', icon: '⚙️', label: '사이트 설정' },
+      { to: '/admin/boards', icon: '📋', label: '게시판 관리' },
       { to: '/admin/system', icon: '🖥️', label: '시스템' },
     ]
   },

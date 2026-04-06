@@ -1513,8 +1513,9 @@ const newApiKey = ref({ name: '', service: '', api_key: '', description: '' })
 async function loadApiKeys() {
   try {
     const { data } = await axios.get('/api/admin/api-keys')
-    apiKeys.value = (data || []).map(k => ({ ...k, showFull: false, fullKey: '' }))
-  } catch {}
+    const list = data.data || data || []
+    apiKeys.value = list.map(k => ({ ...k, showFull: false, fullKey: '' }))
+  } catch (e) { console.error('loadApiKeys error:', e) }
 }
 
 async function saveApiKey() {
@@ -1540,7 +1541,7 @@ async function toggleApiKeyActive(key) {
 async function toggleReveal(key) {
   if (!key.showFull) {
     const { data } = await axios.get('/api/admin/api-keys/' + key.id + '/reveal')
-    key.fullKey = data.api_key
+    key.fullKey = data.data?.key || data.key || key.api_key || ''
   }
   key.showFull = !key.showFull
 }
@@ -1553,6 +1554,7 @@ function copyKey(key) {
 
 onMounted(loadSettings)
 onMounted(loadMenus)
+onMounted(loadApiKeys)
 
 watch(() => activeTab.value, (tab) => {
   if (tab === 'api') loadApiKeys()
