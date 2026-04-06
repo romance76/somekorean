@@ -6,27 +6,226 @@ use Illuminate\Http\Request;
 
 class AdminSettingsController extends Controller
 {
+    // 전체 설정 로드 (이전 버전 호환)
     public function index() {
         $settings = SiteSetting::all()->pluck('value', 'key');
         return response()->json(['success'=>true,'data'=>$settings]);
     }
 
-    public function getPublic() {
-        $settings = SiteSetting::whereIn('key', ['site_name','logo_url','primary_color'])->pluck('value','key');
+    // 전체 설정 한번에 로드 (이전 SiteSettings.vue 호환)
+    public function getAll() {
+        $settings = SiteSetting::all()->pluck('value', 'key')->toArray();
+        // JSON 값들 디코딩
+        foreach ($settings as $key => $val) {
+            $decoded = json_decode($val, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $settings[$key] = $decoded;
+            }
+        }
         return response()->json(['success'=>true,'data'=>$settings]);
     }
 
+    public function getPublic() {
+        $keys = ['site_name','site_subtitle','logo_url','primary_color','footer_text','about_page','terms_page','privacy_page','meta_description','meta_keywords','company_name','contact_email','contact_phone','company_address','sns_facebook','sns_instagram','sns_twitter','sns_youtube','sns_kakao'];
+        $settings = SiteSetting::whereIn('key', $keys)->pluck('value','key');
+        return response()->json(['success'=>true,'data'=>$settings]);
+    }
+
+    // 일괄 업데이트
     public function update(Request $request) {
+        foreach ($request->all() as $key => $value) {
+            $storeValue = is_array($value) ? json_encode($value) : $value;
+            SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$storeValue]);
+        }
+        return response()->json(['success'=>true,'message'=>'설정이 저장되었습니다']);
+    }
+
+    // 회사 정보 저장
+    public function saveCompany(Request $request) {
         foreach ($request->all() as $key => $value) {
             SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$value]);
         }
+        return response()->json(['success'=>true,'message'=>'회사 정보가 저장되었습니다']);
+    }
+
+    // 사이트 설정 저장
+    public function saveSite(Request $request) {
+        foreach ($request->all() as $key => $value) {
+            $storeValue = is_bool($value) ? ($value ? '1' : '0') : (is_array($value) ? json_encode($value) : $value);
+            SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$storeValue]);
+        }
+        return response()->json(['success'=>true,'message'=>'사이트 설정이 저장되었습니다']);
+    }
+
+    // 푸터 저장
+    public function saveFooter(Request $request) {
+        SiteSetting::updateOrCreate(['key'=>'footer_config'], ['value'=>json_encode($request->all())]);
+        return response()->json(['success'=>true,'message'=>'푸터가 저장되었습니다']);
+    }
+
+    // 약관 저장
+    public function saveTerms(Request $request, $type) {
+        $key = $type === 'privacy' ? 'privacy_page' : 'terms_page';
+        SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$request->content]);
+        return response()->json(['success'=>true,'message'=>'약관이 저장되었습니다']);
+    }
+
+    // 알림 설정 저장
+    public function saveNotifications(Request $request) {
+        SiteSetting::updateOrCreate(['key'=>'notification_config'], ['value'=>json_encode($request->all())]);
+        return response()->json(['success'=>true,'message'=>'알림 설정이 저장되었습니다']);
+    }
+
+    // Stripe 키 저장
+    public function saveStripe(Request $request) {
+        foreach (['stripe_publishable_key','stripe_secret_key','stripe_webhook_secret','stripe_test_mode'] as $k) {
+            if ($request->has($k)) {
+                SiteSetting::updateOrCreate(['key'=>$k], ['value'=>$request->$k]);
+            }
+        }
+        // .env 파일에도 반영
+        $this->updateEnv('STRIPE_KEY', $request->stripe_publishable_key);
+        $this->updateEnv('STRIPE_SECRET', $request->stripe_secret_key);
+        return response()->json(['success'=>true,'message'=>'Stripe 키가 저장되었습니다']);
+    }
+
+    // 결제 게이트웨이 설정
+    public function savePaymentGateway(Request $request) {
+        SiteSetting::updateOrCreate(['key'=>'payment_config'], ['value'=>json_encode($request->all())]);
+        return response()->json(['success'=>true,'message'=>'결제 설정이 저장되었습니다']);
+    }
+
+    // SEO 설정 저장
+    public function saveSeo(Request $request) {
+        foreach ($request->all() as $key => $value) {
+            SiteSetting::updateOrCreate(['key'=>'seo_'.$key], ['value'=>$value]);
+        }
+        return response()->json(['success'=>true,'message'=>'SEO 설정이 저장되었습니다']);
+    }
+
+    // VAPID 키 생성
+    public function generateVapid() {
+        // 간단한 더미 키 생성 (실제로는 web-push 라이브러리 사용)
+        $public = base64_encode(random_bytes(65));
+        $private = base64_encode(random_bytes(32));
+        SiteSetting::updateOrCreate(['key'=>'vapid_public'], ['value'=>$public]);
+        SiteSetting::updateOrCreate(['key'=>'vapid_private'], ['value'=>$private]);
+        return response()->json(['success'=>true,'data'=>['public'=>$public,'private'=>$private]]);
+    }
+
+    // 메뉴 목록
+    public function getMenus() {
+        $setting = SiteSetting::where('key', 'menu_config')->first();
+        $menus = $setting ? json_decode($setting->value, true) : $this->defaultMenus();
+        return response()->json(['success'=>true,'data'=>$menus]);
+    }
+
+    // 메뉴 일괄 저장
+    public function saveMenus(Request $request) {
+        SiteSetting::updateOrCreate(['key'=>'menu_config'], ['value'=>json_encode($request->menus)]);
+        return response()->json(['success'=>true,'message'=>'메뉴 설정이 저장되었습니다']);
+    }
+
+    // API 키 관리
+    public function getApiKeys() {
+        $setting = SiteSetting::where('key', 'api_keys')->first();
+        $keys = $setting ? json_decode($setting->value, true) : [];
+        // 키 마스킹
+        foreach ($keys as &$k) {
+            $k['masked_key'] = substr($k['api_key'] ?? '', 0, 8) . '••••••••';
+            $k['showFull'] = false;
+        }
+        return response()->json(['success'=>true,'data'=>$keys]);
+    }
+
+    public function storeApiKey(Request $request) {
+        $request->validate(['name'=>'required','service'=>'required','api_key'=>'required']);
+        $setting = SiteSetting::where('key', 'api_keys')->first();
+        $keys = $setting ? json_decode($setting->value, true) : [];
+        $newKey = [
+            'id' => count($keys) + 1,
+            'name' => $request->name,
+            'service' => $request->service,
+            'api_key' => $request->api_key,
+            'description' => $request->description ?? '',
+            'is_active' => true,
+            'created_at' => now()->toDateTimeString(),
+        ];
+        $keys[] = $newKey;
+        SiteSetting::updateOrCreate(['key'=>'api_keys'], ['value'=>json_encode($keys)]);
+        // .env에도 반영 (서비스별)
+        $envKey = strtoupper($request->service) . '_API_KEY';
+        $this->updateEnv($envKey, $request->api_key);
+        return response()->json(['success'=>true,'data'=>$newKey,'message'=>'API 키가 등록되었습니다']);
+    }
+
+    public function deleteApiKey($id) {
+        $setting = SiteSetting::where('key', 'api_keys')->first();
+        $keys = $setting ? json_decode($setting->value, true) : [];
+        $keys = array_values(array_filter($keys, fn($k) => $k['id'] != $id));
+        SiteSetting::updateOrCreate(['key'=>'api_keys'], ['value'=>json_encode($keys)]);
+        return response()->json(['success'=>true,'message'=>'삭제되었습니다']);
+    }
+
+    public function updateApiKey(Request $request, $id) {
+        $setting = SiteSetting::where('key', 'api_keys')->first();
+        $keys = $setting ? json_decode($setting->value, true) : [];
+        foreach ($keys as &$k) {
+            if ($k['id'] == $id) {
+                if ($request->has('is_active')) $k['is_active'] = $request->is_active;
+            }
+        }
+        SiteSetting::updateOrCreate(['key'=>'api_keys'], ['value'=>json_encode($keys)]);
         return response()->json(['success'=>true]);
+    }
+
+    public function revealApiKey($id) {
+        $setting = SiteSetting::where('key', 'api_keys')->first();
+        $keys = $setting ? json_decode($setting->value, true) : [];
+        foreach ($keys as $k) {
+            if ($k['id'] == $id) return response()->json(['success'=>true,'data'=>['key'=>$k['api_key']]]);
+        }
+        return response()->json(['success'=>false,'message'=>'키를 찾을 수 없습니다'],404);
     }
 
     public function uploadLogo(Request $request) {
         $request->validate(['logo'=>'required|image']);
         $path = $request->file('logo')->storeAs('public', 'logo_00.jpg');
         copy(storage_path('app/' . $path), public_path('images/logo_00.jpg'));
+        SiteSetting::updateOrCreate(['key'=>'logo_url'], ['value'=>'/images/logo_00.jpg']);
         return response()->json(['success'=>true,'data'=>['url'=>'/images/logo_00.jpg']]);
+    }
+
+    // .env 파일 업데이트 헬퍼
+    private function updateEnv($key, $value) {
+        $envPath = base_path('.env');
+        if (!file_exists($envPath)) return;
+        $content = file_get_contents($envPath);
+        if (strpos($content, $key.'=') !== false) {
+            $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
+        } else {
+            $content .= "\n{$key}={$value}";
+        }
+        file_put_contents($envPath, $content);
+    }
+
+    private function defaultMenus() {
+        return [
+            ['key'=>'home','label'=>'홈','icon'=>'🏠','path'=>'/','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'community','label'=>'커뮤니티','icon'=>'💬','path'=>'/community','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'qa','label'=>'Q&A','icon'=>'❓','path'=>'/qa','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'jobs','label'=>'구인구직','icon'=>'💼','path'=>'/jobs','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'market','label'=>'중고장터','icon'=>'🛒','path'=>'/market','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'directory','label'=>'업소록','icon'=>'🏪','path'=>'/directory','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'realestate','label'=>'부동산','icon'=>'🏠','path'=>'/realestate','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'events','label'=>'이벤트','icon'=>'🎉','path'=>'/events','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'news','label'=>'뉴스','icon'=>'📰','path'=>'/news','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'recipes','label'=>'레시피','icon'=>'🍳','path'=>'/recipes','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'clubs','label'=>'동호회','icon'=>'👥','path'=>'/clubs','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'games','label'=>'게임','icon'=>'🎮','path'=>'/games','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'shorts','label'=>'숏츠','icon'=>'📱','path'=>'/shorts','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'music','label'=>'음악','icon'=>'🎵','path'=>'/music','enabled'=>true,'login_required'=>false,'admin_only'=>false],
+            ['key'=>'chat','label'=>'채팅','icon'=>'💭','path'=>'/chat','enabled'=>true,'login_required'=>true,'admin_only'=>false],
+        ];
     }
 }

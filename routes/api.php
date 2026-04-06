@@ -232,8 +232,25 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/ip-bans/{id}', [AdminController::class, 'deleteIpBan']);
     Route::get('/payments', [AdminController::class, 'payments']);
     Route::get('/settings', [AdminSettingsController::class, 'index']);
+    Route::get('/settings/all', [AdminSettingsController::class, 'getAll']);
     Route::put('/settings', [AdminSettingsController::class, 'update']);
+    Route::post('/settings/company', [AdminSettingsController::class, 'saveCompany']);
+    Route::post('/settings/site', [AdminSettingsController::class, 'saveSite']);
+    Route::post('/settings/footer', [AdminSettingsController::class, 'saveFooter']);
+    Route::post('/settings/terms/{type}', [AdminSettingsController::class, 'saveTerms']);
+    Route::post('/settings/notifications', [AdminSettingsController::class, 'saveNotifications']);
+    Route::post('/settings/stripe', [AdminSettingsController::class, 'saveStripe']);
+    Route::post('/settings/payment-gateway', [AdminSettingsController::class, 'savePaymentGateway']);
+    Route::post('/settings/seo', [AdminSettingsController::class, 'saveSeo']);
+    Route::post('/settings/generate-vapid', [AdminSettingsController::class, 'generateVapid']);
+    Route::get('/settings/menus', [AdminSettingsController::class, 'getMenus']);
+    Route::post('/settings/menus/batch', [AdminSettingsController::class, 'saveMenus']);
     Route::post('/settings/logo', [AdminSettingsController::class, 'uploadLogo']);
+    Route::get('/api-keys', [AdminSettingsController::class, 'getApiKeys']);
+    Route::post('/api-keys', [AdminSettingsController::class, 'storeApiKey']);
+    Route::put('/api-keys/{id}', [AdminSettingsController::class, 'updateApiKey']);
+    Route::delete('/api-keys/{id}', [AdminSettingsController::class, 'deleteApiKey']);
+    Route::get('/api-keys/{id}/reveal', [AdminSettingsController::class, 'revealApiKey']);
 
     // 수동 수집
     Route::post('/fetch-news', function () {
