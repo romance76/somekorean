@@ -1,10 +1,52 @@
 <template>
 <div class="min-h-screen bg-gray-50">
-  <div class="max-w-7xl mx-auto px-4 py-8 text-center">
-    <div class="text-4xl mb-3">✏️</div>
-    <h1 class="text-xl font-black text-gray-800">매물 등록</h1>
-    <p class="text-gray-400 mt-2">준비 중입니다</p>
-    <RouterLink to="/" class="inline-block mt-4 text-amber-600 text-sm font-semibold">← 홈으로</RouterLink>
+  <div class="max-w-3xl mx-auto px-4 py-5">
+    <h1 class="text-xl font-black text-gray-800 mb-4">🏠 매물 등록</h1>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+      <div><label class="text-sm font-semibold text-gray-700">제목</label><input v-model="form.title" type="text" placeholder="예: LA 1BR 아파트 렌트" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-semibold text-gray-700">유형</label>
+          <select v-model="form.type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
+            <option value="rent">렌트</option><option value="sale">매매</option><option value="roommate">룸메이트</option>
+          </select></div>
+        <div><label class="text-sm font-semibold text-gray-700">종류</label>
+          <select v-model="form.property_type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
+            <option value="apt">아파트</option><option value="house">하우스</option><option value="condo">콘도</option><option value="studio">스튜디오</option><option value="office">오피스</option>
+          </select></div>
+      </div>
+      <div class="grid grid-cols-4 gap-3">
+        <div><label class="text-sm font-semibold text-gray-700">가격 ($)</label><input v-model.number="form.price" type="number" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+        <div><label class="text-sm font-semibold text-gray-700">방</label><input v-model.number="form.bedrooms" type="number" min="0" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+        <div><label class="text-sm font-semibold text-gray-700">화장실</label><input v-model.number="form.bathrooms" type="number" min="0" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+        <div><label class="text-sm font-semibold text-gray-700">면적(sqft)</label><input v-model.number="form.sqft" type="number" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+      </div>
+      <div><label class="text-sm font-semibold text-gray-700">상세 설명</label><textarea v-model="form.content" rows="6" placeholder="위치, 시설, 조건 등을 자세히 작성해주세요" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-semibold text-gray-700">연락 전화</label><input v-model="form.contact_phone" type="text" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+        <div><label class="text-sm font-semibold text-gray-700">연락 이메일</label><input v-model="form.contact_email" type="email" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+      </div>
+      <div v-if="error" class="text-red-500 text-sm">{{ error }}</div>
+      <div class="flex gap-3 pt-2">
+        <button @click="submit" :disabled="submitting" class="bg-amber-400 text-amber-900 font-bold px-6 py-2.5 rounded-lg hover:bg-amber-500 disabled:opacity-50">{{ submitting ? '등록 중...' : '매물 등록' }}</button>
+        <button @click="$router.back()" class="text-gray-500 px-6 py-2.5">취소</button>
+      </div>
+    </div>
   </div>
 </div>
 </template>
+<script setup>
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+const router = useRouter()
+const form = reactive({ title:'',type:'rent',property_type:'apt',price:0,bedrooms:1,bathrooms:1,sqft:0,content:'',contact_phone:'',contact_email:'' })
+const error = ref('')
+const submitting = ref(false)
+async function submit() {
+  if (!form.title || !form.content || !form.price) { error.value = '필수 항목을 입력해주세요'; return }
+  submitting.value = true; error.value = ''
+  try { const { data } = await axios.post('/api/realestate', form); router.push(`/realestate/${data.data.id}`) }
+  catch (e) { error.value = e.response?.data?.message || '등록 실패' }
+  submitting.value = false
+}
+</script>
