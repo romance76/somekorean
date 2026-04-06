@@ -360,6 +360,7 @@ class DatabaseSeeder extends Seeder
                 'user_id'=>$ownerId,'name'=>$d['n'].($i>=10?' '.($i-9):''),
                 'description'=>$d['n'].'입니다. 함께 즐거운 활동하실 분들을 모집합니다!',
                 'category'=>$d['cat'],'type'=>$d['t'],'zipcode'=>$c['zip'],
+                'lat'=>$c['lat']+rand(-100,100)/10000, 'lng'=>$c['lng']+rand(-100,100)/10000,
                 'member_count'=>$memberCount,
                 'created_at'=>$this->rDate(120),
             ]);

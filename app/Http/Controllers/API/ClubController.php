@@ -13,8 +13,13 @@ class ClubController extends Controller
             ->where('is_active', true)
             ->when($request->type, fn($q,$v) => $q->where('type', $v))
             ->when($request->category, fn($q,$v) => $q->where('category', $v))
-            ->when($request->search, fn($q,$v) => $q->where('name', 'like', "%{$v}%"))
-            ->orderByDesc('member_count');
+            ->when($request->search, fn($q,$v) => $q->where('name', 'like', "%{$v}%"));
+
+        if ($request->lat && $request->lng) {
+            $query->nearby($request->lat, $request->lng, $request->radius ?? 50);
+        } else {
+            $query->orderByDesc('member_count');
+        }
         return response()->json(['success' => true, 'data' => $query->paginate(20)]);
     }
 
