@@ -27,6 +27,9 @@ class ChatController extends Controller
     public function sendMessage(Request $request, $id) {
         $request->validate(['content' => 'required']);
         $msg = ChatMessage::create(['chat_room_id'=>$id,'user_id'=>auth()->id(),'content'=>$request->content,'type'=>$request->type??'text']);
+
+        // 실시간 브로드캐스트
+        try { event(new \App\Events\MessageSent($msg->load('user:id,name,nickname,avatar'))); } catch (\Exception $e) {}
         return response()->json(['success'=>true,'data'=>$msg->load('user:id,name,nickname,avatar')],201);
     }
 }

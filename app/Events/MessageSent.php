@@ -34,14 +34,14 @@ class MessageSent implements ShouldBroadcast
         return [
             'id'         => $this->message->id,
             'user_id'    => $this->message->user_id,
-            'message'    => $this->message->message,
+            'content'    => $this->message->content,
             'type'       => $this->message->type,
-            'created_at' => $this->message->created_at->toISOString(),
+            'created_at' => $this->message->created_at?->toISOString(),
             'user'       => [
-                'id'       => $this->message->user->id,
-                'name'     => $this->message->user->name,
-                'username' => $this->message->user->username,
-                'avatar'   => $this->message->user->avatar,
+                'id'       => $this->message->user->id ?? 0,
+                'name'     => $this->message->user->name ?? '',
+                'nickname' => $this->message->user->nickname ?? '',
+                'avatar'   => $this->message->user->avatar ?? null,
             ],
         ];
     }
