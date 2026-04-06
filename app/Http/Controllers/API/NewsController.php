@@ -17,7 +17,10 @@ class NewsController extends Controller
 
         $sort = $request->sort ?? 'latest';
         if ($sort === 'popular') $query->orderByDesc('view_count');
-        else $query->orderByDesc('published_at');
+        else $query->orderByDesc('published_at')->orderByDesc('id');
+
+        // 중복 제거
+        $query->distinct();
 
         return response()->json(['success' => true, 'data' => $query->paginate(20)]);
     }

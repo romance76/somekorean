@@ -8,9 +8,9 @@
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
-          <button @click="activeCat=null; loadNews()" class="w-full text-left px-3 py-2 text-xs transition"
+          <button @click="activeCat=null; activeItem=null; loadNews()" class="w-full text-left px-3 py-2 text-xs transition"
             :class="!activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
-          <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; loadNews()"
+          <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; activeItem=null; loadNews()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="activeCat?.id===cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ cat.name }}</button>
         </div>
@@ -109,10 +109,12 @@ const categories = ref([])
 const activeCat = ref(null)
 const activeItem = ref(null)
 
-// 본문 이미지 중복 체크
+// 본문 이미지 중복 체크 (확장자 무시)
 const hasImageInContent = computed(() => {
   if (!activeItem.value?.content || !activeItem.value?.image_url) return false
-  return activeItem.value.content.includes(activeItem.value.image_url)
+  // 확장자 제거 후 비교
+  const baseUrl = activeItem.value.image_url.replace(/\.\w+$/, '')
+  return activeItem.value.content.includes(baseUrl)
 })
 
 // 본문 파싱: 마크다운 이미지 + 단락 분리
@@ -143,8 +145,10 @@ const contentBlocks = computed(() => {
     } else {
       // 이미지 URL
       const src = parts[i]
-      // 대표 이미지와 같은 URL이면 건너뛰기
-      if (src !== activeItem.value?.image_url) {
+      // 대표 이미지와 같은 URL이면 건너뛰기 (확장자 무시)
+      const baseUrl = activeItem.value?.image_url?.replace(/\.\w+$/, '') || ''
+      const srcBase = src.replace(/\.\w+$/, '')
+      if (srcBase !== baseUrl) {
         blocks.push({ type: 'img', src })
       }
     }

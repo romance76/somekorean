@@ -36,16 +36,38 @@
     </div>
     <div class="col-span-12 lg:col-span-7">
 
-    <!-- 목록 -->
-    <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
-    <div v-else-if="!items.length" class="text-center py-12">
-      <div class="text-4xl mb-3">🎉</div>
-      <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
-      <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
+    <!-- 상세 모드 -->
+    <div v-if="activeItem">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.category }}</span>
+            <span v-if="!activeItem.price || activeItem.price == 0" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">무료</span>
+            <span v-else class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">${{ activeItem.price }}</span>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
+          <div class="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-600">
+            <div>📅 {{ formatDate(activeItem.start_date) }}</div>
+            <div>📍 {{ activeItem.venue || activeItem.city }}</div>
+            <div>🏢 {{ activeItem.organizer }}</div>
+            <div>👥 {{ activeItem.attendee_count }}명 참가</div>
+          </div>
+        </div>
+        <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content || activeItem.description }}</div>
+      </div>
+      <div class="flex justify-between mt-3">
+        <button @click="navItem(-1)" :disabled="currentIdx<=0" class="text-xs text-gray-500 hover:text-amber-700 disabled:opacity-30">← 이전글</button>
+        <button @click="activeItem=null" class="text-xs text-gray-400">목록</button>
+        <button @click="navItem(1)" :disabled="currentIdx>=items.length-1" class="text-xs text-gray-500 hover:text-amber-700 disabled:opacity-30">다음글 →</button>
+      </div>
     </div>
+
+    <!-- 목록 -->
+    <div v-else-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
+    <div v-else-if="!items.length" class="text-center py-12 text-gray-400">검색 결과 없음</div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <RouterLink v-for="item in items" :key="item.id" :to="'/events/' + item.id"
-        class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
+      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
@@ -62,7 +84,7 @@
             <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
           </div>
         </div>
-      </RouterLink>
+      </div>
     </div>
 
     <!-- 페이지네이션 -->
@@ -91,6 +113,22 @@ const auth = useAuthStore()
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
 
 const activeCat = ref('')
+const activeItem = ref(null)
+const currentIdx = ref(-1)
+
+async function openItem(item) {
+  currentIdx.value = items.value.findIndex(i => i.id === item.id)
+  try { const { data } = await axios.get(`/api/events/${item.id}`); activeItem.value = data.data }
+  catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function navItem(dir) {
+  const newIdx = currentIdx.value + dir
+  if (newIdx >= 0 && newIdx < items.value.length) openItem(items.value[newIdx])
+}
+
+function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR', { year:'numeric',month:'long',day:'numeric' }) : '' }
 const eventCategories = [
   { value: '', label: '전체' },{ value: 'culture', label: '🎭 문화' },{ value: 'networking', label: '🤝 네트워킹' },
   { value: 'education', label: '📚 교육' },{ value: 'community', label: '👥 커뮤니티' },

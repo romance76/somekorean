@@ -35,7 +35,7 @@
           </select>
         </div>
 
-        <div v-if="activeBoard" class="mb-3 text-sm text-gray-600">
+        <div v-if="activeBoard && !activeItem" class="mb-3 text-sm text-gray-600">
           <span class="font-bold text-amber-700">{{ activeBoard.name }}</span>
           <span v-if="activeBoard.description" class="text-xs text-gray-400 ml-2">{{ activeBoard.description }}</span>
         </div>
@@ -141,11 +141,11 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔥 인기 게시글</div>
           <div class="py-1">
-            <RouterLink v-for="(p, i) in popularPosts" :key="p.id" :to="`/community/${p.board?.slug||'free'}/${p.id}`"
-              class="flex items-start gap-2 px-3 py-1.5 hover:bg-amber-50/50 transition">
+            <button v-for="(p, i) in popularPosts" :key="p.id" @click="openItem(p)"
+              class="flex items-start gap-2 px-3 py-1.5 hover:bg-amber-50/50 transition w-full text-left">
               <span class="text-[10px] font-bold w-4 text-center" :class="i<3?'text-amber-600':'text-gray-400'">{{ i+1 }}</span>
               <span class="text-xs text-gray-700 leading-snug line-clamp-2 flex-1">{{ p.title }}</span>
-            </RouterLink>
+            </button>
           </div>
         </div>
 
