@@ -55,9 +55,36 @@
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
       <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
+    <!-- 상세 모드 -->
+    <div v-if="activeItem">
+      <button @click="activeItem=null" class="text-xs text-amber-600 font-semibold mb-3">← 목록으로</button>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs px-2 py-0.5 rounded-full font-bold" :class="activeItem.type==='sale'?'bg-red-100 text-red-700':activeItem.type==='rent'?'bg-blue-100 text-blue-700':'bg-green-100 text-green-700'">{{ {rent:'렌트',sale:'매매',roommate:'룸메이트'}[activeItem.type] }}</span>
+            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ activeItem.property_type }}</span>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
+          <div class="text-2xl font-black text-amber-600 mt-2">${{ Number(activeItem.price).toLocaleString() }}{{ activeItem.type==='rent'?'/월':'' }}</div>
+          <div class="grid grid-cols-4 gap-2 mt-3 text-center text-xs">
+            <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.bedrooms||'-' }}</strong> 방</div>
+            <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.bathrooms||'-' }}</strong> 화장실</div>
+            <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.sqft||'-' }}</strong> sqft</div>
+            <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.view_count }}</strong> 조회</div>
+          </div>
+        </div>
+        <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content }}</div>
+        <div v-if="activeItem.contact_phone||activeItem.contact_email" class="px-5 py-3 border-t bg-amber-50 text-sm">
+          <div v-if="activeItem.contact_phone">📱 {{ activeItem.contact_phone }}</div>
+          <div v-if="activeItem.contact_email">📧 {{ activeItem.contact_email }}</div>
+        </div>
+      </div>
+    </div>
+    <!-- 목록 모드 -->
+    <div v-else-if="!items.length" class="text-center py-12 text-gray-400">검색 결과 없음</div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <RouterLink v-for="item in items" :key="item.id" :to="'/realestate/' + item.id"
-        class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
+      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
@@ -74,7 +101,7 @@
             <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
           </div>
         </div>
-      </RouterLink>
+      </div>
     </div>
 
     <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
@@ -109,6 +136,12 @@ const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation
 
 const items = ref([])
 const loading = ref(true)
+const activeItem = ref(null)
+async function openItem(item) {
+  try { const { data } = await axios.get(`/api/realestate/${item.id}`); activeItem.value = data.data }
+  catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const page = ref(1)
 const lastPage = ref(1)
 const search = ref('')

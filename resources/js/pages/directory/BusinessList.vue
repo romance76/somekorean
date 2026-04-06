@@ -55,9 +55,28 @@
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
       <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
+    <!-- 상세 모드 -->
+    <div v-if="activeItem">
+      <button @click="activeItem=null" class="text-xs text-amber-600 font-semibold mb-3">← 목록으로</button>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4">
+          <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.category }}</span>
+          <h2 class="text-lg font-bold text-gray-900 mt-2">🏪 {{ activeItem.name }}</h2>
+          <div class="flex items-center gap-1 mt-1"><span class="text-amber-400">{{'★'.repeat(Math.round(activeItem.rating))}}</span><span class="text-sm text-gray-600">{{ activeItem.rating }}</span><span class="text-xs text-gray-400">({{ activeItem.review_count }}리뷰)</span></div>
+        </div>
+        <div class="px-5 py-3 border-t text-sm text-gray-600 space-y-1">
+          <div v-if="activeItem.phone">📱 {{ activeItem.phone }}</div>
+          <div v-if="activeItem.address">📍 {{ activeItem.address }}, {{ activeItem.city }}, {{ activeItem.state }}</div>
+          <div v-if="activeItem.website">🌐 <a :href="activeItem.website" target="_blank" class="text-amber-600">{{ activeItem.website }}</a></div>
+        </div>
+        <div v-if="activeItem.description" class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.description }}</div>
+      </div>
+    </div>
+    <!-- 목록 모드 -->
+    <div v-else-if="!items.length" class="text-center py-12 text-gray-400">검색 결과 없음</div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <RouterLink v-for="item in items" :key="item.id" :to="'/directory/' + item.id"
-        class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
+      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
@@ -74,7 +93,7 @@
             <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
           </div>
         </div>
-      </RouterLink>
+      </div>
     </div>
 
     <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
@@ -102,6 +121,12 @@ import axios from 'axios'
 const auth = useAuthStore()
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
 const activeCat = ref('')
+const activeItem = ref(null)
+async function openItem(item) {
+  try { const { data } = await axios.get(`/api/businesses/${item.id}`); activeItem.value = data.data }
+  catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const bizCategories = [
   { value: '', label: '전체' },{ value: 'restaurant', label: '🍽️ 음식점' },{ value: 'grocery', label: '🛒 마트' },
   { value: 'beauty', label: '💅 미용' },{ value: 'medical', label: '🏥 의료' },{ value: 'professional', label: '💼 전문서비스' },
