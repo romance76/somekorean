@@ -30,6 +30,8 @@ use App\Models\MusicTrack;
 use App\Models\GroupBuy;
 use App\Models\GameSetting;
 use App\Models\SiteSetting;
+use App\Models\ShoppingStore;
+use App\Models\ShoppingDeal;
 
 class DatabaseSeeder extends Seeder
 {
@@ -67,6 +69,7 @@ class DatabaseSeeder extends Seeder
         $this->seedGroupBuys();
         $this->seedGameSettings();
         $this->seedSiteSettings();
+        $this->seedShopping();
     }
 
     private function rCity() { return $this->cities[array_rand($this->cities)]; }
@@ -738,5 +741,58 @@ class DatabaseSeeder extends Seeder
         ];
         foreach ($settings as $s) SiteSetting::create($s);
         $this->command->info('✅ site settings');
+    }
+
+    // ════════════════════════════════════════
+    // 19. SHOPPING (매장 + 딜)
+    // ════════════════════════════════════════
+    private function seedShopping()
+    {
+        $stores = [
+            ['name'=>'H Mart','category'=>'grocery'],
+            ['name'=>'한남체인','category'=>'grocery'],
+            ['name'=>'한양마트','category'=>'grocery'],
+            ['name'=>'Amazon','category'=>'online'],
+            ['name'=>'Costco','category'=>'warehouse'],
+            ['name'=>'Target','category'=>'retail'],
+        ];
+        $storeIds = [];
+        foreach ($stores as $s) {
+            $store = ShoppingStore::create($s);
+            $storeIds[] = $store->id;
+        }
+
+        $deals = [
+            ['t'=>'신라면 멀티팩 (5개입)','op'=>8.99,'sp'=>5.99,'dp'=>33],
+            ['t'=>'CJ 비비고 만두 (대용량)','op'=>15.99,'sp'=>10.99,'dp'=>31],
+            ['t'=>'오뚜기 진라면 (4+1)','op'=>7.49,'sp'=>4.99,'dp'=>33],
+            ['t'=>'삼양 불닭볶음면 세트','op'=>12.99,'sp'=>8.99,'dp'=>31],
+            ['t'=>'농심 새우깡 파티팩','op'=>6.99,'sp'=>3.99,'dp'=>43],
+            ['t'=>'정관장 홍삼 에브리타임','op'=>45.00,'sp'=>32.99,'dp'=>27],
+            ['t'=>'한국 김 선물세트','op'=>24.99,'sp'=>16.99,'dp'=>32],
+            ['t'=>'CJ 햇반 즉석밥 (12개)','op'=>18.99,'sp'=>13.99,'dp'=>26],
+            ['t'=>'오설록 제주 녹차 세트','op'=>28.00,'sp'=>19.99,'dp'=>29],
+            ['t'=>'삼성 갤럭시 버즈3 프로','op'=>249.99,'sp'=>179.99,'dp'=>28],
+            ['t'=>'LG 스타일러 의류관리기','op'=>1499.00,'sp'=>999.00,'dp'=>33],
+            ['t'=>'쿠쿠 전기밥솥 CRP-P1009','op'=>299.99,'sp'=>219.99,'dp'=>27],
+            ['t'=>'한국 라면 종합세트 (20개)','op'=>35.99,'sp'=>24.99,'dp'=>31],
+            ['t'=>'비비고 왕교자 (대용량)','op'=>16.99,'sp'=>11.99,'dp'=>29],
+            ['t'=>'테팔 프라이팬 세트','op'=>89.99,'sp'=>59.99,'dp'=>33],
+        ];
+
+        foreach ($deals as $d) {
+            ShoppingDeal::create([
+                'store_id' => $storeIds[array_rand($storeIds)],
+                'title' => $d['t'],
+                'description' => $d['t'] . ' 특가 세일!',
+                'original_price' => $d['op'],
+                'sale_price' => $d['sp'],
+                'discount_percent' => $d['dp'],
+                'url' => 'https://example.com/deal/' . rand(1000, 9999),
+                'is_active' => true,
+                'expires_at' => now()->addDays(rand(3, 30)),
+            ]);
+        }
+        $this->command->info('✅ 6 stores + 15 shopping deals');
     }
 }
