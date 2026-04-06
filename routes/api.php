@@ -214,6 +214,9 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/users', [AdminController::class, 'users']);
     Route::post('/users/{id}/ban', [AdminController::class, 'banUser']);
     Route::post('/users/{id}/unban', [AdminController::class, 'unbanUser']);
+    Route::get('/users/{id}/detail', [AdminController::class, 'userDetail']);
+    Route::put('/users/{id}', [AdminController::class, 'updateUser']);
+    Route::get('/posts/{id}/detail', [AdminController::class, 'postDetail']);
     Route::get('/posts', [AdminController::class, 'posts']);
     Route::post('/posts/{id}/hide', [AdminController::class, 'hidePost']);
     Route::post('/posts/{id}/pin', [AdminController::class, 'pinPost']);

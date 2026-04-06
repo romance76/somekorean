@@ -62,4 +62,32 @@ class AdminController extends Controller
     public function deleteIpBan($id) { IpBan::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
 
     public function payments(Request $request) { return response()->json(['success'=>true,'data'=>Payment::with('user:id,name')->orderByDesc('created_at')->paginate(20)]); }
+
+    // 회원 상세 (관리자용 - 전체 정보)
+    public function userDetail($id) {
+        $user = User::findOrFail($id);
+        $posts = Post::where('user_id',$id)->orderByDesc('created_at')->limit(20)->get();
+        $payments = Payment::where('user_id',$id)->orderByDesc('created_at')->limit(20)->get();
+        $points = \App\Models\PointHistory::where('user_id',$id)->orderByDesc('created_at')->limit(30)->get();
+        $comments = \App\Models\Comment::where('user_id',$id)->orderByDesc('created_at')->limit(20)->get();
+        $jobs = JobPost::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
+        $market = MarketItem::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
+        return response()->json(['success'=>true,'data'=>[
+            'user'=>$user, 'posts'=>$posts, 'payments'=>$payments,
+            'points'=>$points, 'comments'=>$comments, 'jobs'=>$jobs, 'market'=>$market,
+        ]]);
+    }
+
+    // 회원 정보 수정 (관리자)
+    public function updateUser(Request $request, $id) {
+        $user = User::findOrFail($id);
+        $user->update($request->only('name','nickname','email','role','points','game_points','city','state','phone','bio','is_banned','ban_reason'));
+        return response()->json(['success'=>true,'data'=>$user->fresh(),'message'=>'회원 정보가 수정되었습니다']);
+    }
+
+    // 게시글 상세 (관리자 인라인 뷰용)
+    public function postDetail($id) {
+        $post = Post::with('user:id,name,email','board:id,name,slug','comments.user:id,name')->findOrFail($id);
+        return response()->json(['success'=>true,'data'=>$post]);
+    }
 }
