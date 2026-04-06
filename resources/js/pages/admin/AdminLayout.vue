@@ -116,7 +116,6 @@ const menuGroups = [
       { to: '/admin/payments', icon: '💳', label: '결제' },
       { to: '/admin/security', icon: '🔒', label: '보안' },
       { to: '/admin/settings', icon: '⚙️', label: '사이트 설정' },
-      { to: '/admin/boards', icon: '📋', label: '게시판 관리' },
       { to: '/admin/system', icon: '🖥️', label: '시스템' },
     ]
   },
