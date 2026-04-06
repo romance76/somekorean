@@ -46,7 +46,20 @@
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
       <div v-if="type==='local'" class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-12 gap-4">
+    <!-- 왼쪽: 카테고리 -->
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 분류</div>
+        <button v-for="c in clubCategories" :key="c.value" @click="catFilter=c.value; loadClubs()"
+          class="w-full text-left px-3 py-2 text-xs transition"
+          :class="catFilter===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
+      </div>
+    </div>
+    <!-- 메인 -->
+    <div class="col-span-12 lg:col-span-7">
+    <div v-if="!clubs.length && !loading" class="text-center py-12 text-gray-400">동호회가 없습니다</div>
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <RouterLink v-for="club in clubs" :key="club.id" :to="`/clubs/${club.id}`"
         class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
         <div class="flex items-center gap-3 mb-3">
@@ -68,6 +81,14 @@
         </div>
       </RouterLink>
     </div>
+    </div>
+    <!-- 오른쪽 위젯 -->
+    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <SidebarWidgets api-url="/api/clubs" detail-path="/clubs/" :current-id="0"
+        label="동호회" recommend-label="인기 동호회" quick-label="최근 개설"
+        :links="[{to:'/clubs',icon:'📋',label:'전체 동호회'},{to:'/community',icon:'💬',label:'커뮤니티'}]" />
+    </div>
+    </div>
   </div>
 </div>
 </template>
@@ -76,6 +97,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
+import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
 const auth = useAuthStore()
@@ -83,6 +105,12 @@ const { city, locationQuery, koreanCities, init: initLocation, selectKoreanCity 
 
 const clubs = ref([])
 const loading = ref(true)
+const catFilter = ref('')
+const clubCategories = [
+  { value: '', label: '전체' },{ value: 'sports', label: '⚽ 운동' },{ value: 'books', label: '📚 독서' },
+  { value: 'cooking', label: '🍳 요리' },{ value: 'photo', label: '📷 사진' },{ value: 'tech', label: '💻 기술' },
+  { value: 'finance', label: '💰 재테크' },{ value: 'parenting', label: '👶 육아' },
+]
 const type = ref('')
 const search = ref('')
 const radius = ref('30')
@@ -116,6 +144,7 @@ async function loadClubs() {
   const params = {}
   if (type.value) params.type = type.value
   if (search.value) params.search = search.value
+  if (catFilter.value) params.category = catFilter.value
 
   // 지역 동호회일 때 위치 필터
   if (type.value !== 'online' && radius.value !== '0') {

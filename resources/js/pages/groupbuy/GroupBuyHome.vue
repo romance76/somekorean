@@ -1,11 +1,20 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <!-- 헤더 -->
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-xl font-black text-gray-800">🤝 공동구매</h1>
     </div>
-
+    <div class="grid grid-cols-12 gap-4">
+    <!-- 왼쪽: 상태 필터 -->
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
+        <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadPage()"
+          class="w-full text-left px-3 py-2 text-xs transition"
+          :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
+      </div>
+    </div>
+    <div class="col-span-12 lg:col-span-7">
     <!-- 위치 필터 바 -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-4">
       <div class="flex flex-wrap items-center gap-2">
@@ -67,10 +76,16 @@
       </RouterLink>
     </div>
 
-    <!-- 페이지네이션 -->
     <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
       <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadPage(pg)"
         class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white text-gray-600 border hover:bg-amber-50'">{{ pg }}</button>
+    </div>
+    </div>
+    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <SidebarWidgets api-url="/api/groupbuys" detail-path="/groupbuy/" :current-id="0"
+        label="공동구매" recommend-label="인기" quick-label="마감 임박"
+        :links="[{to:'/groupbuy',icon:'📋',label:'전체 공동구매'},{to:'/market',icon:'🛒',label:'중고장터'}]" />
+    </div>
     </div>
   </div>
 </div>
@@ -79,9 +94,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
+import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
 const auth = useAuthStore()
+const statusFilter = ref('')
+const statusFilters = [
+  { value: '', label: '전체' },{ value: 'recruiting', label: '🟢 모집중' },
+  { value: 'confirmed', label: '🔵 확정' },{ value: 'completed', label: '✅ 완료' },
+]
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
 
 const items = ref([])
@@ -127,9 +148,9 @@ async function loadPage(p = 1) {
 
   const params = { page: p, per_page: 20 }
   if (search.value) params.search = search.value
+  if (statusFilter.value) params.status = statusFilter.value
 
   if (radius.value !== '0') {
-    // 도시 선택에 따라 좌표 결정
     let lat, lng
     const idx = parseInt(selectedCityIdx.value)
     if (idx >= 0) {
