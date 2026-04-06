@@ -5,88 +5,225 @@
 
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else class="grid grid-cols-12 gap-4">
-      <!-- 카테고리 -->
-      <div class="col-span-12 lg:col-span-3">
+
+      <!-- 카테고리 + 내 플레이리스트 -->
+      <div class="col-span-12 lg:col-span-3 space-y-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">🎵 카테고리</div>
-          <div class="py-1">
-            <button v-for="cat in categories" :key="cat.id" @click="selectCategory(cat)"
-              class="w-full text-left px-4 py-2.5 text-sm transition"
-              :class="activeCat?.id === cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
-              {{ cat.name }}
-            </button>
+          <button v-for="cat in categories" :key="cat.id" @click="selectCategory(cat)"
+            class="w-full text-left px-4 py-2.5 text-sm transition"
+            :class="activeCat?.id === cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
+            {{ cat.name }}
+          </button>
+        </div>
+
+        <!-- 내 플레이리스트 -->
+        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
+            📋 내 플레이리스트
+            <button @click="showCreatePL = true" class="text-amber-600 text-xs hover:text-amber-800">+ 새로 만들기</button>
+          </div>
+          <div v-if="!playlists.length" class="px-4 py-3 text-xs text-gray-400">플레이리스트가 없습니다</div>
+          <button v-for="pl in playlists" :key="pl.id" @click="selectPlaylist(pl)"
+            class="w-full text-left px-4 py-2.5 text-sm transition flex items-center justify-between"
+            :class="activePL?.id === pl.id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-blue-50/50'">
+            <span class="truncate">{{ pl.name }}</span>
+            <span class="text-[10px] text-gray-400">{{ pl.tracks_count || 0 }}곡</span>
+          </button>
+        </div>
+
+        <!-- 검색 -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+          <div class="font-bold text-xs text-gray-800 mb-2">🔍 트랙 검색</div>
+          <form @submit.prevent="searchTracks" class="flex gap-1">
+            <input v-model="searchQ" type="text" placeholder="제목/아티스트" class="flex-1 border rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none" />
+            <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-2 py-1.5 rounded-lg text-xs hover:bg-amber-500">검색</button>
+          </form>
+          <div v-if="searchResults.length" class="mt-2 space-y-1">
+            <div v-for="t in searchResults" :key="t.id" class="flex items-center justify-between py-1 text-xs">
+              <div class="truncate flex-1"><span class="font-semibold text-gray-700">{{ t.title }}</span> <span class="text-gray-400">{{ t.artist }}</span></div>
+              <button @click="playTrack(t)" class="text-amber-600 ml-1">▶</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 트랙 목록 -->
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-5">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">
-            🎶 {{ activeCat?.name || '트랙 선택' }}
+          <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
+            <span>🎶 {{ activePL ? activePL.name : (activeCat?.name || '트랙') }}</span>
+            <span class="text-xs text-gray-400">{{ displayTracks.length }}곡</span>
           </div>
-          <div v-if="!tracks.length" class="py-8 text-center text-sm text-gray-400">카테고리를 선택해주세요</div>
-          <div v-for="(track, i) in tracks" :key="track.id"
-            class="flex items-center gap-3 px-4 py-3 border-b last:border-0 hover:bg-amber-50/50 transition cursor-pointer"
-            :class="playing?.id === track.id ? 'bg-amber-50' : ''"
-            @click="playTrack(track)">
+          <div v-if="!displayTracks.length" class="py-8 text-center text-sm text-gray-400">{{ activePL ? '플레이리스트가 비어있습니다' : '카테고리를 선택해주세요' }}</div>
+          <div v-for="(track, i) in displayTracks" :key="track.id"
+            class="flex items-center gap-3 px-4 py-2.5 border-b last:border-0 hover:bg-amber-50/50 transition cursor-pointer group"
+            :class="playing?.id === track.id ? 'bg-amber-50' : ''">
             <span class="text-xs text-gray-400 w-5 text-center">{{ i + 1 }}</span>
-            <div class="w-8 h-8 bg-amber-100 rounded flex items-center justify-center text-sm flex-shrink-0">
-              {{ playing?.id === track.id ? '🔊' : '🎵' }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium text-gray-800 truncate">{{ track.title }}</div>
+            <div class="flex-1 min-w-0" @click="playTrack(track)">
+              <div class="text-sm font-medium text-gray-800 truncate">{{ playing?.id === track.id ? '🔊 ' : '' }}{{ track.title }}</div>
               <div class="text-[10px] text-gray-400">{{ track.artist }}</div>
             </div>
             <span class="text-[10px] text-gray-400">{{ formatDuration(track.duration) }}</span>
+            <!-- 플레이리스트 추가/제거 버튼 -->
+            <div class="opacity-0 group-hover:opacity-100 flex gap-1 transition">
+              <button v-if="auth.isLoggedIn && activePL" @click.stop="removeFromPL(track)" class="text-red-400 text-xs hover:text-red-600" title="제거">✕</button>
+              <button v-if="auth.isLoggedIn && !activePL && playlists.length" @click.stop="showAddToPL(track)" class="text-amber-600 text-xs hover:text-amber-800" title="플레이리스트에 추가">+</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 플레이어 -->
-      <div class="col-span-12 lg:col-span-3">
+      <div class="col-span-12 lg:col-span-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">🎧 Now Playing</div>
-          <div v-if="playing" class="p-4">
+          <div v-if="playing" class="p-3">
             <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden mb-3">
               <iframe :src="`https://www.youtube.com/embed/${playing.youtube_id}?autoplay=1`"
                 class="w-full h-full" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
             <div class="text-sm font-bold text-gray-800">{{ playing.title }}</div>
             <div class="text-xs text-gray-400 mt-0.5">{{ playing.artist }}</div>
+            <div class="flex gap-2 mt-3">
+              <button @click="prevTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200">⏮ 이전</button>
+              <button @click="nextTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200">다음 ⏭</button>
+            </div>
           </div>
-          <div v-else class="p-4 text-center text-sm text-gray-400">트랙을 선택해주세요</div>
+          <div v-else class="p-4 text-center text-sm text-gray-400">트랙을 선택해주세요 🎵</div>
         </div>
+      </div>
+    </div>
+
+    <!-- 플레이리스트 생성 모달 -->
+    <div v-if="showCreatePL" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showCreatePL=false">
+      <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-xl">
+        <h3 class="font-bold text-gray-800 mb-3">새 플레이리스트</h3>
+        <input v-model="newPLName" type="text" placeholder="플레이리스트 이름" class="w-full border rounded-lg px-3 py-2 text-sm mb-3 focus:ring-2 focus:ring-amber-400 outline-none" />
+        <div class="flex gap-2">
+          <button @click="createPlaylist" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm flex-1 hover:bg-amber-500">만들기</button>
+          <button @click="showCreatePL=false" class="text-gray-500 px-4 py-2">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 플레이리스트에 추가 모달 -->
+    <div v-if="addTrackTarget" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="addTrackTarget=null">
+      <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-xl">
+        <h3 class="font-bold text-gray-800 mb-3">플레이리스트에 추가</h3>
+        <div class="text-sm text-gray-600 mb-3">{{ addTrackTarget.title }}</div>
+        <div class="space-y-1">
+          <button v-for="pl in playlists" :key="pl.id" @click="addToPL(pl.id)"
+            class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-amber-50 transition">
+            📋 {{ pl.name }}
+          </button>
+        </div>
+        <button @click="addTrackTarget=null" class="mt-3 text-gray-500 text-sm">취소</button>
       </div>
     </div>
   </div>
 </div>
 </template>
+
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../../stores/auth'
+import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
+
+const auth = useAuthStore()
+const siteStore = useSiteStore()
+
 const categories = ref([])
 const tracks = ref([])
+const playlists = ref([])
+const plTracks = ref([])
 const activeCat = ref(null)
+const activePL = ref(null)
 const playing = ref(null)
 const loading = ref(true)
+const searchQ = ref('')
+const searchResults = ref([])
+const showCreatePL = ref(false)
+const newPLName = ref('')
+const addTrackTarget = ref(null)
+
+const displayTracks = computed(() => activePL.value ? plTracks.value : tracks.value)
 
 function formatDuration(sec) {
   if (!sec) return '--:--'
-  const m = Math.floor(sec / 60)
-  const s = sec % 60
-  return `${m}:${String(s).padStart(2, '0')}`
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
+}
+
+function playTrack(track) { playing.value = track }
+
+function nextTrack() {
+  const list = displayTracks.value
+  const idx = list.findIndex(t => t.id === playing.value?.id)
+  if (idx >= 0 && idx < list.length - 1) playing.value = list[idx + 1]
+}
+
+function prevTrack() {
+  const list = displayTracks.value
+  const idx = list.findIndex(t => t.id === playing.value?.id)
+  if (idx > 0) playing.value = list[idx - 1]
 }
 
 async function selectCategory(cat) {
   activeCat.value = cat
+  activePL.value = null
+  try { const { data } = await axios.get(`/api/music/tracks/${cat.id}`); tracks.value = data.data || [] } catch {}
+}
+
+async function selectPlaylist(pl) {
+  activePL.value = pl
+  activeCat.value = null
   try {
-    const { data } = await axios.get(`/api/music/tracks/${cat.id}`)
-    tracks.value = data.data || []
+    const { data } = await axios.get(`/api/music/playlists/${pl.id}`)
+    plTracks.value = (data.data?.tracks || []).map(pt => pt.track).filter(Boolean)
   } catch {}
 }
 
-function playTrack(track) { playing.value = track }
+async function loadPlaylists() {
+  if (!auth.isLoggedIn) return
+  try { const { data } = await axios.get('/api/music/playlists'); playlists.value = data.data || [] } catch {}
+}
+
+async function createPlaylist() {
+  if (!newPLName.value.trim()) return
+  try {
+    await axios.post('/api/music/playlists', { name: newPLName.value })
+    newPLName.value = ''; showCreatePL.value = false
+    await loadPlaylists()
+    siteStore.toast('플레이리스트가 생성되었습니다!', 'success')
+  } catch {}
+}
+
+function showAddToPL(track) { addTrackTarget.value = track }
+
+async function addToPL(plId) {
+  try {
+    await axios.post(`/api/music/playlists/${plId}/tracks`, { track_id: addTrackTarget.value.id })
+    siteStore.toast('추가되었습니다!', 'success')
+    await loadPlaylists()
+  } catch (e) { siteStore.toast(e.response?.data?.message || '실패', 'error') }
+  addTrackTarget.value = null
+}
+
+async function removeFromPL(track) {
+  if (!activePL.value) return
+  try {
+    await axios.delete(`/api/music/playlists/${activePL.value.id}/tracks/${track.id}`)
+    plTracks.value = plTracks.value.filter(t => t.id !== track.id)
+    siteStore.toast('제거되었습니다', 'info')
+    await loadPlaylists()
+  } catch {}
+}
+
+async function searchTracks() {
+  if (!searchQ.value.trim()) { searchResults.value = []; return }
+  try { const { data } = await axios.get('/api/music/search', { params: { q: searchQ.value } }); searchResults.value = data.data || [] } catch {}
+}
 
 onMounted(async () => {
   try {
@@ -94,6 +231,7 @@ onMounted(async () => {
     categories.value = data.data || []
     if (categories.value.length) selectCategory(categories.value[0])
   } catch {}
+  await loadPlaylists()
   loading.value = false
 })
 </script>

@@ -154,6 +154,15 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/reports', [ReportController::class, 'store']);
 
+    // Music playlists
+    Route::get('/music/playlists', [MusicController::class, 'playlists']);
+    Route::post('/music/playlists', [MusicController::class, 'createPlaylist']);
+    Route::get('/music/playlists/{id}', [MusicController::class, 'getPlaylist']);
+    Route::post('/music/playlists/{id}/tracks', [MusicController::class, 'addTrack']);
+    Route::delete('/music/playlists/{id}/tracks/{trackId}', [MusicController::class, 'removeTrack']);
+    Route::delete('/music/playlists/{id}', [MusicController::class, 'deletePlaylist']);
+    Route::get('/music/search', [MusicController::class, 'searchTracks']);
+
     Route::get('/elder/settings', [ElderController::class, 'settings']);
     Route::put('/elder/settings', [ElderController::class, 'updateSettings']);
     Route::post('/elder/checkin', [ElderController::class, 'checkin']);

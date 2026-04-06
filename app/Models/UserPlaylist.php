@@ -4,5 +4,6 @@ use Illuminate\Database\Eloquent\Model;
 class UserPlaylist extends Model
 {
     protected $fillable = ['user_id','name'];
-
+    public function user() { return $this->belongsTo(User::class); }
+    public function tracks() { return $this->hasMany(UserPlaylistTrack::class, 'playlist_id'); }
 }
