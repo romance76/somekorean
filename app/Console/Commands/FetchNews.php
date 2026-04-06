@@ -229,17 +229,38 @@ class FetchNews extends Command
                 return null;
             }
 
-            // HTML 태그 제거 및 정리
+            // img 태그는 보존하고 나머지 HTML 제거
+            // 1. img 태그 추출하여 마커로 교체
+            $imgTags = [];
+            $text = preg_replace_callback('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', function($m) use (&$imgTags) {
+                $src = $m[1];
+                // 작은 이미지(아이콘/로고) 필터링
+                if (strpos($src, 'logo') !== false || strpos($src, 'icon') !== false || strpos($src, 'pixel') !== false) return '';
+                if (strlen($src) < 10) return '';
+                // 절대 URL만
+                if (!str_starts_with($src, 'http')) return '';
+                $idx = count($imgTags);
+                $imgTags[] = $src;
+                return "\n[IMG:{$idx}]\n";
+            }, $text);
+
+            // 2. 나머지 HTML 태그 제거
             $text = strip_tags($text);
             $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+
+            // 3. img 마커를 실제 마크다운 이미지로 교체
+            foreach ($imgTags as $idx => $src) {
+                $text = str_replace("[IMG:{$idx}]", "\n![뉴스 이미지]({$src})\n", $text);
+            }
+
             // 연속 공백/줄바꿈 정리
             $text = preg_replace('/[ \t]+/', ' ', $text);
             $text = preg_replace('/\n\s*\n/', "\n\n", $text);
             $text = trim($text);
 
-            // 최대 5000자로 제한
-            if (mb_strlen($text) > 5000) {
-                $text = mb_substr($text, 0, 5000);
+            // 최대 8000자로 제한 (이미지 포함이므로 늘림)
+            if (mb_strlen($text) > 8000) {
+                $text = mb_substr($text, 0, 8000);
             }
 
             // 너무 짧으면 무시

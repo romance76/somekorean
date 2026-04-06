@@ -44,7 +44,12 @@
             <div v-if="activeItem.image_url" class="px-5 pb-3">
               <img :src="activeItem.image_url" class="w-full max-h-96 object-cover rounded-lg" @error="e=>e.target.style.display='none'" />
             </div>
-            <div class="px-5 py-5 border-t text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ activeItem.content }}</div>
+            <div class="px-5 py-5 border-t text-sm text-gray-700 leading-relaxed">
+              <template v-for="(block, i) in contentBlocks" :key="i">
+                <img v-if="block.type==='img'" :src="block.src" class="w-full rounded-lg my-3" @error="e=>e.target.style.display='none'" />
+                <p v-else class="whitespace-pre-wrap mb-2">{{ block.text }}</p>
+              </template>
+            </div>
             <div v-if="activeItem.source_url" class="px-5 py-3 border-t">
               <a :href="activeItem.source_url" target="_blank" class="text-amber-600 text-sm hover:underline">📎 원문 보기 →</a>
             </div>
@@ -94,7 +99,7 @@
 </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
@@ -102,6 +107,25 @@ const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)
 const activeItem = ref(null)
+
+// 본문에서 마크다운 이미지 ![alt](url) 파싱
+const contentBlocks = computed(() => {
+  if (!activeItem.value?.content) return []
+  const lines = activeItem.value.content.split('\n')
+  const blocks = []
+  let textBuf = ''
+  for (const line of lines) {
+    const imgMatch = line.match(/!\[.*?\]\((.+?)\)/)
+    if (imgMatch) {
+      if (textBuf.trim()) { blocks.push({ type: 'text', text: textBuf.trim() }); textBuf = '' }
+      blocks.push({ type: 'img', src: imgMatch[1] })
+    } else {
+      textBuf += line + '\n'
+    }
+  }
+  if (textBuf.trim()) blocks.push({ type: 'text', text: textBuf.trim() })
+  return blocks
+})
 
 async function openItem(item) {
   try { const { data } = await axios.get(`/api/news/${item.id}`); activeItem.value = data.data }
