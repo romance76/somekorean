@@ -1,5 +1,8 @@
 <template>
 <div>
+  <!-- 타이틀 -->
+  <h1 v-if="title" class="text-xl font-black text-gray-800 mb-4">{{ icon }} {{ title }}</h1>
+
   <!-- 검색 + 필터 -->
   <div class="bg-white rounded-xl shadow-sm border p-3 mb-4">
     <div class="flex flex-wrap gap-2">
