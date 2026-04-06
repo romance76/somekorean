@@ -25,7 +25,19 @@ class FetchYoutubeShorts extends Command
     {
         $limit = (int) $this->option('limit');
         $days = (int) $this->option('days');
-        $apiKey = env('YOUTUBE_API_KEY');
+        // config 캐시에서 못 읽으면 .env에서 직접 읽기
+        $apiKey = config('services.youtube.api_key');
+        if (!$apiKey) {
+            $envFile = base_path('.env');
+            if (file_exists($envFile)) {
+                foreach (file($envFile) as $line) {
+                    if (str_starts_with(trim($line), 'YOUTUBE_API_KEY=')) {
+                        $apiKey = trim(substr(trim($line), strlen('YOUTUBE_API_KEY=')));
+                        break;
+                    }
+                }
+            }
+        }
 
         if (!$apiKey) {
             $this->error('YOUTUBE_API_KEY not set');
