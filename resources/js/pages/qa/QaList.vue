@@ -7,75 +7,115 @@
     </div>
 
     <div class="grid grid-cols-12 gap-4">
-      <!-- 왼쪽: 카테고리 -->
+      <!-- 왼쪽: 카테고리 + 상태 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
-          <button @click="activeCat=null; loadQa()" class="w-full text-left px-3 py-2 text-xs transition"
+          <button @click="activeCat=null; activeItem=null; loadQa()" class="w-full text-left px-3 py-2 text-xs transition"
             :class="!activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
-          <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; loadQa()"
+          <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; activeItem=null; loadQa()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="activeCat?.id===cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ cat.name }}</button>
         </div>
-
-        <!-- 상태 필터 -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔍 상태</div>
-          <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadQa()"
+          <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; activeItem=null; loadQa()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
         </div>
       </div>
 
-      <!-- 메인 -->
+      <!-- 메인: 목록 또는 상세 (인라인 전환) -->
       <div class="col-span-12 lg:col-span-7">
-        <!-- 모바일 필터 -->
-        <div class="lg:hidden flex gap-2 mb-3">
-          <select @change="e => { activeCat = categories.find(c=>c.id==e.target.value)||null; loadQa() }" class="flex-1 border rounded-lg px-2 py-2 text-sm">
-            <option :value="null">전체 카테고리</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-          </select>
-          <select v-model="statusFilter" @change="loadQa()" class="border rounded-lg px-2 py-2 text-sm">
-            <option v-for="s in statusFilters" :key="s.value" :value="s.value">{{ s.label }}</option>
-          </select>
-        </div>
 
-        <div v-if="activeCat" class="mb-2 text-sm font-bold text-amber-700">{{ activeCat.name }}</div>
+        <!-- ═══ 상세 모드 ═══ -->
+        <div v-if="activeItem">
+          <button @click="activeItem=null; answers=[]" class="text-xs text-amber-600 font-semibold mb-3 hover:text-amber-800">← Q&A 목록</button>
 
-        <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
-        <div v-else-if="!items.length" class="text-center py-12">
-          <div class="text-4xl mb-3">❓</div>
-          <div class="text-gray-500 font-semibold">질문이 없습니다</div>
-          <RouterLink v-if="auth.isLoggedIn" to="/qa/write" class="inline-block mt-3 bg-amber-400 text-amber-900 font-bold px-5 py-2 rounded-lg text-sm">첫 질문 올리기</RouterLink>
-        </div>
-        <div v-else class="space-y-2">
-          <RouterLink v-for="item in items" :key="item.id" :to="`/qa/${item.id}`"
-            class="block bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">{{ item.category?.name || 'Q&A' }}</span>
-              <span v-if="item.bounty_points > 0" class="text-[10px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full font-bold">🏆 {{ item.bounty_points }}P</span>
-              <span v-if="item.is_resolved" class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">✅ 해결</span>
-              <span v-else class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">미해결</span>
+          <!-- 질문 카드 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3">
+            <div class="px-5 py-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">{{ activeItem.category?.name }}</span>
+                <span v-if="activeItem.bounty_points > 0" class="text-[10px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full font-bold">🏆 {{ activeItem.bounty_points }}P</span>
+                <span v-if="activeItem.is_resolved" class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">✅ 해결</span>
+                <span v-else class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">미해결</span>
+              </div>
+              <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
+              <div class="text-xs text-gray-400 mt-1">{{ activeItem.user?.name }} · {{ activeItem.view_count }}조회 · 답변 {{ activeItem.answer_count }}개</div>
             </div>
-            <div class="text-sm font-medium text-gray-800">{{ item.title }}</div>
-            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-              <span>{{ item.user?.name }}</span>
-              <span>💬 답변 {{ item.answer_count }}개</span>
-              <span>👁 {{ item.view_count }}</span>
-              <span>{{ formatDate(item.created_at) }}</span>
+            <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content }}</div>
+          </div>
+
+          <!-- 답변 목록 -->
+          <div class="space-y-2 mb-3">
+            <h3 class="font-bold text-sm text-gray-800">💡 답변 {{ answers.length }}개</h3>
+            <div v-for="ans in answers" :key="ans.id"
+              class="bg-white rounded-xl shadow-sm border overflow-hidden"
+              :class="ans.is_best ? 'border-amber-400' : 'border-gray-100'">
+              <div v-if="ans.is_best" class="bg-amber-50 px-4 py-1.5 text-xs font-bold text-amber-700">👑 채택된 답변</div>
+              <div class="px-5 py-4">
+                <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ ans.content }}</div>
+                <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                  <span class="font-semibold text-gray-600">{{ ans.user?.name }}</span>
+                  <span>❤️ {{ ans.like_count }}</span>
+                  <span>{{ formatDate(ans.created_at) }}</span>
+                </div>
+              </div>
             </div>
-          </RouterLink>
+          </div>
+
+          <!-- 답변 작성 -->
+          <div v-if="auth.isLoggedIn && !activeItem.is_resolved" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 class="font-bold text-sm text-gray-800 mb-2">✍️ 답변 작성</h3>
+            <textarea v-model="newAnswer" rows="4" placeholder="답변을 입력하세요..." class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea>
+            <button @click="submitAnswer" :disabled="!newAnswer.trim()" class="mt-2 bg-amber-400 text-amber-900 font-bold px-5 py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50">답변 등록</button>
+          </div>
         </div>
 
-        <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
-          <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadQa(pg)"
-            class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white border text-gray-600'">{{ pg }}</button>
+        <!-- ═══ 목록 모드 ═══ -->
+        <div v-else>
+          <div class="lg:hidden flex gap-2 mb-3">
+            <select @change="e => { activeCat = categories.find(c=>c.id==e.target.value)||null; loadQa() }" class="flex-1 border rounded-lg px-2 py-2 text-sm">
+              <option :value="null">전체 카테고리</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+
+          <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
+          <div v-else-if="!items.length" class="text-center py-12">
+            <div class="text-4xl mb-3">❓</div>
+            <div class="text-gray-500 font-semibold">질문이 없습니다</div>
+          </div>
+          <div v-else class="space-y-2">
+            <div v-for="item in items" :key="item.id" @click="openItem(item)"
+              class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 hover:shadow-md hover:border-amber-300 transition cursor-pointer">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">{{ item.category?.name || 'Q&A' }}</span>
+                <span v-if="item.bounty_points > 0" class="text-[10px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full font-bold">🏆 {{ item.bounty_points }}P</span>
+                <span v-if="item.is_resolved" class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">✅ 해결</span>
+                <span v-else class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">미해결</span>
+              </div>
+              <div class="text-sm font-medium text-gray-800">{{ item.title }}</div>
+              <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                <span>{{ item.user?.name }}</span>
+                <span>💬 답변 {{ item.answer_count }}개</span>
+                <span>👁 {{ item.view_count }}</span>
+                <span>{{ formatDate(item.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
+            <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadQa(pg)"
+              class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white border text-gray-600'">{{ pg }}</button>
+          </div>
         </div>
       </div>
 
       <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
-        <SidebarWidgets api-url="/api/qa" detail-path="/qa/" :current-id="0"
+        <SidebarWidgets api-url="/api/qa" detail-path="/qa/" :current-id="activeItem?.id || 0"
           label="질문" recommend-label="인기 질문" quick-label="최신 질문"
           :links="[{to:'/qa',icon:'📋',label:'전체 Q&A'},{to:'/qa/write',icon:'✏️',label:'질문하기'}]" />
       </div>
@@ -94,6 +134,9 @@ const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)
 const statusFilter = ref('')
+const activeItem = ref(null)
+const answers = ref([])
+const newAnswer = ref('')
 const loading = ref(true)
 const page = ref(1)
 const lastPage = ref(1)
@@ -110,6 +153,30 @@ function formatDate(dt) {
   if (h < 1) return '방금'
   if (h < 24) return h + '시간 전'
   return Math.floor(h / 24) + '일 전'
+}
+
+async function openItem(item) {
+  // 상세 데이터 로딩
+  try {
+    const { data } = await axios.get(`/api/qa/${item.id}`)
+    activeItem.value = data.data
+    answers.value = data.data?.answers || []
+  } catch {
+    activeItem.value = item
+    answers.value = []
+  }
+  // 스크롤 위로
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+async function submitAnswer() {
+  if (!newAnswer.value.trim() || !activeItem.value) return
+  try {
+    const { data } = await axios.post(`/api/qa/${activeItem.value.id}/answer`, { content: newAnswer.value })
+    answers.value.push(data.data)
+    newAnswer.value = ''
+    activeItem.value.answer_count++
+  } catch {}
 }
 
 async function loadQa(p = 1) {

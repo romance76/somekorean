@@ -40,13 +40,59 @@
           <span v-if="activeBoard.description" class="text-xs text-gray-400 ml-2">{{ activeBoard.description }}</span>
         </div>
 
+        <!-- ═══ 상세 모드 ═══ -->
+        <div v-if="activeItem">
+          <button @click="activeItem=null; comments=[]" class="text-xs text-amber-600 font-semibold mb-3 hover:text-amber-800">← 목록으로</button>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3">
+            <div class="px-5 py-4 border-b">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.board?.name }}</span>
+              </div>
+              <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
+              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                <span>{{ activeItem.user?.name }}</span>
+                <span>{{ formatDate(activeItem.created_at) }}</span>
+                <span>👁 {{ activeItem.view_count }}</span>
+                <span>❤️ {{ activeItem.like_count }}</span>
+                <span>💬 {{ activeItem.comment_count }}</span>
+              </div>
+            </div>
+            <div class="px-5 py-5 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ activeItem.content }}</div>
+            <div class="px-5 py-3 border-t flex gap-4">
+              <button @click="toggleLike" class="text-sm" :class="liked ? 'text-red-500' : 'text-gray-400'">{{ liked ? '❤️' : '🤍' }} 좋아요</button>
+              <span class="text-gray-400 text-sm">🔖 북마크</span>
+            </div>
+          </div>
+
+          <!-- 댓글 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">💬 댓글 {{ comments.length }}개</div>
+            <div v-if="auth.isLoggedIn" class="px-5 py-3 border-b">
+              <div class="flex gap-2">
+                <input v-model="newComment" @keyup.enter="submitComment" type="text" placeholder="댓글 입력..." class="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none" />
+                <button @click="submitComment" :disabled="!newComment.trim()" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-50">등록</button>
+              </div>
+            </div>
+            <div v-for="c in comments" :key="c.id" class="px-5 py-3 border-b last:border-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-semibold text-gray-800">{{ c.user?.name }}</span>
+                <span class="text-xs text-gray-400">{{ formatDate(c.created_at) }}</span>
+              </div>
+              <div class="text-sm text-gray-600">{{ c.content }}</div>
+            </div>
+            <div v-if="!comments.length" class="px-5 py-6 text-center text-sm text-gray-400">첫 댓글을 남겨보세요!</div>
+          </div>
+        </div>
+
+        <!-- ═══ 목록 모드 ═══ -->
+        <div v-else>
         <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
         <div v-else-if="!items.length" class="text-center py-12 text-gray-400">게시글이 없습니다</div>
 
         <!-- 리스트 뷰 -->
         <div v-else-if="viewMode==='list'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <RouterLink v-for="item in items" :key="item.id" :to="`/community/${item.board?.slug || 'free'}/${item.id}`"
-            class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
+          <div v-for="item in items" :key="item.id" @click="openItem(item)"
+            class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
             <div class="flex items-center gap-2">
               <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0">{{ item.board?.name || '자유' }}</span>
               <span class="text-sm font-medium text-gray-800 truncate flex-1">{{ item.title }}</span>
@@ -58,13 +104,13 @@
               <span>❤️{{ item.like_count }}</span>
               <span>{{ formatDate(item.created_at) }}</span>
             </div>
-          </RouterLink>
+          </div>
         </div>
 
         <!-- 카드 뷰 -->
         <div v-else class="grid grid-cols-2 gap-3">
-          <RouterLink v-for="item in items" :key="item.id" :to="`/community/${item.board?.slug || 'free'}/${item.id}`"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition">
+          <div v-for="item in items" :key="item.id" @click="openItem(item)"
+            class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition cursor-pointer">
             <div v-if="item.images?.length" class="aspect-video bg-gray-100 rounded-lg mb-2 overflow-hidden">
               <img :src="'/storage/'+item.images[0]" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
             </div>
@@ -72,13 +118,14 @@
             <div class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold inline-block mb-1">{{ item.board?.name || '자유' }}</div>
             <div class="text-sm font-medium text-gray-800 line-clamp-2">{{ item.title }}</div>
             <div class="text-[10px] text-gray-400 mt-1">{{ item.user?.name }} · {{ item.view_count }}조회</div>
-          </RouterLink>
+          </div>
         </div>
 
         <!-- 페이지네이션 -->
         <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
           <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadPosts(pg)"
             class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white border text-gray-600 hover:bg-amber-50'">{{ pg }}</button>
+        </div>
         </div>
       </div>
 
@@ -136,6 +183,45 @@ const viewMode = ref('list')
 const loading = ref(true)
 const page = ref(1)
 const lastPage = ref(1)
+
+// 인라인 상세
+const activeItem = ref(null)
+const comments = ref([])
+const newComment = ref('')
+const liked = ref(false)
+
+async function openItem(item) {
+  try {
+    const { data } = await axios.get(`/api/posts/${item.id}`)
+    activeItem.value = data.data
+    try {
+      const { data: cData } = await axios.get(`/api/comments/post/${item.id}`)
+      comments.value = cData.data || []
+    } catch { comments.value = [] }
+  } catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+async function toggleLike() {
+  if (!auth.isLoggedIn || !activeItem.value) return
+  try {
+    const { data } = await axios.post(`/api/posts/${activeItem.value.id}/like`)
+    liked.value = data.liked
+    activeItem.value.like_count += data.liked ? 1 : -1
+  } catch {}
+}
+
+async function submitComment() {
+  if (!newComment.value.trim() || !activeItem.value) return
+  try {
+    const { data } = await axios.post('/api/comments', {
+      commentable_type: 'post', commentable_id: activeItem.value.id, content: newComment.value
+    })
+    comments.value.unshift(data.data)
+    newComment.value = ''
+    activeItem.value.comment_count++
+  } catch {}
+}
 
 function formatDate(dt) {
   if (!dt) return ''
