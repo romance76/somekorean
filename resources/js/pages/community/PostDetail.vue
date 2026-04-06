@@ -95,41 +95,20 @@
           </RouterLink>
         </div>
 
-        <!-- 같은 게시판 인기글 -->
-        <div v-if="popularPosts.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div class="font-bold text-sm text-amber-900 mb-3">🔥 인기 게시글</div>
-          <div class="space-y-1.5">
-            <RouterLink v-for="p in popularPosts" :key="p.id" :to="`/community/${post.board?.slug || 'free'}/${p.id}`"
-              class="block text-xs text-gray-600 hover:text-amber-700 truncate py-1 border-b border-gray-50 last:border-0 transition">
-              {{ p.title }}
-              <span class="text-[10px] text-gray-400 ml-1">{{ p.like_count }}❤</span>
-            </RouterLink>
-          </div>
-        </div>
-
-        <!-- 최신글 -->
-        <div v-if="recentPosts.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div class="font-bold text-sm text-amber-900 mb-3">📝 최신 게시글</div>
-          <div class="space-y-1.5">
-            <RouterLink v-for="p in recentPosts" :key="p.id" :to="`/community/${post.board?.slug || 'free'}/${p.id}`"
-              class="block text-xs text-gray-600 hover:text-amber-700 truncate py-1 border-b border-gray-50 last:border-0 transition">
-              {{ p.title }}
-              <span class="text-[10px] text-gray-400 ml-1">{{ formatDate(p.created_at) }}</span>
-            </RouterLink>
-          </div>
-        </div>
-
-        <!-- 게시판 목록 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div class="font-bold text-sm text-amber-900 mb-3">📋 게시판</div>
-          <div class="space-y-1">
-            <RouterLink v-for="b in boards" :key="b.slug" :to="`/community/${b.slug}`"
-              class="block text-xs text-gray-600 hover:text-amber-700 py-1 transition"
-              :class="b.slug === post.board?.slug ? 'text-amber-700 font-bold' : ''">
-              {{ b.name }}
-            </RouterLink>
-          </div>
-        </div>
+        <!-- 공통 사이드바 위젯 -->
+        <SidebarWidgets
+          :api-url="`/api/posts?board_id=${post.board_id}`"
+          :detail-path="`/community/${post.board?.slug || 'free'}/`"
+          :current-id="post.id"
+          label="게시글"
+          recommend-label="추천 글"
+          quick-label="실시간 게시글"
+          :links="[
+            { to: '/community', icon: '📋', label: '전체 게시판' },
+            { to: `/community/write/${post.board?.slug || ''}`, icon: '✏️', label: '글쓰기' },
+            { to: '/qa', icon: '❓', label: 'Q&A' },
+          ]"
+        />
       </div>
     </div>
   </div>
@@ -140,15 +119,13 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
 const route = useRoute()
 const auth = useAuthStore()
 const post = ref(null)
 const comments = ref([])
-const popularPosts = ref([])
-const recentPosts = ref([])
-const boards = ref([])
 const loading = ref(true)
 const liked = ref(false)
 const newComment = ref('')
@@ -193,17 +170,11 @@ onMounted(async () => {
     const { data } = await axios.get(`/api/posts/${route.params.id}`)
     post.value = data.data
 
-    // 댓글, 인기글, 최신글, 게시판 목록 동시 로딩
-    const [cRes, popRes, recRes, bRes] = await Promise.allSettled([
-      axios.get(`/api/comments/post/${route.params.id}`),
-      axios.get(`/api/posts?sort=popular&per_page=5&board_id=${post.value.board_id}`),
-      axios.get(`/api/posts?sort=latest&per_page=5&board_id=${post.value.board_id}`),
-      axios.get('/api/boards'),
-    ])
-    if (cRes.status === 'fulfilled') comments.value = cRes.value.data?.data || []
-    if (popRes.status === 'fulfilled') popularPosts.value = (popRes.value.data?.data?.data || []).filter(p => p.id !== post.value.id).slice(0, 5)
-    if (recRes.status === 'fulfilled') recentPosts.value = (recRes.value.data?.data?.data || []).filter(p => p.id !== post.value.id).slice(0, 5)
-    if (bRes.status === 'fulfilled') boards.value = bRes.value.data?.data || []
+    // 댓글 로딩
+    try {
+      const { data: cData } = await axios.get(`/api/comments/post/${route.params.id}`)
+      comments.value = cData.data || []
+    } catch {}
   } catch {}
   loading.value = false
 })

@@ -34,40 +34,20 @@
       </div>
 
       <!-- 사이드바 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
-        <!-- 같은 카테고리 구인 -->
-        <div v-if="relatedJobs.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div class="font-bold text-sm text-amber-900 mb-3">💼 관련 채용</div>
-          <div class="space-y-2">
-            <RouterLink v-for="j in relatedJobs" :key="j.id" :to="`/jobs/${j.id}`"
-              class="block py-1.5 border-b border-gray-50 last:border-0 hover:bg-amber-50 -mx-2 px-2 rounded transition">
-              <div class="text-xs font-medium text-gray-700 truncate">{{ j.title }}</div>
-              <div class="text-[10px] text-gray-400">{{ j.company }} · {{ j.city }}</div>
-            </RouterLink>
-          </div>
-        </div>
-
-        <!-- 최신 구인 -->
-        <div v-if="recentJobs.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div class="font-bold text-sm text-amber-900 mb-3">🕐 최신 채용</div>
-          <div class="space-y-2">
-            <RouterLink v-for="j in recentJobs" :key="j.id" :to="`/jobs/${j.id}`"
-              class="block py-1.5 border-b border-gray-50 last:border-0 hover:bg-amber-50 -mx-2 px-2 rounded transition">
-              <div class="text-xs font-medium text-gray-700 truncate">{{ j.title }}</div>
-              <div class="text-[10px] text-gray-400">{{ j.company }} · ${{ j.salary_min }}/{{ j.salary_type }}</div>
-            </RouterLink>
-          </div>
-        </div>
-
-        <!-- 빠른 링크 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div class="font-bold text-sm text-amber-900 mb-3">⚡ 바로가기</div>
-          <div class="space-y-1">
-            <RouterLink to="/jobs" class="block text-xs text-gray-600 hover:text-amber-700 py-1">📋 전체 채용공고</RouterLink>
-            <RouterLink to="/jobs/write" class="block text-xs text-gray-600 hover:text-amber-700 py-1">✏️ 채용공고 등록</RouterLink>
-            <RouterLink to="/directory" class="block text-xs text-gray-600 hover:text-amber-700 py-1">🏪 업소록</RouterLink>
-          </div>
-        </div>
+      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+        <SidebarWidgets
+          api-url="/api/jobs"
+          detail-path="/jobs/"
+          :current-id="job.id"
+          label="채용"
+          recommend-label="추천 채용"
+          quick-label="실시간 채용"
+          :links="[
+            { to: '/jobs', icon: '📋', label: '전체 채용공고' },
+            { to: '/jobs/write', icon: '✏️', label: '채용공고 등록' },
+            { to: '/directory', icon: '🏪', label: '업소록' },
+          ]"
+        />
       </div>
     </div>
   </div>
@@ -76,24 +56,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 const route = useRoute()
 const job = ref(null)
-const relatedJobs = ref([])
-const recentJobs = ref([])
 const loading = ref(true)
 function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR') : '' }
 onMounted(async () => {
   try {
     const { data } = await axios.get(`/api/jobs/${route.params.id}`)
     job.value = data.data
-
-    const [relRes, recRes] = await Promise.allSettled([
-      axios.get(`/api/jobs?category=${job.value.category}&per_page=5`),
-      axios.get('/api/jobs?per_page=5'),
-    ])
-    if (relRes.status === 'fulfilled') relatedJobs.value = (relRes.value.data?.data?.data || []).filter(j => j.id !== job.value.id).slice(0, 5)
-    if (recRes.status === 'fulfilled') recentJobs.value = (recRes.value.data?.data?.data || []).filter(j => j.id !== job.value.id).slice(0, 5)
   } catch {}
   loading.value = false
 })

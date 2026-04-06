@@ -33,22 +33,20 @@
     </div>
 
     <!-- 사이드바 -->
-    <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
-      <div v-if="relatedItems.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="font-bold text-sm text-amber-900 mb-3">🛍️ 관련 물품</div>
-        <div class="space-y-2">
-          <RouterLink v-for="r in relatedItems" :key="r.id" :to="`/market/${r.id}`"
-            class="block py-1.5 border-b border-gray-50 last:border-0 hover:bg-amber-50 -mx-2 px-2 rounded transition">
-            <div class="text-xs font-medium text-gray-700 truncate">{{ r.title }}</div>
-            <div class="text-[10px] text-amber-600 font-bold">${{ Number(r.price).toLocaleString() }}</div>
-          </RouterLink>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="font-bold text-sm text-amber-900 mb-3">⚡ 바로가기</div>
-        <RouterLink to="/market" class="block text-xs text-gray-600 hover:text-amber-700 py-1">📋 전체 장터</RouterLink>
-        <RouterLink to="/market/write" class="block text-xs text-gray-600 hover:text-amber-700 py-1">✏️ 물품 등록</RouterLink>
-      </div>
+    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <SidebarWidgets
+        api-url="/api/market"
+        detail-path="/market/"
+        :current-id="item.id"
+        label="물품"
+        recommend-label="추천 물품"
+        quick-label="방금 올라온"
+        :links="[
+          { to: '/market', icon: '📋', label: '전체 장터' },
+          { to: '/market/write', icon: '✏️', label: '물품 등록' },
+          { to: '/jobs', icon: '💼', label: '구인구직' },
+        ]"
+      />
     </div>
     </div>
   </div>
@@ -59,6 +57,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useSiteStore } from '../../stores/site'
+import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 const route = useRoute()
 const auth = useAuthStore()
