@@ -1,10 +1,7 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-black text-gray-800">🛒 중고장터</h1>
-      <RouterLink v-if="auth.isLoggedIn" to="/market/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">✏️ 등록</RouterLink>
-    </div>
+
 
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 카테고리 -->
@@ -19,7 +16,10 @@
     <div class="col-span-12 lg:col-span-7">
 
     <!-- 위치 필터 바 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-4">
+    <!-- 헤더 + 위치필터 통일 -->
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h1 class="text-xl font-black text-gray-800">🛒 중고장터</h1>
+      <div class="flex items-center gap-2 flex-wrap flex-1 justify-end">
       <div class="flex flex-wrap items-center gap-2">
         <!-- 도시 선택 -->
         <div class="flex items-center gap-1">
@@ -47,7 +47,9 @@
           <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500">검색</button>
         </form>
       </div>
-      <div class="text-[10px] text-gray-400 mt-1.5">{{ locationInfo }}</div>
+      <RouterLink v-if="auth.isLoggedIn" to="/market/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500 flex-shrink-0">✏️ 등록</RouterLink>
+      </div>
+      <div class="text-[10px] text-gray-400 mt-0.5">{{ locationInfo }}</div>
     </div>
 
     <!-- 목록 -->
