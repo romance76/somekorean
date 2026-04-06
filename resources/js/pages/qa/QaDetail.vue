@@ -4,7 +4,18 @@
     <button @click="$router.back()" class="text-sm text-gray-500 hover:text-amber-600 mb-3">← Q&A 목록</button>
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="qa" class="grid grid-cols-12 gap-4">
-      <div class="col-span-12 lg:col-span-9">
+      <!-- 왼쪽: 카테고리 -->
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
+          <RouterLink to="/qa" class="block px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50">전체</RouterLink>
+          <RouterLink v-for="cat in categories" :key="cat.id" :to="`/qa?category=${cat.id}`"
+            class="block px-3 py-2 text-xs transition"
+            :class="qa.category_id===cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ cat.name }}</RouterLink>
+        </div>
+      </div>
+
+      <div class="col-span-12 lg:col-span-7">
       <!-- 질문 카드 -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
         <div class="px-5 py-4">
@@ -64,6 +75,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const qa = ref(null)
 const answers = ref([])
+const categories = ref([])
 const loading = ref(true)
 const newAnswer = ref('')
 function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR') : '' }
@@ -78,9 +90,12 @@ async function submitAnswer() {
 }
 onMounted(async () => {
   try {
-    const { data } = await axios.get(`/api/qa/${route.params.id}`)
-    qa.value = data.data
-    answers.value = data.data.answers || []
+    const [qRes, cRes] = await Promise.allSettled([
+      axios.get(`/api/qa/${route.params.id}`),
+      axios.get('/api/qa/categories'),
+    ])
+    if (qRes.status === 'fulfilled') { qa.value = qRes.value.data?.data; answers.value = qa.value?.answers || [] }
+    if (cRes.status === 'fulfilled') categories.value = cRes.value.data?.data || []
   } catch {}
   loading.value = false
 })
