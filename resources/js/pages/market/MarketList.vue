@@ -57,9 +57,27 @@
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
       <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
+    <!-- 상세 모드 -->
+    <div v-if="activeItem">
+      <button @click="activeItem=null" class="text-xs text-amber-600 font-semibold mb-3">← 목록으로</button>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs px-2 py-0.5 rounded-full font-bold" :class="{'bg-green-100 text-green-700':activeItem.status==='active','bg-amber-100 text-amber-700':activeItem.status==='reserved','bg-gray-200 text-gray-500':activeItem.status==='sold'}">{{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[activeItem.status] }}</span>
+            <span class="text-xs text-gray-400">{{ activeItem.condition }}</span>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
+          <div class="text-2xl font-black text-amber-600 mt-2">${{ Number(activeItem.price).toLocaleString() }}</div>
+          <div class="text-xs text-gray-400 mt-1">{{ activeItem.city }}, {{ activeItem.state }} · {{ activeItem.view_count }}조회</div>
+        </div>
+        <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content }}</div>
+      </div>
+    </div>
+    <!-- 목록 모드 -->
+    <div v-else-if="!items.length" class="text-center py-12 text-gray-400">검색 결과 없음</div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <RouterLink v-for="item in items" :key="item.id" :to="'/market/' + item.id"
-        class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
+      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
@@ -76,10 +94,10 @@
             <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
           </div>
         </div>
-      </RouterLink>
+      </div>
     </div>
 
-    <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
+    <div v-if="lastPage > 1 && !activeItem" class="flex justify-center gap-1.5 mt-4">
       <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadPage(pg)"
         class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white text-gray-600 border hover:bg-amber-50'">{{ pg }}</button>
     </div>
@@ -112,6 +130,12 @@ const marketCategories = [
 ]
 const items = ref([])
 const loading = ref(true)
+const activeItem = ref(null)
+async function openItem(item) {
+  try { const { data } = await axios.get(`/api/market/${item.id}`); activeItem.value = data.data }
+  catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const page = ref(1)
 const lastPage = ref(1)
 const search = ref('')

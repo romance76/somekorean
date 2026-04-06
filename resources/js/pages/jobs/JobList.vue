@@ -52,16 +52,44 @@
       <div class="text-[10px] text-gray-400 mt-1.5">{{ locationInfo }}</div>
     </div>
 
-    <!-- 목록 -->
+    <!-- ═══ 상세 모드 ═══ -->
+    <div v-if="activeItem">
+      <button @click="activeItem=null" class="text-xs text-amber-600 font-semibold mb-3 hover:text-amber-800">← 목록으로</button>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs px-2 py-0.5 rounded-full font-bold"
+              :class="activeItem.type==='full'?'bg-blue-100 text-blue-700':activeItem.type==='part'?'bg-green-100 text-green-700':'bg-orange-100 text-orange-700'">
+              {{ {full:'풀타임',part:'파트타임',contract:'계약직'}[activeItem.type] || activeItem.type }}
+            </span>
+            <span class="text-xs text-gray-400">{{ activeItem.city }}, {{ activeItem.state }}</span>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
+          <div class="text-sm text-amber-700 font-semibold mt-1">{{ activeItem.company }}</div>
+          <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
+            <span>💰 ${{ activeItem.salary_min }}~${{ activeItem.salary_max }}/{{ activeItem.salary_type }}</span>
+            <span>👁 {{ activeItem.view_count }}</span>
+          </div>
+        </div>
+        <div class="px-5 py-5 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ activeItem.content }}</div>
+        <div v-if="activeItem.contact_phone || activeItem.contact_email" class="px-5 py-4 border-t bg-amber-50">
+          <div class="text-sm font-semibold text-amber-900 mb-1">📞 연락처</div>
+          <div v-if="activeItem.contact_phone" class="text-sm text-gray-700">📱 {{ activeItem.contact_phone }}</div>
+          <div v-if="activeItem.contact_email" class="text-sm text-gray-700">📧 {{ activeItem.contact_email }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 목록 모드 ═══ -->
+    <div v-else>
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="!items.length" class="text-center py-12">
       <div class="text-4xl mb-3">💼</div>
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
-      <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <RouterLink v-for="item in items" :key="item.id" :to="'/jobs/' + item.id"
-        class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
+      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
@@ -78,13 +106,13 @@
             <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
           </div>
         </div>
-      </RouterLink>
+      </div>
     </div>
 
-    <!-- 페이지네이션 -->
     <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
       <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadPage(pg)"
         class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white text-gray-600 border hover:bg-amber-50'">{{ pg }}</button>
+    </div>
     </div>
     </div>
 
@@ -124,6 +152,13 @@ const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation
 
 const items = ref([])
 const loading = ref(true)
+const activeItem = ref(null)
+
+async function openItem(item) {
+  try { const { data } = await axios.get(`/api/jobs/${item.id}`); activeItem.value = data.data }
+  catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const page = ref(1)
 const lastPage = ref(1)
 const search = ref('')
