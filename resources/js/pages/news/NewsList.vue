@@ -26,13 +26,40 @@
           </select>
         </div>
 
+        <!-- ═══ 상세 모드 ═══ -->
+        <div v-if="activeItem">
+          <button @click="activeItem=null" class="text-xs text-amber-600 font-semibold mb-3 hover:text-amber-800">← 뉴스 목록</button>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-5 py-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.category?.name || '뉴스' }}</span>
+                <span class="text-xs text-gray-400">{{ activeItem.source }}</span>
+              </div>
+              <h2 class="text-lg font-bold text-gray-900 leading-snug">{{ activeItem.title }}</h2>
+              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                <span>{{ formatDate(activeItem.published_at) }}</span>
+                <span>👁 {{ activeItem.view_count }}조회</span>
+              </div>
+            </div>
+            <div v-if="activeItem.image_url" class="px-5 pb-3">
+              <img :src="activeItem.image_url" class="w-full max-h-96 object-cover rounded-lg" @error="e=>e.target.style.display='none'" />
+            </div>
+            <div class="px-5 py-5 border-t text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ activeItem.content }}</div>
+            <div v-if="activeItem.source_url" class="px-5 py-3 border-t">
+              <a :href="activeItem.source_url" target="_blank" class="text-amber-600 text-sm hover:underline">📎 원문 보기 →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ 목록 모드 ═══ -->
+        <div v-else>
         <div v-if="activeCat" class="mb-3 text-sm font-bold text-amber-700">{{ activeCat.name }}</div>
 
         <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
         <div v-else-if="!items.length" class="text-center py-12 text-gray-400">뉴스가 없습니다</div>
         <div v-else class="space-y-2">
-          <RouterLink v-for="item in items" :key="item.id" :to="`/news/${item.id}`"
-            class="block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+          <div v-for="item in items" :key="item.id" @click="openItem(item)"
+            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-amber-300 transition cursor-pointer">
             <div class="flex gap-3 p-3">
               <div v-if="item.image_url" class="w-24 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                 <img :src="item.image_url" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
@@ -46,12 +73,13 @@
                 <div class="text-[10px] text-gray-400 mt-1">👁 {{ item.view_count }} · {{ formatDate(item.published_at) }}</div>
               </div>
             </div>
-          </RouterLink>
+          </div>
         </div>
 
-        <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
+        <div v-if="lastPage > 1 && !activeItem" class="flex justify-center gap-1.5 mt-4">
           <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadNews(pg)"
             class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white border text-gray-600'">{{ pg }}</button>
+        </div>
         </div>
       </div>
 
@@ -73,6 +101,13 @@ import axios from 'axios'
 const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)
+const activeItem = ref(null)
+
+async function openItem(item) {
+  try { const { data } = await axios.get(`/api/news/${item.id}`); activeItem.value = data.data }
+  catch { activeItem.value = item }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 const loading = ref(true)
 const page = ref(1)
 const lastPage = ref(1)
