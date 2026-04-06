@@ -7,6 +7,19 @@
         <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">✏️ 등록</RouterLink>
     </div>
 
+    <div class="grid grid-cols-12 gap-4">
+    <!-- 왼쪽: 카테고리 -->
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
+        <button v-for="c in jobCategories" :key="c.value" @click="activeCat=c.value; loadPage()"
+          class="w-full text-left px-3 py-2 text-xs transition"
+          :class="activeCat===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
+      </div>
+    </div>
+
+    <!-- 메인 -->
+    <div class="col-span-12 lg:col-span-7">
     <!-- 위치 필터 바 -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-4">
       <div class="flex flex-wrap items-center gap-2">
@@ -73,6 +86,15 @@
       <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadPage(pg)"
         class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white text-gray-600 border hover:bg-amber-50'">{{ pg }}</button>
     </div>
+    </div>
+
+    <!-- 오른쪽: 위젯 -->
+    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <SidebarWidgets api-url="/api/jobs" detail-path="/jobs/" :current-id="0"
+        label="채용" recommend-label="추천 채용" quick-label="최신 채용"
+        :links="[{to:'/jobs',icon:'📋',label:'전체 채용'},{to:'/jobs/write',icon:'✏️',label:'채용 등록'},{to:'/directory',icon:'🏪',label:'업소록'}]" />
+    </div>
+    </div>
   </div>
 </div>
 </template>
@@ -80,9 +102,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
+import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
 const auth = useAuthStore()
+const activeCat = ref('')
+const jobCategories = [
+  { value: '', label: '전체' },
+  { value: 'restaurant', label: '🍳 요식업' },
+  { value: 'it', label: '💻 IT' },
+  { value: 'beauty', label: '💅 미용' },
+  { value: 'driving', label: '🚗 운전' },
+  { value: 'retail', label: '🛒 판매' },
+  { value: 'office', label: '🏢 사무직' },
+  { value: 'construction', label: '🔨 건설' },
+  { value: 'medical', label: '🏥 의료' },
+  { value: 'education', label: '📚 교육' },
+  { value: 'etc', label: '📋 기타' },
+]
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
 
 const items = ref([])
@@ -128,6 +165,7 @@ async function loadPage(p = 1) {
 
   const params = { page: p, per_page: 20 }
   if (search.value) params.search = search.value
+  if (activeCat.value) params.category = activeCat.value
 
   if (radius.value !== '0') {
     // 도시 선택에 따라 좌표 결정
