@@ -9,12 +9,13 @@
         :class="popTab==='latest' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">최신 {{ label }}</button>
     </div>
     <div class="py-1">
-      <RouterLink v-for="(item, i) in (popTab==='views' ? popularItems : latestItems)" :key="item.id"
-        :to="detailPath + item.id"
-        class="flex items-start gap-2 px-3 py-2 hover:bg-amber-50/50 transition">
+      <component v-for="(item, i) in (popTab==='views' ? popularItems : latestItems)" :key="item.id"
+        :is="inline ? 'button' : 'RouterLink'" :to="inline ? undefined : detailPath + item.id"
+        @click="inline && emit('select', item)"
+        class="flex items-start gap-2 px-3 py-2 hover:bg-amber-50/50 transition w-full text-left">
         <span class="text-xs font-bold flex-shrink-0 w-5 text-center" :class="i < 3 ? 'text-amber-600' : 'text-gray-400'">{{ i + 1 }}</span>
         <span class="text-xs text-gray-700 leading-snug line-clamp-2">{{ item.title || item.name }}</span>
-      </RouterLink>
+      </component>
       <div v-if="!popularItems.length && !latestItems.length" class="py-4 text-center text-xs text-gray-400">데이터 로딩중...</div>
     </div>
   </div>
@@ -23,12 +24,13 @@
   <div v-if="recommendItems.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">👍 {{ recommendLabel }}</div>
     <div class="py-1">
-      <RouterLink v-for="item in recommendItems" :key="item.id"
-        :to="detailPath + item.id"
-        class="block px-3 py-2 hover:bg-amber-50/50 transition">
+      <component v-for="item in recommendItems" :key="item.id"
+        :is="inline ? 'button' : 'RouterLink'" :to="inline ? undefined : detailPath + item.id"
+        @click="inline && emit('select', item)"
+        class="block px-3 py-2 hover:bg-amber-50/50 transition w-full text-left">
         <div class="text-xs text-gray-700 line-clamp-2 leading-snug">{{ item.title || item.name }}</div>
         <div class="text-[10px] text-gray-400 mt-0.5">{{ item.user?.name || item.company || item.source || '' }}</div>
-      </RouterLink>
+      </component>
     </div>
   </div>
 
@@ -36,12 +38,13 @@
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">⚡ {{ quickLabel }}</div>
     <div class="py-1">
-      <RouterLink v-for="item in quickItems" :key="item.id"
-        :to="detailPath + item.id"
-        class="flex items-center gap-2 px-3 py-1.5 hover:bg-amber-50/50 transition">
+      <component v-for="item in quickItems" :key="item.id"
+        :is="inline ? 'button' : 'RouterLink'" :to="inline ? undefined : detailPath + item.id"
+        @click="inline && emit('select', item)"
+        class="flex items-center gap-2 px-3 py-1.5 hover:bg-amber-50/50 transition w-full text-left">
         <span class="text-[10px] text-amber-500">●</span>
         <span class="text-xs text-gray-600 truncate">{{ item.title || item.name }}</span>
-      </RouterLink>
+      </component>
       <div v-if="!quickItems.length" class="py-3 text-center text-xs text-gray-400">준비 중</div>
     </div>
   </div>
@@ -62,15 +65,18 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
-  apiUrl: { type: String, required: true },        // 예: /api/posts, /api/jobs
-  detailPath: { type: String, required: true },     // 예: /community/free/, /jobs/
+  apiUrl: { type: String, required: true },
+  detailPath: { type: String, required: true },
   currentId: { type: [Number, String], default: 0 },
-  label: { type: String, default: '글' },           // 많이 본 '글', 많이 본 '뉴스'
+  label: { type: String, default: '글' },
   recommendLabel: { type: String, default: '추천 글' },
   quickLabel: { type: String, default: '실시간' },
   links: { type: Array, default: () => [] },
-  filterParams: { type: Object, default: () => ({}) }, // 추가 필터 (category 등)
+  filterParams: { type: Object, default: () => ({}) },
+  inline: { type: Boolean, default: false }, // true면 클릭 시 emit
 })
+
+const emit = defineEmits(['select'])
 
 const popTab = ref('views')
 const popularItems = ref([])

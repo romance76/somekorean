@@ -110,7 +110,7 @@
 
     <!-- 오른쪽: 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
-      <SidebarWidgets api-url="/api/jobs" detail-path="/jobs/" :current-id="0"
+      <SidebarWidgets :inline="true" @select="openItem" api-url="/api/jobs" detail-path="/jobs/" :current-id="0"
         label="채용" recommend-label="추천 채용" quick-label="최신 채용"
         :links="[{to:'/jobs',icon:'📋',label:'전체 채용'},{to:'/jobs/write',icon:'✏️',label:'채용 등록'},{to:'/directory',icon:'🏪',label:'업소록'}]" />
     </div>

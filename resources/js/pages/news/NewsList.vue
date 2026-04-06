@@ -40,13 +40,15 @@
                 <span>👁 {{ activeItem.view_count }}조회</span>
               </div>
             </div>
-            <div v-if="activeItem.image_url" class="px-5 pb-3">
-              <img :src="activeItem.image_url" class="w-full max-h-96 object-cover rounded-lg" @error="e=>e.target.style.display='none'" />
+            <!-- 대표 이미지 (본문에 같은 이미지 없을 때만) -->
+            <div v-if="activeItem.image_url && !hasImageInContent" class="px-5 pb-3">
+              <img :src="activeItem.image_url" class="w-full max-h-80 object-cover rounded-lg" @error="e=>e.target.style.display='none'" />
             </div>
-            <div class="px-5 py-5 border-t text-sm text-gray-700 leading-relaxed">
+            <!-- 본문 (단락 구분 + 이미지) -->
+            <div class="px-5 py-5 border-t text-sm text-gray-700 leading-7">
               <template v-for="(block, i) in contentBlocks" :key="i">
-                <img v-if="block.type==='img'" :src="block.src" class="w-full rounded-lg my-3" @error="e=>e.target.style.display='none'" />
-                <p v-else class="whitespace-pre-wrap mb-2">{{ block.text }}</p>
+                <img v-if="block.type==='img'" :src="block.src" class="w-full rounded-lg my-4" @error="e=>e.target.style.display='none'" />
+                <p v-else class="mb-4" style="text-indent: 0.5em;">{{ block.text }}</p>
               </template>
             </div>
             <div v-if="activeItem.source_url" class="px-5 py-3 border-t">
@@ -89,7 +91,7 @@
 
       <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
-        <SidebarWidgets api-url="/api/news" detail-path="/news/" :current-id="0"
+        <SidebarWidgets :inline="true" @select="openItem" api-url="/api/news" detail-path="/news/" :current-id="0"
           label="뉴스" recommend-label="좋아할 기사" quick-label="실시간 뉴스"
           :links="[{to:'/news',icon:'📰',label:'전체 뉴스'},{to:'/community',icon:'💬',label:'커뮤니티'}]" />
       </div>
@@ -107,22 +109,47 @@ const categories = ref([])
 const activeCat = ref(null)
 const activeItem = ref(null)
 
-// 본문에서 마크다운 이미지 ![alt](url) 파싱
+// 본문 이미지 중복 체크
+const hasImageInContent = computed(() => {
+  if (!activeItem.value?.content || !activeItem.value?.image_url) return false
+  return activeItem.value.content.includes(activeItem.value.image_url)
+})
+
+// 본문 파싱: 마크다운 이미지 + 단락 분리
 const contentBlocks = computed(() => {
   if (!activeItem.value?.content) return []
-  const lines = activeItem.value.content.split('\n')
+  const text = activeItem.value.content
+
+  // 마크다운 이미지 분리
+  const parts = text.split(/!\[.*?\]\((.+?)\)/)
   const blocks = []
-  let textBuf = ''
-  for (const line of lines) {
-    const imgMatch = line.match(/!\[.*?\]\((.+?)\)/)
-    if (imgMatch) {
-      if (textBuf.trim()) { blocks.push({ type: 'text', text: textBuf.trim() }); textBuf = '' }
-      blocks.push({ type: 'img', src: imgMatch[1] })
+
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      // 텍스트 파트 — 문장 단위로 단락 분리
+      const textPart = parts[i].trim()
+      if (!textPart) continue
+
+      // '다.' '했다.' '한다.' 등으로 끝나는 문장 뒤에 줄바꿈 추가
+      const paragraphs = textPart
+        .replace(/([.!?])(\s*)([가-힣A-Z"'\[])/g, '$1\n\n$3')
+        .split(/\n{2,}/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+
+      paragraphs.forEach(p => {
+        if (p.length > 10) blocks.push({ type: 'text', text: p })
+      })
     } else {
-      textBuf += line + '\n'
+      // 이미지 URL
+      const src = parts[i]
+      // 대표 이미지와 같은 URL이면 건너뛰기
+      if (src !== activeItem.value?.image_url) {
+        blocks.push({ type: 'img', src })
+      }
     }
   }
-  if (textBuf.trim()) blocks.push({ type: 'text', text: textBuf.trim() })
+
   return blocks
 })
 

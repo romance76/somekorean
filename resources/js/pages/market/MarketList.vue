@@ -89,7 +89,7 @@
     </div>
     <!-- 오른쪽 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
-      <SidebarWidgets api-url="/api/market" detail-path="/market/" :current-id="0"
+      <SidebarWidgets :inline="true" @select="openItem" api-url="/api/market" detail-path="/market/" :current-id="0"
         label="물품" recommend-label="추천 물품" quick-label="최신"
         :links="[{to:'/market',icon:'📋',label:'전체 장터'},{to:'/market/write',icon:'✏️',label:'물품 등록'}]" />
     </div>
