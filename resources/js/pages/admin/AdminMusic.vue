@@ -1,39 +1,160 @@
 <template>
 <div>
   <h1 class="text-xl font-black text-gray-800 mb-4">🎵 음악 관리</h1>
-  <div v-if="loading" class="text-center py-8 text-gray-400">로딩중...</div>
-  <div v-else-if="!items.length" class="text-center py-8 text-gray-400">데이터 없음</div>
-  <div v-else class="bg-white rounded-xl shadow-sm border overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 border-b"><tr>
-        <th class="px-3 py-2 text-left text-xs text-gray-500">카테고리</th>
-        <th class="px-3 py-2 text-left text-xs text-gray-500">slug</th>
-        <th class="px-3 py-2 text-left text-xs text-gray-500">순서</th>
-        <th class="px-3 py-2 text-xs text-gray-500">관리</th>
-      </tr></thead>
-      <tbody>
-        <tr v-for="item in items" :key="item.id" class="border-b last:border-0 hover:bg-amber-50/30">
-          <td class="px-3 py-2.5 font-semibold text-gray-800 truncate max-w-[200px]">{{ item.name }}</td>
-          <td class="px-3 py-2.5 text-xs text-gray-500">{{ item.slug }}</td>
-          <td class="px-3 py-2.5 text-xs text-gray-500">{{ item.sort_order }}</td>
-          <td class="px-3 py-2.5 text-center">
-            <button @click="deleteItem(item)" class="text-xs text-red-400 hover:text-red-600">삭제</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+
+  <div class="grid grid-cols-12 gap-4">
+    <!-- 카테고리 목록 -->
+    <div class="col-span-12 lg:col-span-4">
+      <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+          <span class="font-bold text-sm text-gray-800">🎵 카테고리 ({{ categories.length }}개)</span>
+          <button @click="showAddCat=true" class="text-amber-600 text-xs font-bold hover:text-amber-800">+ 추가</button>
+        </div>
+        <button v-for="cat in categories" :key="cat.id" @click="selectCategory(cat)"
+          class="w-full text-left px-4 py-3 border-b last:border-0 transition flex items-center justify-between"
+          :class="activeCat?.id===cat.id ? 'bg-amber-50 text-amber-700' : 'hover:bg-gray-50'">
+          <div>
+            <div class="text-sm font-semibold">{{ cat.name }}</div>
+            <div class="text-[10px] text-gray-400">{{ trackCounts[cat.id] || 0 }}곡</div>
+          </div>
+          <span class="text-xs text-gray-300">→</span>
+        </button>
+      </div>
+
+      <!-- 통계 -->
+      <div class="bg-white rounded-xl shadow-sm border p-4 mt-3">
+        <div class="text-xs text-gray-500 space-y-1">
+          <div>전체 카테고리: <strong>{{ categories.length }}개</strong></div>
+          <div>전체 트랙: <strong>{{ totalTracks }}곡</strong></div>
+          <div class="text-amber-600">* 트랙은 YouTube API로 매일 자동 추가됩니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 트랙 목록 -->
+    <div class="col-span-12 lg:col-span-8">
+      <div v-if="!activeCat" class="bg-white rounded-xl shadow-sm border p-12 text-center text-gray-400">
+        카테고리를 선택하세요
+      </div>
+      <div v-else class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+          <span class="font-bold text-sm text-gray-800">🎶 {{ activeCat.name }} ({{ tracks.length }}곡)</span>
+          <button @click="showAddTrack=true" class="bg-amber-400 text-amber-900 font-bold px-3 py-1 rounded-lg text-xs hover:bg-amber-500">+ 트랙 추가</button>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b"><tr>
+            <th class="px-3 py-2 text-left text-xs text-gray-500">#</th>
+            <th class="px-3 py-2 text-left text-xs text-gray-500">제목</th>
+            <th class="px-3 py-2 text-left text-xs text-gray-500">아티스트</th>
+            <th class="px-3 py-2 text-xs text-gray-500">YouTube</th>
+            <th class="px-3 py-2 text-xs text-gray-500">관리</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="(t, i) in tracks" :key="t.id" class="border-b last:border-0 hover:bg-amber-50/30">
+              <td class="px-3 py-2 text-xs text-gray-400">{{ i+1 }}</td>
+              <td class="px-3 py-2 font-medium text-gray-800">{{ t.title }}</td>
+              <td class="px-3 py-2 text-xs text-gray-500">{{ t.artist }}</td>
+              <td class="px-3 py-2 text-center">
+                <a v-if="t.youtube_id" :href="`https://youtube.com/watch?v=${t.youtube_id}`" target="_blank" class="text-red-500 text-xs">▶</a>
+              </td>
+              <td class="px-3 py-2 text-center">
+                <button @click="deleteTrack(t)" class="text-xs text-red-400 hover:text-red-600">삭제</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-if="!tracks.length" class="py-6 text-center text-sm text-gray-400">트랙이 없습니다</div>
+      </div>
+    </div>
   </div>
-  <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
-    <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="load(pg)"
-      class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white border text-gray-600'">{{ pg }}</button>
+
+  <!-- 카테고리 추가 모달 -->
+  <div v-if="showAddCat" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showAddCat=false">
+    <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-xl space-y-3">
+      <h3 class="font-bold">카테고리 추가</h3>
+      <input v-model="newCat.name" placeholder="카테고리 이름" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input v-model="newCat.slug" placeholder="slug (영문)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <div class="flex gap-2">
+        <button @click="addCategory" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm flex-1">추가</button>
+        <button @click="showAddCat=false" class="text-gray-500 px-4">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 트랙 추가 모달 -->
+  <div v-if="showAddTrack" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showAddTrack=false">
+    <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-xl space-y-3">
+      <h3 class="font-bold">트랙 추가 ({{ activeCat?.name }})</h3>
+      <input v-model="newTrack.title" placeholder="곡 제목" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input v-model="newTrack.artist" placeholder="아티스트" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input v-model="newTrack.youtube_url" placeholder="YouTube URL" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <div class="flex gap-2">
+        <button @click="addTrack" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm flex-1">추가</button>
+        <button @click="showAddTrack=false" class="text-gray-500 px-4">취소</button>
+      </div>
+    </div>
   </div>
 </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import axios from 'axios'
-const items = ref([]); const loading = ref(true); const page = ref(1); const lastPage = ref(1)
-async function load(p=1) { loading.value=true; page.value=p; try { const{data}=await axios.get('/api/music/categories',{params:{page:p}}); items.value=data.data?.data||data.data||[]; lastPage.value=data.data?.last_page||1 }catch{}; loading.value=false }
-async function deleteItem(item) { if(!confirm('삭제?'))return; try { await axios.delete('/api/music/categories/'+item.id); items.value=items.value.filter(x=>x.id!==item.id) }catch{} }
-onMounted(()=>load())
+
+const categories = ref([])
+const tracks = ref([])
+const activeCat = ref(null)
+const trackCounts = ref({})
+const showAddCat = ref(false)
+const showAddTrack = ref(false)
+const newCat = reactive({ name: '', slug: '' })
+const newTrack = reactive({ title: '', artist: '', youtube_url: '' })
+
+const totalTracks = computed(() => Object.values(trackCounts.value).reduce((s, n) => s + n, 0))
+
+async function loadCategories() {
+  try {
+    const { data } = await axios.get('/api/music/categories')
+    categories.value = data.data || []
+    // 각 카테고리별 트랙 수 로딩
+    for (const cat of categories.value) {
+      try {
+        const { data: tData } = await axios.get(`/api/music/tracks/${cat.id}`)
+        trackCounts.value[cat.id] = (tData.data || []).length
+      } catch { trackCounts.value[cat.id] = 0 }
+    }
+  } catch {}
+}
+
+async function selectCategory(cat) {
+  activeCat.value = cat
+  try {
+    const { data } = await axios.get(`/api/music/tracks/${cat.id}`)
+    tracks.value = data.data || []
+  } catch {}
+}
+
+async function addCategory() {
+  if (!newCat.name) return
+  try {
+    await axios.post('/api/admin/music/categories', newCat)
+    showAddCat.value = false; newCat.name = ''; newCat.slug = ''
+    loadCategories()
+  } catch {}
+}
+
+async function addTrack() {
+  if (!newTrack.title || !activeCat.value) return
+  try {
+    await axios.post('/api/admin/music/tracks', { ...newTrack, category_id: activeCat.value.id })
+    showAddTrack.value = false; newTrack.title = ''; newTrack.artist = ''; newTrack.youtube_url = ''
+    selectCategory(activeCat.value)
+  } catch {}
+}
+
+async function deleteTrack(t) {
+  if (!confirm('삭제?')) return
+  try { await axios.delete(`/api/admin/music/tracks/${t.id}`); tracks.value = tracks.value.filter(x => x.id !== t.id) } catch {}
+}
+
+onMounted(loadCategories)
 </script>

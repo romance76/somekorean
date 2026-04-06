@@ -229,4 +229,9 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/settings', [AdminSettingsController::class, 'index']);
     Route::put('/settings', [AdminSettingsController::class, 'update']);
     Route::post('/settings/logo', [AdminSettingsController::class, 'uploadLogo']);
+
+    // Admin Music
+    Route::post('/music/categories', [MusicController::class, 'storeCategory']);
+    Route::post('/music/tracks', [MusicController::class, 'storeTrack']);
+    Route::delete('/music/tracks/{id}', [MusicController::class, 'destroyTrack']);
 });

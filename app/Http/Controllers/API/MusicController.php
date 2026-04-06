@@ -88,6 +88,15 @@ class MusicController extends Controller
         return response()->json(['success' => true, 'data' => $tracks]);
     }
 
+    // 관리자: 카테고리 추가
+    public function storeCategory(Request $request)
+    {
+        $request->validate(['name' => 'required|max:50']);
+        $slug = $request->slug ?: \Illuminate\Support\Str::slug($request->name);
+        $cat = MusicCategory::create(['name' => $request->name, 'slug' => $slug, 'sort_order' => MusicCategory::max('sort_order') + 1]);
+        return response()->json(['success' => true, 'data' => $cat], 201);
+    }
+
     // 관리자: 트랙 추가
     public function storeTrack(Request $request)
     {
