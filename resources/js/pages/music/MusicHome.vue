@@ -44,24 +44,21 @@
           </div>
         </div>
 
-        <!-- 검색 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
-          <form @submit.prevent="searchTracks" class="flex gap-1">
-            <input v-model="searchQ" type="text" placeholder="제목/아티스트 검색" class="flex-1 border rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none" />
-            <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-2 py-1.5 rounded-lg text-xs">검색</button>
-          </form>
-          <div v-if="searchResults.length" class="mt-2 space-y-0.5 max-h-80 overflow-y-auto">
-            <div class="text-[10px] text-gray-400 mb-1">{{ searchResults.length }}곡 검색됨</div>
-            <div v-for="t in searchResults" :key="t.id" class="flex items-center gap-1 py-1.5 px-1 rounded hover:bg-amber-50 group">
-              <button @click="playTrack(t)" class="text-amber-600 flex-shrink-0 text-xs">▶</button>
-              <div class="flex-1 min-w-0 overflow-hidden">
-                <div class="text-xs font-semibold text-gray-700 whitespace-nowrap group-hover:animate-marquee">{{ t.title }}</div>
-                <div class="text-[10px] text-gray-400 truncate">{{ t.artist }}</div>
-              </div>
-              <button v-if="auth.isLoggedIn" @click.stop="toggleFav(t)" class="text-sm flex-shrink-0" :class="isFav(t.id)?'text-red-500':'text-gray-300'">{{ isFav(t.id)?'❤️':'🤍' }}</button>
-              <button v-if="auth.isLoggedIn && playlists.length" @click.stop="showAddToPL(t)" class="text-sm flex-shrink-0" :class="isInPlaylist(t.id)?'text-amber-500':'text-gray-300'">{{ isInPlaylist(t.id)?'⭐':'☆' }}</button>
-            </div>
+        <!-- YouTube 링크로 추가 -->
+        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+          <div class="font-bold text-xs text-gray-800 mb-2">🔗 YouTube 링크로 추가</div>
+          <textarea v-model="youtubeUrl" rows="2" placeholder="YouTube 곡 또는 플레이리스트 URL 붙여넣기" class="w-full border rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea>
+          <div class="flex gap-1 mt-1">
+            <select v-model="importTargetPL" class="flex-1 border rounded-lg px-2 py-1 text-xs outline-none">
+              <option value="">플레이리스트 선택</option>
+              <option v-for="pl in playlists" :key="pl.id" :value="pl.id">{{ pl.name }}</option>
+            </select>
+            <button @click="importYoutube" :disabled="importing || !youtubeUrl.trim() || !importTargetPL" class="bg-red-500 text-white font-bold px-3 py-1 rounded-lg text-xs hover:bg-red-600 disabled:opacity-50 flex-shrink-0">
+              {{ importing ? '가져오는중...' : '▶ 가져오기' }}
+            </button>
           </div>
+          <div v-if="importMsg" class="text-[10px] mt-1" :class="importMsg.includes('실패')?'text-red-500':'text-green-600'">{{ importMsg }}</div>
+          <div class="text-[10px] text-gray-400 mt-1">곡: youtube.com/watch?v=xxx<br/>리스트: youtube.com/playlist?list=xxx</div>
         </div>
       </div>
 
@@ -186,8 +183,10 @@ const activePL = ref(null)
 const showFavorites = ref(false)
 const playing = ref(null)
 const loading = ref(true)
-const searchQ = ref('')
-const searchResults = ref([])
+const youtubeUrl = ref('')
+const importTargetPL = ref('')
+const importing = ref(false)
+const importMsg = ref('')
 const showCreatePL = ref(false)
 const newPLName = ref('')
 const addTrackTarget = ref(null)
@@ -365,9 +364,21 @@ async function removeFromPL(track) {
   } catch {}
 }
 
-async function searchTracks() {
-  if (!searchQ.value.trim()) { searchResults.value = []; return }
-  try { const { data } = await axios.get('/api/music/search', { params: { q: searchQ.value } }); searchResults.value = data.data || [] } catch {}
+async function importYoutube() {
+  if (!youtubeUrl.value.trim() || !importTargetPL.value) return
+  importing.value = true; importMsg.value = ''
+  try {
+    const { data } = await axios.post('/api/music/import-youtube', {
+      url: youtubeUrl.value.trim(),
+      playlist_id: importTargetPL.value,
+    })
+    importMsg.value = data.message || `${data.added}곡 추가 완료!`
+    youtubeUrl.value = ''
+    // 플레이리스트 새로고침
+    if (activePL.value?.id == importTargetPL.value) selectPlaylist(activePL.value)
+    await loadPlaylists()
+  } catch (e) { importMsg.value = e.response?.data?.message || '가져오기 실패' }
+  importing.value = false
 }
 
 onMounted(async () => {

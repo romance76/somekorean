@@ -90,6 +90,109 @@ class MusicController extends Controller
         return response()->json(['success' => true, 'data' => $tracks]);
     }
 
+    // YouTube 링크로 플레이리스트에 추가
+    public function importYoutube(Request $request)
+    {
+        $request->validate(['url' => 'required|string', 'playlist_id' => 'required|integer']);
+        $url = $request->url;
+        $plId = $request->playlist_id;
+
+        // 플레이리스트 소유 확인
+        $pl = UserPlaylist::where('id', $plId)->where('user_id', auth()->id())->first();
+        if (!$pl) return response()->json(['success' => false, 'message' => '플레이리스트를 찾을 수 없습니다'], 404);
+
+        $apiKey = config('services.youtube.api_key');
+        if (!$apiKey) {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                if (preg_match('/YOUTUBE_API_KEY=(.+)/', $envContent, $m)) $apiKey = trim($m[1]);
+            }
+        }
+        if (!$apiKey) return response()->json(['success' => false, 'message' => 'YouTube API 키가 없습니다'], 500);
+
+        $added = 0;
+
+        // 플레이리스트 URL 감지
+        if (preg_match('/[?&]list=([a-zA-Z0-9_-]+)/', $url, $m)) {
+            $listId = $m[1];
+            $nextPage = '';
+            $maxItems = 50;
+            $fetched = 0;
+
+            do {
+                $params = ['key' => $apiKey, 'playlistId' => $listId, 'part' => 'snippet', 'maxResults' => 50];
+                if ($nextPage) $params['pageToken'] = $nextPage;
+
+                $response = \Illuminate\Support\Facades\Http::get('https://www.googleapis.com/youtube/v3/playlistItems', $params);
+                if (!$response->ok()) break;
+
+                $items = $response->json('items', []);
+                foreach ($items as $item) {
+                    if ($fetched >= $maxItems) break;
+                    $videoId = $item['snippet']['resourceId']['videoId'] ?? null;
+                    if (!$videoId) continue;
+                    $title = $item['snippet']['title'] ?? '';
+                    $channel = $item['snippet']['channelTitle'] ?? '';
+                    if ($title === 'Private video' || $title === 'Deleted video') continue;
+
+                    // DB에 트랙 저장 (없으면 생성)
+                    $track = MusicTrack::firstOrCreate(
+                        ['youtube_id' => $videoId],
+                        ['title' => mb_substr($title, 0, 200), 'artist' => mb_substr($channel, 0, 100), 'youtube_id' => $videoId, 'youtube_url' => "https://www.youtube.com/watch?v={$videoId}", 'category_id' => 1, 'duration' => 0, 'sort_order' => 0]
+                    );
+
+                    // 플레이리스트에 추가 (중복 체크)
+                    if (!UserPlaylistTrack::where('playlist_id', $plId)->where('track_id', $track->id)->exists()) {
+                        UserPlaylistTrack::create(['playlist_id' => $plId, 'track_id' => $track->id, 'sort_order' => 0]);
+                        $added++;
+                    }
+                    $fetched++;
+                }
+
+                $nextPage = $response->json('nextPageToken');
+            } while ($nextPage && $fetched < $maxItems);
+
+            return response()->json(['success' => true, 'added' => $added, 'message' => "플레이리스트에서 {$added}곡 추가 완료!"]);
+        }
+
+        // 단일 곡 URL
+        $videoId = null;
+        if (preg_match('/[?&]v=([a-zA-Z0-9_-]{11})/', $url, $m)) $videoId = $m[1];
+        elseif (preg_match('/youtu\.be\/([a-zA-Z0-9_-]{11})/', $url, $m)) $videoId = $m[1];
+
+        if (!$videoId) return response()->json(['success' => false, 'message' => 'YouTube URL을 인식할 수 없습니다'], 422);
+
+        // 영상 정보 가져오기
+        $response = \Illuminate\Support\Facades\Http::get('https://www.googleapis.com/youtube/v3/videos', [
+            'key' => $apiKey, 'id' => $videoId, 'part' => 'snippet,contentDetails',
+        ]);
+
+        if (!$response->ok()) return response()->json(['success' => false, 'message' => 'YouTube API 오류'], 500);
+
+        $items = $response->json('items', []);
+        if (empty($items)) return response()->json(['success' => false, 'message' => '영상을 찾을 수 없습니다'], 404);
+
+        $item = $items[0];
+        $title = $item['snippet']['title'] ?? '';
+        $channel = $item['snippet']['channelTitle'] ?? '';
+        $dur = $item['contentDetails']['duration'] ?? 'PT0S';
+        preg_match('/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/', $dur, $dm);
+        $seconds = (intval($dm[1] ?? 0) * 3600) + (intval($dm[2] ?? 0) * 60) + intval($dm[3] ?? 0);
+
+        $track = MusicTrack::firstOrCreate(
+            ['youtube_id' => $videoId],
+            ['title' => mb_substr($title, 0, 200), 'artist' => mb_substr($channel, 0, 100), 'youtube_id' => $videoId, 'youtube_url' => "https://www.youtube.com/watch?v={$videoId}", 'category_id' => 1, 'duration' => $seconds, 'sort_order' => 0]
+        );
+
+        if (!UserPlaylistTrack::where('playlist_id', $plId)->where('track_id', $track->id)->exists()) {
+            UserPlaylistTrack::create(['playlist_id' => $plId, 'track_id' => $track->id, 'sort_order' => 0]);
+            return response()->json(['success' => true, 'added' => 1, 'message' => "'{$title}' 추가 완료!"]);
+        }
+
+        return response()->json(['success' => true, 'added' => 0, 'message' => '이미 추가된 곡입니다']);
+    }
+
     // 즐겨찾기 토글
     public function toggleFavorite(Request $request)
     {

@@ -190,6 +190,7 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/music/playlists/{id}/tracks/{trackId}', [MusicController::class, 'removeTrack']);
     Route::delete('/music/playlists/{id}', [MusicController::class, 'deletePlaylist']);
     Route::get('/music/search', [MusicController::class, 'searchTracks']);
+    Route::post('/music/import-youtube', [MusicController::class, 'importYoutube']);
     Route::post('/music/favorites', [MusicController::class, 'toggleFavorite']);
     Route::get('/music/favorites', [MusicController::class, 'favorites']);
 
