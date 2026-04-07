@@ -25,8 +25,8 @@
             </div>
           </div>
           <div v-if="wallet" class="text-center mb-3">
-            <div class="text-3xl font-black text-amber-400 font-mono">{{ wallet.chip_balance?.toLocaleString() || '0' }}</div>
-            <div class="text-xs text-gray-500">&#48372;&#50976; &#52841;</div>
+            <div class="text-3xl font-black text-amber-400 font-mono">{{ (wallet.chips_balance || 0).toLocaleString() }}</div>
+            <div class="text-xs text-gray-500">보유 칩</div>
           </div>
           <div v-else class="text-center mb-3 py-2">
             <div class="text-sm text-gray-500">&#47196;&#44536;&#51064; &#54980; &#51060;&#50857; &#44032;&#45733;</div>
@@ -220,12 +220,19 @@ const prizes = computed(() => {
 
 async function handleDeposit() {
   if (!walletAmount.value || walletAmount.value < 100) return
-  await deposit(walletAmount.value)
+  const result = await deposit(walletAmount.value)
+  if (result?.success) {
+    // Refresh user points in auth store
+    auth.user.points = result.data.points
+  }
 }
 
 async function handleWithdraw() {
   if (!walletAmount.value || walletAmount.value < 100) return
-  await withdraw(walletAmount.value)
+  const result = await withdraw(walletAmount.value)
+  if (result?.success) {
+    auth.user.points = result.data.points
+  }
 }
 
 function startGame() {

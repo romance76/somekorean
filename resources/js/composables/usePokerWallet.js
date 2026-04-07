@@ -30,7 +30,13 @@ export function usePokerWallet() {
     try {
       const { data } = await axios.post('/api/poker/wallet/deposit', { amount });
       if (data.success) {
-        wallet.value = data.data;
+        // Update wallet balance from response
+        if (wallet.value) {
+          wallet.value = { ...wallet.value, chips_balance: data.data.chips_balance, points: data.data.points };
+        } else {
+          wallet.value = data.data;
+        }
+        return data;
       }
     } catch (e) {
       error.value = e.response?.data?.message || e.message;
@@ -45,7 +51,12 @@ export function usePokerWallet() {
     try {
       const { data } = await axios.post('/api/poker/wallet/withdraw', { amount });
       if (data.success) {
-        wallet.value = data.data;
+        if (wallet.value) {
+          wallet.value = { ...wallet.value, chips_balance: data.data.chips_balance, points: data.data.points };
+        } else {
+          wallet.value = data.data;
+        }
+        return data;
       }
     } catch (e) {
       error.value = e.response?.data?.message || e.message;

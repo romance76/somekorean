@@ -1,5 +1,5 @@
 <template>
-<div class="select-none min-h-screen bg-gradient-to-b from-gray-950 via-[#0e1525] to-[#0b1018] flex flex-col overflow-hidden"
+<div class="select-none h-screen bg-gradient-to-b from-gray-950 via-[#0e1525] to-[#0b1018] flex flex-col overflow-hidden"
   style="font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;">
 
   <!-- ===== RESULT SCREEN ===== -->

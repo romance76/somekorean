@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 relative min-h-[400px] mx-auto w-full max-w-[720px]">
+  <div class="flex-1 relative min-h-0 mx-auto w-full max-w-[720px]">
     <!-- Table shadow/glow -->
     <div
       class="absolute left-[8%] right-[8%] top-[10%] bottom-[18%] rounded-full bg-black/40 blur-[20px]"
