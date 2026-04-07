@@ -34,6 +34,11 @@ use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\AdminSettingsController;
 use App\Http\Controllers\API\PokerController;
+use App\Http\Controllers\API\PokerTournamentController;
+use Illuminate\Support\Facades\Broadcast;
+
+// ─── Broadcasting Auth ───
+Broadcast::routes(['middleware' => ['auth:api']]);
 
 // ─── Public Auth ───
 Route::post('/register', [AuthController::class, 'register']);
@@ -225,6 +230,13 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/stats', [PokerController::class, 'stats']);
         Route::get('/leaderboard', [PokerController::class, 'leaderboard']);
         Route::get('/history', [PokerController::class, 'history']);
+
+        // 토너먼트
+        Route::get('/tournaments', [PokerTournamentController::class, 'index']);
+        Route::get('/tournaments/{id}', [PokerTournamentController::class, 'show']);
+        Route::post('/tournaments/{id}/register', [PokerTournamentController::class, 'register']);
+        Route::delete('/tournaments/{id}/register', [PokerTournamentController::class, 'unregister']);
+        Route::post('/tournaments/{id}/heartbeat', [PokerTournamentController::class, 'heartbeat']);
     });
 });
 
@@ -301,5 +313,10 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
         Route::put('/wallets/{id}', [PokerController::class, 'adminUpdateWallet']);
         Route::get('/settings', [PokerController::class, 'adminSettings']);
         Route::put('/settings', [PokerController::class, 'adminUpdateSettings']);
+
+        // 토너먼트 관리
+        Route::post('/tournaments', [PokerTournamentController::class, 'adminCreate']);
+        Route::get('/tournaments', [PokerTournamentController::class, 'adminList']);
+        Route::delete('/tournaments/{id}', [PokerTournamentController::class, 'adminCancel']);
     });
 });

@@ -1,248 +1,244 @@
 <template>
 <div class="min-h-screen bg-gray-950 text-white">
-  <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+  <div class="max-w-5xl mx-auto px-4 py-6 space-y-5">
 
     <!-- Header -->
     <div class="text-center">
       <div class="flex items-center justify-center gap-2 mb-1">
-        <button @click="$router.back()" class="text-white/50 hover:text-white text-lg absolute left-4">&#9664;</button>
-        <span class="text-3xl">&#127942;</span>
-        <h1 class="text-2xl font-black text-amber-400 tracking-wider">&#53664;&#45320;&#47676;&#53944; &#54252;&#52964;</h1>
+        <span class="text-3xl">🎰</span>
+        <h1 class="text-2xl font-black text-amber-400">SomeKorean 포커</h1>
       </div>
-      <p class="text-xs text-blue-400 tracking-[0.3em] font-bold">TOURNAMENT SIMULATOR</p>
+      <p class="text-xs text-blue-400 tracking-[0.3em] font-bold">POKER PLATFORM</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <!-- Left Column -->
+      <!-- ===== MAIN (LEFT 2/3) ===== -->
       <div class="lg:col-span-2 space-y-4">
 
-        <!-- Wallet Widget -->
+        <!-- 🏆 토너먼트 -->
         <div class="bg-gray-900 rounded-xl border border-amber-400/20 p-4">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold text-amber-400">&#128176; &#52841; &#51648;&#44049;</h2>
-            <div v-if="wallet" class="text-xs text-gray-400">
-              &#54252;&#51064;&#53944;: <span class="text-amber-300 font-bold">{{ (auth.user?.points || 0).toLocaleString() }}P</span>
+            <h2 class="text-sm font-bold text-amber-400">🏆 토너먼트</h2>
+            <span class="text-xs text-gray-500">실시간 업데이트</span>
+          </div>
+
+          <!-- 예정된 토너먼트 -->
+          <div v-if="upcomingTournaments.length" class="space-y-2 mb-4">
+            <div v-for="t in upcomingTournaments" :key="t.id"
+              class="bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-3 hover:bg-gray-750 transition">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span :class="typeBadgeClass(t.type)" class="text-[10px] px-1.5 py-0.5 rounded font-bold">{{ t.type }}</span>
+                  <span class="text-white text-sm font-bold truncate">{{ t.title }}</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-gray-400">
+                  <span>💰 {{ t.buy_in.toLocaleString() }} 칩</span>
+                  <span>👥 {{ t.registered_count || 0 }}/{{ t.max_players }}명</span>
+                  <span>🟢 {{ t.online_count || 0 }} 온라인</span>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-amber-400 text-xs font-mono font-bold mb-1">{{ formatTournamentTime(t.scheduled_at) }}</div>
+                <router-link :to="'/games/poker/tournament/' + t.id"
+                  class="bg-amber-500 hover:bg-amber-400 text-gray-950 text-xs font-bold px-3 py-1.5 rounded-lg inline-block transition">
+                  {{ isRegistered(t.id) ? '대기실 입장' : '참가 신청' }}
+                </router-link>
+              </div>
             </div>
           </div>
+          <div v-else class="text-center py-4 text-gray-600 text-sm">예정된 토너먼트가 없습니다</div>
+
+          <!-- 진행 중인 토너먼트 -->
+          <div v-if="runningTournaments.length">
+            <div class="text-xs text-gray-500 font-bold mb-2 mt-2">🔴 진행 중</div>
+            <div v-for="t in runningTournaments" :key="t.id"
+              class="bg-red-950/30 border border-red-500/20 rounded-lg p-3 flex items-center justify-between mb-2">
+              <div>
+                <span class="text-white text-sm font-bold">{{ t.title }}</span>
+                <div class="text-xs text-gray-400">👥 {{ t.remaining_count || 0 }}명 남음</div>
+              </div>
+              <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1.5 rounded-lg">👁️ 관전</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🎮 게임 모드 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <router-link to="/games/poker/play" class="bg-gray-900 rounded-xl border border-blue-400/20 p-4 hover:border-blue-400/40 transition block">
+            <div class="text-2xl mb-2">🎮</div>
+            <div class="text-sm font-bold text-blue-400">솔로 AI 연습</div>
+            <div class="text-xs text-gray-500 mt-1">AI 상대 토너먼트 연습</div>
+          </router-link>
+          <router-link to="/games/blackjack" class="bg-gray-900 rounded-xl border border-green-400/20 p-4 hover:border-green-400/40 transition block">
+            <div class="text-2xl mb-2">🃏</div>
+            <div class="text-sm font-bold text-green-400">블랙잭</div>
+            <div class="text-xs text-gray-500 mt-1">솔로 블랙잭 게임</div>
+          </router-link>
+          <router-link to="/games/poker/tutorial" class="bg-gray-900 rounded-xl border border-purple-400/20 p-4 hover:border-purple-400/40 transition block">
+            <div class="text-2xl mb-2">📚</div>
+            <div class="text-sm font-bold text-purple-400">룰 & 튜토리얼</div>
+            <div class="text-xs text-gray-500 mt-1">핸드 랭킹, 포지션 가이드</div>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- ===== SIDEBAR (RIGHT 1/3) ===== -->
+      <div class="space-y-4">
+
+        <!-- 💰 칩 지갑 -->
+        <div class="bg-gray-900 rounded-xl border border-amber-400/20 p-4">
+          <h2 class="text-sm font-bold text-amber-400 mb-3">💰 칩 지갑</h2>
           <div v-if="wallet" class="text-center mb-3">
             <div class="text-3xl font-black text-amber-400 font-mono">{{ (wallet.chips_balance || 0).toLocaleString() }}</div>
             <div class="text-xs text-gray-500">보유 칩</div>
-          </div>
-          <div v-else class="text-center mb-3 py-2">
-            <div class="text-sm text-gray-500">&#47196;&#44536;&#51064; &#54980; &#51060;&#50857; &#44032;&#45733;</div>
+            <div class="text-xs text-gray-400 mt-1">포인트: <span class="text-amber-300 font-bold">{{ (auth.user?.points || 0).toLocaleString() }}P</span></div>
           </div>
           <div class="flex gap-2">
-            <div class="flex-1">
-              <input v-model.number="walletAmount" type="number" min="100" step="100"
-                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white text-center focus:border-amber-400 focus:outline-none"
-                placeholder="&#44552;&#50529;">
-            </div>
+            <input v-model.number="walletAmount" type="number" min="1000" step="1000"
+              class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white text-center focus:border-amber-400 focus:outline-none"
+              placeholder="금액">
             <button @click="handleDeposit" :disabled="walletLoading || !walletAmount"
-              class="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
-              &#51077;&#44552;
-            </button>
+              class="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 text-white text-xs font-bold px-3 py-2 rounded-lg">입금</button>
             <button @click="handleWithdraw" :disabled="walletLoading || !walletAmount"
-              class="bg-red-600 hover:bg-red-700 disabled:bg-gray-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
-              &#52636;&#44552;
-            </button>
+              class="bg-red-600 hover:bg-red-500 disabled:bg-gray-700 text-white text-xs font-bold px-3 py-2 rounded-lg">출금</button>
           </div>
           <div v-if="walletError" class="text-xs text-red-400 mt-2 text-center">{{ walletError }}</div>
         </div>
 
-        <!-- Tournament Setup -->
-        <div class="bg-gray-900 rounded-xl border border-blue-400/20 p-4">
-          <h2 class="text-sm font-bold text-blue-400 mb-4">&#9881;&#65039; &#45824;&#54924; &#49444;&#51221;</h2>
-
-          <!-- Buy-in -->
-          <div class="mb-4">
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-gray-400">&#48148;&#51060;&#51064;</span>
-              <span class="text-amber-400 font-bold font-mono">{{ config.buyIn.toLocaleString() }} &#52841;</span>
-            </div>
-            <input v-model.number="config.buyIn" type="range" min="50" max="10000" step="50"
-              class="w-full accent-amber-400">
-          </div>
-
-          <!-- Total Players -->
-          <div class="mb-4">
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-gray-400">&#52280;&#44032; &#51064;&#50896;</span>
-              <span class="text-blue-400 font-bold font-mono">{{ config.totalPlayers }}&#47749;</span>
-            </div>
-            <input v-model.number="config.totalPlayers" type="range" min="18" max="1000" step="9"
-              class="w-full accent-blue-400">
-          </div>
-
-          <!-- Start Chips -->
-          <div class="mb-4">
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-gray-400">&#49884;&#51089; &#52841;</span>
-              <span class="text-green-400 font-bold font-mono">{{ config.startChips.toLocaleString() }}</span>
-            </div>
-            <input v-model.number="config.startChips" type="range" min="5000" max="100000" step="1000"
-              class="w-full accent-green-400">
-          </div>
-
-          <!-- Summary -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-            <div class="bg-gray-800 rounded-lg p-2 text-center">
-              <div class="text-[10px] text-gray-500">&#52509; &#49345;&#44552;</div>
-              <div class="text-sm font-bold text-amber-400 font-mono">{{ prizePool.toLocaleString() }}</div>
-            </div>
-            <div class="bg-gray-800 rounded-lg p-2 text-center">
-              <div class="text-[10px] text-gray-500">&#51077;&#49345;&#44428;</div>
-              <div class="text-sm font-bold text-green-400 font-mono">{{ paidSlots }}&#47749;</div>
-            </div>
-            <div class="bg-gray-800 rounded-lg p-2 text-center">
-              <div class="text-[10px] text-gray-500">&#53580;&#51060;&#48660; &#49688;</div>
-              <div class="text-sm font-bold text-blue-400 font-mono">{{ tableCount }}</div>
-            </div>
-            <div class="bg-gray-800 rounded-lg p-2 text-center">
-              <div class="text-[10px] text-gray-500">&#49884;&#51089; &#48660;&#46972;&#51064;&#46300;</div>
-              <div class="text-sm font-bold text-white font-mono">10/20</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column -->
-      <div class="space-y-4">
-
-        <!-- Stats Panel -->
+        <!-- 📊 내 기록 -->
         <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <h2 class="text-sm font-bold text-amber-400 mb-3">&#128202; &#45236; &#44592;&#47197;</h2>
+          <h2 class="text-sm font-bold text-amber-400 mb-3">📊 내 기록</h2>
           <div class="space-y-2">
-            <div class="flex justify-between text-xs">
-              <span class="text-gray-500">&#52280;&#44032; &#54943;&#49688;</span>
-              <span class="text-white font-bold font-mono">{{ myStats.gamesPlayed || 0 }}</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-gray-500">&#52572;&#44256; &#49457;&#51201;</span>
-              <span class="text-amber-400 font-bold font-mono">{{ myStats.bestPlacement ? myStats.bestPlacement + '&#50948;' : '-' }}</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-gray-500">&#52509; &#49345;&#44552;</span>
-              <span class="text-green-400 font-bold font-mono">{{ (myStats.totalWinnings || 0).toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-gray-500">&#48148;&#50868;&#54000;</span>
-              <span class="text-yellow-400 font-bold font-mono">{{ myStats.bounties || 0 }}</span>
+            <div v-for="s in statsDisplay" :key="s.label" class="flex justify-between text-xs">
+              <span class="text-gray-500">{{ s.label }}</span>
+              <span :class="s.color" class="font-bold font-mono">{{ s.value }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Leaderboard Preview -->
+        <!-- 🏅 리더보드 -->
         <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold text-amber-400">&#127941; &#47532;&#45908;&#48372;&#46300;</h2>
-            <RouterLink to="/games/leaderboard" class="text-xs text-blue-400 hover:text-blue-300">&#51204;&#52404; &#48372;&#44592; &#8594;</RouterLink>
-          </div>
+          <h2 class="text-sm font-bold text-amber-400 mb-3">🏅 리더보드</h2>
           <div v-if="leaderboard.length" class="space-y-2">
-            <div v-for="(entry, i) in leaderboard.slice(0, 5)" :key="i"
-              class="flex items-center gap-2 text-xs">
-              <span class="w-5 text-center font-bold" :class="i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-orange-400' : 'text-gray-500'">
-                {{ i === 0 ? '&#127942;' : i === 1 ? '&#129352;' : i === 2 ? '&#129353;' : (i + 1) }}
+            <div v-for="(e, i) in leaderboard.slice(0, 5)" :key="i" class="flex items-center gap-2 text-xs">
+              <span class="w-5 text-center font-bold" :class="i===0?'text-amber-400':i===1?'text-gray-300':i===2?'text-orange-400':'text-gray-500'">
+                {{ ['🏆','🥈','🥉'][i] || (i+1) }}
               </span>
-              <span class="flex-1 text-gray-300 truncate">{{ entry.user_name || entry.name || '&#51061;&#47749;' }}</span>
-              <span class="text-amber-400 font-bold font-mono">{{ (entry.total_winnings || 0).toLocaleString() }}</span>
+              <span class="flex-1 text-gray-300 truncate">{{ e.user?.name || e.user?.nickname || '?' }}</span>
+              <span class="text-amber-400 font-bold font-mono">{{ (e.total_prize_won || 0).toLocaleString() }}</span>
             </div>
           </div>
-          <div v-else class="text-xs text-gray-600 text-center py-3">&#50500;&#51649; &#45936;&#51060;&#53552; &#50630;&#51020;</div>
-        </div>
-
-        <!-- Prize Structure -->
-        <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <h2 class="text-sm font-bold text-amber-400 mb-3">&#128176; &#49345;&#44552; &#44396;&#51312;</h2>
-          <div class="space-y-1">
-            <div v-for="p in prizes" :key="p.place" class="flex justify-between text-xs">
-              <span class="text-gray-400">{{ p.place }}</span>
-              <span class="text-amber-400 font-mono">{{ Math.floor(prizePool * p.pct / 100).toLocaleString() }} ({{ p.pct }}%)</span>
-            </div>
-          </div>
+          <div v-else class="text-xs text-gray-600 text-center py-2">데이터 없음</div>
         </div>
       </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2 pb-8">
-      <button @click="startGame"
-        class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-gray-950 font-black text-lg px-8 py-3 rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
-        &#127918; &#45824;&#54924; &#49884;&#51089;
-      </button>
-      <RouterLink to="/games/poker/tutorial"
-        class="bg-gray-800 hover:bg-gray-700 text-blue-400 font-bold text-sm px-6 py-3 rounded-xl border border-blue-400/20 transition text-center">
-        &#128218; &#47344; &amp; &#53916;&#53664;&#47532;&#50620;
-      </RouterLink>
     </div>
   </div>
 </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { usePokerWallet } from '@/composables/usePokerWallet'
+import axios from 'axios'
 
-const router = useRouter()
 const auth = useAuthStore()
 const {
   wallet, stats, leaderboard, loading: walletLoading, error: walletError,
   fetchWallet, deposit, withdraw, fetchStats, fetchLeaderboard
 } = usePokerWallet()
 
-const walletAmount = ref(500)
+const walletAmount = ref(1000)
+const upcomingTournaments = ref([])
+const runningTournaments = ref([])
+const myEntries = ref([]) // tournament IDs I'm registered for
 
-const config = ref({
-  buyIn: 400,
-  totalPlayers: 90,
-  startChips: 15000,
+const statsDisplay = computed(() => {
+  const s = stats.value || {}
+  return [
+    { label: '참가 횟수', value: s.games_played || 0, color: 'text-white' },
+    { label: '최고 성적', value: s.best_place ? s.best_place + '위' : '-', color: 'text-amber-400' },
+    { label: '총 상금', value: (s.total_prize_won || 0).toLocaleString(), color: 'text-green-400' },
+    { label: '바운티', value: s.total_bounties || 0, color: 'text-yellow-400' },
+  ]
 })
 
-const myStats = computed(() => stats.value || {})
-const prizePool = computed(() => config.value.buyIn * config.value.totalPlayers)
-const paidSlots = computed(() => Math.max(1, Math.floor(config.value.totalPlayers * 0.15)))
-const tableCount = computed(() => Math.ceil(config.value.totalPlayers / 9))
+function typeBadgeClass(type) {
+  const m = { freeroll: 'bg-green-500/20 text-green-400', micro: 'bg-blue-500/20 text-blue-400', regular: 'bg-amber-500/20 text-amber-400', high_roller: 'bg-red-500/20 text-red-400' }
+  return m[type] || m.regular
+}
 
-const prizes = computed(() => {
-  const ps = paidSlots.value
-  const p = []
-  if (ps >= 10) {
-    p.push({ place: '1st', pct: 25 }, { place: '2nd', pct: 16 }, { place: '3rd', pct: 11 })
-    p.push({ place: '4~6th', pct: 7 }, { place: '7~10th', pct: 4 })
-    const rem = 100 - 25 - 16 - 11 - 7 * 3 - 4 * 4
-    if (ps > 10) p.push({ place: `11~${ps}th`, pct: Math.max(1, Math.round(rem / (ps - 10))) })
-  } else {
-    p.push({ place: '1st', pct: 50 }, { place: '2nd', pct: 30 }, { place: '3rd', pct: 20 })
-  }
-  return p
-})
+function formatTournamentTime(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1)
+  const isTomorrow = d.toDateString() === tomorrow.toDateString()
+  const time = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  if (isToday) return `오늘 ${time}`
+  if (isTomorrow) return `내일 ${time}`
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) + ' ' + time
+}
+
+function isRegistered(tournamentId) {
+  return myEntries.value.includes(tournamentId)
+}
+
+async function fetchTournaments() {
+  try {
+    const { data } = await axios.get('/api/poker/tournaments')
+    if (data.success) {
+      upcomingTournaments.value = data.data.upcoming || []
+      runningTournaments.value = data.data.running || []
+    }
+  } catch (e) { console.error(e) }
+}
+
+async function fetchMyEntries() {
+  // Check which tournaments I'm in
+  upcomingTournaments.value.forEach(async (t) => {
+    try {
+      const { data } = await axios.get(`/api/poker/tournaments/${t.id}`)
+      if (data.success) {
+        const me = data.data.entries?.find(e => e.user_id === auth.user?.id)
+        if (me) myEntries.value.push(t.id)
+      }
+    } catch (e) { /* ignore */ }
+  })
+}
 
 async function handleDeposit() {
-  if (!walletAmount.value || walletAmount.value < 100) return
+  if (!walletAmount.value || walletAmount.value < 1000) return
   const result = await deposit(walletAmount.value)
-  if (result?.success) {
-    // Refresh user points in auth store
-    auth.user.points = result.data.points
-  }
+  if (result?.success) auth.user.points = result.data.points
 }
 
 async function handleWithdraw() {
-  if (!walletAmount.value || walletAmount.value < 100) return
+  if (!walletAmount.value || walletAmount.value < 1000) return
   const result = await withdraw(walletAmount.value)
-  if (result?.success) {
-    auth.user.points = result.data.points
-  }
+  if (result?.success) auth.user.points = result.data.points
 }
 
-function startGame() {
-  sessionStorage.setItem('pokerConfig', JSON.stringify(config.value))
-  router.push('/games/poker/play')
-}
+let echoChannel = null
 
 onMounted(async () => {
   if (auth.isLoggedIn) {
-    await Promise.all([fetchWallet(), fetchStats(), fetchLeaderboard()])
+    await Promise.all([fetchWallet(), fetchStats(), fetchLeaderboard(), fetchTournaments()])
+    await fetchMyEntries()
+  } else {
+    await fetchTournaments()
   }
+
+  // Real-time lobby updates
+  if (window.Echo) {
+    echoChannel = window.Echo.channel('poker.lobby')
+    echoChannel.listen('.tournament.updated', () => { fetchTournaments() })
+    echoChannel.listen('.lobby.updated', () => { fetchTournaments() })
+  }
+})
+
+onUnmounted(() => {
+  if (echoChannel) { window.Echo.leave('poker.lobby') }
 })
 </script>

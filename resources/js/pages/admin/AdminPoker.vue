@@ -45,6 +45,64 @@
     <div v-if="wallets.length === 0" class="p-8 text-center text-gray-400 text-sm">&#51648;&#44049; &#45936;&#51060;&#53552;&#44032; &#50630;&#49845;&#45768;&#45796;.</div>
   </div>
 
+  <!-- Tournament Management -->
+  <div class="bg-white rounded-xl border shadow-sm mb-6">
+    <div class="p-4 border-b flex justify-between items-center">
+      <h2 class="font-bold text-gray-800">🏆 토너먼트 관리</h2>
+      <button @click="showCreateTournament = true" class="bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold px-4 py-2 rounded-lg transition">+ 새 토너먼트</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="bg-gray-50 text-gray-500 text-xs">
+          <th class="px-4 py-2 text-left">제목</th>
+          <th class="px-4 py-2 text-center">상태</th>
+          <th class="px-4 py-2 text-right">바이인</th>
+          <th class="px-4 py-2 text-right">참가자</th>
+          <th class="px-4 py-2 text-center">시작 시간</th>
+          <th class="px-4 py-2 text-center">관리</th>
+        </tr></thead>
+        <tbody>
+          <tr v-for="t in tournaments" :key="t.id" class="border-t hover:bg-gray-50">
+            <td class="px-4 py-2 font-semibold">{{ t.title }}</td>
+            <td class="px-4 py-2 text-center">
+              <span :class="{'bg-blue-100 text-blue-700': t.status==='scheduled', 'bg-green-100 text-green-700': t.status==='registering', 'bg-amber-100 text-amber-700': t.status==='running', 'bg-gray-100 text-gray-500': t.status==='finished' || t.status==='cancelled'}" class="text-xs px-2 py-0.5 rounded-full font-bold">{{ t.status }}</span>
+            </td>
+            <td class="px-4 py-2 text-right font-mono">{{ (t.buy_in || 0).toLocaleString() }}</td>
+            <td class="px-4 py-2 text-right font-mono">{{ t.entries_count || 0 }}/{{ t.max_players }}</td>
+            <td class="px-4 py-2 text-center text-xs text-gray-500">{{ new Date(t.scheduled_at).toLocaleString('ko-KR') }}</td>
+            <td class="px-4 py-2 text-center">
+              <button v-if="t.status !== 'running' && t.status !== 'finished'" @click="cancelTournament(t.id)" class="text-xs text-red-500 hover:underline">취소</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-if="!tournaments.length" class="p-6 text-center text-gray-400 text-sm">토너먼트가 없습니다.</div>
+  </div>
+
+  <!-- Create Tournament Modal -->
+  <div v-if="showCreateTournament" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showCreateTournament=false">
+    <div class="bg-white rounded-xl p-6 w-96 shadow-xl">
+      <h3 class="font-bold text-gray-800 mb-4">🏆 새 토너먼트 생성</h3>
+      <div class="space-y-3">
+        <div><label class="text-xs text-gray-500">제목</label><input v-model="newTournament.title" class="w-full border rounded px-3 py-2 text-sm" placeholder="18:00 데일리 $500"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs text-gray-500">타입</label><select v-model="newTournament.type" class="w-full border rounded px-3 py-2 text-sm"><option value="freeroll">프리롤</option><option value="micro">마이크로</option><option value="regular">레귤러</option><option value="high_roller">하이롤러</option></select></div>
+          <div><label class="text-xs text-gray-500">바이인</label><input v-model.number="newTournament.buy_in" type="number" class="w-full border rounded px-3 py-2 text-sm"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs text-gray-500">시작 칩</label><input v-model.number="newTournament.starting_chips" type="number" class="w-full border rounded px-3 py-2 text-sm"></div>
+          <div><label class="text-xs text-gray-500">최대 인원</label><input v-model.number="newTournament.max_players" type="number" class="w-full border rounded px-3 py-2 text-sm"></div>
+        </div>
+        <div><label class="text-xs text-gray-500">시작 시간</label><input v-model="newTournament.scheduled_at" type="datetime-local" class="w-full border rounded px-3 py-2 text-sm"></div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button @click="createTournament" class="flex-1 bg-amber-500 hover:bg-amber-400 text-white py-2 rounded-lg font-bold text-sm">생성</button>
+        <button @click="showCreateTournament=false" class="flex-1 bg-gray-200 text-gray-600 py-2 rounded-lg font-bold text-sm">취소</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings -->
   <div class="bg-white rounded-xl border shadow-sm">
     <div class="p-4 border-b"><h2 class="font-bold text-gray-800">&#9881;&#65039; &#54252;&#52964; &#49444;&#51221;</h2></div>
@@ -112,6 +170,12 @@ const adjustWallet = ref(null)
 const adjustAmount = ref(0)
 const adjusting = ref(false)
 const adjustError = ref('')
+const tournaments = ref([])
+const showCreateTournament = ref(false)
+const newTournament = ref({
+  title: '', type: 'regular', buy_in: 500, starting_chips: 15000,
+  max_players: 90, scheduled_at: '',
+})
 
 const overviewCards = computed(() => [
   { label: '\uCD1D \uAC8C\uC784', value: (overview.value.total_games || 0).toLocaleString(), color: 'text-blue-600' },
@@ -132,14 +196,16 @@ const settingsFields = [
 
 onMounted(async () => {
   try {
-    const [ov, wl, st] = await Promise.all([
+    const [ov, wl, st, tn] = await Promise.all([
       axios.get('/api/admin/poker/overview'),
       axios.get('/api/admin/poker/wallets'),
       axios.get('/api/admin/poker/settings'),
+      axios.get('/api/admin/poker/tournaments'),
     ])
     if (ov.data.success) overview.value = ov.data.data
     if (wl.data.success) wallets.value = wl.data.data?.data || wl.data.data || []
     if (st.data.success) Object.assign(settings.value, st.data.data)
+    if (tn.data.success) tournaments.value = tn.data.data?.data || tn.data.data || []
   } catch (e) {
     console.error('Admin poker load failed', e)
   }
@@ -163,6 +229,25 @@ async function submitAdjust() {
   } finally {
     adjusting.value = false
   }
+}
+
+async function createTournament() {
+  try {
+    const { data } = await axios.post('/api/admin/poker/tournaments', newTournament.value)
+    if (data.success) {
+      tournaments.value.unshift(data.data)
+      showCreateTournament.value = false
+      newTournament.value = { title: '', type: 'regular', buy_in: 500, starting_chips: 15000, max_players: 90, scheduled_at: '' }
+    }
+  } catch (e) { alert(e.response?.data?.message || e.message) }
+}
+
+async function cancelTournament(id) {
+  if (!confirm('이 토너먼트를 취소하시겠습니까? 참가자 전원에게 환불됩니다.')) return
+  try {
+    await axios.delete(`/api/admin/poker/tournaments/${id}`)
+    tournaments.value = tournaments.value.filter(t => t.id !== id)
+  } catch (e) { alert(e.response?.data?.message || e.message) }
 }
 
 async function saveSettings() {
