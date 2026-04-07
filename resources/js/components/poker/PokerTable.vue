@@ -4,8 +4,8 @@
     <div class="absolute inset-0 opacity-[0.07]"
       style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><text x=%225%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♠</text><text x=%2230%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♥</text><text x=%225%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♦</text><text x=%2230%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♣</text></svg>'); background-size: 60px 60px;" />
 
-    <!-- 검은 쿠션 (바깥 테두리) — 위아래 여유 -->
-    <div class="absolute left-[6%] right-[6%] top-[12%] bottom-[10%] p-[8px]"
+    <!-- 검은 쿠션 — 전체 15% 축소 -->
+    <div class="absolute left-[12%] right-[12%] top-[16%] bottom-[14%] p-[8px]"
       style="border-radius: 999px; background: linear-gradient(180deg, #3a3a3a, #1a1a1a, #2a2a2a); box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5);">
 
       <!-- 나무 림 -->
@@ -26,7 +26,7 @@
               <PokerCard v-for="(c, i) in community" :key="i" :card="c" :winner="hasWinner" />
               <template v-if="community.length < 5 && !showdown">
                 <div v-for="i in (5 - community.length)" :key="'e' + i"
-                  class="w-16 h-[88px] rounded-lg border-2 border-dashed border-white/[0.06] bg-black/[0.06]" />
+                  class="w-[72px] h-[100px] rounded-lg border-2 border-dashed border-white/[0.06] bg-black/[0.06]" />
               </template>
             </div>
             <div class="text-emerald-200 text-sm font-medium tracking-widest uppercase">{{ stageLabel }} {{ stageDesc }}</div>
