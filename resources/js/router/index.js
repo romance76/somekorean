@@ -121,7 +121,7 @@ const routes = [
   { path: '/music', name: 'music', component: p('music/MusicHome') },
 
   // Elder
-  { path: '/elder', name: 'elder', component: p('elder/ElderHome'), meta: { auth: true } },
+  { path: '/elder', name: 'elder', component: p('elder/ElderHome') },
   { path: '/elder/checkin', component: p('elder/ElderCheckin'), meta: { auth: true } },
   { path: '/elder/guardian', component: p('elder/GuardianDashboard'), meta: { auth: true } },
 
