@@ -17,6 +17,15 @@
           </button>
         </div>
 
+        <!-- 즐겨찾기 -->
+        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <button @click="loadFavorites"
+            class="w-full text-left px-4 py-3 border-b font-bold text-sm transition"
+            :class="showFavorites ? 'bg-red-50 text-red-700' : 'text-amber-900'">
+            ❤️ 즐겨찾기 {{ favoriteTracks.length }}곡
+          </button>
+        </div>
+
         <!-- 내 플레이리스트 -->
         <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
@@ -31,16 +40,15 @@
               <span class="truncate">{{ pl.name }}</span>
               <span class="text-[10px] text-gray-400">{{ pl.tracks_count || 0 }}곡</span>
             </button>
-            <button @click.stop="deletePlaylist(pl.id)" class="text-red-400 text-xs px-2 opacity-0 group-hover:opacity-100 hover:text-red-600" title="삭제">✕</button>
+            <button @click.stop="deletePlaylist(pl.id)" class="text-red-400 text-xs px-2 opacity-0 group-hover:opacity-100 hover:text-red-600">✕</button>
           </div>
         </div>
 
         <!-- 검색 -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
-          <div class="font-bold text-xs text-gray-800 mb-2">🔍 트랙 검색</div>
           <form @submit.prevent="searchTracks" class="flex gap-1">
-            <input v-model="searchQ" type="text" placeholder="제목/아티스트" class="flex-1 border rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none" />
-            <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-2 py-1.5 rounded-lg text-xs hover:bg-amber-500">검색</button>
+            <input v-model="searchQ" type="text" placeholder="제목/아티스트 검색" class="flex-1 border rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none" />
+            <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-2 py-1.5 rounded-lg text-xs">검색</button>
           </form>
           <div v-if="searchResults.length" class="mt-2 space-y-1">
             <div v-for="t in searchResults" :key="t.id" class="flex items-center justify-between py-1 text-xs">
@@ -55,25 +63,31 @@
       <div class="col-span-12 lg:col-span-5">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
-            <span>🎶 {{ activePL ? activePL.name : (activeCat?.name || '트랙') }}</span>
+            <span>🎶 {{ showFavorites ? '❤️ 즐겨찾기' : (activePL ? activePL.name : (activeCat?.name || '트랙')) }}</span>
             <span class="text-xs text-gray-400">{{ displayTracks.length }}곡</span>
           </div>
-          <div v-if="!displayTracks.length" class="py-8 text-center text-sm text-gray-400">{{ activePL ? '플레이리스트가 비어있습니다' : '카테고리를 선택해주세요' }}</div>
+          <div v-if="!displayTracks.length" class="py-8 text-center text-sm text-gray-400">{{ showFavorites ? '즐겨찾기한 곡이 없습니다' : (activePL ? '플레이리스트가 비어있습니다' : '카테고리를 선택해주세요') }}</div>
           <div v-for="(track, i) in displayTracks" :key="track.id"
             class="flex items-center gap-3 px-4 py-2.5 border-b last:border-0 hover:bg-amber-50/50 transition cursor-pointer group"
             :class="playing?.id === track.id ? 'bg-amber-50' : ''">
-            <span class="text-xs text-gray-400 w-5 text-center">{{ i + 1 }}</span>
+            <span class="text-xs text-gray-400 w-5 text-center">{{ i + 1 + (trackPage - 1) * 20 }}</span>
             <div class="flex-1 min-w-0" @click="playTrack(track)">
               <div class="text-sm font-medium text-gray-800 truncate">{{ playing?.id === track.id ? '🔊 ' : '' }}{{ track.title }}</div>
-              <div class="text-[10px] text-gray-400">{{ track.artist }}</div>
+              <div class="text-[10px] text-gray-400">{{ track.artist }} {{ track.duration ? '· ' + formatDuration(track.duration) : '' }}</div>
             </div>
-            <span class="text-[10px] text-gray-400">{{ formatDuration(track.duration) }}</span>
-            <!-- 플레이리스트 추가/제거 버튼 -->
-            <div class="opacity-0 group-hover:opacity-100 flex gap-1 transition">
-              <button v-if="auth.isLoggedIn && activePL" @click.stop="removeFromPL(track)" class="text-red-400 text-xs hover:text-red-600" title="제거">✕</button>
-              <button v-if="auth.isLoggedIn && !activePL && playlists.length" @click.stop="showAddToPL(track)" class="text-amber-600 text-xs hover:text-amber-800" title="플레이리스트에 추가">+</button>
-            </div>
+            <!-- 즐겨찾기 버튼 -->
+            <button v-if="auth.isLoggedIn" @click.stop="toggleFav(track)" class="text-sm transition" :class="isFav(track.id) ? 'text-red-500' : 'text-gray-300 hover:text-red-400'">{{ isFav(track.id) ? '❤️' : '🤍' }}</button>
+            <!-- 플레이리스트 추가 -->
+            <button v-if="auth.isLoggedIn && !activePL && playlists.length" @click.stop="showAddToPL(track)" class="text-gray-300 text-xs hover:text-amber-600 opacity-0 group-hover:opacity-100">+PL</button>
+            <!-- 플레이리스트에서 제거 -->
+            <button v-if="auth.isLoggedIn && activePL" @click.stop="removeFromPL(track)" class="text-red-400 text-xs hover:text-red-600 opacity-0 group-hover:opacity-100">✕</button>
           </div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div v-if="trackLastPage > 1" class="flex justify-center gap-1.5 mt-3">
+          <button v-for="pg in Math.min(trackLastPage, 10)" :key="pg" @click="loadCategoryPage(pg)"
+            class="px-3 py-1 rounded text-sm" :class="pg===trackPage?'bg-amber-400 text-amber-900 font-bold':'bg-white text-gray-600 border hover:bg-amber-50'">{{ pg }}</button>
         </div>
       </div>
 
@@ -86,14 +100,30 @@
               <iframe :src="`https://www.youtube.com/embed/${playing.youtube_id}?autoplay=1`"
                 class="w-full h-full" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
-            <div class="text-sm font-bold text-gray-800">{{ playing.title }}</div>
+            <div class="text-sm font-bold text-gray-800 truncate">{{ playing.title }}</div>
             <div class="text-xs text-gray-400 mt-0.5">{{ playing.artist }}</div>
             <div class="flex gap-2 mt-3">
-              <button @click="prevTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200">⏮ 이전</button>
-              <button @click="nextTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200">다음 ⏭</button>
+              <button @click="prevTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200">⏮</button>
+              <button @click="nextTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200 flex-1">다음 ⏭</button>
+              <button v-if="auth.isLoggedIn" @click="toggleFav(playing)" class="text-sm" :class="isFav(playing.id)?'text-red-500':'text-gray-300'">{{ isFav(playing.id)?'❤️':'🤍' }}</button>
             </div>
           </div>
           <div v-else class="p-4 text-center text-sm text-gray-400">트랙을 선택해주세요 🎵</div>
+
+          <!-- 즐겨찾기 큐 -->
+          <div v-if="favoriteTracks.length" class="border-t">
+            <div class="px-4 py-2 font-bold text-xs text-red-700 flex items-center justify-between">
+              <span>❤️ 즐겨찾기 큐 ({{ favoriteTracks.length }}곡)</span>
+              <button @click="playAllFavorites" class="text-amber-600 hover:text-amber-800">▶ 전체재생</button>
+            </div>
+            <div class="max-h-40 overflow-y-auto">
+              <div v-for="ft in favoriteTracks.slice(0,10)" :key="ft.id" @click="playTrack(ft)"
+                class="px-4 py-1.5 text-xs text-gray-600 hover:bg-amber-50 cursor-pointer truncate"
+                :class="playing?.id===ft.id ? 'bg-amber-50 font-bold' : ''">
+                {{ ft.title }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -117,9 +147,7 @@
         <div class="text-sm text-gray-600 mb-3">{{ addTrackTarget.title }}</div>
         <div class="space-y-1">
           <button v-for="pl in playlists" :key="pl.id" @click="addToPL(pl.id)"
-            class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-amber-50 transition">
-            📋 {{ pl.name }}
-          </button>
+            class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-amber-50 transition">📋 {{ pl.name }}</button>
         </div>
         <button @click="addTrackTarget=null" class="mt-3 text-gray-500 text-sm">취소</button>
       </div>
@@ -131,18 +159,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
 
 const auth = useAuthStore()
-const siteStore = useSiteStore()
-
 const categories = ref([])
 const tracks = ref([])
 const playlists = ref([])
 const plTracks = ref([])
+const favoriteTracks = ref([])
+const favIds = ref(new Set())
 const activeCat = ref(null)
 const activePL = ref(null)
+const showFavorites = ref(false)
 const playing = ref(null)
 const loading = ref(true)
 const searchQ = ref('')
@@ -150,40 +178,88 @@ const searchResults = ref([])
 const showCreatePL = ref(false)
 const newPLName = ref('')
 const addTrackTarget = ref(null)
+const trackPage = ref(1)
+const trackLastPage = ref(1)
+const playQueue = ref([])
 
-const displayTracks = computed(() => activePL.value ? plTracks.value : tracks.value)
+const displayTracks = computed(() => {
+  if (showFavorites.value) return favoriteTracks.value
+  if (activePL.value) return plTracks.value
+  return tracks.value
+})
 
 function formatDuration(sec) {
-  if (!sec) return '--:--'
+  if (!sec) return ''
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 }
 
-function playTrack(track) { playing.value = track }
+function isFav(id) { return favIds.value.has(id) }
+
+function playTrack(track) {
+  playing.value = track
+  // 현재 표시 목록을 재생 큐로 설정
+  playQueue.value = [...displayTracks.value]
+}
 
 function nextTrack() {
-  const list = displayTracks.value
+  const list = playQueue.value.length ? playQueue.value : displayTracks.value
   const idx = list.findIndex(t => t.id === playing.value?.id)
   if (idx >= 0 && idx < list.length - 1) playing.value = list[idx + 1]
+  else if (list.length) playing.value = list[0] // 처음으로
 }
 
 function prevTrack() {
-  const list = displayTracks.value
+  const list = playQueue.value.length ? playQueue.value : displayTracks.value
   const idx = list.findIndex(t => t.id === playing.value?.id)
   if (idx > 0) playing.value = list[idx - 1]
 }
 
+function playAllFavorites() {
+  if (!favoriteTracks.value.length) return
+  playQueue.value = [...favoriteTracks.value]
+  playing.value = favoriteTracks.value[0]
+}
+
 async function selectCategory(cat) {
-  activeCat.value = cat
-  activePL.value = null
-  try { const { data } = await axios.get(`/api/music/tracks/${cat.id}`); tracks.value = data.data || [] } catch {}
+  activeCat.value = cat; activePL.value = null; showFavorites.value = false
+  trackPage.value = 1
+  await loadCategoryPage(1)
+}
+
+async function loadCategoryPage(p = 1) {
+  trackPage.value = p
+  try {
+    const { data } = await axios.get(`/api/music/tracks/${activeCat.value.id}`, { params: { page: p, per_page: 20 } })
+    tracks.value = data.data?.data || data.data || []
+    trackLastPage.value = data.data?.last_page || 1
+  } catch {}
 }
 
 async function selectPlaylist(pl) {
-  activePL.value = pl
-  activeCat.value = null
+  activePL.value = pl; activeCat.value = null; showFavorites.value = false
   try {
     const { data } = await axios.get(`/api/music/playlists/${pl.id}`)
     plTracks.value = (data.data?.tracks || []).map(pt => pt.track).filter(Boolean)
+  } catch {}
+}
+
+async function loadFavorites() {
+  showFavorites.value = true; activeCat.value = null; activePL.value = null
+  if (!auth.isLoggedIn) return
+  try { const { data } = await axios.get('/api/music/favorites'); favoriteTracks.value = data.data || [] } catch {}
+}
+
+async function toggleFav(track) {
+  if (!auth.isLoggedIn) return
+  try {
+    const { data } = await axios.post('/api/music/favorites', { track_id: track.id })
+    if (data.favorited) {
+      favIds.value.add(track.id)
+      favoriteTracks.value.push(track)
+    } else {
+      favIds.value.delete(track.id)
+      favoriteTracks.value = favoriteTracks.value.filter(t => t.id !== track.id)
+    }
   } catch {}
 }
 
@@ -198,7 +274,15 @@ async function createPlaylist() {
     await axios.post('/api/music/playlists', { name: newPLName.value })
     newPLName.value = ''; showCreatePL.value = false
     await loadPlaylists()
-    siteStore.toast('플레이리스트가 생성되었습니다!', 'success')
+  } catch {}
+}
+
+async function deletePlaylist(plId) {
+  if (!confirm('삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/music/playlists/${plId}`)
+    if (activePL.value?.id === plId) { activePL.value = null; plTracks.value = [] }
+    await loadPlaylists()
   } catch {}
 }
 
@@ -207,20 +291,9 @@ function showAddToPL(track) { addTrackTarget.value = track }
 async function addToPL(plId) {
   try {
     await axios.post(`/api/music/playlists/${plId}/tracks`, { track_id: addTrackTarget.value.id })
-    siteStore.toast('추가되었습니다!', 'success')
     await loadPlaylists()
-  } catch (e) { siteStore.toast(e.response?.data?.message || '실패', 'error') }
-  addTrackTarget.value = null
-}
-
-async function deletePlaylist(plId) {
-  if (!confirm('플레이리스트를 삭제하시겠습니까?')) return
-  try {
-    await axios.delete(`/api/music/playlists/${plId}`)
-    if (activePL.value?.id === plId) { activePL.value = null; plTracks.value = [] }
-    await loadPlaylists()
-    siteStore.toast('삭제되었습니다', 'info')
   } catch {}
+  addTrackTarget.value = null
 }
 
 async function removeFromPL(track) {
@@ -228,7 +301,6 @@ async function removeFromPL(track) {
   try {
     await axios.delete(`/api/music/playlists/${activePL.value.id}/tracks/${track.id}`)
     plTracks.value = plTracks.value.filter(t => t.id !== track.id)
-    siteStore.toast('제거되었습니다', 'info')
     await loadPlaylists()
   } catch {}
 }
@@ -245,6 +317,14 @@ onMounted(async () => {
     if (categories.value.length) selectCategory(categories.value[0])
   } catch {}
   await loadPlaylists()
+  // 즐겨찾기 ID 로드
+  if (auth.isLoggedIn) {
+    try {
+      const { data } = await axios.get('/api/music/favorites')
+      favoriteTracks.value = data.data || []
+      favoriteTracks.value.forEach(t => favIds.value.add(t.id))
+    } catch {}
+  }
   loading.value = false
 })
 </script>

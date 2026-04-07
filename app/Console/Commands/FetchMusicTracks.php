@@ -114,7 +114,8 @@ class FetchMusicTracks extends Command
                 'key' => $apiKey,
                 'q' => $query . ' music',
                 'type' => 'video',
-                'videoCategoryId' => '10', // Music 카테고리
+                'videoCategoryId' => '10',
+                'videoDuration' => 'short', // 4분 이하 우선 (medium=4-20분)
                 'part' => 'snippet',
                 'maxResults' => $perPage,
                 'order' => 'relevance',
@@ -127,6 +128,23 @@ class FetchMusicTracks extends Command
             }
 
             $items = $response->json('items', []);
+            $videoIds = collect($items)->pluck('id.videoId')->filter()->implode(',');
+
+            // 영상 길이 조회 (contentDetails)
+            $durations = [];
+            if ($videoIds) {
+                $detailRes = Http::get('https://www.googleapis.com/youtube/v3/videos', [
+                    'key' => $apiKey,
+                    'id' => $videoIds,
+                    'part' => 'contentDetails',
+                ]);
+                if ($detailRes->ok()) {
+                    foreach ($detailRes->json('items', []) as $v) {
+                        $dur = $v['contentDetails']['duration'] ?? 'PT0S';
+                        $durations[$v['id']] = $this->parseDuration($dur);
+                    }
+                }
+            }
 
             foreach ($items as $item) {
                 if ($added >= $limit) break;
@@ -136,13 +154,16 @@ class FetchMusicTracks extends Command
 
                 $title = $item['snippet']['title'] ?? '';
                 $channel = $item['snippet']['channelTitle'] ?? '';
+                $seconds = $durations[$videoId] ?? 0;
 
-                // 이미 있는 곡 스킵
+                // 5분(300초) 초과 필터링
+                if ($seconds > 300) continue;
+                // 10초 미만도 제외 (짧은 클립)
+                if ($seconds > 0 && $seconds < 10) continue;
+
                 if (MusicTrack::where('youtube_id', $videoId)->exists()) continue;
-
-                // 제목 필터: 너무 짧거나 라이브스트림 제외
                 if (mb_strlen($title) < 3) continue;
-                if (preg_match('/live stream|라이브 방송|24\/7|radio/i', $title)) continue;
+                if (preg_match('/live stream|라이브 방송|24\/7|radio|playlist|모음|메들리/i', $title)) continue;
 
                 MusicTrack::create([
                     'category_id' => $categoryId,
@@ -150,7 +171,7 @@ class FetchMusicTracks extends Command
                     'artist' => mb_substr($channel, 0, 100),
                     'youtube_id' => $videoId,
                     'youtube_url' => "https://www.youtube.com/watch?v={$videoId}",
-                    'duration' => 0,
+                    'duration' => $seconds,
                     'sort_order' => 0,
                 ]);
 
@@ -202,5 +223,12 @@ class FetchMusicTracks extends Command
         }
 
         return $added;
+    }
+
+    // ISO 8601 duration → 초 변환 (PT3M45S → 225)
+    private function parseDuration($iso)
+    {
+        preg_match('/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/', $iso, $m);
+        return (($m[1] ?? 0) * 3600) + (($m[2] ?? 0) * 60) + ($m[3] ?? 0);
     }
 }

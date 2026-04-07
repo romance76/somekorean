@@ -11,9 +11,11 @@ class MusicController extends Controller
         return response()->json(['success' => true, 'data' => MusicCategory::orderBy('sort_order')->get()]);
     }
 
-    public function tracks($categoryId)
+    public function tracks(Request $request, $categoryId)
     {
-        return response()->json(['success' => true, 'data' => MusicTrack::where('category_id', $categoryId)->orderBy('sort_order')->get()]);
+        $query = MusicTrack::where('category_id', $categoryId)->inRandomOrder();
+        $perPage = $request->per_page ?? 20;
+        return response()->json(['success' => true, 'data' => $query->paginate($perPage)]);
     }
 
     // 내 플레이리스트 목록
@@ -85,6 +87,29 @@ class MusicController extends Controller
         $tracks = MusicTrack::where('title', 'like', "%{$q}%")
             ->orWhere('artist', 'like', "%{$q}%")
             ->limit(20)->get();
+        return response()->json(['success' => true, 'data' => $tracks]);
+    }
+
+    // 즐겨찾기 토글
+    public function toggleFavorite(Request $request)
+    {
+        $request->validate(['track_id' => 'required|integer']);
+        $userId = auth()->id();
+        $trackId = $request->track_id;
+        $existing = \DB::table('music_favorites')->where('user_id', $userId)->where('track_id', $trackId)->first();
+        if ($existing) {
+            \DB::table('music_favorites')->where('id', $existing->id)->delete();
+            return response()->json(['success' => true, 'favorited' => false]);
+        }
+        \DB::table('music_favorites')->insert(['user_id' => $userId, 'track_id' => $trackId, 'created_at' => now()]);
+        return response()->json(['success' => true, 'favorited' => true]);
+    }
+
+    // 즐겨찾기 목록
+    public function favorites()
+    {
+        $ids = \DB::table('music_favorites')->where('user_id', auth()->id())->pluck('track_id');
+        $tracks = MusicTrack::whereIn('id', $ids)->get();
         return response()->json(['success' => true, 'data' => $tracks]);
     }
 
