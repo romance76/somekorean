@@ -1,134 +1,257 @@
 <template>
 <div class="min-h-screen bg-gray-950 text-white">
-  <div class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
     <!-- Header -->
-    <div class="text-center">
-      <div class="flex items-center justify-center gap-2 mb-1">
-        <span class="text-3xl">🎰</span>
-        <h1 class="text-2xl font-black text-amber-400">SomeKorean 포커</h1>
+    <div class="text-center relative">
+      <button @click="$router.back()" class="text-white/50 hover:text-white text-lg absolute left-0 top-1/2 -translate-y-1/2">&#9664;</button>
+      <div class="flex items-center justify-center gap-3 mb-1">
+        <span class="text-4xl">&#127920;</span>
+        <h1 class="text-3xl font-black text-amber-400 tracking-wider">SomeKorean 포커</h1>
       </div>
-      <p class="text-xs text-blue-400 tracking-[0.3em] font-bold">POKER PLATFORM</p>
+      <p class="text-sm text-gray-400">토너먼트 &middot; AI 연습 &middot; 블랙잭 &mdash; 실력을 겨뤄보세요</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <!-- ===== MAIN (LEFT 2/3) ===== -->
-      <div class="lg:col-span-2 space-y-4">
+    <!-- Main Grid: 2/3 + 1/3 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- 🏆 토너먼트 -->
-        <div class="bg-gray-900 rounded-xl border border-amber-400/20 p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold text-amber-400">🏆 토너먼트</h2>
-            <span class="text-xs text-gray-500">실시간 업데이트</span>
-          </div>
+      <!-- ============ LEFT: Main Content ============ -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- ===== 1. 토너먼트 섹션 ===== -->
+        <section class="space-y-4">
+          <h2 class="text-lg font-black text-amber-400 flex items-center gap-2">
+            <span>&#127942;</span> 토너먼트
+          </h2>
 
           <!-- 예정된 토너먼트 -->
-          <div v-if="upcomingTournaments.length" class="space-y-2 mb-4">
-            <div v-for="t in upcomingTournaments" :key="t.id"
-              class="bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-3 hover:bg-gray-750 transition">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span :class="typeBadgeClass(t.type)" class="text-[10px] px-1.5 py-0.5 rounded font-bold">{{ t.type }}</span>
-                  <span class="text-white text-sm font-bold truncate">{{ t.title }}</span>
+          <div>
+            <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+              예정된 토너먼트
+            </h3>
+
+            <div v-if="tournamentsLoading" class="text-center py-8">
+              <div class="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+              <p class="text-xs text-gray-500 mt-2">로딩 중...</p>
+            </div>
+
+            <div v-else-if="upcomingTournaments.length === 0" class="bg-gray-900 rounded-xl border border-gray-800 p-6 text-center">
+              <span class="text-3xl">&#128566;</span>
+              <p class="text-sm text-gray-500 mt-2">예정된 토너먼트가 없습니다</p>
+            </div>
+
+            <div v-else class="space-y-3">
+              <div v-for="t in upcomingTournaments" :key="t.id"
+                class="bg-gray-900 rounded-xl border border-gray-800 hover:border-amber-400/30 p-4 transition">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <!-- Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-base font-bold text-white truncate">{{ t.title }}</span>
+                      <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        :class="typeBadgeClass(t.type)">
+                        {{ typeBadgeLabel(t.type) }}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                      <span>&#128197; {{ formatTournamentTime(t.scheduled_at) }}</span>
+                      <span>&#128176; {{ Number(t.buy_in || 0).toLocaleString() }} 칩</span>
+                      <span>&#128101; {{ t.registered_count || 0 }}/{{ t.max_players }}명</span>
+                      <span v-if="t.online_count" class="text-green-400">
+                        &#128994; {{ t.online_count }}명 접속
+                      </span>
+                    </div>
+                    <!-- Countdown -->
+                    <div class="mt-2 text-xs font-mono text-amber-300">
+                      &#9200; {{ getCountdown(t.scheduled_at) }}
+                    </div>
+                  </div>
+                  <!-- Action -->
+                  <div class="shrink-0">
+                    <button v-if="isRegistered(t)"
+                      @click="unregisterTournament(t.id)"
+                      :disabled="t._actionLoading"
+                      class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-bold px-4 py-2 rounded-lg transition disabled:opacity-50">
+                      {{ t._actionLoading ? '처리 중...' : '취소' }}
+                    </button>
+                    <button v-else
+                      @click="registerTournament(t.id)"
+                      :disabled="t._actionLoading || (t.registered_count >= t.max_players)"
+                      class="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-700 text-gray-950 text-xs font-bold px-4 py-2 rounded-lg transition disabled:text-gray-400">
+                      {{ t._actionLoading ? '처리 중...' : t.registered_count >= t.max_players ? '마감' : '참가 신청' }}
+                    </button>
+                  </div>
                 </div>
-                <div class="flex items-center gap-3 text-xs text-gray-400">
-                  <span>💰 {{ t.buy_in.toLocaleString() }} 칩</span>
-                  <span>👥 {{ t.registered_count || 0 }}/{{ t.max_players }}명</span>
-                  <span>🟢 {{ t.online_count || 0 }} 온라인</span>
-                </div>
-              </div>
-              <div class="text-right shrink-0">
-                <div class="text-amber-400 text-xs font-mono font-bold mb-1">{{ formatTournamentTime(t.scheduled_at) }}</div>
-                <router-link :to="'/games/poker/tournament/' + t.id"
-                  class="bg-amber-500 hover:bg-amber-400 text-gray-950 text-xs font-bold px-3 py-1.5 rounded-lg inline-block transition">
-                  {{ isRegistered(t.id) ? '대기실 입장' : '참가 신청' }}
-                </router-link>
               </div>
             </div>
           </div>
-          <div v-else class="text-center py-4 text-gray-600 text-sm">예정된 토너먼트가 없습니다</div>
 
           <!-- 진행 중인 토너먼트 -->
-          <div v-if="runningTournaments.length">
-            <div class="text-xs text-gray-500 font-bold mb-2 mt-2">🔴 진행 중</div>
-            <div v-for="t in runningTournaments" :key="t.id"
-              class="bg-red-950/30 border border-red-500/20 rounded-lg p-3 flex items-center justify-between mb-2">
-              <div>
-                <span class="text-white text-sm font-bold">{{ t.title }}</span>
-                <div class="text-xs text-gray-400">👥 {{ t.remaining_count || 0 }}명 남음</div>
+          <div v-if="liveTournaments.length > 0">
+            <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              진행 중인 토너먼트
+            </h3>
+            <div class="space-y-3">
+              <div v-for="t in liveTournaments" :key="t.id"
+                class="bg-gray-900 rounded-xl border border-red-500/20 p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-base font-bold text-white truncate">{{ t.title }}</span>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">LIVE</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                      <span>&#128101; {{ t.remaining_players || '?' }}/{{ t.max_players }}명 남음</span>
+                      <span v-if="t.online_count" class="text-green-400">&#128994; {{ t.online_count }}명 관전</span>
+                    </div>
+                  </div>
+                  <button disabled
+                    class="bg-gray-700 text-gray-400 text-xs font-bold px-4 py-2 rounded-lg cursor-not-allowed">
+                    관전 (준비 중)
+                  </button>
+                </div>
               </div>
-              <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1.5 rounded-lg">👁️ 관전</button>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- 🎮 게임 모드 -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <router-link to="/games/poker/play" class="bg-gray-900 rounded-xl border border-blue-400/20 p-4 hover:border-blue-400/40 transition block">
-            <div class="text-2xl mb-2">🎮</div>
-            <div class="text-sm font-bold text-blue-400">솔로 AI 연습</div>
-            <div class="text-xs text-gray-500 mt-1">AI 상대 토너먼트 연습</div>
-          </router-link>
-          <router-link to="/games/blackjack" class="bg-gray-900 rounded-xl border border-green-400/20 p-4 hover:border-green-400/40 transition block">
-            <div class="text-2xl mb-2">🃏</div>
-            <div class="text-sm font-bold text-green-400">블랙잭</div>
-            <div class="text-xs text-gray-500 mt-1">솔로 블랙잭 게임</div>
-          </router-link>
-          <router-link to="/games/poker/tutorial" class="bg-gray-900 rounded-xl border border-purple-400/20 p-4 hover:border-purple-400/40 transition block">
-            <div class="text-2xl mb-2">📚</div>
-            <div class="text-sm font-bold text-purple-400">룰 & 튜토리얼</div>
-            <div class="text-xs text-gray-500 mt-1">핸드 랭킹, 포지션 가이드</div>
-          </router-link>
-        </div>
+        <!-- ===== 2. 게임 모드 카드 ===== -->
+        <section>
+          <h2 class="text-lg font-black text-amber-400 flex items-center gap-2 mb-4">
+            <span>&#127918;</span> 게임 모드
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            <!-- 솔로 AI 연습 -->
+            <RouterLink to="/games/poker/play"
+              class="group bg-gray-900 rounded-xl border border-gray-800 hover:border-green-400/40 p-5 transition hover:shadow-lg hover:shadow-green-500/5 block">
+              <div class="text-3xl mb-3">&#129302;</div>
+              <h3 class="text-sm font-bold text-green-400 group-hover:text-green-300 mb-1">솔로 AI 연습</h3>
+              <p class="text-xs text-gray-500">AI 상대 연습 모드. 부담 없이 실력을 키워보세요.</p>
+            </RouterLink>
+
+            <!-- 블랙잭 -->
+            <RouterLink to="/games/blackjack"
+              class="group bg-gray-900 rounded-xl border border-gray-800 hover:border-purple-400/40 p-5 transition hover:shadow-lg hover:shadow-purple-500/5 block">
+              <div class="text-3xl mb-3">&#127183;</div>
+              <h3 class="text-sm font-bold text-purple-400 group-hover:text-purple-300 mb-1">솔로 블랙잭</h3>
+              <p class="text-xs text-gray-500">딜러와 1:1 블랙잭. 21에 가까워지세요!</p>
+            </RouterLink>
+
+            <!-- 룰 & 튜토리얼 -->
+            <RouterLink to="/games/poker/tutorial"
+              class="group bg-gray-900 rounded-xl border border-gray-800 hover:border-blue-400/40 p-5 transition hover:shadow-lg hover:shadow-blue-500/5 block">
+              <div class="text-3xl mb-3">&#128218;</div>
+              <h3 class="text-sm font-bold text-blue-400 group-hover:text-blue-300 mb-1">룰 &amp; 튜토리얼</h3>
+              <p class="text-xs text-gray-500">포커 규칙과 전략을 배워보세요.</p>
+            </RouterLink>
+          </div>
+        </section>
       </div>
 
-      <!-- ===== SIDEBAR (RIGHT 1/3) ===== -->
-      <div class="space-y-4">
+      <!-- ============ RIGHT: Sidebar ============ -->
+      <div class="space-y-6">
 
-        <!-- 💰 칩 지갑 -->
-        <div class="bg-gray-900 rounded-xl border border-amber-400/20 p-4">
-          <h2 class="text-sm font-bold text-amber-400 mb-3">💰 칩 지갑</h2>
-          <div v-if="wallet" class="text-center mb-3">
-            <div class="text-3xl font-black text-amber-400 font-mono">{{ (wallet.chips_balance || 0).toLocaleString() }}</div>
-            <div class="text-xs text-gray-500">보유 칩</div>
-            <div class="text-xs text-gray-400 mt-1">포인트: <span class="text-amber-300 font-bold">{{ (auth.user?.points || 0).toLocaleString() }}P</span></div>
-          </div>
-          <div class="flex gap-2">
-            <input v-model.number="walletAmount" type="number" min="1000" step="1000"
-              class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white text-center focus:border-amber-400 focus:outline-none"
-              placeholder="금액">
-            <button @click="handleDeposit" :disabled="walletLoading || !walletAmount"
-              class="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 text-white text-xs font-bold px-3 py-2 rounded-lg">입금</button>
-            <button @click="handleWithdraw" :disabled="walletLoading || !walletAmount"
-              class="bg-red-600 hover:bg-red-500 disabled:bg-gray-700 text-white text-xs font-bold px-3 py-2 rounded-lg">출금</button>
-          </div>
-          <div v-if="walletError" class="text-xs text-red-400 mt-2 text-center">{{ walletError }}</div>
-        </div>
+        <!-- ===== 3. 칩 지갑 ===== -->
+        <div class="bg-gray-900 rounded-xl border border-amber-400/20 p-5">
+          <h2 class="text-sm font-bold text-amber-400 mb-4 flex items-center gap-2">
+            <span>&#128176;</span> 칩 지갑
+          </h2>
 
-        <!-- 📊 내 기록 -->
-        <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <h2 class="text-sm font-bold text-amber-400 mb-3">📊 내 기록</h2>
-          <div class="space-y-2">
-            <div v-for="s in statsDisplay" :key="s.label" class="flex justify-between text-xs">
-              <span class="text-gray-500">{{ s.label }}</span>
-              <span :class="s.color" class="font-bold font-mono">{{ s.value }}</span>
+          <div v-if="wallet" class="space-y-4">
+            <!-- Chip Balance -->
+            <div class="text-center">
+              <div class="text-4xl font-black text-amber-400 font-mono leading-tight">
+                {{ (wallet.chips_balance || 0).toLocaleString() }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">보유 칩</div>
+            </div>
+
+            <!-- Points -->
+            <div class="text-center">
+              <div class="text-lg font-bold text-blue-400 font-mono">
+                {{ (auth.user?.points || 0).toLocaleString() }}P
+              </div>
+              <div class="text-xs text-gray-500">포인트 잔액</div>
+            </div>
+
+            <!-- Deposit / Withdraw -->
+            <div class="space-y-2">
+              <input v-model.number="walletAmount" type="number" min="100" step="100"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white text-center focus:border-amber-400 focus:outline-none"
+                placeholder="금액 입력">
+              <div class="flex gap-2">
+                <button @click="handleDeposit" :disabled="walletLoading || !walletAmount"
+                  class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white text-xs font-bold py-2 rounded-lg transition">
+                  입금
+                </button>
+                <button @click="handleWithdraw" :disabled="walletLoading || !walletAmount"
+                  class="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 text-white text-xs font-bold py-2 rounded-lg transition">
+                  출금
+                </button>
+              </div>
             </div>
           </div>
+
+          <div v-else class="text-center py-4">
+            <p class="text-sm text-gray-500">로그인 후 이용 가능</p>
+          </div>
+
+          <div v-if="walletError" class="text-xs text-red-400 mt-3 text-center">{{ walletError }}</div>
         </div>
 
-        <!-- 🏅 리더보드 -->
-        <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <h2 class="text-sm font-bold text-amber-400 mb-3">🏅 리더보드</h2>
+        <!-- ===== 4. 내 기록 ===== -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <h2 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
+            <span>&#128202;</span> 내 기록
+          </h2>
+          <div v-if="auth.isLoggedIn" class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-500">참가 횟수</span>
+              <span class="text-white font-bold font-mono">{{ myStats.gamesPlayed || myStats.games_played || 0 }}</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-500">최고 성적</span>
+              <span class="text-amber-400 font-bold font-mono">{{ bestPlacement || '-' }}</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-500">총 상금</span>
+              <span class="text-green-400 font-bold font-mono">{{ (myStats.totalWinnings || myStats.total_prize_won || 0).toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-500">승률</span>
+              <span class="text-blue-400 font-bold font-mono">{{ myStats.winRate ? myStats.winRate + '%' : '-' }}</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-500">바운티</span>
+              <span class="text-yellow-400 font-bold font-mono">{{ myStats.bounties || myStats.total_bounties || 0 }}</span>
+            </div>
+          </div>
+          <div v-else class="text-xs text-gray-600 text-center py-3">로그인 후 확인 가능</div>
+        </div>
+
+        <!-- ===== 5. 리더보드 (Top 5) ===== -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+              <span>&#127941;</span> 리더보드
+            </h2>
+            <RouterLink to="/games/leaderboard" class="text-xs text-blue-400 hover:text-blue-300">전체 보기 &rarr;</RouterLink>
+          </div>
           <div v-if="leaderboard.length" class="space-y-2">
-            <div v-for="(e, i) in leaderboard.slice(0, 5)" :key="i" class="flex items-center gap-2 text-xs">
-              <span class="w-5 text-center font-bold" :class="i===0?'text-amber-400':i===1?'text-gray-300':i===2?'text-orange-400':'text-gray-500'">
-                {{ ['🏆','🥈','🥉'][i] || (i+1) }}
+            <div v-for="(entry, i) in leaderboard.slice(0, 5)" :key="i"
+              class="flex items-center gap-2 text-xs">
+              <span class="w-6 text-center font-bold"
+                :class="i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-orange-400' : 'text-gray-500'">
+                {{ i === 0 ? '&#127942;' : i === 1 ? '&#129352;' : i === 2 ? '&#129353;' : (i + 1) }}
               </span>
-              <span class="flex-1 text-gray-300 truncate">{{ e.user?.name || e.user?.nickname || '?' }}</span>
-              <span class="text-amber-400 font-bold font-mono">{{ (e.total_prize_won || 0).toLocaleString() }}</span>
+              <span class="flex-1 text-gray-300 truncate">{{ entry.user_name || entry.user?.name || entry.name || '익명' }}</span>
+              <span class="text-amber-400 font-bold font-mono">{{ (entry.total_winnings || entry.total_prize_won || 0).toLocaleString() }}</span>
             </div>
           </div>
-          <div v-else class="text-xs text-gray-600 text-center py-2">데이터 없음</div>
+          <div v-else class="text-xs text-gray-600 text-center py-3">아직 데이터 없음</div>
         </div>
       </div>
     </div>
@@ -138,107 +261,240 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePokerWallet } from '@/composables/usePokerWallet'
 import axios from 'axios'
 
+const router = useRouter()
 const auth = useAuthStore()
 const {
   wallet, stats, leaderboard, loading: walletLoading, error: walletError,
   fetchWallet, deposit, withdraw, fetchStats, fetchLeaderboard
 } = usePokerWallet()
 
-const walletAmount = ref(1000)
-const upcomingTournaments = ref([])
-const runningTournaments = ref([])
-const myEntries = ref([]) // tournament IDs I'm registered for
-
-const statsDisplay = computed(() => {
-  const s = stats.value || {}
-  return [
-    { label: '참가 횟수', value: s.games_played || 0, color: 'text-white' },
-    { label: '최고 성적', value: s.best_place ? s.best_place + '위' : '-', color: 'text-amber-400' },
-    { label: '총 상금', value: (s.total_prize_won || 0).toLocaleString(), color: 'text-green-400' },
-    { label: '바운티', value: s.total_bounties || 0, color: 'text-yellow-400' },
-  ]
-})
-
-function typeBadgeClass(type) {
-  const m = { freeroll: 'bg-green-500/20 text-green-400', micro: 'bg-blue-500/20 text-blue-400', regular: 'bg-amber-500/20 text-amber-400', high_roller: 'bg-red-500/20 text-red-400' }
-  return m[type] || m.regular
-}
-
-function formatTournamentTime(dt) {
-  if (!dt) return ''
-  const d = new Date(dt)
-  const now = new Date()
-  const isToday = d.toDateString() === now.toDateString()
-  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1)
-  const isTomorrow = d.toDateString() === tomorrow.toDateString()
-  const time = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
-  if (isToday) return `오늘 ${time}`
-  if (isTomorrow) return `내일 ${time}`
-  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) + ' ' + time
-}
-
-function isRegistered(tournamentId) {
-  return myEntries.value.includes(tournamentId)
-}
-
-async function fetchTournaments() {
-  try {
-    const { data } = await axios.get('/api/poker/tournaments')
-    if (data.success) {
-      upcomingTournaments.value = data.data.upcoming || []
-      runningTournaments.value = data.data.running || []
-    }
-  } catch (e) { console.error(e) }
-}
-
-async function fetchMyEntries() {
-  // Check which tournaments I'm in
-  upcomingTournaments.value.forEach(async (t) => {
-    try {
-      const { data } = await axios.get(`/api/poker/tournaments/${t.id}`)
-      if (data.success) {
-        const me = data.data.entries?.find(e => e.user_id === auth.user?.id)
-        if (me) myEntries.value.push(t.id)
-      }
-    } catch (e) { /* ignore */ }
-  })
-}
+// ─── Wallet ───
+const walletAmount = ref(500)
 
 async function handleDeposit() {
-  if (!walletAmount.value || walletAmount.value < 1000) return
+  if (!walletAmount.value || walletAmount.value < 100) return
   const result = await deposit(walletAmount.value)
-  if (result?.success) auth.user.points = result.data.points
+  if (result?.success) {
+    auth.user.points = result.data.points
+  }
 }
 
 async function handleWithdraw() {
-  if (!walletAmount.value || walletAmount.value < 1000) return
+  if (!walletAmount.value || walletAmount.value < 100) return
   const result = await withdraw(walletAmount.value)
-  if (result?.success) auth.user.points = result.data.points
+  if (result?.success) {
+    auth.user.points = result.data.points
+  }
 }
 
+// ─── Stats ───
+const myStats = computed(() => stats.value || {})
+const bestPlacement = computed(() => {
+  const s = stats.value || {}
+  const v = s.bestPlacement || s.best_place
+  return v ? v + '위' : null
+})
+
+// ─── Tournaments ───
+const tournaments = ref([])
+const tournamentsLoading = ref(false)
+
+const upcomingTournaments = computed(() =>
+  tournaments.value.filter(t => t.status === 'upcoming' || t.status === 'open')
+)
+const liveTournaments = computed(() =>
+  tournaments.value.filter(t => t.status === 'live' || t.status === 'in_progress')
+)
+
+async function fetchTournaments() {
+  tournamentsLoading.value = true
+  try {
+    const { data } = await axios.get('/api/poker/tournaments')
+    if (data.success) {
+      // API may return { upcoming: [], running: [] } or flat array
+      const raw = Array.isArray(data.data)
+        ? data.data
+        : [...(data.data.upcoming || []), ...(data.data.running || [])]
+      tournaments.value = raw.map(t => ({ ...t, _actionLoading: false }))
+    } else {
+      tournaments.value = []
+    }
+  } catch {
+    tournaments.value = []
+  } finally {
+    tournamentsLoading.value = false
+  }
+}
+
+function isRegistered(tournament) {
+  return !!tournament.is_registered
+}
+
+async function registerTournament(id) {
+  const t = tournaments.value.find(x => x.id === id)
+  if (t) t._actionLoading = true
+  try {
+    await axios.post(`/api/poker/tournaments/${id}/register`)
+    await fetchTournaments()
+    if (auth.isLoggedIn) await fetchWallet()
+  } catch (e) {
+    alert(e.response?.data?.message || '참가 신청에 실패했습니다.')
+  } finally {
+    if (t) t._actionLoading = false
+  }
+}
+
+async function unregisterTournament(id) {
+  const t = tournaments.value.find(x => x.id === id)
+  if (t) t._actionLoading = true
+  try {
+    await axios.delete(`/api/poker/tournaments/${id}/register`)
+    await fetchTournaments()
+    if (auth.isLoggedIn) await fetchWallet()
+  } catch (e) {
+    alert(e.response?.data?.message || '취소에 실패했습니다.')
+  } finally {
+    if (t) t._actionLoading = false
+  }
+}
+
+// ─── Tournament Badge Helpers ───
+function typeBadgeClass(type) {
+  const map = {
+    freezeout: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+    freeroll: 'bg-green-500/20 text-green-400 border border-green-500/30',
+    rebuy: 'bg-green-500/20 text-green-400 border border-green-500/30',
+    bounty: 'bg-red-500/20 text-red-400 border border-red-500/30',
+    turbo: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+    satellite: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+    micro: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+    regular: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+    high_roller: 'bg-red-500/20 text-red-400 border border-red-500/30',
+  }
+  return map[type] || 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+}
+
+function typeBadgeLabel(type) {
+  const map = {
+    freezeout: '프리즈아웃',
+    freeroll: '프리롤',
+    rebuy: '리바이',
+    bounty: '바운티',
+    turbo: '터보',
+    satellite: '새틀라이트',
+    micro: '마이크로',
+    regular: '일반',
+    high_roller: '하이롤러',
+  }
+  return map[type] || type || '일반'
+}
+
+// ─── Date / Countdown Formatting ───
+const now = ref(Date.now())
+let clockInterval = null
+
+function formatTournamentTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const today = new Date()
+  const tomorrow = new Date()
+  tomorrow.setDate(today.getDate() + 1)
+
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const time = `${hours}:${minutes}`
+
+  if (d.toDateString() === today.toDateString()) return `오늘 ${time}`
+  if (d.toDateString() === tomorrow.toDateString()) return `내일 ${time}`
+
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  return `${month}/${day} ${time}`
+}
+
+function getCountdown(dateStr) {
+  if (!dateStr) return ''
+  const diff = new Date(dateStr).getTime() - now.value
+  if (diff <= 0) return '곧 시작!'
+
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const secs = Math.floor((diff % 60000) / 1000)
+
+  if (days > 0) return `${days}일 ${hours}시간 ${mins}분`
+  if (hours > 0) return `${hours}시간 ${mins}분 ${secs}초`
+  return `${mins}분 ${secs}초`
+}
+
+// ─── Real-time: Echo ───
 let echoChannel = null
 
-onMounted(async () => {
-  if (auth.isLoggedIn) {
-    await Promise.all([fetchWallet(), fetchStats(), fetchLeaderboard(), fetchTournaments()])
-    await fetchMyEntries()
-  } else {
-    await fetchTournaments()
-  }
-
-  // Real-time lobby updates
-  if (window.Echo) {
+function setupEcho() {
+  if (typeof window !== 'undefined' && window.Echo) {
     echoChannel = window.Echo.channel('poker.lobby')
-    echoChannel.listen('.tournament.updated', () => { fetchTournaments() })
-    echoChannel.listen('.lobby.updated', () => { fetchTournaments() })
+    echoChannel.listen('.tournament.updated', () => {
+      fetchTournaments()
+    })
   }
+}
+
+function teardownEcho() {
+  if (echoChannel && window.Echo) {
+    window.Echo.leave('poker.lobby')
+    echoChannel = null
+  }
+}
+
+// ─── Heartbeat ───
+let heartbeatInterval = null
+
+function startHeartbeat() {
+  stopHeartbeat()
+  heartbeatInterval = setInterval(() => {
+    const registered = tournaments.value.filter(t =>
+      t.is_registered && (t.status === 'upcoming' || t.status === 'open')
+    )
+    registered.forEach(t => {
+      axios.post(`/api/poker/tournaments/${t.id}/heartbeat`).catch(() => {})
+    })
+  }, 30000)
+}
+
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+  }
+}
+
+// ─── Lifecycle ───
+onMounted(async () => {
+  // Start countdown clock (updates every second)
+  clockInterval = setInterval(() => { now.value = Date.now() }, 1000)
+
+  // Setup real-time tournament updates
+  setupEcho()
+
+  // Fetch all data in parallel
+  const promises = [fetchTournaments()]
+  if (auth.isLoggedIn) {
+    promises.push(fetchWallet(), fetchStats(), fetchLeaderboard())
+  }
+  await Promise.all(promises)
+
+  // Start heartbeat for registered tournaments
+  if (auth.isLoggedIn) startHeartbeat()
 })
 
 onUnmounted(() => {
-  if (echoChannel) { window.Echo.leave('poker.lobby') }
+  if (clockInterval) clearInterval(clockInterval)
+  teardownEcho()
+  stopHeartbeat()
 })
 </script>
