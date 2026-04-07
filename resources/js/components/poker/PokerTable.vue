@@ -1,48 +1,58 @@
 <template>
   <div class="h-full w-full relative">
-    <!-- Table shadow -->
-    <div class="absolute left-[2%] right-[2%] top-[8%] bottom-[8%] bg-black/50 blur-[24px]"
-      style="border-radius: 45% / 42%" />
+    <!-- 배경: 카드 무늬 패턴 -->
+    <div class="absolute inset-0 opacity-[0.07]"
+      style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><text x=%225%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♠</text><text x=%2230%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♥</text><text x=%225%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♦</text><text x=%2230%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♣</text></svg>'); background-size: 60px 60px;" />
 
-    <!-- Wood rim -->
-    <div class="absolute left-[1.5%] right-[1.5%] top-[7%] bottom-[7%] p-[6px]"
-      style="border-radius: 45% / 42%; background: linear-gradient(145deg, #7a5a3a, #5a3a1a, #7a5a3a)">
-      <!-- Green felt -->
-      <div class="w-full h-full relative overflow-visible"
-        style="border-radius: 45% / 42%; background: radial-gradient(ellipse at 45% 40%, #2d7a4a 0%, #1a5c35 35%, #13442a 65%, #0d3320 100%); box-shadow: inset 0 4px 40px rgba(0,0,0,0.5), inset 0 0 80px rgba(0,0,0,0.2)">
+    <!-- 검은 쿠션 (바깥 테두리) -->
+    <div class="absolute left-[3%] right-[3%] top-[6%] bottom-[6%] p-[8px]"
+      style="border-radius: 999px; background: linear-gradient(180deg, #3a3a3a, #1a1a1a, #2a2a2a); box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5);">
 
-        <!-- Community Cards (center) -->
-        <div class="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-[4]">
-          <div class="flex gap-2 justify-center mb-2">
-            <PokerCard v-for="(c, i) in community" :key="i" :card="c" :winner="hasWinner" />
-            <template v-if="community.length < 5 && !showdown">
-              <div v-for="i in (5 - community.length)" :key="'e' + i"
-                class="w-16 h-[88px] rounded-lg border-2 border-dashed border-white/10 bg-black/10" />
-            </template>
+      <!-- 나무 림 -->
+      <div class="w-full h-full p-[6px]"
+        style="border-radius: 999px; background: linear-gradient(145deg, #c8a96e, #a08050, #d4b878, #9a7848);">
+
+        <!-- 녹색 펠트 -->
+        <div class="w-full h-full relative overflow-visible"
+          style="border-radius: 999px; background: radial-gradient(ellipse at 50% 40%, #3a9a5a 0%, #2d8a4a 20%, #1f7038 45%, #165a2d 70%, #0f4a24 100%); box-shadow: inset 0 4px 40px rgba(0,0,0,0.3), inset 0 0 80px rgba(0,0,0,0.15);">
+
+          <!-- 펠트 위 얇은 흰색 라인 (베팅 라인) -->
+          <div class="absolute left-[8%] right-[8%] top-[12%] bottom-[12%] border border-white/[0.08]"
+            style="border-radius: 999px;" />
+
+          <!-- Community Cards (center) -->
+          <div class="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-[4]">
+            <div class="flex gap-2.5 justify-center mb-2">
+              <PokerCard v-for="(c, i) in community" :key="i" :card="c" :winner="hasWinner" />
+              <template v-if="community.length < 5 && !showdown">
+                <div v-for="i in (5 - community.length)" :key="'e' + i"
+                  class="w-16 h-[88px] rounded-lg border-2 border-dashed border-white/[0.06] bg-black/[0.06]" />
+              </template>
+            </div>
+            <div class="text-emerald-200 text-sm font-medium tracking-widest uppercase">{{ stageLabel }} {{ stageDesc }}</div>
           </div>
-          <div class="text-emerald-300 text-sm tracking-widest uppercase">{{ stageLabel }} {{ stageDesc }}</div>
-        </div>
 
-        <!-- Pot -->
-        <div class="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1">
-          <div class="flex gap-1 justify-center">
-            <div v-for="ci in potChipColumns" :key="ci" class="flex flex-col items-center">
-              <div v-for="si in Math.min(Math.ceil((ci + 1) * 0.8), 4)" :key="si"
-                class="w-5 h-[6px] rounded-full border border-white/30 shadow-sm -mt-0.5"
-                :style="{ background: chipColor(ci) }" />
+          <!-- Pot -->
+          <div class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1">
+            <div class="flex gap-1 justify-center">
+              <div v-for="ci in potChipColumns" :key="ci" class="flex flex-col items-center">
+                <div v-for="si in Math.min(Math.ceil((ci + 1) * 0.8), 4)" :key="si"
+                  class="w-5 h-[6px] rounded-full border border-white/30 shadow-sm -mt-0.5"
+                  :style="{ background: chipColor(ci) }" />
+              </div>
+            </div>
+            <div class="bg-black/60 rounded-full px-5 py-1.5 flex items-center gap-2 backdrop-blur border border-white/10">
+              <span class="text-white/60 text-sm font-bold">POT</span>
+              <span class="text-amber-400 text-2xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
             </div>
           </div>
-          <div class="bg-black/60 rounded-full px-5 py-1.5 flex items-center gap-2 backdrop-blur border border-white/10">
-            <span class="text-white/70 text-sm font-bold">POT</span>
-            <span class="text-amber-400 text-2xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
-          </div>
-        </div>
 
-        <!-- Dealer chip -->
-        <div v-if="dealerSeat && !dealerSeat.isOut"
-          class="absolute z-[8] flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black text-gray-700 border-2 border-amber-400 shadow-lg"
-          style="background: linear-gradient(135deg, #fff, #e0e0e0); transform: translate(-50%, -50%)"
-          :style="{ left: dealerChipPos.x + '%', top: dealerChipPos.y + '%' }">D</div>
+          <!-- Dealer chip -->
+          <div v-if="dealerSeat && !dealerSeat.isOut"
+            class="absolute z-[8] flex items-center justify-center w-7 h-7 rounded-full text-xs font-black text-gray-800 border-2 border-amber-400 shadow-lg"
+            style="background: linear-gradient(135deg, #fff, #e8e0d0); transform: translate(-50%, -50%)"
+            :style="{ left: dealerChipPos.x + '%', top: dealerChipPos.y + '%' }">D</div>
+        </div>
       </div>
     </div>
 
@@ -79,17 +89,17 @@ const props = defineProps({
   chatBubbles: { type: Object, default: () => ({}) }
 })
 
-// 넓은 타원형 좌석 배치 — 좌우로 넓게, 테이블 가장자리에
+// 스타디움(pill) 형태 좌석 배치
 const seatPositions = [
-  { x: 50, y: 88 },   // 0: 나 (하단 중앙)
-  { x: 16, y: 78 },   // 1: 좌하
-  { x: 2,  y: 48 },   // 2: 좌
-  { x: 16, y: 18 },   // 3: 좌상
-  { x: 36, y: 4 },    // 4: 상좌
-  { x: 50, y: 0 },    // 5: 상단 중앙
-  { x: 64, y: 4 },    // 6: 상우
-  { x: 84, y: 18 },   // 7: 우상
-  { x: 98, y: 48 }    // 8: 우
+  { x: 50, y: 90 },   // 0: 나 (하단 중앙)
+  { x: 18, y: 82 },   // 1: 좌하
+  { x: 3,  y: 50 },   // 2: 좌
+  { x: 18, y: 16 },   // 3: 좌상
+  { x: 36, y: 2 },    // 4: 상좌
+  { x: 50, y: -2 },   // 5: 상단 중앙
+  { x: 64, y: 2 },    // 6: 상우
+  { x: 82, y: 16 },   // 7: 우상
+  { x: 97, y: 50 }    // 8: 우
 ]
 
 const stageLabel = computed(() => STAGE_NAMES[props.stage] || props.stage)
@@ -110,7 +120,7 @@ const dealerChipPos = computed(() => {
   const dDispIdx = displayOrder.value.indexOf(dealerSeat.value)
   if (dDispIdx < 0) return { x: 50, y: 50 }
   const dp = seatPositions[dDispIdx]
-  return { x: dp.x + (50 - dp.x) * 0.15, y: dp.y + (50 - dp.y) * 0.15 }
+  return { x: dp.x + (50 - dp.x) * 0.18, y: dp.y + (50 - dp.y) * 0.18 }
 })
 
 const potChipColumns = computed(() => {
@@ -129,10 +139,10 @@ function isWinnerSeat(seat) {
 }
 
 function getPosLabel(seat) {
-  const seatGlobalIdx = getSeatGlobalIdx(seat)
+  const idx = getSeatGlobalIdx(seat)
   const liveIdxs = props.seats.map((x, j) => x.isOut ? -1 : j).filter(j => j >= 0)
   const dlrOff = liveIdxs.indexOf(props.dealerIdx)
-  const myOff = liveIdxs.indexOf(seatGlobalIdx)
+  const myOff = liveIdxs.indexOf(idx)
   return POSITION_NAMES[(myOff - dlrOff + liveIdxs.length) % liveIdxs.length] || ''
 }
 </script>
