@@ -169,9 +169,50 @@ class PokerTournamentController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // ─── Admin: 토너먼트 생성 ───
+    // ─── Admin: 토너먼트 생성 (일회성 or 반복 스케줄 템플릿) ───
     public function adminCreate(Request $request)
     {
+        $isSchedule = $request->boolean('is_schedule');
+
+        if ($isSchedule) {
+            // 반복 스케줄 템플릿 생성
+            $request->validate([
+                'title' => 'required|string|max:100',
+                'type' => 'in:freeroll,micro,regular,high_roller',
+                'buy_in' => 'required|integer|min:0',
+                'starting_chips' => 'required|integer|min:1000',
+                'max_players' => 'required|integer|min:9|max:1000',
+                'schedule_time' => 'required|string', // "18:00"
+                'schedule_days' => 'required|array', // ["mon","tue",...]
+            ]);
+
+            $template = PokerTournament::create([
+                'title' => $request->title,
+                'type' => $request->type ?? 'regular',
+                'status' => 'scheduled',
+                'buy_in' => $request->buy_in,
+                'starting_chips' => $request->starting_chips,
+                'max_players' => $request->max_players,
+                'min_players' => $request->min_players ?? 9,
+                'scheduled_at' => now()->addDay()->format('Y-m-d') . ' ' . $request->schedule_time,
+                'registration_opens_at' => now(),
+                'late_reg_levels' => $request->late_reg_levels ?? 3,
+                'bounty_pct' => $request->bounty_pct ?? 10,
+                'is_template' => true,
+                'schedule_pattern' => [
+                    'recurring' => true,
+                    'days' => $request->schedule_days,
+                    'time' => $request->schedule_time,
+                ],
+            ]);
+
+            // 즉시 오늘/내일 토너먼트도 생성
+            \Artisan::call('poker:generate-tournaments');
+
+            return response()->json(['success' => true, 'data' => $template, 'message' => '반복 스케줄이 등록되었습니다. 매일 자동 생성됩니다.']);
+        }
+
+        // 일회성 토너먼트 생성
         $request->validate([
             'title' => 'required|string|max:100',
             'type' => 'in:freeroll,micro,regular,high_roller',
@@ -179,7 +220,7 @@ class PokerTournamentController extends Controller
             'starting_chips' => 'required|integer|min:1000',
             'max_players' => 'required|integer|min:9|max:1000',
             'min_players' => 'integer|min:2',
-            'scheduled_at' => 'required|date|after:now',
+            'scheduled_at' => 'required|date',
         ]);
 
         $tournament = PokerTournament::create([

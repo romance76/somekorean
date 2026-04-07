@@ -22,3 +22,6 @@ Schedule::command('music:fetch --daily=500 --korean-ratio=70')->dailyAt('02:00')
 
 Schedule::command('elder:check')->everyMinute();
 Schedule::command('reservations:expire')->everyMinute();
+
+// 포커 토너먼트 자동 생성 (매일 00:10 — 내일 스케줄 생성)
+Schedule::command('poker:generate-tournaments')->dailyAt('00:10');

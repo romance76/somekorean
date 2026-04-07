@@ -63,7 +63,10 @@
         </tr></thead>
         <tbody>
           <tr v-for="t in tournaments" :key="t.id" class="border-t hover:bg-gray-50">
-            <td class="px-4 py-2 font-semibold">{{ t.title }}</td>
+            <td class="px-4 py-2 font-semibold">
+              {{ t.title }}
+              <span v-if="t.is_template" class="ml-1 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold">🔄 반복</span>
+            </td>
             <td class="px-4 py-2 text-center">
               <span :class="{'bg-blue-100 text-blue-700': t.status==='scheduled', 'bg-green-100 text-green-700': t.status==='registering', 'bg-amber-100 text-amber-700': t.status==='running', 'bg-gray-100 text-gray-500': t.status==='finished' || t.status==='cancelled'}" class="text-xs px-2 py-0.5 rounded-full font-bold">{{ t.status }}</span>
             </td>
@@ -82,8 +85,19 @@
 
   <!-- Create Tournament Modal -->
   <div v-if="showCreateTournament" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showCreateTournament=false">
-    <div class="bg-white rounded-xl p-6 w-96 shadow-xl">
-      <h3 class="font-bold text-gray-800 mb-4">🏆 새 토너먼트 생성</h3>
+    <div class="bg-white rounded-xl p-6 w-[420px] shadow-xl max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold text-gray-800 mb-4">🏆 토너먼트 생성</h3>
+
+      <!-- 모드 선택 -->
+      <div class="flex gap-2 mb-4">
+        <button @click="newTournament.is_schedule = false"
+          :class="!newTournament.is_schedule ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'"
+          class="flex-1 py-2 rounded-lg text-sm font-bold transition">일회성</button>
+        <button @click="newTournament.is_schedule = true"
+          :class="newTournament.is_schedule ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'"
+          class="flex-1 py-2 rounded-lg text-sm font-bold transition">🔄 반복 스케줄</button>
+      </div>
+
       <div class="space-y-3">
         <div><label class="text-xs text-gray-500">제목</label><input v-model="newTournament.title" class="w-full border rounded px-3 py-2 text-sm" placeholder="18:00 데일리 $500"></div>
         <div class="grid grid-cols-2 gap-3">
@@ -94,10 +108,31 @@
           <div><label class="text-xs text-gray-500">시작 칩</label><input v-model.number="newTournament.starting_chips" type="number" class="w-full border rounded px-3 py-2 text-sm"></div>
           <div><label class="text-xs text-gray-500">최대 인원</label><input v-model.number="newTournament.max_players" type="number" class="w-full border rounded px-3 py-2 text-sm"></div>
         </div>
-        <div><label class="text-xs text-gray-500">시작 시간</label><input v-model="newTournament.scheduled_at" type="datetime-local" class="w-full border rounded px-3 py-2 text-sm"></div>
+
+        <!-- 일회성: 날짜/시간 선택 -->
+        <div v-if="!newTournament.is_schedule">
+          <label class="text-xs text-gray-500">시작 시간</label>
+          <input v-model="newTournament.scheduled_at" type="datetime-local" class="w-full border rounded px-3 py-2 text-sm">
+        </div>
+
+        <!-- 반복: 시간 + 요일 선택 -->
+        <template v-else>
+          <div><label class="text-xs text-gray-500">매일 시작 시간</label><input v-model="newTournament.schedule_time" type="time" class="w-full border rounded px-3 py-2 text-sm"></div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">반복 요일</label>
+            <div class="flex gap-1 flex-wrap">
+              <button v-for="d in dayOptions" :key="d.value" @click="toggleDay(d.value)"
+                :class="newTournament.schedule_days.includes(d.value) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition">{{ d.label }}</button>
+            </div>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+            ℹ️ 매일 자정에 다음 날 토너먼트가 자동 생성됩니다. 생성 즉시 참가 신청이 열립니다.
+          </div>
+        </template>
       </div>
       <div class="flex gap-2 mt-4">
-        <button @click="createTournament" class="flex-1 bg-amber-500 hover:bg-amber-400 text-white py-2 rounded-lg font-bold text-sm">생성</button>
+        <button @click="createTournament" class="flex-1 bg-amber-500 hover:bg-amber-400 text-white py-2 rounded-lg font-bold text-sm">{{ newTournament.is_schedule ? '스케줄 등록' : '생성' }}</button>
         <button @click="showCreateTournament=false" class="flex-1 bg-gray-200 text-gray-600 py-2 rounded-lg font-bold text-sm">취소</button>
       </div>
     </div>
@@ -174,8 +209,22 @@ const tournaments = ref([])
 const showCreateTournament = ref(false)
 const newTournament = ref({
   title: '', type: 'regular', buy_in: 500, starting_chips: 15000,
-  max_players: 90, scheduled_at: '',
+  max_players: 90, scheduled_at: '', is_schedule: false,
+  schedule_time: '18:00', schedule_days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
 })
+
+const dayOptions = [
+  { value: 'mon', label: '월' }, { value: 'tue', label: '화' },
+  { value: 'wed', label: '수' }, { value: 'thu', label: '목' },
+  { value: 'fri', label: '금' }, { value: 'sat', label: '토' },
+  { value: 'sun', label: '일' },
+]
+
+function toggleDay(day) {
+  const idx = newTournament.value.schedule_days.indexOf(day)
+  if (idx >= 0) newTournament.value.schedule_days.splice(idx, 1)
+  else newTournament.value.schedule_days.push(day)
+}
 
 const overviewCards = computed(() => [
   { label: '\uCD1D \uAC8C\uC784', value: (overview.value.total_games || 0).toLocaleString(), color: 'text-blue-600' },
@@ -233,11 +282,15 @@ async function submitAdjust() {
 
 async function createTournament() {
   try {
-    const { data } = await axios.post('/api/admin/poker/tournaments', newTournament.value)
+    const payload = { ...newTournament.value }
+    const { data } = await axios.post('/api/admin/poker/tournaments', payload)
     if (data.success) {
-      tournaments.value.unshift(data.data)
+      // Refresh list
+      const tn = await axios.get('/api/admin/poker/tournaments')
+      if (tn.data.success) tournaments.value = tn.data.data?.data || tn.data.data || []
       showCreateTournament.value = false
-      newTournament.value = { title: '', type: 'regular', buy_in: 500, starting_chips: 15000, max_players: 90, scheduled_at: '' }
+      newTournament.value = { title: '', type: 'regular', buy_in: 500, starting_chips: 15000, max_players: 90, scheduled_at: '', is_schedule: false, schedule_time: '18:00', schedule_days: ['mon','tue','wed','thu','fri','sat','sun'] }
+      alert(data.message)
     }
   } catch (e) { alert(e.response?.data?.message || e.message) }
 }

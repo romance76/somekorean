@@ -10,7 +10,7 @@ class PokerTournament extends Model
         'title', 'type', 'status', 'buy_in', 'starting_chips',
         'max_players', 'min_players', 'scheduled_at', 'registration_opens_at',
         'started_at', 'finished_at', 'late_reg_levels', 'blind_level',
-        'prize_pool', 'bounty_pct',
+        'prize_pool', 'bounty_pct', 'schedule_pattern', 'is_template',
     ];
 
     protected function casts(): array
@@ -27,6 +27,8 @@ class PokerTournament extends Model
             'min_players' => 'integer',
             'blind_level' => 'integer',
             'bounty_pct' => 'integer',
+            'schedule_pattern' => 'array',
+            'is_template' => 'boolean',
         ];
     }
 
