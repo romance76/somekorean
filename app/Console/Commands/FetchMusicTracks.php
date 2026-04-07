@@ -229,6 +229,6 @@ class FetchMusicTracks extends Command
     private function parseDuration($iso)
     {
         preg_match('/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/', $iso, $m);
-        return (($m[1] ?? 0) * 3600) + (($m[2] ?? 0) * 60) + ($m[3] ?? 0);
+        return (intval($m[1] ?? 0) * 3600) + (intval($m[2] ?? 0) * 60) + intval($m[3] ?? 0);
     }
 }
