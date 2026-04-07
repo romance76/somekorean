@@ -7,5 +7,5 @@ class Event extends Model
     protected $casts = ['start_date'=>'datetime','end_date'=>'datetime','lat'=>'decimal:7','lng'=>'decimal:7'];
     public function attendees() { return $this->hasMany(EventAttendee::class); }
     public function scopeUpcoming($q) { return $q->where('start_date', '>=', now()); }
-    public function scopeNearby($q,$lat,$lng,$r=50) { return $q->selectRaw("*, (3959*acos(cos(radians(?))*cos(radians(lat))*cos(radians(lng)-radians(?))+sin(radians(?))*sin(radians(lat)))) AS distance",[$lat,$lng,$lat])->having('distance','<',$r)->orderBy('distance'); }
+    public function scopeNearby($q,$lat,$lng,$r=50) { return $q->selectRaw("*, (3959*acos(cos(radians(?))*cos(radians(lat))*cos(radians(lng)-radians(?))+sin(radians(?))*sin(radians(lat)))) AS distance",[$lat,$lng,$lat])->having('distance','<',$r); }
 }

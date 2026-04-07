@@ -7,5 +7,5 @@ class JobPost extends Model
     protected $casts = ['is_active'=>'boolean','expires_at'=>'datetime','lat'=>'decimal:7','lng'=>'decimal:7'];
     public function user() { return $this->belongsTo(User::class); }
     public function scopeActive($q) { return $q->where('is_active', true); }
-    public function scopeNearby($q,$lat,$lng,$r=50) { return $q->selectRaw("*, (3959*acos(cos(radians(?))*cos(radians(lat))*cos(radians(lng)-radians(?))+sin(radians(?))*sin(radians(lat)))) AS distance",[$lat,$lng,$lat])->having('distance','<',$r)->orderBy('distance'); }
+    public function scopeNearby($q,$lat,$lng,$r=50) { return $q->selectRaw("*, (3959*acos(cos(radians(?))*cos(radians(lat))*cos(radians(lng)-radians(?))+sin(radians(?))*sin(radians(lat)))) AS distance",[$lat,$lng,$lat])->having('distance','<',$r); }
 }
