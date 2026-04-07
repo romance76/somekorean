@@ -59,7 +59,7 @@
     <!-- 딜러 이미지 (내 맞은편 상단 중앙) -->
     <div class="absolute left-1/2 -translate-x-1/2 z-[5]" style="top: 8%">
       <div class="flex flex-col items-center">
-        <img src="/images/dealer.png" alt="Dealer" class="h-[100px] w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]" />
+        <img src="/images/dealer.png" alt="Dealer" class="h-[180px] w-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)]" />
       </div>
     </div>
 
