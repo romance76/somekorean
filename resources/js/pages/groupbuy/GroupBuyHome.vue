@@ -80,6 +80,7 @@
 </div>
 </template>
 <script setup>
+import { useRoute } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
@@ -87,6 +88,7 @@ import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
 const auth = useAuthStore()
+const route = useRoute()
 const statusFilter = ref('')
 const statusFilters = [
   { value: '', label: '전체' },{ value: 'recruiting', label: '🟢 모집중' },

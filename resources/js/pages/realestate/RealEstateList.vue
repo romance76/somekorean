@@ -136,6 +136,7 @@
 </div>
 </template>
 <script setup>
+import { useRoute } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
@@ -144,6 +145,7 @@ import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 
 const auth = useAuthStore()
+const route = useRoute()
 const activeCat = ref('')
 const { loadConfig, getDefaultView } = useMenuConfig()
 const viewMode = ref('list')

@@ -28,48 +28,49 @@ const routes = [
   // Q&A
   { path: '/qa', name: 'qa', component: p('qa/QaList') },
   { path: '/qa/write', name: 'qa-write', component: p('qa/QAWrite'), meta: { auth: true } },
-  { path: '/qa/:id', name: 'qa-detail', component: p('qa/QaDetail') },
+  { path: '/qa/:id', name: 'qa-detail', component: p('qa/QaList') },
 
   // Jobs
   { path: '/jobs', name: 'jobs', component: p('jobs/JobList') },
   { path: '/jobs/write', name: 'job-write', component: p('jobs/JobWrite'), meta: { auth: true } },
-  { path: '/jobs/:id', name: 'job-detail', component: p('jobs/JobDetail') },
+  { path: '/jobs/:id', name: 'job-detail', component: p('jobs/JobList') },
 
   // Market
   { path: '/market', name: 'market', component: p('market/MarketList') },
   { path: '/market/write', name: 'market-write', component: p('market/MarketWrite'), meta: { auth: true } },
-  { path: '/market/:id', name: 'market-detail', component: p('market/MarketDetail') },
+  { path: '/market/:id', name: 'market-detail', component: p('market/MarketList') },
 
   // Real Estate
   { path: '/realestate', name: 'realestate', component: p('realestate/RealEstateList') },
   { path: '/realestate/write', name: 'realestate-write', component: p('realestate/RealEstateWrite'), meta: { auth: true } },
-  { path: '/realestate/:id', name: 'realestate-detail', component: p('realestate/RealEstateDetail') },
+  { path: '/realestate/:id', name: 'realestate-detail', component: p('realestate/RealEstateList') },
 
   // Clubs
   { path: '/clubs', name: 'clubs', component: p('community/ClubList') },
-  { path: '/clubs/:id', name: 'club-detail', component: p('community/ClubDetail') },
+  { path: '/clubs/:id', name: 'club-detail', component: p('community/ClubList') },
 
   // News
   { path: '/news', name: 'news', component: p('news/NewsList') },
-  { path: '/news/:id', name: 'news-detail', component: p('news/NewsDetail') },
+  { path: '/news/:id', name: 'news-detail', component: p('news/NewsList') },
 
   // Recipes
   { path: '/recipes', name: 'recipes', component: p('recipes/RecipeList') },
   { path: '/recipes/write', name: 'recipe-write', component: p('recipes/RecipeCreate'), meta: { auth: true } },
-  { path: '/recipes/:id', name: 'recipe-detail', component: p('recipes/RecipeDetail') },
+  { path: '/recipes/:id', name: 'recipe-detail', component: p('recipes/RecipeList') },
 
   // GroupBuy
   { path: '/groupbuy', name: 'groupbuy', component: p('groupbuy/GroupBuyHome') },
+  { path: '/groupbuy/:id', name: 'groupbuy-detail', component: p('groupbuy/GroupBuyHome') },
 
   // Events
   { path: '/events', name: 'events', component: p('events/EventList') },
   { path: '/events/create', name: 'event-create', component: p('events/EventCreate'), meta: { auth: true } },
-  { path: '/events/:id', name: 'event-detail', component: p('events/EventDetail') },
+  { path: '/events/:id', name: 'event-detail', component: p('events/EventList') },
 
   // Directory
   { path: '/directory', name: 'directory', component: p('directory/BusinessList') },
   { path: '/directory/register', name: 'business-register', component: p('directory/BusinessRegister'), meta: { auth: true } },
-  { path: '/directory/:id', name: 'business-detail', component: p('directory/BusinessDetail') },
+  { path: '/directory/:id', name: 'business-detail', component: p('directory/BusinessList') },
 
   // Chat
   { path: '/chat', name: 'chat', component: p('chat/ChatRooms'), meta: { auth: true } },

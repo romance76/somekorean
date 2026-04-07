@@ -106,6 +106,7 @@
 </div>
 </template>
 <script setup>
+import { useRoute } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
@@ -201,6 +202,12 @@ onMounted(async () => {
   ])
   if (nRes.status === 'fulfilled') { items.value = nRes.value.data?.data?.data || []; lastPage.value = nRes.value.data?.data?.last_page || 1 }
   if (cRes.status === 'fulfilled') categories.value = cRes.value.data?.data || []
+
+  // URL에 id가 있으면 해당 항목 인라인 열기
+  const itemId = route.params.id
+  if (itemId) {
+    try { const { data } = await axios.get('/api/news/' + itemId); activeItem.value = data.data } catch {}
+  }
   loading.value = false
 })
 </script>

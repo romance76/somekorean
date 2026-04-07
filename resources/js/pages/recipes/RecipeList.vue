@@ -76,12 +76,14 @@
 </div>
 </template>
 <script setup>
+import { useRoute } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 const auth = useAuthStore()
+const route = useRoute()
 const items = ref([])
 const categories = ref([{ name: '전체', id: null }])
 const activeCat = ref(null)

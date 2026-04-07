@@ -130,12 +130,14 @@
 </div>
 </template>
 <script setup>
+import { useRoute } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
 const auth = useAuthStore()
+const route = useRoute()
 const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)
@@ -211,6 +213,12 @@ onMounted(async () => {
   ])
   if (qRes.status === 'fulfilled') { items.value = qRes.value.data?.data?.data || []; lastPage.value = qRes.value.data?.data?.last_page || 1 }
   if (cRes.status === 'fulfilled') categories.value = cRes.value.data?.data || []
+
+  // URL에 id가 있으면 해당 항목 인라인 열기
+  const itemId = route.params.id
+  if (itemId) {
+    try { const { data } = await axios.get('/api/qa/' + itemId); activeItem.value = data.data } catch {}
+  }
   loading.value = false
 })
 </script>
