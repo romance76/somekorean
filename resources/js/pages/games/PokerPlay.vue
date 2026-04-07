@@ -170,9 +170,9 @@
       </div>
     </div>
 
-    <!-- Bottom: 결과 + 액션 버튼 -->
-    <div class="shrink-0">
-      <div v-if="handResults && gameOver" class="text-center py-1">
+    <!-- Bottom: 고정 높이 — 결과 + 액션 버튼 -->
+    <div class="shrink-0 h-[110px]">
+      <div v-if="handResults && gameOver" class="text-center h-[20px] leading-[20px] overflow-hidden">
         <span :class="handResults.winners[0]?.name === '\uB098' ? 'text-emerald-400' : 'text-red-400'" class="text-sm font-bold">{{ handResults.msg }}</span>
       </div>
       <PokerActions :is-player-turn="isPlayerTurn" :game-over="gameOver" :tourney-over="tourneyOver"

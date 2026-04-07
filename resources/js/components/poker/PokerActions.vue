@@ -1,5 +1,5 @@
 <template>
-  <div class="px-3 py-2 pb-3 shrink-0 bg-black/20 border-t border-amber-400/[0.08]">
+  <div class="px-3 shrink-0 bg-black/20 border-t border-amber-400/[0.08] h-[90px] flex flex-col justify-center">
     <!-- Player's turn -->
     <div v-if="isPlayerTurn && !gameOver">
       <!-- Main action buttons -->
