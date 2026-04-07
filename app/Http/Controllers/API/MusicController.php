@@ -93,7 +93,13 @@ class MusicController extends Controller
     {
         $request->validate(['name' => 'required|max:50']);
         $slug = $request->slug ?: \Illuminate\Support\Str::slug($request->name);
-        $cat = MusicCategory::create(['name' => $request->name, 'slug' => $slug, 'sort_order' => MusicCategory::max('sort_order') + 1]);
+        $cat = MusicCategory::create([
+            'name' => $request->name,
+            'slug' => $slug,
+            'sort_order' => MusicCategory::max('sort_order') + 1,
+            'korean_queries' => $request->korean_queries,
+            'pop_queries' => $request->pop_queries,
+        ]);
         return response()->json(['success' => true, 'data' => $cat], 201);
     }
 

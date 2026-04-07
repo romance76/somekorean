@@ -80,14 +80,18 @@ class FetchMusicTracks extends Command
         foreach ($categories as $cat) {
             $this->info("\n📂 {$cat->name} ({$cat->slug}) - 한국 {$koreanPerCat}곡 + 팝 {$popPerCat}곡");
 
-            // 한국 곡 수집
-            $kQueries = $this->koreanQueries[$cat->slug] ?? ['한국 음악 ' . $cat->name];
+            // 한국 곡 수집 — DB 검색어 우선, 없으면 하드코딩 fallback
+            $kQueries = $cat->korean_queries
+                ? explode(',', $cat->korean_queries)
+                : ($this->koreanQueries[$cat->slug] ?? ['한국 음악 ' . $cat->name]);
             $added = $this->fetchTracks($apiKey, $cat->id, $kQueries, $koreanPerCat);
             $this->info("  ✅ 한국: {$added}곡 추가");
             $totalAdded += $added;
 
-            // 팝송 수집
-            $pQueries = $this->popQueries[$cat->slug] ?? ['pop music ' . $cat->slug];
+            // 팝송 수집 — DB 검색어 우선
+            $pQueries = $cat->pop_queries
+                ? explode(',', $cat->pop_queries)
+                : ($this->popQueries[$cat->slug] ?? ['pop music ' . $cat->slug]);
             $added = $this->fetchTracks($apiKey, $cat->id, $pQueries, $popPerCat);
             $this->info("  ✅ 팝: {$added}곡 추가");
             $totalAdded += $added;

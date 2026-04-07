@@ -78,10 +78,19 @@
 
   <!-- 카테고리 추가 모달 -->
   <div v-if="showAddCat" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showAddCat=false">
-    <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-xl space-y-3">
+    <div class="bg-white rounded-xl p-5 w-full max-w-md shadow-xl space-y-3">
       <h3 class="font-bold">카테고리 추가</h3>
-      <input v-model="newCat.name" placeholder="카테고리 이름" class="w-full border rounded-lg px-3 py-2 text-sm" />
-      <input v-model="newCat.slug" placeholder="slug (영문)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input v-model="newCat.name" placeholder="카테고리 이름 (예: 인디)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input v-model="newCat.slug" placeholder="slug (영문, 예: indie)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <div>
+        <label class="text-xs text-gray-500">한국 검색어 (쉼표 구분)</label>
+        <input v-model="newCat.korean_queries" placeholder="한국 인디 음악,인디 밴드,인디 인기곡" class="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
+      </div>
+      <div>
+        <label class="text-xs text-gray-500">팝 검색어 (쉼표 구분)</label>
+        <input v-model="newCat.pop_queries" placeholder="indie music,indie rock,indie pop hits" class="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
+      </div>
+      <p class="text-[10px] text-gray-400">* 매일 자동 수집 시 이 검색어로 YouTube에서 음악을 찾습니다</p>
       <div class="flex gap-2">
         <button @click="addCategory" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm flex-1">추가</button>
         <button @click="showAddCat=false" class="text-gray-500 px-4">취소</button>
@@ -121,7 +130,7 @@ async function fetchMusic() {
 const trackCounts = ref({})
 const showAddCat = ref(false)
 const showAddTrack = ref(false)
-const newCat = reactive({ name: '', slug: '' })
+const newCat = reactive({ name: '', slug: '', korean_queries: '', pop_queries: '' })
 const newTrack = reactive({ title: '', artist: '', youtube_url: '' })
 
 const totalTracks = computed(() => Object.values(trackCounts.value).reduce((s, n) => s + n, 0))
