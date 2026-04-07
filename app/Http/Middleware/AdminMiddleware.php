@@ -24,7 +24,7 @@ class AdminMiddleware
             ], 401);
         }
 
-        if ($user->role !== 'admin') {
+        if (!in_array($user->role, ['admin', 'super_admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => '관리자 권한이 필요합니다.',

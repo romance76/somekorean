@@ -41,7 +41,7 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims() { return []; }
 
     // Accessors
-    public function getIsAdminAttribute(): bool { return $this->role === 'admin'; }
+    public function getIsAdminAttribute(): bool { return in_array($this->role, ['admin', 'super_admin', 'moderator']); }
 
     // Relationships
     public function posts() { return $this->hasMany(Post::class); }

@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const initPromise = new Promise(r => { _resolveInit = r })
 
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isAdmin = computed(() => ['admin', 'super_admin'].includes(user.value?.role))
 
   function initialize() {
     const t = localStorage.getItem('sk_token')
