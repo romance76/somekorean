@@ -206,6 +206,7 @@ const adjustAmount = ref(0)
 const adjusting = ref(false)
 const adjustError = ref('')
 const tournaments = ref([])
+const scheduleTemplates = ref([])
 const showCreateTournament = ref(false)
 const newTournament = ref({
   title: '', type: 'regular', buy_in: 500, starting_chips: 15000,
@@ -254,7 +255,15 @@ onMounted(async () => {
     if (ov.data.success) overview.value = ov.data.data
     if (wl.data.success) wallets.value = wl.data.data?.data || wl.data.data || []
     if (st.data.success) Object.assign(settings.value, st.data.data)
-    if (tn.data.success) tournaments.value = tn.data.data?.data || tn.data.data || []
+    if (tn.data.success) {
+      const d = tn.data.data
+      if (d?.templates !== undefined) {
+        scheduleTemplates.value = d.templates || []
+        tournaments.value = d.tournaments?.data || d.tournaments || []
+      } else {
+        tournaments.value = d?.data || d || []
+      }
+    }
   } catch (e) {
     console.error('Admin poker load failed', e)
   }
@@ -287,7 +296,15 @@ async function createTournament() {
     if (data.success) {
       // Refresh list
       const tn = await axios.get('/api/admin/poker/tournaments')
-      if (tn.data.success) tournaments.value = tn.data.data?.data || tn.data.data || []
+      if (tn.data.success) {
+      const d = tn.data.data
+      if (d?.templates !== undefined) {
+        scheduleTemplates.value = d.templates || []
+        tournaments.value = d.tournaments?.data || d.tournaments || []
+      } else {
+        tournaments.value = d?.data || d || []
+      }
+    }
       showCreateTournament.value = false
       newTournament.value = { title: '', type: 'regular', buy_in: 500, starting_chips: 15000, max_players: 90, scheduled_at: '', is_schedule: false, schedule_time: '18:00', schedule_days: ['mon','tue','wed','thu','fri','sat','sun'] }
       alert(data.message)

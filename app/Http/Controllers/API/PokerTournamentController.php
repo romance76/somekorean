@@ -8,6 +8,7 @@ use App\Models\PokerTournamentEntry;
 use App\Models\PokerWallet;
 use App\Events\PokerLobbyUpdate;
 use App\Events\PokerTournamentUpdate;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PokerTournamentController extends Controller
@@ -16,12 +17,14 @@ class PokerTournamentController extends Controller
     public function index()
     {
         $upcoming = PokerTournament::upcoming()
+            ->where('is_template', false)
             ->withCount(['entries as registered_count', 'entries as online_count' => function ($q) {
                 $q->where('is_online', true);
             }])
             ->get();
 
         $running = PokerTournament::running()
+            ->where('is_template', false)
             ->withCount(['entries as registered_count', 'entries as online_count' => function ($q) {
                 $q->where('is_online', true);
             }, 'entries as remaining_count' => function ($q) {
@@ -186,15 +189,16 @@ class PokerTournamentController extends Controller
                 'schedule_days' => 'required|array', // ["mon","tue",...]
             ]);
 
+            // 템플릿만 저장 (토너먼트 목록에 안 보이도록 status=template)
             $template = PokerTournament::create([
                 'title' => $request->title,
                 'type' => $request->type ?? 'regular',
-                'status' => 'scheduled',
+                'status' => 'template',
                 'buy_in' => $request->buy_in,
                 'starting_chips' => $request->starting_chips,
                 'max_players' => $request->max_players,
                 'min_players' => $request->min_players ?? 9,
-                'scheduled_at' => now()->addDay()->format('Y-m-d') . ' ' . $request->schedule_time,
+                'scheduled_at' => Carbon::now('America/New_York')->format('Y-m-d') . ' ' . $request->schedule_time . ':00',
                 'registration_opens_at' => now(),
                 'late_reg_levels' => $request->late_reg_levels ?? 3,
                 'bounty_pct' => $request->bounty_pct ?? 10,
@@ -206,10 +210,10 @@ class PokerTournamentController extends Controller
                 ],
             ]);
 
-            // 즉시 오늘/내일 토너먼트도 생성
-            \Artisan::call('poker:generate-tournaments');
+            // 오늘/내일 토너먼트 즉시 생성
+            $this->generateFromTemplate($template);
 
-            return response()->json(['success' => true, 'data' => $template, 'message' => '반복 스케줄이 등록되었습니다. 매일 자동 생성됩니다.']);
+            return response()->json(['success' => true, 'data' => $template, 'message' => '반복 스케줄 등록 완료! 매일 자동 생성됩니다.']);
         }
 
         // 일회성 토너먼트 생성
@@ -223,6 +227,9 @@ class PokerTournamentController extends Controller
             'scheduled_at' => 'required|date',
         ]);
 
+        // datetime-local에서 오는 값을 NY 시간으로 해석
+        $scheduledAt = Carbon::parse($request->scheduled_at, 'America/New_York');
+
         $tournament = PokerTournament::create([
             'title' => $request->title,
             'type' => $request->type ?? 'regular',
@@ -231,8 +238,8 @@ class PokerTournamentController extends Controller
             'starting_chips' => $request->starting_chips,
             'max_players' => $request->max_players,
             'min_players' => $request->min_players ?? 9,
-            'scheduled_at' => $request->scheduled_at,
-            'registration_opens_at' => $request->registration_opens_at ?? now(),
+            'scheduled_at' => $scheduledAt,
+            'registration_opens_at' => now(),
             'late_reg_levels' => $request->late_reg_levels ?? 3,
             'bounty_pct' => $request->bounty_pct ?? 10,
         ]);
@@ -242,14 +249,68 @@ class PokerTournamentController extends Controller
         return response()->json(['success' => true, 'data' => $tournament, 'message' => '토너먼트가 생성되었습니다.']);
     }
 
-    // Admin: 토너먼트 목록
+    // 템플릿에서 오늘/내일 토너먼트 생성
+    private function generateFromTemplate(PokerTournament $template)
+    {
+        $pattern = $template->schedule_pattern;
+        if (!$pattern) return;
+
+        $time = $pattern['time'] ?? '18:00';
+        $days = $pattern['days'] ?? [];
+
+        foreach ([Carbon::today('America/New_York'), Carbon::tomorrow('America/New_York')] as $date) {
+            $dayShort = strtolower(substr($date->format('D'), 0, 3));
+            if (!in_array($dayShort, $days)) continue;
+
+            $scheduledAt = Carbon::parse($date->format('Y-m-d') . ' ' . $time, 'America/New_York');
+            if ($scheduledAt->isPast()) continue;
+
+            // 중복 체크
+            $exists = PokerTournament::where('title', $template->title)
+                ->whereDate('scheduled_at', $scheduledAt->copy()->utc()->format('Y-m-d'))
+                ->where('is_template', false)
+                ->exists();
+
+            if ($exists) continue;
+
+            PokerTournament::create([
+                'title' => $template->title,
+                'type' => $template->type,
+                'status' => 'scheduled',
+                'buy_in' => $template->buy_in,
+                'starting_chips' => $template->starting_chips,
+                'max_players' => $template->max_players,
+                'min_players' => $template->min_players,
+                'scheduled_at' => $scheduledAt,
+                'registration_opens_at' => now(),
+                'late_reg_levels' => $template->late_reg_levels,
+                'bounty_pct' => $template->bounty_pct,
+                'is_template' => false,
+            ]);
+        }
+
+        broadcast(new PokerLobbyUpdate())->toOthers();
+    }
+
+    // Admin: 토너먼트 목록 (템플릿 + 일반 분리)
     public function adminList()
     {
-        $tournaments = PokerTournament::withCount('entries')
+        $templates = PokerTournament::where('is_template', true)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $tournaments = PokerTournament::where('is_template', false)
+            ->withCount('entries')
             ->orderByDesc('scheduled_at')
             ->paginate(20);
 
-        return response()->json(['success' => true, 'data' => $tournaments]);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'templates' => $templates,
+                'tournaments' => $tournaments,
+            ],
+        ]);
     }
 
     // Admin: 토너먼트 취소
