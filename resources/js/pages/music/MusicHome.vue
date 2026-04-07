@@ -82,7 +82,7 @@
             <!-- 즐겨찾기 버튼 -->
             <button v-if="auth.isLoggedIn" @click.stop="toggleFav(track)" class="text-sm transition" :class="isFav(track.id) ? 'text-red-500' : 'text-gray-300 hover:text-red-400'">{{ isFav(track.id) ? '❤️' : '🤍' }}</button>
             <!-- 플레이리스트 추가 -->
-            <button v-if="auth.isLoggedIn && !activePL && playlists.length" @click.stop="showAddToPL(track)" class="text-sm transition text-gray-300 hover:text-amber-500" title="플레이리스트에 추가">⭐</button>
+            <button v-if="auth.isLoggedIn && !activePL && playlists.length" @click.stop="showAddToPL(track)" class="text-sm transition" :class="isInPlaylist(track.id) ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'" :title="isInPlaylist(track.id) ? '플레이리스트에 추가됨' : '플레이리스트에 추가'">{{ isInPlaylist(track.id) ? '⭐' : '☆' }}</button>
             <!-- 플레이리스트에서 제거 -->
             <button v-if="auth.isLoggedIn && activePL" @click.stop="removeFromPL(track)" class="text-red-400 text-xs hover:text-red-600 opacity-0 group-hover:opacity-100">✕</button>
           </div>
@@ -174,6 +174,7 @@ const playlists = ref([])
 const plTracks = ref([])
 const favoriteTracks = ref([])
 const favIds = ref(new Set())
+const plTrackIds = ref(new Set())
 const activeCat = ref(null)
 const activePL = ref(null)
 const showFavorites = ref(false)
@@ -202,6 +203,7 @@ function formatDuration(sec) {
 }
 
 function isFav(id) { return favIds.value.has(id) }
+function isInPlaylist(id) { return plTrackIds.value.has(id) }
 
 function playTrack(track) {
   playing.value = track
@@ -303,7 +305,20 @@ async function toggleFav(track) {
 
 async function loadPlaylists() {
   if (!auth.isLoggedIn) return
-  try { const { data } = await axios.get('/api/music/playlists'); playlists.value = data.data || [] } catch {}
+  try {
+    const { data } = await axios.get('/api/music/playlists')
+    playlists.value = data.data || []
+    // 모든 플레이리스트의 트랙 ID 수집
+    const ids = new Set()
+    for (const pl of playlists.value) {
+      try {
+        const { data: plData } = await axios.get(`/api/music/playlists/${pl.id}`)
+        const tracks = (plData.data?.tracks || []).map(pt => pt.track).filter(Boolean)
+        tracks.forEach(t => ids.add(t.id))
+      } catch {}
+    }
+    plTrackIds.value = ids
+  } catch {}
 }
 
 async function createPlaylist() {
@@ -329,6 +344,7 @@ function showAddToPL(track) { addTrackTarget.value = track }
 async function addToPL(plId) {
   try {
     await axios.post(`/api/music/playlists/${plId}/tracks`, { track_id: addTrackTarget.value.id })
+    plTrackIds.value.add(addTrackTarget.value.id)
     await loadPlaylists()
   } catch {}
   addTrackTarget.value = null
