@@ -20,9 +20,9 @@
     <NavBar v-if="showNav" />
 
     <main>
-      <router-view v-slot="{ Component }">
+      <router-view v-slot="{ Component }" :key="route.fullPath">
         <keep-alive :include="['Home']">
-          <component :is="Component" />
+          <component :is="Component" :key="route.fullPath" />
         </keep-alive>
       </router-view>
     </main>
