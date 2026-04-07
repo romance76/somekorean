@@ -1,6 +1,6 @@
 <template>
 <div>
-  <h1 class="text-xl font-bold text-gray-800 mb-6">&spades;&xFE0F; &#54252;&#52964; &#44288;&#47532;</h1>
+  <h1 class="text-xl font-bold text-gray-800 mb-6">♠ 포커 관리</h1>
 
   <!-- Overview Cards -->
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
@@ -72,7 +72,7 @@
             </td>
             <td class="px-4 py-2 text-right font-mono">{{ (t.buy_in || 0).toLocaleString() }}</td>
             <td class="px-4 py-2 text-right font-mono">{{ t.entries_count || 0 }}/{{ t.max_players }}</td>
-            <td class="px-4 py-2 text-center text-xs text-gray-500">{{ new Date(t.scheduled_at).toLocaleString('ko-KR') }}</td>
+            <td class="px-4 py-2 text-center text-xs text-gray-500">{{ formatNY(t.scheduled_at) }}</td>
             <td class="px-4 py-2 text-center">
               <button v-if="t.status !== 'running' && t.status !== 'finished'" @click="cancelTournament(t.id)" class="text-xs text-red-500 hover:underline">취소</button>
             </td>
@@ -225,6 +225,11 @@ function toggleDay(day) {
   const idx = newTournament.value.schedule_days.indexOf(day)
   if (idx >= 0) newTournament.value.schedule_days.splice(idx, 1)
   else newTournament.value.schedule_days.push(day)
+}
+
+function formatNY(dt) {
+  if (!dt) return ''
+  return new Date(dt).toLocaleString('ko-KR', { timeZone: 'America/New_York', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const overviewCards = computed(() => [

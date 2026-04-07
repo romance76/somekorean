@@ -15,7 +15,7 @@ class GeneratePokerTournaments extends Command
     public function handle()
     {
         $templates = PokerTournament::where('is_template', true)->get();
-        $tomorrow = Carbon::tomorrow();
+        $tomorrow = Carbon::tomorrow('America/New_York');
         $created = 0;
 
         foreach ($templates as $template) {
@@ -36,9 +36,9 @@ class GeneratePokerTournaments extends Command
             }
 
             // 이미 내일 같은 시간에 같은 제목으로 생성되어 있는지
-            $scheduledAt = Carbon::parse($tomorrow->format('Y-m-d') . ' ' . $time);
+            $scheduledAt = Carbon::parse($tomorrow->format('Y-m-d') . ' ' . $time, 'America/New_York')->utc();
             $exists = PokerTournament::where('title', $template->title)
-                ->where('scheduled_at', $scheduledAt)
+                ->where('scheduled_at', $scheduledAt->format('Y-m-d H:i:s'))
                 ->where('is_template', false)
                 ->exists();
 

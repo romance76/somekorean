@@ -198,7 +198,7 @@ class PokerTournamentController extends Controller
                 'starting_chips' => $request->starting_chips,
                 'max_players' => $request->max_players,
                 'min_players' => $request->min_players ?? 9,
-                'scheduled_at' => Carbon::now('America/New_York')->format('Y-m-d') . ' ' . $request->schedule_time . ':00',
+                'scheduled_at' => Carbon::parse(Carbon::now('America/New_York')->format('Y-m-d') . ' ' . $request->schedule_time, 'America/New_York')->utc(),
                 'registration_opens_at' => now(),
                 'late_reg_levels' => $request->late_reg_levels ?? 3,
                 'bounty_pct' => $request->bounty_pct ?? 10,
@@ -227,8 +227,8 @@ class PokerTournamentController extends Controller
             'scheduled_at' => 'required|date',
         ]);
 
-        // datetime-local에서 오는 값을 NY 시간으로 해석
-        $scheduledAt = Carbon::parse($request->scheduled_at, 'America/New_York');
+        // datetime-local은 시간대 없이 오므로 NY로 해석 후 UTC 변환
+        $scheduledAt = Carbon::parse($request->scheduled_at, 'America/New_York')->utc();
 
         $tournament = PokerTournament::create([
             'title' => $request->title,
@@ -262,12 +262,12 @@ class PokerTournamentController extends Controller
             $dayShort = strtolower(substr($date->format('D'), 0, 3));
             if (!in_array($dayShort, $days)) continue;
 
-            $scheduledAt = Carbon::parse($date->format('Y-m-d') . ' ' . $time, 'America/New_York');
+            $scheduledAt = Carbon::parse($date->format('Y-m-d') . ' ' . $time, 'America/New_York')->utc();
             if ($scheduledAt->isPast()) continue;
 
-            // 중복 체크
+            // 중복 체크 (UTC 기준)
             $exists = PokerTournament::where('title', $template->title)
-                ->whereDate('scheduled_at', $scheduledAt->copy()->utc()->format('Y-m-d'))
+                ->where('scheduled_at', $scheduledAt->format('Y-m-d H:i:s'))
                 ->where('is_template', false)
                 ->exists();
 
