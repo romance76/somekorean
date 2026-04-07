@@ -17,5 +17,8 @@ Schedule::command('news:fetch')->dailyAt('06:00');
 Schedule::command('news:fetch')->dailyAt('12:00');
 Schedule::command('news:fetch')->dailyAt('18:00');
 
+// 음악 트랙 자동 수집 (매일 02:00, 500곡, 한국70%+팝30%, 7일 롤링)
+Schedule::command('music:fetch --daily=500 --korean-ratio=70')->dailyAt('02:00');
+
 Schedule::command('elder:check')->everyMinute();
 Schedule::command('reservations:expire')->everyMinute();

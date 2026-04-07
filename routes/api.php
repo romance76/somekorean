@@ -256,6 +256,10 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/api-keys/{id}/reveal', [AdminSettingsController::class, 'revealApiKey']);
 
     // 수동 수집
+    Route::post('/fetch-music', function () {
+        try { \Artisan::call('music:fetch', ['--daily' => 100, '--korean-ratio' => 70]); return response()->json(['success' => true, 'message' => '음악 100곡 수집 완료']); }
+        catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()], 500); }
+    });
     Route::post('/fetch-news', function () {
         try { \Artisan::call('news:fetch'); return response()->json(['success' => true, 'message' => '뉴스 수집 완료']); }
         catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()], 500); }

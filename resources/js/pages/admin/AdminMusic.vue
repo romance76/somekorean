@@ -1,6 +1,14 @@
 <template>
 <div>
-  <h1 class="text-xl font-black text-gray-800 mb-4">🎵 음악 관리</h1>
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-black text-gray-800">🎵 음악 관리</h1>
+    <div class="flex gap-2 items-center">
+      <span class="text-xs text-gray-400">총 {{ totalTracks }}곡</span>
+      <button @click="fetchMusic" :disabled="fetching" class="bg-blue-500 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-blue-600 disabled:opacity-50">
+        {{ fetching ? '수집중...' : '🔄 음악 수집 (100곡)' }}
+      </button>
+    </div>
+  </div>
 
   <div class="grid grid-cols-12 gap-4">
     <!-- 카테고리 목록 -->
@@ -103,6 +111,13 @@ import axios from 'axios'
 const categories = ref([])
 const tracks = ref([])
 const activeCat = ref(null)
+const fetching = ref(false)
+
+async function fetchMusic() {
+  fetching.value = true
+  try { await axios.post('/api/admin/fetch-music'); alert('음악 100곡 수집 완료! 새로고침하세요.') } catch(e) { alert(e.response?.data?.message || '수집 실패') }
+  fetching.value = false
+}
 const trackCounts = ref({})
 const showAddCat = ref(false)
 const showAddTrack = ref(false)
