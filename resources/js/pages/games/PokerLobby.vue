@@ -305,10 +305,10 @@ const tournaments = ref([])
 const tournamentsLoading = ref(false)
 
 const upcomingTournaments = computed(() =>
-  tournaments.value.filter(t => t.status === 'upcoming' || t.status === 'open')
+  tournaments.value.filter(t => ['scheduled', 'registering', 'starting'].includes(t.status))
 )
 const liveTournaments = computed(() =>
-  tournaments.value.filter(t => t.status === 'live' || t.status === 'in_progress')
+  tournaments.value.filter(t => t.status === 'running')
 )
 
 async function fetchTournaments() {
