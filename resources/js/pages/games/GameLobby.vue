@@ -85,7 +85,7 @@ const categories = [
 
 const allGames = [
   { path: '/games/gostop', icon: '🎴', name: '고스톱', desc: '한국 전통 카드', cat: 'card' },
-  { path: '/games/poker', icon: '♠️', name: '포커', desc: '텍사스 홀덤', cat: 'card' },
+  { path: '/games/poker', icon: '♠️', name: '토너먼트 포커', desc: 'AI 대전 토너먼트', cat: 'card' },
   { path: '/games/holdem', icon: '♦️', name: '홀덤', desc: '1인 홀덤', cat: 'card' },
   { path: '/games/blackjack', icon: '🂡', name: '블랙잭', desc: '21 카드', cat: 'card' },
   { path: '/games/memory', icon: '🧩', name: '메모리', desc: '카드 짝맞추기', cat: 'brain' },

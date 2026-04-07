@@ -101,6 +101,7 @@ const menuGroups = [
     items: [
       { to: '/admin/directory', icon: '🏪', label: '업소록' },
       { to: '/admin/games', icon: '🎮', label: '게임' },
+      { to: '/admin/poker', icon: '♠️', label: '포커 관리' },
       { to: '/admin/music', icon: '🎵', label: '음악' },
       { to: '/admin/shorts', icon: '📱', label: '숏츠' },
       { to: '/admin/shopping', icon: '🛍️', label: '쇼핑' },

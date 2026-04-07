@@ -33,6 +33,7 @@ use App\Http\Controllers\API\GameScoreController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\AdminSettingsController;
+use App\Http\Controllers\API\PokerController;
 
 // ─── Public Auth ───
 Route::post('/register', [AuthController::class, 'register']);
@@ -213,6 +214,18 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/users/{id}', [ProfileController::class, 'show']);
     Route::get('/users/{id}/posts', [ProfileController::class, 'posts']);
+
+    // ─── Poker ───
+    Route::prefix('poker')->group(function () {
+        Route::get('/wallet', [PokerController::class, 'wallet']);
+        Route::post('/wallet/deposit', [PokerController::class, 'deposit']);
+        Route::post('/wallet/withdraw', [PokerController::class, 'withdraw']);
+        Route::get('/wallet/transactions', [PokerController::class, 'transactions']);
+        Route::post('/games', [PokerController::class, 'storeGame']);
+        Route::get('/stats', [PokerController::class, 'stats']);
+        Route::get('/leaderboard', [PokerController::class, 'leaderboard']);
+        Route::get('/history', [PokerController::class, 'history']);
+    });
 });
 
 // ─── Admin ───
@@ -280,4 +293,13 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/music/categories', [MusicController::class, 'storeCategory']);
     Route::post('/music/tracks', [MusicController::class, 'storeTrack']);
     Route::delete('/music/tracks/{id}', [MusicController::class, 'destroyTrack']);
+
+    // ─── Admin Poker ───
+    Route::prefix('poker')->group(function () {
+        Route::get('/overview', [PokerController::class, 'adminOverview']);
+        Route::get('/wallets', [PokerController::class, 'adminWallets']);
+        Route::put('/wallets/{id}', [PokerController::class, 'adminUpdateWallet']);
+        Route::get('/settings', [PokerController::class, 'adminSettings']);
+        Route::put('/settings', [PokerController::class, 'adminUpdateSettings']);
+    });
 });
