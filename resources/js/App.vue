@@ -94,7 +94,7 @@ const showNav = computed(() => {
   100% { transform: translateX(-50%); }
 }
 .group:hover .group-hover\:animate-marquee {
-  animation: marquee 5s linear infinite;
+  animation: marquee 12s linear infinite;
   display: inline-block;
   padding-right: 2rem;
 }
