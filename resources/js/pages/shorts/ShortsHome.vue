@@ -50,11 +50,11 @@
 
     <!-- 위/아래 네비 버튼 -->
     <button @click="prev" :disabled="idx <= 0"
-      class="absolute top-1/2 -translate-y-full left-1/2 -translate-x-1/2 -mt-20 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">
+      class="absolute top-1/3 right-4 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">
       ▲
     </button>
     <button @click="next" :disabled="idx >= shorts.length - 1"
-      class="absolute top-1/2 translate-y-0 left-1/2 -translate-x-1/2 mt-10 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">
+      class="absolute top-1/2 right-4 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">
       ▼
     </button>
 
