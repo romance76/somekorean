@@ -84,47 +84,81 @@
       :my-bounties="myBounties" :prize-pool="prizePool" :elapsed-time="elapsedTime"
       :start-chips="config.startChips" @close="showMonitor = false" />
 
-    <!-- Poker Table (with top padding so cards don't clip) -->
-    <div class="flex-1 min-h-0 pt-2">
-      <PokerTable :seats="seats" :community="community" :pot="pot" :stage="stage"
-        :dealer-idx="dealerIdx" :showdown="showdown" :hand-results="handResults"
-        :game-over="gameOver" :bl="bl" :act-idx="actIdx" :chat-bubbles="chatBubbles"
-        :current-bet-level="currentBetLevel" :blind-level="blindLevel" :total-remaining="totalRemaining"
-        :paid-slots="paidSlots" :fold-reveals="foldReveals" :is-player-turn="isPlayerTurn" />
-    </div>
-
-    <!-- Bottom panel: fixed, no jumping -->
-    <div class="shrink-0">
-      <!-- Result/Action log (1줄) -->
-      <div v-if="lastAction || bustMsg || (handResults && gameOver)" class="text-center px-3 py-1">
-        <span v-if="handResults && gameOver" :class="handResults.winners[0]?.name === '\uB098' ? 'text-emerald-400' : 'text-red-400'" class="text-sm font-bold">{{ handResults.msg }}</span>
-        <span v-else-if="bustMsg" class="text-red-400 text-xs">{{ bustMsg }}</span>
-        <span v-else class="text-gray-400 text-xs">{{ lastAction }}</span>
+    <!-- Main area: Table (left) + Side panel (right) -->
+    <div class="flex-1 min-h-0 flex">
+      <!-- 테이블 (70%) -->
+      <div class="flex-[7] min-h-0 pt-1">
+        <PokerTable :seats="seats" :community="community" :pot="pot" :stage="stage"
+          :dealer-idx="dealerIdx" :showdown="showdown" :hand-results="handResults"
+          :game-over="gameOver" :bl="bl" :act-idx="actIdx" :chat-bubbles="chatBubbles"
+          :current-bet-level="currentBetLevel" :blind-level="blindLevel" :total-remaining="totalRemaining"
+          :paid-slots="paidSlots" :fold-reveals="foldReveals" :is-player-turn="isPlayerTurn" />
       </div>
 
-      <!-- 액션 버튼 (먼저!) -->
+      <!-- 사이드 패널 (30%) — 코칭 + 폴드 + 로그 -->
+      <div class="flex-[3] min-w-[220px] max-w-[300px] bg-gray-950/80 border-l border-gray-800/50 flex flex-col overflow-hidden hidden lg:flex">
+        <!-- 코칭 -->
+        <div v-if="showCoach && coachTips && !gameOver" class="p-3 border-b border-gray-800/50">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <span class="bg-blue-500/20 border border-blue-500/30 rounded px-1.5 py-0.5 text-blue-400 text-[10px] font-bold">{{ coachTips.posName }}</span>
+              <span class="text-gray-400 text-[10px]">{{ coachTips.posFullName }}</span>
+            </div>
+            <span :class="coachTips.m <= 10 ? 'text-red-400' : 'text-gray-400'" class="text-[10px] font-mono">{{ coachTips.m }}BB</span>
+          </div>
+          <!-- 승률 바 -->
+          <div class="mb-2">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-gray-400 text-[10px]">승률</span>
+              <span :class="coachTips.equity >= 60 ? 'text-emerald-400' : coachTips.equity >= 40 ? 'text-amber-400' : 'text-red-400'" class="text-lg font-black">{{ coachTips.equity }}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div :class="coachTips.equity >= 60 ? 'bg-emerald-500' : coachTips.equity >= 40 ? 'bg-amber-500' : 'bg-red-500'" class="h-full rounded-full transition-all" :style="{ width: coachTips.equity + '%' }" />
+            </div>
+          </div>
+          <!-- 팟오즈 -->
+          <div v-if="coachTips.toCall > 0" class="bg-black/30 rounded px-2 py-1 mb-2 text-[10px] text-gray-300">
+            팟오즈: {{ coachTips.toCall }}/{{ coachTips.pot + coachTips.toCall }} = <span class="text-blue-400 font-bold">{{ coachTips.potOddsPct }}%</span>
+          </div>
+          <!-- 추천 -->
+          <div class="rounded px-2 py-1.5" :style="{ background: coachTips.rec.color + '15', border: '1px solid ' + coachTips.rec.color + '30' }">
+            <span :style="{ color: coachTips.rec.color }" class="text-sm font-black">→ {{ coachTips.rec.action }}</span>
+            <div class="text-gray-400 text-[10px] mt-0.5 leading-tight">{{ coachTips.rec.reason }}</div>
+          </div>
+          <!-- 핸드 설명 -->
+          <div v-if="coachTips.handDesc || coachTips.madeHand" class="text-gray-400 text-[9px] mt-1.5">
+            {{ coachTips.madeHand ? '메이드: ' + coachTips.madeHand : coachTips.handDesc }}
+          </div>
+        </div>
+
+        <!-- 폴드 카드 -->
+        <div class="flex-1 overflow-y-auto p-3">
+          <div v-if="foldReveals.length > 0" class="mb-2">
+            <div class="text-amber-600 text-[10px] font-bold mb-1.5">🃏 폴드 카드</div>
+            <div v-for="(fr, i) in foldReveals.slice(-5)" :key="i" class="flex items-start gap-2 mb-2">
+              <span class="text-sm shrink-0">{{ fr.emoji }}</span>
+              <div class="min-w-0">
+                <div class="text-gray-300 text-[10px] font-bold">{{ fr.name }} <span class="text-gray-500">({{ fr.posLabel }})</span></div>
+                <div class="text-amber-700 text-[9px] leading-tight">{{ fr.reason }}</div>
+              </div>
+            </div>
+          </div>
+          <!-- 로그 -->
+          <div v-if="lastAction && !gameOver" class="text-gray-400 text-[10px]">{{ lastAction }}</div>
+          <div v-if="bustMsg" class="text-red-400 text-[10px] mt-1">{{ bustMsg }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: 결과 + 액션 버튼 -->
+    <div class="shrink-0">
+      <div v-if="handResults && gameOver" class="text-center py-1">
+        <span :class="handResults.winners[0]?.name === '\uB098' ? 'text-emerald-400' : 'text-red-400'" class="text-sm font-bold">{{ handResults.msg }}</span>
+      </div>
       <PokerActions :is-player-turn="isPlayerTurn" :game-over="gameOver" :tourney-over="tourneyOver"
         :can-check="canCheck" :call-amt="callAmt" :current-bet-level="currentBetLevel"
         :player-chips="playerSeat?.chips || 0" :blind-b-b="bl.bb" :raise-amt="raiseAmt"
         @action="doPlayerAction" @update-raise="raiseAmt = $event" @next-hand="nextHand" />
-
-      <!-- 코칭 + 폴드 (컴팩트, 좌측 정렬) -->
-      <div v-if="(showCoach && coachTips && !gameOver) || foldReveals.length > 0" class="flex gap-2 px-3 py-1.5 bg-black/30 overflow-hidden max-h-[60px]">
-        <!-- 코칭: 좌측 컴팩트 -->
-        <div v-if="showCoach && coachTips && !gameOver" class="flex items-center gap-3 text-xs shrink-0">
-          <span class="bg-blue-500/20 border border-blue-500/30 rounded px-1.5 text-blue-400 font-bold">{{ coachTips.posName }}</span>
-          <span :class="coachTips.equity >= 60 ? 'text-emerald-400' : coachTips.equity >= 40 ? 'text-amber-400' : 'text-red-400'" class="font-bold">{{ coachTips.equity }}%</span>
-          <span :style="{ color: coachTips.rec.color }" class="font-bold">{{ coachTips.rec.action }}</span>
-          <span class="text-gray-400 hidden sm:inline max-w-[200px] truncate">{{ coachTips.rec.reason }}</span>
-        </div>
-        <!-- 폴드 카드: 우측 -->
-        <div v-if="foldReveals.length > 0" class="flex items-center gap-2 text-xs ml-auto shrink-0">
-          <span class="text-amber-600 font-bold">폴드:</span>
-          <span v-for="(fr, i) in foldReveals.slice(-2)" :key="i" class="text-gray-400">
-            {{ fr.emoji }}{{ fr.name }}
-          </span>
-        </div>
-      </div>
     </div>
   </template>
 
