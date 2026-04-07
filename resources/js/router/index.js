@@ -23,7 +23,7 @@ const routes = [
   { path: '/community', name: 'community', component: p('community/BoardList') },
   { path: '/community/write/:board?', name: 'post-write', component: p('community/PostWrite'), meta: { auth: true } },
   { path: '/community/:board', name: 'board', component: p('community/BoardList') },
-  { path: '/community/:board/:id', name: 'post-detail', component: p('community/PostDetail') },
+  { path: '/community/:board/:id', name: 'post-detail', component: p('community/BoardList') },
 
   // Q&A
   { path: '/qa', name: 'qa', component: p('qa/QaList') },

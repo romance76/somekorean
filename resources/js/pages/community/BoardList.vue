@@ -291,9 +291,24 @@ onMounted(async () => {
     const found = boards.value.find(b => b.slug === boardSlug)
     if (found) {
       activeBoard.value = found
-      loadPosts()
+      await loadPosts()
     }
   }
+
+  // URL에 id가 있으면 해당 글을 인라인으로 열기
+  const postId = route.params.id
+  if (postId) {
+    try {
+      const { data } = await axios.get(`/api/posts/${postId}`)
+      activeItem.value = data.data
+      // 댓글도 로드
+      try {
+        const { data: cData } = await axios.get(`/api/comments/post/${postId}`)
+        comments.value = cData.data || []
+      } catch {}
+    } catch {}
+  }
+
   loading.value = false
 })
 </script>
