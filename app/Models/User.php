@@ -15,7 +15,7 @@ class User extends Authenticatable implements JWTSubject
         'name', 'nickname', 'email', 'password', 'phone',
         'address', 'city', 'state', 'zipcode', 'latitude', 'longitude',
         'avatar', 'bio', 'language', 'points', 'game_points',
-        'role', 'is_banned', 'ban_reason', 'last_login_at', 'login_count',
+        'role', 'is_banned', 'ban_reason', 'allow_friend_request', 'last_login_at', 'last_active_at', 'login_count',
         'provider', 'provider_id',
     ];
 

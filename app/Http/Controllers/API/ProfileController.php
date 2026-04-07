@@ -8,14 +8,14 @@ class ProfileController extends Controller
 {
     public function show($id)
     {
-        $user = User::select('id','name','nickname','avatar','bio','city','state','points','created_at')->findOrFail($id);
+        $user = User::select('id','name','nickname','avatar','bio','city','state','points','allow_friend_request','last_active_at','created_at')->findOrFail($id);
         return response()->json(['success' => true, 'data' => $user]);
     }
 
     public function update(Request $request)
     {
         $user = auth()->user();
-        $user->update($request->only('name','nickname','bio','phone','address','city','state','zipcode','language'));
+        $user->update($request->only('name','nickname','bio','phone','address','city','state','zipcode','language','allow_friend_request'));
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');

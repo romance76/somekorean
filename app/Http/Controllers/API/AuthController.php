@@ -25,6 +25,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'language' => 'ko',
+            'allow_friend_request' => $request->allow_friend_request ?? true,
         ]);
 
         // 가입 보너스 +10 포인트

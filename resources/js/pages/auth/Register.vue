@@ -11,6 +11,16 @@
       <div><label class="text-sm font-semibold text-gray-700">이메일</label><input v-model="form.email" type="email" required class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       <div><label class="text-sm font-semibold text-gray-700">비밀번호</label><input v-model="form.password" type="password" required minlength="6" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       <div><label class="text-sm font-semibold text-gray-700">비밀번호 확인</label><input v-model="form.password_confirmation" type="password" required class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
+      <div class="flex items-start gap-2 mb-2">
+        <div class="flex-1">
+          <label class="text-sm font-semibold text-gray-700 mb-1 block">친구 요청 허용</label>
+          <div class="flex gap-3">
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" v-model="form.allow_friend_request" :value="true" class="text-amber-500" /><span class="text-sm text-gray-600">수락 (다른 사람이 친구 추가 가능)</span></label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" v-model="form.allow_friend_request" :value="false" class="text-amber-500" /><span class="text-sm text-gray-600">거절</span></label>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-0.5">나중에 프로필 설정에서 변경할 수 있습니다</p>
+        </div>
+      </div>
       <div class="flex items-start gap-2">
         <input v-model="agreeTerms" type="checkbox" id="terms" class="mt-1 rounded" />
         <label for="terms" class="text-xs text-gray-500">
@@ -31,7 +41,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 const auth = useAuthStore()
 const router = useRouter()
-const form = reactive({ name: '', nickname: '', email: '', password: '', password_confirmation: '' })
+const form = reactive({ name: '', nickname: '', email: '', password: '', password_confirmation: '', allow_friend_request: true })
 const error = ref('')
 const submitting = ref(false)
 const agreeTerms = ref(false)

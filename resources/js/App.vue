@@ -18,6 +18,8 @@
     </Teleport>
 
     <NavBar v-if="showNav" />
+    <!-- 글로벌 미니 프로필 팝업 -->
+    <UserPopup :show="showUserPopup" :user-id="popupUserId" @close="showUserPopup=false" />
 
     <main>
       <router-view v-slot="{ Component }" :key="route.fullPath">
@@ -66,14 +68,28 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSiteStore } from './stores/site'
 import NavBar from './components/NavBar.vue'
 import BottomNav from './components/BottomNav.vue'
+import UserPopup from './components/UserPopup.vue'
 
 const route = useRoute()
 const siteStore = useSiteStore()
+
+// 글로벌 유저 팝업
+const showUserPopup = ref(false)
+const popupUserId = ref(null)
+
+// 글로벌 이벤트: 어디서든 window.openUserPopup(userId) 호출 가능
+if (typeof window !== 'undefined') {
+  window.openUserPopup = (userId) => {
+    if (!userId) return
+    popupUserId.value = userId
+    showUserPopup.value = true
+  }
+}
 
 const showNav = computed(() => {
   const p = route.path

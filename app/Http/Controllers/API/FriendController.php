@@ -53,6 +53,9 @@ class FriendController extends Controller
 
     public function sendRequest(Request $request, $userId) {
         if ($userId == auth()->id()) return response()->json(['success' => false, 'message' => '자신에게 요청할 수 없습니다'], 400);
+        $target = User::find($userId);
+        if (!$target) return response()->json(['success' => false, 'message' => '사용자를 찾을 수 없습니다'], 404);
+        if (!$target->allow_friend_request) return response()->json(['success' => false, 'message' => '이 사용자는 친구 요청을 받지 않습니다'], 403);
         if (Friend::where('user_id', auth()->id())->where('friend_id', $userId)->exists())
             return response()->json(['success' => false, 'message' => '이미 요청했습니다'], 400);
 

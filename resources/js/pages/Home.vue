@@ -73,7 +73,7 @@
                   <span v-if="post.comment_count" class="text-xs text-amber-500 font-bold flex-shrink-0">[{{ post.comment_count }}]</span>
                 </div>
                 <div class="flex items-center gap-3 flex-shrink-0 ml-2">
-                  <span class="text-xs text-gray-400">{{ post.user?.name }}</span>
+                  <button @click.prevent.stop="window.openUserPopup && window.openUserPopup(post.user?.id)" class="text-xs text-gray-400 hover:text-amber-700 hover:underline">{{ post.user?.name }}</button>
                   <span class="text-xs text-gray-300">{{ post.view_count }}</span>
                 </div>
               </RouterLink>
