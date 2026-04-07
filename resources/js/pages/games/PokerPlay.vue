@@ -71,8 +71,9 @@
 
       <!-- ◀ 좌측: 코칭 + 폴드 -->
       <div class="w-[220px] shrink-0 bg-[#080c14]/90 border-r border-gray-800/30 flex flex-col overflow-hidden hidden xl:flex">
-        <!-- 코칭 -->
-        <div v-if="coachTips && !gameOver" class="p-2.5 border-b border-gray-800/30">
+        <!-- 코칭 (고정 공간) -->
+        <div class="p-2.5 border-b border-gray-800/30 h-[250px] overflow-hidden">
+        <template v-if="coachTips && !gameOver">
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-1">
               <span class="bg-blue-500/20 border border-blue-500/30 rounded px-1.5 py-0.5 text-blue-400 text-xs font-bold">{{ coachTips.posName }}</span>
@@ -99,6 +100,8 @@
           <div v-if="coachTips.handDesc || coachTips.madeHand" class="text-gray-200 text-xs mt-1.5">
             {{ coachTips.madeHand ? '메이드: ' + coachTips.madeHand : coachTips.handDesc }}
           </div>
+        </template>
+        <div v-else class="text-gray-400 text-xs text-center pt-8">코칭 대기 중...</div>
         </div>
 
         <!-- 폴드 카드 -->
