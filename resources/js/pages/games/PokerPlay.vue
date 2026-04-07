@@ -1,6 +1,8 @@
 <template>
-<div class="select-none h-screen bg-gradient-to-b from-gray-950 via-[#0e1525] to-[#0b1018] flex flex-col overflow-hidden"
+<div ref="gameWrapper" class="select-none h-screen bg-gradient-to-b from-gray-950 via-[#0e1525] to-[#0b1018] overflow-hidden"
   style="font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;">
+<!-- 스케일 컨테이너: 고정 1400x800 기준, 뷰포트에 맞게 자동 축소/확대 -->
+<div ref="scaleContainer" class="origin-top-left flex flex-col" :style="scaleStyle">
 
   <!-- ===== RESULT SCREEN ===== -->
   <div v-if="tourneyOver" class="min-h-screen flex items-center justify-center p-4">
@@ -188,13 +190,14 @@
 
   <!-- Loading -->
   <div v-else class="min-h-screen flex items-center justify-center">
-    <div class="text-gray-300 text-sm">&#47196;&#46377; &#51473;...</div>
+    <div class="text-gray-300 text-sm">로딩 중...</div>
   </div>
-</div>
+</div><!-- /scaleContainer -->
+</div><!-- /gameWrapper -->
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePokerGame } from '@/composables/usePokerGame'
 import { usePokerWallet } from '@/composables/usePokerWallet'
@@ -204,6 +207,26 @@ import PokerActions from '@/components/poker/PokerActions.vue'
 // PokerCoaching now inlined in bottom panel for compact layout
 
 const router = useRouter()
+
+// 스케일 시스템: 고정 해상도 1400x800 기준, 뷰포트에 자동 맞춤
+const BASE_W = 1400
+const BASE_H = 800
+const gameWrapper = ref(null)
+const scaleContainer = ref(null)
+const scaleFactor = ref(1)
+
+function updateScale() {
+  if (!gameWrapper.value) return
+  const w = gameWrapper.value.clientWidth
+  const h = gameWrapper.value.clientHeight
+  scaleFactor.value = Math.min(w / BASE_W, h / BASE_H)
+}
+
+const scaleStyle = computed(() => ({
+  width: BASE_W + 'px',
+  height: BASE_H + 'px',
+  transform: `scale(${scaleFactor.value})`,
+}))
 const { saveGame } = usePokerWallet()
 
 const {
@@ -268,6 +291,10 @@ function saveResult() {
 let tourneyWatcher = null
 
 onMounted(() => {
+  // 스케일 초기화 + 리사이즈 감지
+  updateScale()
+  window.addEventListener('resize', updateScale)
+
   // Read config from sessionStorage (set by PokerLobby)
   const saved = sessionStorage.getItem('pokerConfig')
   if (saved) {
@@ -285,6 +312,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateScale)
   cleanup()
   if (tourneyWatcher) { clearInterval(tourneyWatcher); tourneyWatcher = null }
 })
