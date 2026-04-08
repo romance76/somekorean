@@ -15,16 +15,18 @@
         <img src="/images/logo_00.jpg" alt="SomeKorean" class="h-8 rounded-lg object-contain" @error="e => e.target.outerHTML='<div class=\'w-7 h-7 bg-amber-400 rounded-lg flex items-center justify-center text-xs font-black text-amber-900\'>SK</div>'" />
       </RouterLink>
 
-      <!-- Search -->
-      <div class="flex-1 mx-2 min-w-0">
-        <form @submit.prevent="goSearch" class="flex border border-amber-400 rounded-lg overflow-hidden">
-          <input v-model="searchQ" type="text" placeholder="검색"
-            class="flex-1 px-2 py-1.5 text-sm outline-none min-w-0" />
-          <button type="submit" class="bg-amber-400 px-2.5 text-amber-900 hover:bg-amber-500 transition flex-shrink-0">
+      <!-- Search (데스크톱만 — 모바일은 햄버거 메뉴 안에) -->
+      <div class="flex-1 mx-2 min-w-0 hidden md:block">
+        <form @submit.prevent="goSearch" class="flex border border-amber-400 rounded-lg overflow-hidden max-w-lg mx-auto">
+          <input v-model="searchQ" type="text" placeholder="검색어를 입력하세요"
+            class="flex-1 px-3 py-1.5 text-sm outline-none min-w-0" />
+          <button type="submit" class="bg-amber-400 px-3 text-amber-900 hover:bg-amber-500 transition flex-shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </button>
         </form>
       </div>
+      <!-- 모바일: 로고 옆 빈 공간 채우기 -->
+      <div class="flex-1 md:hidden"></div>
 
       <!-- Auth -->
       <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -92,6 +94,16 @@
             <button @click="mobileMenu=false" class="p-1 text-gray-400 hover:text-gray-600">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
+          </div>
+          <!-- 검색 -->
+          <div class="px-3 py-2 border-b">
+            <form @submit.prevent="goSearch(); mobileMenu=false" class="flex border border-amber-400 rounded-lg overflow-hidden">
+              <input v-model="searchQ" type="text" placeholder="검색어를 입력하세요"
+                class="flex-1 px-3 py-2 text-sm outline-none" />
+              <button type="submit" class="bg-amber-400 px-3 text-amber-900">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </button>
+            </form>
           </div>
           <!-- 메뉴 목록 -->
           <div class="py-2">
