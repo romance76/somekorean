@@ -6,28 +6,6 @@
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else class="grid grid-cols-12 gap-4">
 
-      <!-- 모바일: 플레이어 먼저 (lg 이상에서는 숨김) -->
-      <div class="col-span-12 lg:hidden" v-if="playing">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" ref="mobilePlayer">
-          <div class="px-4 py-2 border-b font-bold text-sm text-amber-900">🎧 Now Playing</div>
-          <div class="p-3">
-            <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden mb-2">
-              <iframe :src="`https://www.youtube.com/embed/${playing.youtube_id}?autoplay=1`"
-                class="w-full h-full" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-            </div>
-            <div class="text-sm font-bold text-gray-800 truncate">{{ playing.title }}</div>
-            <div class="text-xs text-gray-400 mt-0.5">{{ playing.artist }}</div>
-            <div class="flex gap-2 mt-2">
-              <button @click="prevTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200">⏮</button>
-              <button @click="nextTrack" class="bg-gray-100 px-3 py-1 rounded text-xs hover:bg-gray-200 flex-1">다음 ⏭</button>
-              <button @click="shufflePlay" class="bg-blue-100 px-2 py-1 rounded text-xs hover:bg-blue-200" :class="isShuffled?'text-blue-700 font-bold':'text-blue-400'">🔀</button>
-              <button @click="toggleRepeat" class="bg-gray-100 px-2 py-1 rounded text-xs hover:bg-gray-200" :class="repeatMode?'text-amber-700 font-bold':'text-gray-400'">{{ repeatMode === 'one' ? '🔂' : '🔁' }}</button>
-              <button v-if="auth.isLoggedIn" @click="toggleFav(playing)" class="text-sm" :class="isFav(playing.id)?'text-red-500':'text-gray-300'">{{ isFav(playing.id)?'❤️':'🤍' }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 카테고리 + 내 플레이리스트 -->
       <div class="col-span-12 lg:col-span-3 space-y-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -84,8 +62,8 @@
         </div>
       </div>
 
-      <!-- 트랙 목록 -->
-      <div class="col-span-12 lg:col-span-5">
+      <!-- 플레이어 (가운데) -->
+      <div class="col-span-12 lg:col-span-4 order-first lg:order-none">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             <span>🎶 {{ showFavorites ? '❤️ 즐겨찾기' : (activePL ? activePL.name : (activeCat?.name || '트랙')) }}</span>
@@ -122,8 +100,8 @@
         </div>
       </div>
 
-      <!-- 플레이어 (데스크톱 — 모바일에서는 위에 표시) -->
-      <div class="hidden lg:block col-span-4">
+      <!-- 트랙 목록 (오른쪽) -->
+      <div class="col-span-12 lg:col-span-5">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">🎧 Now Playing</div>
           <div v-if="playing" class="p-3">
