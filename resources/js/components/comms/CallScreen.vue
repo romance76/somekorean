@@ -52,7 +52,8 @@
       <div v-else class="flex flex-col items-center w-full max-w-xs gap-0">
         <!-- Status label -->
         <p class="text-sm text-white/60 mb-8 tracking-wide">
-          <span v-if="callStatus === 'calling'">연결 중...</span>
+          <span v-if="callStatus === 'calling'">발신 중...</span>
+          <span v-else-if="callStatus === 'connecting'">연결 중...</span>
           <span v-else-if="callStatus === 'connected'">통화 중 &middot; {{ durationFormatted }}</span>
           <span v-else-if="callStatus === 'ended'">통화 종료</span>
         </p>
@@ -64,6 +65,13 @@
                @error="$event.target.src = '/images/default-avatar.svg'">
           <p class="text-2xl font-bold mt-4">{{ remoteUser?.name }}</p>
         </div>
+
+        <!-- ★ 모바일 오디오 차단 시 "소리 켜기" 버튼 -->
+        <button v-if="remoteAudioBlocked && callStatus === 'connected'"
+                @click="$emit('unblock-audio')"
+                class="bg-yellow-400 text-black font-bold px-8 py-3 rounded-full mb-6 animate-pulse text-sm shadow-lg">
+          🔊 탭하여 소리 켜기
+        </button>
 
         <!-- Audio wave animation (when connected) -->
         <div v-if="callStatus === 'connected'"
@@ -128,16 +136,17 @@
 
 <script setup>
 defineProps({
-  show:              Boolean,
-  callStatus:        String,
-  incomingCall:      Object,
-  remoteUser:        Object,
-  isMuted:           Boolean,
-  isSpeaker:         Boolean,
-  durationFormatted: String,
+  show:               Boolean,
+  callStatus:         String,
+  incomingCall:       Object,
+  remoteUser:         Object,
+  isMuted:            Boolean,
+  isSpeaker:          Boolean,
+  durationFormatted:  String,
+  remoteAudioBlocked: Boolean,
 })
 
-defineEmits(['answer', 'decline', 'end', 'toggle-mute', 'toggle-speaker'])
+defineEmits(['answer', 'decline', 'end', 'toggle-mute', 'toggle-speaker', 'unblock-audio'])
 </script>
 
 <!--

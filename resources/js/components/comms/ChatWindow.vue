@@ -114,8 +114,6 @@
       </button>
     </div>
 
-    <!-- Hidden audio element for WebRTC remote audio -->
-    <audio id="sk-remote-audio" autoplay playsinline class="hidden"></audio>
   </div>
 </template>
 

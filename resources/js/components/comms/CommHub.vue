@@ -26,11 +26,13 @@
       :is-muted="isMuted"
       :is-speaker="isSpeaker"
       :duration-formatted="durationFormatted"
+      :remote-audio-blocked="remoteAudioBlocked"
       @answer="answerCall"
       @decline="declineCall"
       @end="endCall"
       @toggle-mute="toggleMute"
       @toggle-speaker="toggleSpeaker"
+      @unblock-audio="unblockRemoteAudio"
     />
   </div>
 </template>
@@ -59,6 +61,8 @@ const {
   remoteUser,
   incomingCall,
   durationFormatted,
+  remoteAudioBlocked,
+  unblockRemoteAudio,
   listenForSignals,
   startCall,
   answerCall,

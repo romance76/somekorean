@@ -17,6 +17,7 @@ class User extends Authenticatable implements JWTSubject
         'avatar', 'bio', 'language', 'points', 'game_points',
         'role', 'is_banned', 'ban_reason', 'allow_friend_request', 'last_login_at', 'last_active_at', 'login_count',
         'provider', 'provider_id',
+        'fcm_token', 'push_platform',
     ];
 
     protected $hidden = ['password', 'remember_token'];
