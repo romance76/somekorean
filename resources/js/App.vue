@@ -89,8 +89,13 @@ if (typeof window !== 'undefined') {
   window.openCommChat = (partner, conversationId) => {
     commHub.value?.openChat(partner, conversationId)
   }
-  window.startCommCall = (partner) => {
-    commHub.value?.startCall(partner)
+  window.startCommCall = async (partner) => {
+    try {
+      await commHub.value?.startCall(partner)
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || '통화 연결 실패'
+      alert('📞 ' + msg + '\n\n마이크 권한을 허용해주세요.')
+    }
   }
 }
 

@@ -1,6 +1,8 @@
 <template>
   <div>
     <slot />
+    <!-- 원격 오디오 (통화 시 상대방 음성) -->
+    <audio id="sk-remote-audio" autoplay playsinline style="display:none" />
 
     <!-- Chat window overlay (via Teleport) -->
     <Teleport to="body">

@@ -23,8 +23,12 @@ class FriendController extends Controller
         $friends = $query->get();
 
         // 관련 유저 정보 + 온라인 상태 추가
-        $result = $friends->map(function($f) use ($userId) {
+        // 양방향 레코드 중복 제거 (같은 상대방이 2번 나오는 것 방지)
+        $seenIds = [];
+        $result = $friends->map(function($f) use ($userId, &$seenIds) {
             $otherId = $f->user_id == $userId ? $f->friend_id : $f->user_id;
+            if (in_array($otherId, $seenIds)) return null; // 중복 스킵
+            $seenIds[] = $otherId;
             $isSender = $f->user_id == $userId; // 내가 보낸 건지
             $other = User::select('id','name','nickname','avatar','city','state','bio','last_active_at')->find($otherId);
             if (!$other) return null;
