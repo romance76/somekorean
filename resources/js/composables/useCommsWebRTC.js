@@ -75,25 +75,49 @@ export function useCommsWebRTC() {
 
     // ★ 원격 오디오 트랙 수신
     pc.ontrack = (event) => {
-      const stream = event.streams[0]
-      console.log('[WebRTC] 🔊 Remote track received:', stream.getAudioTracks().length, 'audio tracks')
-
-      const audio = document.getElementById('sk-remote-audio')
-      if (!audio) {
-        console.error('[WebRTC] ❌ <audio> element not found!')
-        return
+      // 모바일에서 event.streams가 비어있을 수 있음 — track으로 직접 생성
+      let stream
+      if (event.streams && event.streams[0]) {
+        stream = event.streams[0]
+      } else {
+        stream = new MediaStream([event.track])
       }
+      console.log('[WebRTC] 🔊 Remote track:', stream.getAudioTracks().length, 'audio,',
+        event.track?.kind, event.track?.readyState)
 
-      audio.srcObject = stream
-      const playPromise = audio.play()
-      if (playPromise) {
-        playPromise.then(() => {
+      // 방법 1: 새 Audio 객체 생성 (가장 안정적 — DOM 의존 없음)
+      try {
+        const el = new Audio()
+        el.autoplay = true
+        el.playsInline = true
+        el.srcObject = stream
+        el.play().then(() => {
           remoteAudioBlocked.value = false
-          console.log('[WebRTC] ✅ Remote audio playing')
+          console.log('[WebRTC] ✅ Audio playing (new Audio())')
         }).catch(e => {
-          console.warn('[WebRTC] ⚠️ audio.play() blocked:', e.name)
+          console.warn('[WebRTC] new Audio play blocked:', e.name)
+          // 방법 2: DOM 엘리먼트 fallback
+          playViaDomElement(stream)
+        })
+      } catch (e) {
+        console.warn('[WebRTC] new Audio() failed:', e)
+        playViaDomElement(stream)
+      }
+    }
+
+    function playViaDomElement(stream) {
+      const audio = document.getElementById('sk-remote-audio')
+      if (audio) {
+        audio.srcObject = stream
+        audio.play().then(() => {
+          remoteAudioBlocked.value = false
+          console.log('[WebRTC] ✅ Audio playing (DOM element)')
+        }).catch(e => {
+          console.warn('[WebRTC] DOM audio also blocked:', e.name)
           remoteAudioBlocked.value = true
         })
+      } else {
+        remoteAudioBlocked.value = true
       }
     }
 
@@ -129,11 +153,24 @@ export function useCommsWebRTC() {
   async function getLocalStream() {
     if (localStream) return localStream
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      })
       console.log('[WebRTC] ✅ Mic:', localStream.getAudioTracks()[0]?.label)
       return localStream
     } catch (err) {
       console.error('[WebRTC] ❌ Mic failed:', err.name, err.message)
+      // 사용자에게 마이크 문제 알림
+      if (err.name === 'NotAllowedError') {
+        alert('마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크를 허용해주세요.')
+      } else if (err.name === 'NotFoundError') {
+        alert('마이크를 찾을 수 없습니다.')
+      }
       return null
     }
   }
