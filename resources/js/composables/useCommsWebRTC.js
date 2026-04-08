@@ -288,6 +288,7 @@ export function useCommsWebRTC() {
         payload: { sdp: offer },
       })
       console.log('[WebRTC] ✅ Offer sent to', targetUser.name)
+      startCallMonitor()
     } catch (err) {
       console.error('[WebRTC] startCall failed:', err)
       handleCallEnded()
@@ -311,7 +312,8 @@ export function useCommsWebRTC() {
     remoteUser.value = { id: caller_id, name: caller_name, avatar: caller_avatar }
     callStatus.value = 'connected'
     incomingCall.value = null
-    startDurationTimer()  // 수락 즉시 타이머 시작
+    startDurationTimer()
+    startCallMonitor()  // 상대방 끊었는지 3초마다 확인
 
     try {
       // 1. 서버에 수락 알림
@@ -397,9 +399,32 @@ export function useCommsWebRTC() {
   // ── 통화 종료 ──────────────────────────────────────────────────
   async function endCall(notifyServer = true) {
     if (notifyServer && currentCallId.value) {
-      await axios.post(`/api/comms/calls/${currentCallId.value}/end`).catch(() => {})
+      try {
+        await axios.post(`/api/comms/calls/${currentCallId.value}/end`)
+        console.log('[WebRTC] End API sent OK')
+      } catch (e) {
+        console.warn('[WebRTC] End API failed:', e.message)
+      }
     }
     handleCallEnded()
+  }
+
+  // 주기적으로 통화 상태 확인 (상대방이 끊었는지)
+  function startCallMonitor() {
+    const monitor = setInterval(async () => {
+      if (!currentCallId.value || callStatus.value === 'idle' || callStatus.value === 'ended') {
+        clearInterval(monitor)
+        return
+      }
+      try {
+        const { data } = await axios.get(`/api/comms/calls/${currentCallId.value}/status`)
+        if (data.status === 'ended') {
+          console.log('[WebRTC] Server says call ended — closing')
+          clearInterval(monitor)
+          handleCallEnded()
+        }
+      } catch {}
+    }, 3000)
   }
 
   // ── 음소거 토글 ────────────────────────────────────────────────

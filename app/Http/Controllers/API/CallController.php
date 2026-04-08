@@ -113,6 +113,11 @@ class CallController extends Controller
     /**
      * Get call history for the authenticated user.
      */
+    public function status(Call $call)
+    {
+        return response()->json(['status' => $call->status, 'duration' => $call->duration]);
+    }
+
     public function history(Request $request)
     {
         $userId = $request->user()->id;

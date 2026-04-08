@@ -241,6 +241,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/calls/signal', [CallController::class, 'signal']);
         Route::post('/calls/{call}/answer', [CallController::class, 'answer']);
         Route::post('/calls/{call}/end', [CallController::class, 'end']);
+        Route::get('/calls/{call}/status', [CallController::class, 'status']);
         Route::get('/calls/history', [CallController::class, 'history']);
 
         // 차단
