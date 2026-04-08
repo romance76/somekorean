@@ -78,28 +78,17 @@ export function unlockAudio() {
   }
 }
 
-// ── DOM <audio> 벨소리 pre-load (사용자 제스처 중 호출!) ──────────
+// ── DOM <audio> 벨소리 pre-load (소스만 로드, 재생하지 않음) ──────
 export function preloadRingtone() {
   const el = document.getElementById('sk-ringtone')
   if (!el || ringtoneLoaded) return
 
+  // WAV 소스만 로드 — 재생은 하지 않음 (페이지 진입 시 벨소리 방지)
+  // 실제 재생은 startRingtone()에서 수신 통화 시에만
   el.src = getRingtoneUrl()
   el.load()
-  // 사용자 제스처 콜스택에서 play → pause (모바일 unlock)
-  el.volume = 0.01
-  const p = el.play()
-  if (p) {
-    p.then(() => {
-      el.pause()
-      el.currentTime = 0
-      el.volume = 1.0
-      ringtoneLoaded = true
-      console.log('[Ringtone] <audio> element pre-loaded & unlocked')
-    }).catch(() => {
-      el.volume = 1.0
-      console.warn('[Ringtone] <audio> pre-load play failed')
-    })
-  }
+  ringtoneLoaded = true
+  console.log('[Ringtone] <audio> source pre-loaded (no play)')
 }
 
 // ── Web Audio 벨소리 (AudioContext 이미 unlock된 경우) ────────────
