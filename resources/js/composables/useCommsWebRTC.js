@@ -296,12 +296,13 @@ export function useCommsWebRTC() {
     remoteUser.value = targetUser
     callStatus.value = 'calling'
 
-    // ★ 1단계: user gesture 중 AudioContext 생성 (동기)
-    prepareAudio()
-
-    // ★ 2단계: user gesture 중 마이크 획득 (첫 번째 await)
-    // getUserMedia 성공 → 브라우저가 오디오 권한 전체 부여
+    // ★ 1단계: getUserMedia 최우선 (user gesture 소비하기 전에!)
+    // 마이크 권한 팝업이 뜨고, 성공하면 오디오 전체 unlock
     const stream = await getLocalStream()
+
+    // ★ 2단계: getUserMedia 성공 후 AudioContext 준비
+    // 이 시점에서 페이지에 오디오 권한이 부여됨
+    prepareAudio()
 
     try {
       const { data } = await axios.post('/api/comms/calls/initiate', { callee_id: targetUser.id })
@@ -334,11 +335,11 @@ export function useCommsWebRTC() {
   async function answerCall() {
     if (!incomingCall.value) return
 
-    // ★ 1단계: user gesture 중 AudioContext 생성 (동기)
-    prepareAudio()
-
-    // ★ 2단계: user gesture 중 마이크 획득 (첫 번째 await)
+    // ★ 1단계: getUserMedia 최우선 (user gesture 소비하기 전에!)
     const stream = await getLocalStream()
+
+    // ★ 2단계: getUserMedia 성공 후 AudioContext + <audio> 준비
+    prepareAudio()
 
     stopRingtone()
     if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
