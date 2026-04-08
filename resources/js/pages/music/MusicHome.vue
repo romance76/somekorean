@@ -62,8 +62,8 @@
         </div>
       </div>
 
-      <!-- 플레이어 (가운데) -->
-      <div class="col-span-12 lg:col-span-4 order-first lg:order-none">
+      <!-- 트랙 목록 (오른쪽으로 이동) -->
+      <div class="col-span-12 lg:col-span-5 lg:order-last">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             <span>🎶 {{ showFavorites ? '❤️ 즐겨찾기' : (activePL ? activePL.name : (activeCat?.name || '트랙')) }}</span>
@@ -100,8 +100,8 @@
         </div>
       </div>
 
-      <!-- 트랙 목록 (오른쪽) -->
-      <div class="col-span-12 lg:col-span-5">
+      <!-- 플레이어 (가운데) -->
+      <div class="col-span-12 lg:col-span-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">🎧 Now Playing</div>
           <div v-if="playing" class="p-3">
