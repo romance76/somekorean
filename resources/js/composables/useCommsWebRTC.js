@@ -256,12 +256,32 @@ export function useCommsWebRTC() {
 
         if (type === 'answer') {
           if (pc && currentRoomId.value === room_id) {
-            await pc.setRemoteDescription(sanitizeSdp(payload.sdp))
-            if (pendingIceCandidates.length > 0) {
-              for (const c of pendingIceCandidates) await pc.addIceCandidate(c).catch(() => {})
-              pendingIceCandidates = []
+            try {
+              const cleanAnswer = sanitizeSdp(payload.sdp)
+              axios.post('/api/comms/calls/client-log', {
+                message: 'caller: got answer, setting remote desc',
+                data: {
+                  answerType: cleanAnswer.type,
+                  answerLen: cleanAnswer.sdp?.length,
+                  pendingIce: pendingIceCandidates.length,
+                  pcState: pc.signalingState,
+                }
+              }).catch(() => {})
+              await pc.setRemoteDescription(cleanAnswer)
+              axios.post('/api/comms/calls/client-log', {
+                message: 'caller: remote desc set OK',
+                data: { iceState: pc.iceConnectionState, connState: pc.connectionState }
+              }).catch(() => {})
+              if (pendingIceCandidates.length > 0) {
+                for (const c of pendingIceCandidates) await pc.addIceCandidate(c).catch(() => {})
+                pendingIceCandidates = []
+              }
+            } catch (e) {
+              axios.post('/api/comms/calls/client-log', {
+                message: 'caller: ❌ answer ERROR',
+                data: { error: e.message }
+              }).catch(() => {})
             }
-            // ★ connected는 여기서 설정하지 않음! onconnectionstatechange가 처리
           }
           return
         }
