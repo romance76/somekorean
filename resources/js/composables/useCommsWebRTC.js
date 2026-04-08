@@ -72,24 +72,21 @@ export function useCommsWebRTC() {
 
     pc.onconnectionstatechange = () => {
       console.log('[WebRTC] Connection state:', pc?.connectionState)
-      if (pc && ['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+      if (pc?.connectionState === 'connected') {
+        console.log('[WebRTC] ✅ P2P Connected — audio should work!')
+        if (callStatus.value !== 'connected') {
+          callStatus.value = 'connected'
+          startDurationTimer()
+        }
+      }
+      // failed만 처리 (disconnected는 재연결 시도할 수 있으므로 무시)
+      if (pc?.connectionState === 'failed') {
+        console.error('[WebRTC] ❌ Connection failed')
         handleCallEnded()
       }
-      if (pc?.connectionState === 'connected' && callStatus.value !== 'connected') {
-        callStatus.value = 'connected'
-        startDurationTimer()
-      }
     }
 
-    // 버퍼된 ICE 후보 처리
-    if (pendingIceCandidates.length > 0) {
-      console.log(`[WebRTC] Processing ${pendingIceCandidates.length} buffered ICE candidates`)
-      pendingIceCandidates.forEach(c => {
-        pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {})
-      })
-      pendingIceCandidates = []
-    }
-
+    // ICE 후보는 setRemoteDescription 후에 처리해야 함 → 여기서는 하지 않음
     return pc
   }
 
@@ -165,6 +162,16 @@ export function useCommsWebRTC() {
           if (pc && currentRoomId.value === room_id) {
             console.log('[WebRTC] Setting remote answer')
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp))
+            // answer 설정 후 버퍼된 ICE 후보 처리
+            if (pendingIceCandidates.length > 0) {
+              console.log(`[WebRTC] Processing ${pendingIceCandidates.length} buffered ICE (caller)`)
+              for (const c of pendingIceCandidates) {
+                await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {})
+              }
+              pendingIceCandidates = []
+            }
+            callStatus.value = 'connected'
+            startDurationTimer()
           }
           return
         }
@@ -289,6 +296,15 @@ export function useCommsWebRTC() {
         console.log('[WebRTC] Step 4: Processing buffered offer')
         await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.sdp))
         console.log('[WebRTC] Step 4a OK: Remote description set')
+
+        // 4b. setRemoteDescription 후에 버퍼된 ICE 후보 처리 (순서 중요!)
+        if (pendingIceCandidates.length > 0) {
+          console.log(`[WebRTC] Step 4a-1: Processing ${pendingIceCandidates.length} buffered ICE candidates`)
+          for (const c of pendingIceCandidates) {
+            await pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn('[WebRTC] ICE add failed:', e))
+          }
+          pendingIceCandidates = []
+        }
 
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
