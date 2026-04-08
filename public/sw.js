@@ -29,17 +29,18 @@ self.addEventListener('activate', (event) => {
 
 // ── 푸시 알림 수신 ──────────────────────────────────────────────
 self.addEventListener('push', (event) => {
+  console.log('[SW] Push received!', event.data?.text()?.substring(0, 100));
   if (!event.data) return;
   let data = {};
   try { data = event.data.json(); } catch { data = { title: 'SomeKorean', body: event.data.text() }; }
 
-  const notification = data.notification || {};
-  const payload = data.data || {};
+  // data-only 메시지: payload가 data 안에 있거나 최상위에 있을 수 있음
+  const payload = data.data || data;
 
   if (payload.type === 'incoming_call') {
     event.waitUntil(
-      self.registration.showNotification(notification.title || '전화 수신', {
-        body: notification.body || '안심 서비스 음성 통화 수신 중...',
+      self.registration.showNotification(payload.title || '전화 수신', {
+        body: payload.body || '안심 서비스 음성 통화 수신 중...',
         icon: '/images/icons/icon-192.png',
         badge: '/images/icons/icon-72.png',
         vibrate: [500, 200, 500, 200, 500],
@@ -58,8 +59,8 @@ self.addEventListener('push', (event) => {
 
   if (payload.type === 'new_message') {
     event.waitUntil(
-      self.registration.showNotification(notification.title || '새 메시지', {
-        body: notification.body || '',
+      self.registration.showNotification(payload.sender_name || '새 메시지', {
+        body: payload.body || '',
         icon: '/images/icons/icon-192.png',
         tag: 'message-' + (payload.conversation_id || ''),
         renotify: true,
@@ -70,8 +71,8 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(notification.title || data.title || 'SomeKorean', {
-      body: notification.body || data.body || '새 알림이 있습니다',
+    self.registration.showNotification(payload.title || data.title || 'SomeKorean', {
+      body: payload.body || data.body || '새 알림이 있습니다',
       icon: '/images/icons/icon-192.png',
       vibrate: [200, 100, 200],
       data: payload,

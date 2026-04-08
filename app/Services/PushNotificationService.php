@@ -43,11 +43,10 @@ class PushNotificationService
         }
 
         try {
+            // ★ data-only 메시지 — notification 필드 없음!
+            // notification 필드가 있으면 Firebase SDK가 가로채서 sw.js push 이벤트 안 옴
+            // data-only면 항상 sw.js push 이벤트 발생 → 우리가 직접 알림 표시
             $message = CloudMessage::withTarget('token', $fcmToken)
-                ->withNotification(Notification::create(
-                    $callerName . '님의 전화',
-                    '안심 서비스 음성 통화 수신 중...'
-                ))
                 ->withData([
                     'type'          => 'incoming_call',
                     'call_id'       => (string) $callId,
@@ -55,31 +54,16 @@ class PushNotificationService
                     'caller_id'     => (string) $callerId,
                     'caller_name'   => $callerName,
                     'caller_avatar' => $callerAvatar,
+                    'title'         => $callerName . '님의 전화',
+                    'body'          => '안심 서비스 음성 통화 수신 중...',
                 ])
-                ->withWebPushConfig(WebPushConfig::fromArray([
-                    'notification' => [
-                        'title'              => $callerName . '님의 전화',
-                        'body'               => '안심 서비스 음성 통화 수신 중...',
-                        'icon'               => '/images/icons/icon-192.png',
-                        'badge'              => '/images/icons/icon-72.png',
-                        'vibrate'            => [500, 200, 500, 200, 500],
-                        'tag'                => 'incoming-call',
-                        'renotify'           => true,
-                        'requireInteraction' => true,
-                        'actions'            => [
-                            ['action' => 'answer', 'title' => '수락'],
-                            ['action' => 'decline', 'title' => '거절'],
-                        ],
-                    ],
-                    'fcm_options' => [
-                        'link' => '/friends',
-                    ],
-                ]))
                 ->withAndroidConfig(AndroidConfig::fromArray([
                     'priority' => 'high',
-                    'notification' => [
-                        'channel_id' => 'calls',
-                        'sound'      => 'default',
+                ]))
+                ->withWebPushConfig(WebPushConfig::fromArray([
+                    'headers' => [
+                        'Urgency' => 'high',
+                        'TTL'     => '60',
                     ],
                 ]));
 
