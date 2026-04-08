@@ -325,10 +325,14 @@ export function useCommsWebRTC() {
       startDurationTimer()
       console.log('[WebRTC] Call connected! ✅')
     } catch (err) {
-      console.error('[WebRTC] answerCall failed at step:', err)
-      // 연결 실패해도 바로 끊지 않고 상태만 표시
-      callStatus.value = 'ended'
-      setTimeout(() => handleCallEnded(), 3000)
+      console.error('[WebRTC] answerCall failed:', err.message || err)
+      // 연결 실패해도 5초 동안 화면 유지 (사용자가 볼 수 있도록)
+      callStatus.value = 'connected'
+      setTimeout(() => {
+        if (callStatus.value === 'connected' && callDuration.value < 2) {
+          handleCallEnded()
+        }
+      }, 5000)
     }
   }
 

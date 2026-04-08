@@ -1,15 +1,15 @@
 <template>
     <div v-if="show"
-         class="fixed inset-0 z-[999] flex flex-col items-center justify-center
+         class="fixed inset-0 z-[999] flex flex-col items-center
                 bg-gradient-to-br from-gray-950 via-gray-900 to-green-950
-                text-white font-sans"
-         style="padding-top: 60px; padding-bottom: 40px;">
+                text-white font-sans overflow-hidden"
+         style="padding-top: 20px; padding-bottom: 20px;">
 
       <!-- ═══ Incoming call (ringing) ═══ -->
       <div v-if="callStatus === 'ringing'"
-           class="flex flex-col items-center justify-between h-full w-full max-w-xs px-6">
+           class="flex flex-col items-center justify-center gap-8 flex-1 w-full max-w-xs px-6">
         <!-- Caller info -->
-        <div class="text-center mt-10">
+        <div class="text-center">
           <div class="relative inline-block">
             <img :src="incomingCall?.caller_avatar || '/images/default-avatar.svg'"
                  class="w-24 h-24 rounded-full object-cover border-[3px] border-green-500/50 animate-pulse-ring"
@@ -20,7 +20,7 @@
         </div>
 
         <!-- Answer / Decline buttons -->
-        <div class="flex gap-12 mb-5">
+        <div class="flex gap-12">
           <!-- Decline -->
           <button @click="$emit('decline')"
                   class="flex flex-col items-center gap-2">
