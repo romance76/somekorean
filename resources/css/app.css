@@ -5,6 +5,9 @@
 @layer base {
     :root {
         --color-primary: #e53e3e;
+        /* safe-area (iPhone 노치/홈 인디케이터) */
+        --sat: env(safe-area-inset-top, 0px);
+        --sab: env(safe-area-inset-bottom, 0px);
     }
     body {
         font-family: 'Noto Sans KR', sans-serif;

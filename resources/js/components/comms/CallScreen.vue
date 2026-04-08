@@ -1,13 +1,13 @@
 <template>
     <div v-if="show"
-         class="fixed inset-0 z-[999] flex flex-col items-center
+         class="fixed inset-0 z-[999] flex flex-col items-center justify-between
                 bg-gradient-to-br from-gray-950 via-gray-900 to-green-950
                 text-white font-sans overflow-hidden"
-         style="padding-top: 20px; padding-bottom: 20px;">
+         style="padding-top: max(40px, var(--sat, 0px)); padding-bottom: max(30px, var(--sab, 0px));">
 
       <!-- ═══ Incoming call (ringing) ═══ -->
       <div v-if="callStatus === 'ringing'"
-           class="flex flex-col items-center justify-center gap-8 flex-1 w-full max-w-xs px-6">
+           class="flex flex-col items-center justify-center gap-6 flex-1 w-full max-w-xs px-6">
         <!-- Caller info -->
         <div class="text-center">
           <div class="relative inline-block">
@@ -49,9 +49,9 @@
       </div>
 
       <!-- ═══ Active call (calling / connected / ended) ═══ -->
-      <div v-else class="flex flex-col items-center w-full max-w-xs gap-0">
+      <div v-else class="flex flex-col items-center justify-between w-full max-w-xs flex-1 py-4">
         <!-- Status label -->
-        <p class="text-sm text-white/60 mb-8 tracking-wide">
+        <p class="text-sm text-white/60 mb-4 tracking-wide">
           <span v-if="callStatus === 'calling'">발신 중...</span>
           <span v-else-if="callStatus === 'connecting'">연결 중...</span>
           <span v-else-if="callStatus === 'connected'">통화 중 &middot; {{ durationFormatted }}</span>
@@ -59,7 +59,7 @@
         </p>
 
         <!-- Remote user avatar + name -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-4">
           <img :src="remoteUser?.avatar || '/images/default-avatar.svg'"
                class="w-28 h-28 rounded-full object-cover border-[3px] border-white/15 mx-auto"
                @error="$event.target.src = '/images/default-avatar.svg'">
@@ -81,8 +81,8 @@
                 :style="{ animationDelay: `${i * 0.1}s` }"></span>
         </div>
 
-        <!-- Controls -->
-        <div class="flex gap-7 mt-auto">
+        <!-- Controls (하단 고정) -->
+        <div class="flex gap-8 mt-auto pb-4">
           <!-- Mute -->
           <div class="flex flex-col items-center gap-2">
             <button @click="$emit('toggle-mute')"

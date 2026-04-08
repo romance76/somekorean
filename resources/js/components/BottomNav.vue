@@ -1,6 +1,7 @@
 <template>
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden">
-    <div class="flex items-center justify-around h-14">
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden"
+       style="padding-bottom: var(--sab)">
+    <div class="flex items-center justify-around h-12">
       <RouterLink v-for="item in items" :key="item.to" :to="item.to"
         class="flex flex-col items-center gap-0.5 text-[10px] font-medium transition"
         :class="isActive(item.to) ? 'text-amber-600' : 'text-gray-400'">
