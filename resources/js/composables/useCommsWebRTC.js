@@ -155,12 +155,16 @@ export function useCommsWebRTC() {
     pendingOffer = null
     pendingIceCandidates = []
     callStatus.value = 'ended'
+    const endedCallId = currentCallId.value
     setTimeout(() => {
-      callStatus.value = 'idle'
-      currentCallId.value = null
-      currentRoomId.value = null
-      remoteUser.value = null
-      incomingCall.value = null
+      // ★ 새 통화가 이미 시작된 경우 덮어쓰지 않음!
+      if (currentCallId.value === endedCallId || callStatus.value === 'ended') {
+        callStatus.value = 'idle'
+        currentCallId.value = null
+        currentRoomId.value = null
+        remoteUser.value = null
+        incomingCall.value = null
+      }
     }, 3000)
   }
 
@@ -281,21 +285,21 @@ export function useCommsWebRTC() {
   async function answerCall() {
     if (!incomingCall.value) return
 
-    // ★ 1단계: getUserMedia 최우선 (user gesture 소비하기 전에!)
-    const stream = await getLocalStream()
+    // ★ await 전에 incomingCall 데이터 저장! (async 중 null 될 수 있음)
+    const callData = { ...incomingCall.value }
+    const { call_id, room_id, caller_id, caller_name, caller_avatar } = callData
 
-    // ★ 2단계: getUserMedia 성공 후 AudioContext + <audio> 준비
-    prepareAudio()
-
-    stopRingtone()
-    if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
-
-    const { call_id, room_id, caller_id, caller_name, caller_avatar } = incomingCall.value
+    // 상태 즉시 업데이트 (handleCallEnded setTimeout에 의해 덮어쓰이지 않도록)
     currentCallId.value = call_id
     currentRoomId.value = room_id
     remoteUser.value = { id: caller_id, name: caller_name, avatar: caller_avatar }
     callStatus.value = 'connected'
     incomingCall.value = null
+    stopRingtone()
+    if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
+
+    // ★ getUserMedia (마이크 권한)
+    const stream = await getLocalStream()
     startDurationTimer()
     startCallMonitor()
 

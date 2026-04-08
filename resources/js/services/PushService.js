@@ -65,9 +65,10 @@ async function initWebPush() {
   }
 
   // 3. Firebase 초기화
+  console.info('[PushService] Firebase config:', firebaseConfig.projectId, 'VAPID:', VAPID_KEY?.substring(0, 10))
   const app = initializeApp(firebaseConfig)
   messaging = getMessaging(app)
-  console.info('[PushService] Firebase initialized')
+  console.info('[PushService] Firebase initialized OK')
 
   // 4. FCM 토큰 발급 (기존 SW 사용)
   try {
@@ -88,7 +89,7 @@ async function initWebPush() {
       console.warn('[PushService] No FCM token received')
     }
   } catch (err) {
-    console.warn('[PushService] Token error:', err.message || err)
+    console.error('[PushService] ❌ Token error:', err.code || err.name, err.message || err)
   }
 
   // 6. 포그라운드 메시지 처리 (앱이 열려있을 때)
