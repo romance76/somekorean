@@ -40,7 +40,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommsWebRTC } from '@/composables/useCommsWebRTC'
 import { initPushService } from '@/services/PushService'
-import { startRingtone, unlockAudio, preloadRingtone } from '@/services/RingtoneService'
+import { startRingtone, preloadRingtone } from '@/services/RingtoneService'
 import ChatWindow from './ChatWindow.vue'
 import CallScreen from './CallScreen.vue'
 
@@ -70,20 +70,9 @@ const {
 
 let heartbeatInterval = null
 
-// ── 모바일 오디오 사전 unlock ─────────────────────────────────────
-// 사용자 첫 터치/클릭 시 모든 오디오를 미리 unlock
+// ── 벨소리 WAV 미리 로드 (첫 터치 시) ─────────────────────────────
 function onFirstInteraction() {
-  unlockAudio()
-
-  // 원격 오디오 엘리먼트 unlock (모바일 autoplay 정책)
-  const remoteAudio = document.getElementById('sk-remote-audio')
-  if (remoteAudio) {
-    remoteAudio.play().then(() => remoteAudio.pause()).catch(() => {})
-  }
-
-  // 벨소리 <audio> 엘리먼트 pre-load + unlock
   preloadRingtone()
-
   document.removeEventListener('touchstart', onFirstInteraction)
   document.removeEventListener('click', onFirstInteraction)
 }
