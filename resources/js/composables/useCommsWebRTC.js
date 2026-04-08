@@ -257,22 +257,42 @@ export function useCommsWebRTC() {
     currentCallId.value = call_id
     currentRoomId.value = room_id
     remoteUser.value = { id: caller_id, name: caller_name, avatar: caller_avatar }
+    callStatus.value = 'connected'
+    incomingCall.value = null
 
     try {
-      // 서버에 수락 알림
+      // 1. 서버에 수락 알림
+      console.log('[WebRTC] Step 1: Answering call', call_id)
       await axios.post(`/api/comms/calls/${call_id}/answer`)
+      console.log('[WebRTC] Step 1 OK: Server notified')
 
-      // 마이크 스트림
-      const stream = await getLocalStream()
+      // 2. 마이크 스트림 (실패해도 계속 진행)
+      let stream = null
+      try {
+        stream = await getLocalStream()
+        console.log('[WebRTC] Step 2 OK: Microphone acquired')
+      } catch (micErr) {
+        console.warn('[WebRTC] Step 2 WARN: No microphone —', micErr.message, '(수신 전용)')
+      }
+
+      // 3. PeerConnection 생성
       createPeerConnection(room_id, caller_id)
-      stream.getTracks().forEach(t => pc.addTrack(t, stream))
+      if (stream) {
+        stream.getTracks().forEach(t => pc.addTrack(t, stream))
+        console.log('[WebRTC] Step 3 OK: Local tracks added')
+      } else {
+        console.log('[WebRTC] Step 3: No local tracks (listen only)')
+      }
 
-      // 버퍼된 offer 처리
+      // 4. 버퍼된 offer 처리
       if (pendingOffer && pendingOffer.room_id === room_id) {
-        console.log('[WebRTC] Processing buffered offer')
+        console.log('[WebRTC] Step 4: Processing buffered offer')
         await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.sdp))
+        console.log('[WebRTC] Step 4a OK: Remote description set')
+
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
+        console.log('[WebRTC] Step 4b OK: Local answer created')
 
         await axios.post('/api/comms/calls/signal', {
           target_user_id: caller_id,
@@ -281,17 +301,18 @@ export function useCommsWebRTC() {
           payload: { sdp: answer },
         })
         pendingOffer = null
-        console.log('[WebRTC] Answer sent back to caller')
+        console.log('[WebRTC] Step 4c OK: Answer sent to caller ✅')
       } else {
-        console.warn('[WebRTC] No buffered offer — waiting for offer to arrive')
+        console.warn('[WebRTC] Step 4 WARN: No buffered offer — room:', room_id, 'pending:', pendingOffer?.room_id)
       }
 
-      callStatus.value = 'connected'
-      incomingCall.value = null
       startDurationTimer()
+      console.log('[WebRTC] Call connected! ✅')
     } catch (err) {
-      console.error('[WebRTC] answerCall failed:', err)
-      handleCallEnded()
+      console.error('[WebRTC] answerCall failed at step:', err)
+      // 연결 실패해도 바로 끊지 않고 상태만 표시
+      callStatus.value = 'ended'
+      setTimeout(() => handleCallEnded(), 3000)
     }
   }
 
