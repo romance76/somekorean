@@ -79,6 +79,7 @@ onMounted(async () => {
   if (!myUserId) return
 
   // Listen for incoming calls and WebRTC signals
+  console.log('[CommHub] Initializing for user:', myUserId)
   listenForSignals(myUserId)
 
   // Initialize push notifications (stub - no Firebase yet)

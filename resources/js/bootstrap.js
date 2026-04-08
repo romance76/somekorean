@@ -33,14 +33,17 @@ window.Echo = new Echo({
     authorizer: (channel) => ({
         authorize: (socketId, callback) => {
             const token = localStorage.getItem('sk_token')
+            console.log('[Echo] Authorizing channel:', channel.name, 'token:', token ? 'yes' : 'NO TOKEN')
             axios.post('/api/broadcasting/auth', {
                 socket_id: socketId,
                 channel_name: channel.name,
             }, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(response => {
+                console.log('[Echo] Channel authorized OK:', channel.name)
                 callback(null, response.data)
             }).catch(error => {
+                console.error('[Echo] Channel auth FAILED:', channel.name, error.response?.status, error.response?.data)
                 callback(error)
             })
         },
