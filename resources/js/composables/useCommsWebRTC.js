@@ -4,24 +4,30 @@ import { startRingtone, stopRingtone } from '@/services/RingtoneService'
 
 const ICE_SERVERS = {
   iceServers: [
+    // STUN 서버 (무료, NAT 감지용)
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
+    // TURN 서버 (무료, NAT 뒤에서 중계)
+    // Metered.ca 무료 TURN (API 키 방식)
     {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
+      urls: 'turn:a.relay.metered.ca:80',
+      username: 'e43cb0be4e81eab1718c498e',
+      credential: 'qVJIJRkN4/zrbiUn',
     },
     {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
+      urls: 'turn:a.relay.metered.ca:80?transport=tcp',
+      username: 'e43cb0be4e81eab1718c498e',
+      credential: 'qVJIJRkN4/zrbiUn',
     },
     {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
+      urls: 'turn:a.relay.metered.ca:443',
+      username: 'e43cb0be4e81eab1718c498e',
+      credential: 'qVJIJRkN4/zrbiUn',
+    },
+    {
+      urls: 'turns:a.relay.metered.ca:443?transport=tcp',
+      username: 'e43cb0be4e81eab1718c498e',
+      credential: 'qVJIJRkN4/zrbiUn',
     },
   ],
   iceCandidatePoolSize: 10,
@@ -134,6 +140,10 @@ export function useCommsWebRTC() {
     pc.onconnectionstatechange = () => {
       const state = pc?.connectionState
       console.log('[WebRTC] Connection state:', state)
+      axios.post('/api/comms/calls/client-log', {
+        message: 'connectionState: ' + state,
+        data: { iceState: pc?.iceConnectionState }
+      }).catch(() => {})
 
       if (state === 'connected') {
         if (disconnectTimer) { clearTimeout(disconnectTimer); disconnectTimer = null }
