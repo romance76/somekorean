@@ -921,6 +921,62 @@
 
     <!-- API 키 관리 -->
     <div v-if="activeTab === 'api'" class="space-y-6">
+
+      <!-- Firebase Cloud Messaging 설정 -->
+      <div class="bg-white rounded-xl border p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold">🔔 Firebase Push Notification</h3>
+          <span :class="firebaseStatus ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" class="text-xs px-3 py-1 rounded-full font-medium">
+            {{ firebaseStatus ? '✅ 연결됨' : '⚠️ 미설정' }}
+          </span>
+        </div>
+        <p class="text-xs text-gray-400 mb-4">안심통화 수신 알림, 백그라운드 푸시, 벨소리에 사용됩니다.</p>
+
+        <div class="space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">API Key</label>
+              <input v-model="firebase.apiKey" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="AIzaSy..." />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">Project ID</label>
+              <input v-model="firebase.projectId" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="somekorean-xxxxx" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">Messaging Sender ID</label>
+              <input v-model="firebase.messagingSenderId" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="123456789" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">App ID</label>
+              <input v-model="firebase.appId" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="1:123:web:abc..." />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">Auth Domain</label>
+              <input v-model="firebase.authDomain" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="xxx.firebaseapp.com" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">Storage Bucket</label>
+              <input v-model="firebase.storageBucket" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="xxx.appspot.com" />
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">VAPID Key (웹 푸시 인증서)</label>
+            <input v-model="firebase.vapidKey" type="text" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="BA93MT..." />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">서비스 계정 JSON (백엔드용 — 서버에 직접 업로드)</label>
+            <div class="flex items-center gap-2">
+              <code class="text-xs bg-gray-100 px-3 py-2 rounded flex-1 font-mono text-gray-600">{{ firebase.credentialsPath || '/storage/app/firebase-service-account.json' }}</code>
+              <span :class="firebase.credentialsExists ? 'text-green-600' : 'text-red-500'" class="text-xs font-medium">{{ firebase.credentialsExists ? '✅ 파일 존재' : '❌ 파일 없음' }}</span>
+            </div>
+          </div>
+          <button @click="saveFirebase" :disabled="savingFirebase" class="w-full py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 disabled:opacity-50 mt-2">
+            {{ savingFirebase ? '저장 중...' : '🔔 Firebase 설정 저장' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 기존 API 키 관리 -->
       <div class="bg-white rounded-xl border p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-bold">🔑 API 키 관리</h3>
@@ -1514,6 +1570,50 @@ async function saveMenus() {
   }
 }
 
+// ─── Firebase 설정 ───────────────────────────────────────────────────────────
+const savingFirebase = ref(false)
+const firebaseStatus = ref(false)
+const firebase = reactive({
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: '',
+  vapidKey: '',
+  credentialsPath: '',
+  credentialsExists: false,
+})
+
+async function loadFirebase() {
+  try {
+    const { data } = await axios.get('/api/admin/firebase')
+    Object.assign(firebase, data)
+    firebaseStatus.value = !!(data.apiKey && data.projectId && data.vapidKey && data.credentialsExists)
+  } catch (e) { console.warn('loadFirebase:', e) }
+}
+
+async function saveFirebase() {
+  savingFirebase.value = true
+  try {
+    await axios.post('/api/admin/firebase', {
+      apiKey: firebase.apiKey,
+      authDomain: firebase.authDomain,
+      projectId: firebase.projectId,
+      storageBucket: firebase.storageBucket,
+      messagingSenderId: firebase.messagingSenderId,
+      appId: firebase.appId,
+      vapidKey: firebase.vapidKey,
+    })
+    showToast('Firebase 설정이 저장되었습니다')
+    firebaseStatus.value = !!(firebase.apiKey && firebase.projectId && firebase.vapidKey)
+  } catch (e) {
+    showToast(e.response?.data?.message || 'Firebase 저장 실패', 'error')
+  } finally {
+    savingFirebase.value = false
+  }
+}
+
 // ─── API 키 관리 ──────────────────────────────────────────────────────────────
 const apiKeys = ref([])
 const showAddApiKey = ref(false)
@@ -1564,6 +1664,7 @@ function copyKey(key) {
 onMounted(loadSettings)
 onMounted(loadMenus)
 onMounted(loadApiKeys)
+onMounted(loadFirebase)
 
 watch(() => activeTab.value, (tab) => {
   if (tab === 'api') loadApiKeys()

@@ -228,4 +228,68 @@ class AdminSettingsController extends Controller
             ['key'=>'chat','label'=>'채팅','icon'=>'💭','path'=>'/chat','enabled'=>true,'login_required'=>true,'admin_only'=>false],
         ];
     }
+
+    // ─── Firebase 설정 ───────────────────────────────────────────────────────────
+
+    public function getFirebase()
+    {
+        $s = fn($k) => SiteSetting::where('key', $k)->value('value');
+        $credPath = config('services.firebase.credentials');
+
+        return response()->json([
+            'apiKey'            => $s('firebase_api_key') ?: '',
+            'authDomain'        => $s('firebase_auth_domain') ?: '',
+            'projectId'         => $s('firebase_project_id') ?: '',
+            'storageBucket'     => $s('firebase_storage_bucket') ?: '',
+            'messagingSenderId' => $s('firebase_sender_id') ?: '',
+            'appId'             => $s('firebase_app_id') ?: '',
+            'vapidKey'          => $s('firebase_vapid_key') ?: '',
+            'credentialsPath'   => $credPath,
+            'credentialsExists' => $credPath && file_exists($credPath),
+        ]);
+    }
+
+    public function saveFirebase(Request $request)
+    {
+        $fields = [
+            'firebase_api_key'      => $request->apiKey,
+            'firebase_auth_domain'  => $request->authDomain,
+            'firebase_project_id'   => $request->projectId,
+            'firebase_storage_bucket' => $request->storageBucket,
+            'firebase_sender_id'    => $request->messagingSenderId,
+            'firebase_app_id'       => $request->appId,
+            'firebase_vapid_key'    => $request->vapidKey,
+        ];
+
+        foreach ($fields as $key => $value) {
+            SiteSetting::updateOrCreate(['key' => $key], ['value' => $value ?? '', 'group' => 'firebase']);
+        }
+
+        // .env 파일도 업데이트 (VITE_ 환경변수 — 빌드 시 필요)
+        $envMap = [
+            'VITE_FIREBASE_API_KEY'            => $request->apiKey,
+            'VITE_FIREBASE_AUTH_DOMAIN'         => $request->authDomain,
+            'VITE_FIREBASE_PROJECT_ID'          => $request->projectId,
+            'VITE_FIREBASE_STORAGE_BUCKET'      => $request->storageBucket,
+            'VITE_FIREBASE_MESSAGING_SENDER_ID' => $request->messagingSenderId,
+            'VITE_FIREBASE_APP_ID'              => $request->appId,
+            'VITE_FIREBASE_VAPID_KEY'           => $request->vapidKey,
+        ];
+
+        $envPath = base_path('.env');
+        if (file_exists($envPath)) {
+            $env = file_get_contents($envPath);
+            foreach ($envMap as $envKey => $envVal) {
+                $envVal = $envVal ?? '';
+                if (preg_match("/^{$envKey}=.*/m", $env)) {
+                    $env = preg_replace("/^{$envKey}=.*/m", "{$envKey}={$envVal}", $env);
+                } else {
+                    $env .= "\n{$envKey}={$envVal}";
+                }
+            }
+            file_put_contents($envPath, $env);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Firebase 설정 저장 완료']);
+    }
 }

@@ -327,6 +327,10 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/api-keys/{id}', [AdminSettingsController::class, 'deleteApiKey']);
     Route::get('/api-keys/{id}/reveal', [AdminSettingsController::class, 'revealApiKey']);
 
+    // Firebase 설정
+    Route::get('/firebase', [AdminSettingsController::class, 'getFirebase']);
+    Route::post('/firebase', [AdminSettingsController::class, 'saveFirebase']);
+
     // 수동 수집
     Route::post('/fetch-music', function () {
         try { \Artisan::call('music:fetch', ['--daily' => 100, '--korean-ratio' => 70]); return response()->json(['success' => true, 'message' => '음악 100곡 수집 완료']); }
