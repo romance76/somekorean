@@ -274,14 +274,17 @@ export function useCommsWebRTC() {
         console.warn('[WebRTC] Microphone failed:', micErr.message, '— proceeding without mic')
       }
 
+      console.log('[WebRTC] Creating PeerConnection...')
       createPeerConnection(data.room_id, targetUser.id)
       if (stream) {
         stream.getTracks().forEach(t => pc.addTrack(t, stream))
+        console.log('[WebRTC] Tracks added to PC')
       }
 
+      console.log('[WebRTC] Creating offer...')
       const offer = await pc.createOffer({ offerToReceiveAudio: true })
       await pc.setLocalDescription(offer)
-      console.log('[WebRTC] Offer created, sending...')
+      console.log('[WebRTC] Offer created, SDP length:', offer.sdp?.length, 'sending to signal API...')
 
       await axios.post('/api/comms/calls/signal', {
         target_user_id: targetUser.id,

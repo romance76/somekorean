@@ -90,11 +90,12 @@ if (typeof window !== 'undefined') {
     commHub.value?.openChat(partner, conversationId)
   }
   window.startCommCall = async (partner) => {
+    console.log('[App] startCommCall:', partner?.id, partner?.name)
     try {
       await commHub.value?.startCall(partner)
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || '통화 연결 실패'
-      alert('📞 ' + msg + '\n\n마이크 권한을 허용해주세요.')
+      console.error('[App] startCommCall error:', err)
+      alert('📞 ' + (err?.response?.data?.error || err?.message || '통화 연결 실패'))
     }
   }
 }
