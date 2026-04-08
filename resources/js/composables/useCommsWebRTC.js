@@ -79,10 +79,16 @@ export function useCommsWebRTC() {
           startDurationTimer()
         }
       }
-      // failed만 처리 (disconnected는 재연결 시도할 수 있으므로 무시)
+      // failed만 로그 — 바로 끊지 않음 (TURN으로 재시도 가능)
       if (pc?.connectionState === 'failed') {
-        console.error('[WebRTC] ❌ Connection failed')
-        handleCallEnded()
+        console.error('[WebRTC] ❌ Connection failed — but keeping call alive')
+        // 10초 후에도 failed면 종료
+        setTimeout(() => {
+          if (pc?.connectionState === 'failed') {
+            console.error('[WebRTC] ❌ Still failed after 10s — ending call')
+            handleCallEnded()
+          }
+        }, 10000)
       }
     }
 
@@ -127,13 +133,14 @@ export function useCommsWebRTC() {
     pendingOffer = null
     pendingIceCandidates = []
     callStatus.value = 'ended'
+    console.log('[WebRTC] Call ended — showing end screen for 3s')
     setTimeout(() => {
       callStatus.value = 'idle'
       currentCallId.value = null
       currentRoomId.value = null
       remoteUser.value = null
       incomingCall.value = null
-    }, 2000)
+    }, 3000)
   }
 
   // ── WebSocket 시그널 수신 ─────────────────────────────────────
