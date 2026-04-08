@@ -61,8 +61,10 @@ class CallController extends Controller
         abort_unless($call->callee_id === $request->user()->id, 403);
         $call->answer();
         \Log::info('[CALL] Call answered OK', ['call_id' => $call->id]);
-        // 발신자에게만 알림 (수신자 다른 기기에는 보내지 않음 — 30초 타임아웃으로 자동 중지)
+        // 발신자에게 알림
         broadcast(new CommWebRtcSignal($call->caller_id, $call->room_id, 'call-answered', []));
+        // 수신자의 다른 기기에 알림 (call_id 포함 — 본인 기기에서는 무시)
+        broadcast(new CommWebRtcSignal($call->callee_id, $call->room_id, 'call-answered-elsewhere', ['call_id' => $call->id]));
         return response()->json(['status' => 'answered']);
     }
 

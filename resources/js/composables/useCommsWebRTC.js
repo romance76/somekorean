@@ -203,6 +203,24 @@ export function useCommsWebRTC() {
           return
         }
 
+        // 다른 기기에서 수락됨 → 벨 울리는 중이면 중지
+        if (type === 'call-answered-elsewhere') {
+          // 내가 수락한 통화면 무시 (currentCallId가 설정됨)
+          if (currentCallId.value) {
+            console.log('[WebRTC] call-answered-elsewhere ignored (I answered this call)')
+          } else if (callStatus.value === 'ringing') {
+            console.log('[WebRTC] Call answered on another device — dismissing')
+            stopRingtone()
+            if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
+            incomingCall.value = null
+            currentRoomId.value = null
+            pendingOffer = null
+            pendingIceCandidates = []
+            callStatus.value = 'idle'
+          }
+          return
+        }
+
         if (type === 'call-ended') {
           // 현재 진행 중인 통화의 room만 종료
           if (room_id === currentRoomId.value) {
