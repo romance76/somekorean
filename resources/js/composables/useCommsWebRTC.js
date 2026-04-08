@@ -197,8 +197,9 @@ export function useCommsWebRTC() {
         }
 
         // 다른 기기에서 수락됨 → 이 기기가 벨 울리는 중이면 중지
+        // (connected/calling 상태면 무시 — 이미 통화 중인 기기)
         if (type === 'call-answered-elsewhere') {
-          if (callStatus.value === 'ringing') {
+          if (callStatus.value === 'ringing' && currentCallId.value === null) {
             console.log('[WebRTC] Call answered on another device — stopping ring')
             stopRingtone()
             if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
@@ -207,6 +208,8 @@ export function useCommsWebRTC() {
             pendingOffer = null
             pendingIceCandidates = []
             callStatus.value = 'idle'
+          } else {
+            console.log('[WebRTC] call-answered-elsewhere ignored (status:', callStatus.value, 'callId:', currentCallId.value, ')')
           }
           return
         }

@@ -64,7 +64,8 @@ class CallController extends Controller
         // 발신자에게 알림
         broadcast(new CommWebRtcSignal($call->caller_id, $call->room_id, 'call-answered', []));
         // 수신자의 다른 기기에도 알림 (다른 기기에서 벨 중지)
-        broadcast(new CommWebRtcSignal($call->callee_id, $call->room_id, 'call-answered-elsewhere', []))->toOthers();
+        // toOthers()는 소켓ID 없으면 작동 안함 → 직접 처리 안 함 (수락한 기기는 이미 connected)
+        broadcast(new CommWebRtcSignal($call->callee_id, $call->room_id, 'call-answered-elsewhere', []));
         return response()->json(['status' => 'answered']);
     }
 
