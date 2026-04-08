@@ -261,6 +261,16 @@ Route::middleware('auth:api')->group(function () {
             Cache::put('user-online-' . $request->user()->id, true, now()->addSeconds(30));
             return response()->json(['success' => true]);
         });
+
+        // PeerJS peer ID 등록/조회
+        Route::post('/presence/peer-id', function (\Illuminate\Http\Request $request) {
+            $request->validate(['peer_id' => 'required|string']);
+            Cache::put('peer-id-' . $request->user()->id, $request->peer_id, now()->addHours(2));
+            return response()->json(['success' => true]);
+        });
+        Route::get('/presence/peer-id/{userId}', function ($userId) {
+            return response()->json(['peer_id' => Cache::get('peer-id-' . $userId)]);
+        });
     });
 
     // ─── Poker ───

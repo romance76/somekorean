@@ -29,13 +29,17 @@ export function useCommsWebRTC() {
   let missedTimer = null
 
   // ── PeerJS 초기화 ─────────────────────────────────────────────
+  let myPeerId = null
+
   function initPeer(myUserId) {
     if (peer) return
 
-    const peerId = 'sk-user-' + myUserId
-    console.log('[PeerJS] Initializing as', peerId)
+    // 탭마다 고유 ID (같은 사용자 여러 탭 충돌 방지)
+    const suffix = Math.random().toString(36).substring(2, 6)
+    myPeerId = 'sk-' + myUserId + '-' + suffix
+    console.log('[PeerJS] Initializing as', myPeerId)
 
-    peer = new Peer(peerId, {
+    peer = new Peer(myPeerId, {
       host: window.location.hostname,
       port: 443,
       path: '/peerjs/',
@@ -55,23 +59,17 @@ export function useCommsWebRTC() {
           },
         ],
       },
-      debug: 1,
+      debug: 2,
     })
 
     peer.on('open', (id) => {
       console.log('[PeerJS] ✅ Connected as', id)
+      // 서버에 내 peer ID 등록 (상대방이 나를 찾을 수 있게)
+      axios.post('/api/comms/presence/peer-id', { peer_id: id }).catch(() => {})
     })
 
     peer.on('error', (err) => {
       console.error('[PeerJS] ❌ Error:', err.type, err.message)
-      // id-taken: 다른 탭에서 이미 연결됨 → 재연결 시도
-      if (err.type === 'unavailable-id') {
-        setTimeout(() => {
-          peer.destroy()
-          peer = null
-          initPeer(myUserId)
-        }, 3000)
-      }
     })
 
     // ★ 수신 전화 — PeerJS의 peer.on('call')
@@ -279,8 +277,13 @@ export function useCommsWebRTC() {
       currentCallId.value = data.call_id
       currentRoomId.value = data.room_id
 
-      // ★ PeerJS call — SDP/ICE 자동 처리!
-      const targetPeerId = 'sk-user-' + targetUser.id
+      // 상대방의 PeerJS ID를 서버에서 조회
+      const { data: peerData } = await axios.get(`/api/comms/presence/peer-id/${targetUser.id}`)
+      const targetPeerId = peerData.peer_id
+      if (!targetPeerId) {
+        console.error('[PeerJS] Target peer ID not found — user offline?')
+        // PeerJS 없어도 Echo로 call.initiated는 전달됨 → 상대가 접속하면 연결 시도
+      }
       console.log('[PeerJS] Calling', targetPeerId)
 
       currentMediaConn = peer.call(targetPeerId, stream, {
