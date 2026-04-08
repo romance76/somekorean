@@ -59,18 +59,38 @@ export function useCommsWebRTC() {
   }
 
   // ── 오디오 준비 (user gesture 중 호출!) ─────────────────────────
-  // 버튼 클릭 직후 동기적으로 호출 → AudioContext 생성 + resume
+  // 버튼 클릭 직후 동기적으로 호출:
+  // 1. AudioContext 생성 + resume
+  // 2. <audio> 엘리먼트에 무음 스트림 넣고 play → 모바일 unlock
+  // 이후 ontrack에서 srcObject만 교체하면 이미 재생 중이므로 소리 남
   function prepareAudio() {
+    // 1. AudioContext
     try {
       if (!remoteAudioCtx || remoteAudioCtx.state === 'closed') {
         remoteAudioCtx = new (window.AudioContext || window.webkitAudioContext)()
       }
-      if (remoteAudioCtx.state === 'suspended') {
-        remoteAudioCtx.resume()
-      }
-      console.log('[WebRTC] AudioContext prepared:', remoteAudioCtx.state)
+      if (remoteAudioCtx.state === 'suspended') remoteAudioCtx.resume()
+      console.log('[WebRTC] AudioContext:', remoteAudioCtx.state)
     } catch (e) {
-      console.warn('[WebRTC] AudioContext creation failed:', e)
+      console.warn('[WebRTC] AudioContext failed:', e)
+    }
+
+    // 2. <audio> 엘리먼트 미리 play (무음 스트림)
+    // user gesture 중 유효한 소스로 play() → 모바일에서 unlock됨
+    // ontrack에서 srcObject를 실제 스트림으로 교체 → 소리 남
+    const audio = document.getElementById('sk-remote-audio')
+    if (audio && remoteAudioCtx) {
+      try {
+        const dest = remoteAudioCtx.createMediaStreamDestination()
+        audio.srcObject = dest.stream
+        audio.play().then(() => {
+          console.log('[WebRTC] ✅ <audio> pre-played with silent stream (unlocked)')
+        }).catch(e => {
+          console.warn('[WebRTC] <audio> pre-play failed:', e.name)
+        })
+      } catch (e) {
+        console.warn('[WebRTC] Silent stream failed:', e)
+      }
     }
   }
 
@@ -96,25 +116,31 @@ export function useCommsWebRTC() {
       console.log('[WebRTC] 🔊 Remote track received, audio tracks:', tracks.length,
         tracks.map(t => `${t.label} enabled=${t.enabled}`).join(', '))
 
-      // ★ AudioContext로 직접 스피커 출력 (가장 확실한 방법)
-      // prepareAudio()에서 user gesture 중 생성+resume 되었으므로 running 상태
-      if (remoteAudioCtx) {
-        try {
-          if (remoteAudioCtx.state === 'suspended') remoteAudioCtx.resume()
-          if (remoteAudioSource) { try { remoteAudioSource.disconnect() } catch {} }
-          remoteAudioSource = remoteAudioCtx.createMediaStreamSource(stream)
-          remoteAudioSource.connect(remoteAudioCtx.destination)
-          console.log('[WebRTC] ✅ Remote audio → AudioContext →', remoteAudioCtx.state)
-        } catch (e) {
-          console.error('[WebRTC] AudioContext route failed:', e)
-        }
-      }
-
-      // <audio> 엘리먼트도 백업으로 설정 (데스크톱에서 더 안정적)
+      // ★ 방법 1: <audio> 엘리먼트 — srcObject만 교체 (이미 play 중)
+      // prepareAudio()에서 무음 스트림으로 미리 play → unlock됨
+      // 여기서 srcObject만 바꾸면 소리가 나옴 (play() 재호출 불필요)
       const audio = document.getElementById('sk-remote-audio')
       if (audio) {
         audio.srcObject = stream
-        audio.play().catch(() => {})
+        // 혹시 paused 상태면 다시 play 시도
+        if (audio.paused) {
+          audio.play().catch(e => {
+            console.warn('[WebRTC] <audio> play failed:', e.name)
+          })
+        }
+        console.log('[WebRTC] ✅ <audio> srcObject replaced with remote stream')
+      }
+
+      // ★ 방법 2: AudioContext 직접 라우팅 (백업)
+      if (remoteAudioCtx && remoteAudioCtx.state === 'running') {
+        try {
+          if (remoteAudioSource) { try { remoteAudioSource.disconnect() } catch {} }
+          remoteAudioSource = remoteAudioCtx.createMediaStreamSource(stream)
+          remoteAudioSource.connect(remoteAudioCtx.destination)
+          console.log('[WebRTC] ✅ AudioContext route active (backup)')
+        } catch (e) {
+          console.warn('[WebRTC] AudioContext route failed:', e)
+        }
       }
     }
 
