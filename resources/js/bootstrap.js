@@ -27,10 +27,24 @@ window.Echo = new Echo({
     enabledTransports: ['ws', 'wss'],
     authEndpoint: '/api/broadcasting/auth',
     auth: {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('sk_token') || ''}`,
-        },
+        headers: {},
     },
+    // 토큰을 동적으로 가져옴 (로그인 후에도 최신 토큰 사용)
+    authorizer: (channel) => ({
+        authorize: (socketId, callback) => {
+            const token = localStorage.getItem('sk_token')
+            axios.post('/api/broadcasting/auth', {
+                socket_id: socketId,
+                channel_name: channel.name,
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
+            }).then(response => {
+                callback(null, response.data)
+            }).catch(error => {
+                callback(error)
+            })
+        },
+    }),
 });
 
 // 401 처리
