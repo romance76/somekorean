@@ -34,7 +34,9 @@ class CallController extends Controller
             'status'    => 'ringing',
         ]);
 
-        broadcast(new CallInitiated($call));
+        try { broadcast(new CallInitiated($call)); } catch (\Throwable $e) {
+            \Log::warning('[CALL] broadcast CallInitiated failed: ' . $e->getMessage());
+        }
 
         // FCM push (stub — logs warning until Firebase is installed)
         $callee = User::find($calleeId);
@@ -61,10 +63,12 @@ class CallController extends Controller
         abort_unless($call->callee_id === $request->user()->id, 403);
         $call->answer();
         \Log::info('[CALL] Call answered OK', ['call_id' => $call->id]);
-        // 발신자에게 알림
-        broadcast(new CommWebRtcSignal($call->caller_id, $call->room_id, 'call-answered', []));
-        // 수신자의 다른 기기에 알림 (call_id 포함 — 본인 기기에서는 무시)
-        broadcast(new CommWebRtcSignal($call->callee_id, $call->room_id, 'call-answered-elsewhere', ['call_id' => $call->id]));
+        try {
+            broadcast(new CommWebRtcSignal($call->caller_id, $call->room_id, 'call-answered', []));
+            broadcast(new CommWebRtcSignal($call->callee_id, $call->room_id, 'call-answered-elsewhere', ['call_id' => $call->id]));
+        } catch (\Throwable $e) {
+            \Log::warning('[CALL] broadcast answer failed: ' . $e->getMessage());
+        }
         return response()->json(['status' => 'answered']);
     }
 
@@ -81,8 +85,12 @@ class CallController extends Controller
         $otherId = $call->caller_id === $request->user()->id
             ? $call->callee_id
             : $call->caller_id;
-        broadcast(new CommWebRtcSignal($otherId, $call->room_id, 'call-ended', []));
-        return response()->json(['status' => 'ended', 'duration' => $call->duration_formatted]);
+        try {
+            broadcast(new CommWebRtcSignal($otherId, $call->room_id, 'call-ended', []));
+        } catch (\Throwable $e) {
+            \Log::warning('[CALL] broadcast end failed: ' . $e->getMessage());
+        }
+        return response()->json(['status' => 'ended', 'duration' => $call->duration_formatted ?? '00:00']);
     }
 
     /**
@@ -93,20 +101,24 @@ class CallController extends Controller
         $request->validate([
             'target_user_id' => 'required|integer',
             'room_id'        => 'required|string',
-            'type'           => 'required|in:offer,answer,ice-candidate',
-            'payload'        => 'required|array',
+            'type'           => 'required|in:offer,answer,ice-candidate,call-ended',
+            'payload'        => 'present|array',
         ]);
         \Log::info('[SIGNAL] ' . $request->type, [
             'from' => $request->user()->id,
             'to' => $request->target_user_id,
             'room' => $request->room_id,
         ]);
-        broadcast(new CommWebRtcSignal(
-            $request->target_user_id,
-            $request->room_id,
-            $request->type,
-            $request->payload
-        ));
+        try {
+            broadcast(new CommWebRtcSignal(
+                $request->target_user_id,
+                $request->room_id,
+                $request->type,
+                $request->payload ?? []
+            ));
+        } catch (\Throwable $e) {
+            \Log::warning('[SIGNAL] broadcast failed: ' . $e->getMessage());
+        }
         return response()->json(['ok' => true]);
     }
 

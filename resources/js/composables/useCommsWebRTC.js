@@ -1,6 +1,6 @@
 import { ref, computed, onUnmounted } from 'vue'
 import axios from 'axios'
-import { startRingtone, stopRingtone } from '@/services/RingtoneService'
+import { startRingtone, stopRingtone, unlockAudio } from '@/services/RingtoneService'
 
 const ICE_SERVERS = {
   iceServers: [
@@ -42,8 +42,20 @@ export function useCommsWebRTC() {
   let localStream = null
   let durationTimer = null
   let missedTimer = null
+  let disconnectTimer = null  // disconnected 상태 딜레이 타이머
   let pendingOffer = null  // 수신 중 도착한 offer 버퍼
   let pendingIceCandidates = []  // PC 생성 전 도착한 ICE 후보 버퍼
+
+  // SDP 문자열 정리 (브라우저 간 호환성 문제 방지)
+  function sanitizeSdp(sdpObj) {
+    if (!sdpObj || !sdpObj.sdp) return sdpObj
+    return {
+      type: sdpObj.type,
+      sdp: sdpObj.sdp
+        .replace(/ +(\r?\n)/g, '$1')     // 줄 끝 공백 제거
+        .replace(/\r?\n/g, '\r\n')        // 일관된 CRLF
+    }
+  }
 
   // ── PeerConnection ──────────────────────────────────────────────
   function createPeerConnection(roomId, targetUserId) {
@@ -66,28 +78,47 @@ export function useCommsWebRTC() {
       const audio = document.getElementById('sk-remote-audio')
       if (audio) {
         audio.srcObject = event.streams[0]
-        audio.play().catch(() => {})
+        // 이미 unlockRemoteAudio()로 재생 중이면 srcObject만 바꿔도 OK
+        // 아직 안 된 경우 다시 시도
+        audio.play().catch(e => {
+          console.warn('[WebRTC] Remote audio play failed:', e.name, '— will retry on user gesture')
+        })
       }
     }
 
     pc.onconnectionstatechange = () => {
-      console.log('[WebRTC] Connection state:', pc?.connectionState)
-      if (pc?.connectionState === 'connected') {
+      const state = pc?.connectionState
+      console.log('[WebRTC] Connection state:', state)
+
+      if (state === 'connected') {
         console.log('[WebRTC] ✅ P2P Connected — audio should work!')
+        // 연결 복구 시 disconnectTimer 취소
+        if (disconnectTimer) { clearTimeout(disconnectTimer); disconnectTimer = null }
         if (callStatus.value !== 'connected') {
           callStatus.value = 'connected'
           startDurationTimer()
         }
       }
-      if (pc?.connectionState === 'failed') {
+      if (state === 'failed') {
         console.error('[WebRTC] ❌ Connection failed')
         setTimeout(() => {
           if (pc?.connectionState === 'failed') handleCallEnded()
         }, 5000)
       }
-      // 상대방이 끊으면 즉시 종료
-      if (pc?.connectionState === 'disconnected' || pc?.connectionState === 'closed') {
-        console.log('[WebRTC] Peer disconnected/closed — ending call NOW')
+      // disconnected는 일시적일 수 있음 → 2초 대기 후 여전히 disconnected면 종료
+      if (state === 'disconnected') {
+        console.log('[WebRTC] Peer disconnected — waiting 2s before ending')
+        if (disconnectTimer) clearTimeout(disconnectTimer)
+        disconnectTimer = setTimeout(() => {
+          if (pc?.connectionState === 'disconnected' || pc?.connectionState === 'closed') {
+            console.log('[WebRTC] Still disconnected after 2s — ending call')
+            handleCallEnded()
+          }
+        }, 2000)
+      }
+      // closed는 즉시 종료 (의도적 종료)
+      if (state === 'closed') {
+        console.log('[WebRTC] Peer closed — ending call NOW')
         handleCallEnded()
       }
     }
@@ -122,6 +153,7 @@ export function useCommsWebRTC() {
     stopDurationTimer()
     stopRingtone()
     if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
+    if (disconnectTimer) { clearTimeout(disconnectTimer); disconnectTimer = null }
     localStream?.getTracks().forEach(t => t.stop())
     if (pc) { try { pc.close() } catch {} }
     pc = null
@@ -164,12 +196,12 @@ export function useCommsWebRTC() {
         if (type === 'answer') {
           if (pc && currentRoomId.value === room_id) {
             console.log('[WebRTC] Setting remote answer')
-            await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp))
+            await pc.setRemoteDescription(sanitizeSdp(payload.sdp))
             // answer 설정 후 버퍼된 ICE 후보 처리
             if (pendingIceCandidates.length > 0) {
               console.log(`[WebRTC] Processing ${pendingIceCandidates.length} buffered ICE (caller)`)
               for (const c of pendingIceCandidates) {
-                await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {})
+                await pc.addIceCandidate(c).catch(() => {})
               }
               pendingIceCandidates = []
             }
@@ -182,7 +214,7 @@ export function useCommsWebRTC() {
         // ICE 후보
         if (type === 'ice-candidate') {
           if (pc && pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)).catch(() => {})
+            await pc.addIceCandidate(payload.candidate).catch(() => {})
           } else {
             // PC가 아직 없거나 remoteDescription이 없으면 버퍼
             pendingIceCandidates.push(payload.candidate)
@@ -249,11 +281,32 @@ export function useCommsWebRTC() {
       })
   }
 
+  // ── 모바일 원격 오디오 unlock ────────────────────────────────────
+  // 사용자 제스처(전화걸기/수락) 직후 즉시 호출하여 <audio> 재생 허용
+  function unlockRemoteAudio() {
+    const audio = document.getElementById('sk-remote-audio')
+    if (audio) {
+      // 사용자 제스처 콜스택 내에서 play() → 모바일 autoplay 정책 해제
+      audio.muted = true
+      audio.play().then(() => {
+        audio.muted = false
+        console.log('[WebRTC] Remote audio unlocked (user gesture)')
+      }).catch(() => {
+        audio.muted = false
+      })
+    }
+    // AudioContext도 함께 unlock
+    unlockAudio()
+  }
+
   // ── 발신 ───────────────────────────────────────────────────────
   async function startCall(targetUser) {
     if (callStatus.value !== 'idle') return
     remoteUser.value = targetUser
     callStatus.value = 'calling'
+
+    // ★ 사용자 제스처 직후 즉시 오디오 unlock (async 전에!)
+    unlockRemoteAudio()
 
     try {
       const { data } = await axios.post('/api/comms/calls/initiate', { callee_id: targetUser.id })
@@ -281,11 +334,12 @@ export function useCommsWebRTC() {
       await pc.setLocalDescription(offer)
       console.log('[WebRTC] Offer created, SDP length:', offer.sdp?.length, 'sending to signal API...')
 
+      // SDP를 명시적 문자열로 추출 (RTCSessionDescription 객체 직렬화 문제 방지)
       await axios.post('/api/comms/calls/signal', {
         target_user_id: targetUser.id,
         room_id: data.room_id,
         type: 'offer',
-        payload: { sdp: offer },
+        payload: { sdp: { type: offer.type, sdp: offer.sdp } },
       })
       console.log('[WebRTC] ✅ Offer sent to', targetUser.name)
       startCallMonitor()
@@ -303,6 +357,10 @@ export function useCommsWebRTC() {
       console.warn('[WebRTC] answerCall: no incomingCall!')
       return
     }
+
+    // ★ 사용자 제스처 직후 즉시 오디오 unlock (async 전에!)
+    unlockRemoteAudio()
+
     stopRingtone()
     if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
 
@@ -345,15 +403,15 @@ export function useCommsWebRTC() {
 
       // 4. 버퍼된 offer 처리
       if (pendingOffer && pendingOffer.room_id === room_id) {
-        console.log('[WebRTC] Step 4: Processing buffered offer')
-        await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.sdp))
+        console.log('[WebRTC] Step 4: Processing buffered offer, SDP type:', pendingOffer.sdp?.type)
+        await pc.setRemoteDescription(sanitizeSdp(pendingOffer.sdp))
         console.log('[WebRTC] Step 4a OK: Remote description set')
 
         // 4b. setRemoteDescription 후에 버퍼된 ICE 후보 처리 (순서 중요!)
         if (pendingIceCandidates.length > 0) {
           console.log(`[WebRTC] Step 4a-1: Processing ${pendingIceCandidates.length} buffered ICE candidates`)
           for (const c of pendingIceCandidates) {
-            await pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn('[WebRTC] ICE add failed:', e))
+            await pc.addIceCandidate(c).catch(e => console.warn('[WebRTC] ICE add failed:', e))
           }
           pendingIceCandidates = []
         }
@@ -366,7 +424,7 @@ export function useCommsWebRTC() {
           target_user_id: caller_id,
           room_id,
           type: 'answer',
-          payload: { sdp: answer },
+          payload: { sdp: { type: answer.type, sdp: answer.sdp } },
         })
         pendingOffer = null
         console.log('[WebRTC] Step 4c OK: Answer sent to caller ✅')
@@ -399,6 +457,16 @@ export function useCommsWebRTC() {
   // ── 통화 종료 ──────────────────────────────────────────────────
   async function endCall(notifyServer = true) {
     if (notifyServer && currentCallId.value) {
+      // 1. 상대방에게 직접 call-ended 시그널 전송 (즉각 전달)
+      if (remoteUser.value?.id && currentRoomId.value) {
+        axios.post('/api/comms/calls/signal', {
+          target_user_id: remoteUser.value.id,
+          room_id: currentRoomId.value,
+          type: 'call-ended',
+          payload: {},
+        }).catch(() => {})
+      }
+      // 2. 서버에 종료 알림 (DB 업데이트 + 서버측 broadcast 백업)
       try {
         await axios.post(`/api/comms/calls/${currentCallId.value}/end`)
         console.log('[WebRTC] End API sent OK')
