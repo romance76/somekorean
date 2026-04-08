@@ -34,6 +34,7 @@
         @decline="declineCall"
         @end="endCall"
         @toggle-mute="toggleMute"
+        @toggle-speaker="toggleSpeaker"
       />
     </Teleport>
   </div>
@@ -69,6 +70,7 @@ const {
   declineCall,
   endCall,
   toggleMute,
+  toggleSpeaker,
 } = useCommsWebRTC()
 
 let heartbeatInterval = null

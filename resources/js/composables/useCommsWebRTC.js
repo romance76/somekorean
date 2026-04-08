@@ -9,13 +9,6 @@ const ICE_SERVERS = {
   ],
 }
 
-/**
- * useCommsWebRTC()
- * Uses window.Echo (already initialized in bootstrap.js) for signaling.
- * Uses axios (JWT auto-attached) for API calls to /api/comms/calls/...
- *
- * Renamed from useWebRTC to avoid conflict with existing useWebRTC.js (poker).
- */
 export function useCommsWebRTC() {
   const callStatus    = ref('idle')   // idle | ringing | calling | connected | ended
   const callDuration  = ref(0)
@@ -30,23 +23,27 @@ export function useCommsWebRTC() {
   let localStream = null
   let durationTimer = null
   let missedTimer = null
+  let pendingOffer = null  // 수신 중 도착한 offer 버퍼
+  let pendingIceCandidates = []  // PC 생성 전 도착한 ICE 후보 버퍼
 
   // ── PeerConnection ──────────────────────────────────────────────
   function createPeerConnection(roomId, targetUserId) {
+    if (pc) { try { pc.close() } catch {} }
     pc = new RTCPeerConnection(ICE_SERVERS)
 
     pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
         axios.post('/api/comms/calls/signal', {
           target_user_id: targetUserId,
-          room_id:        roomId,
-          type:           'ice-candidate',
-          payload:        { candidate: candidate.toJSON() },
-        })
+          room_id: roomId,
+          type: 'ice-candidate',
+          payload: { candidate: candidate.toJSON() },
+        }).catch(e => console.warn('[WebRTC] ICE signal failed:', e))
       }
     }
 
     pc.ontrack = (event) => {
+      console.log('[WebRTC] Remote track received')
       const audio = document.getElementById('sk-remote-audio')
       if (audio) {
         audio.srcObject = event.streams[0]
@@ -55,207 +52,278 @@ export function useCommsWebRTC() {
     }
 
     pc.onconnectionstatechange = () => {
-      if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+      console.log('[WebRTC] Connection state:', pc?.connectionState)
+      if (pc && ['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
         handleCallEnded()
       }
+      if (pc?.connectionState === 'connected' && callStatus.value !== 'connected') {
+        callStatus.value = 'connected'
+        startDurationTimer()
+      }
+    }
+
+    // 버퍼된 ICE 후보 처리
+    if (pendingIceCandidates.length > 0) {
+      console.log(`[WebRTC] Processing ${pendingIceCandidates.length} buffered ICE candidates`)
+      pendingIceCandidates.forEach(c => {
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {})
+      })
+      pendingIceCandidates = []
     }
 
     return pc
   }
 
   async function getLocalStream() {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    })
+    if (localStream) return localStream
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
     return localStream
   }
 
-  // ── Timers ──────────────────────────────────────────────────────
   function startDurationTimer() {
+    stopDurationTimer()
     callDuration.value = 0
     durationTimer = setInterval(() => callDuration.value++, 1000)
   }
 
   function stopDurationTimer() {
-    clearInterval(durationTimer)
-    durationTimer = null
+    if (durationTimer) { clearInterval(durationTimer); durationTimer = null }
   }
 
-  // ── Call ended cleanup ──────────────────────────────────────────
   function handleCallEnded() {
     stopDurationTimer()
     stopRingtone()
-    clearTimeout(missedTimer)
+    if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
     localStream?.getTracks().forEach(t => t.stop())
-    pc?.close()
+    if (pc) { try { pc.close() } catch {} }
     pc = null
     localStream = null
+    pendingOffer = null
+    pendingIceCandidates = []
     callStatus.value = 'ended'
     setTimeout(() => {
-      callStatus.value    = 'idle'
+      callStatus.value = 'idle'
       currentCallId.value = null
       currentRoomId.value = null
-      remoteUser.value    = null
+      remoteUser.value = null
+      incomingCall.value = null
     }, 2000)
   }
 
-  // ── Listen for incoming signals via window.Echo ─────────────────
+  // ── WebSocket 시그널 수신 ─────────────────────────────────────
   function listenForSignals(myUserId) {
     if (!window.Echo) {
-      console.warn('[useCommsWebRTC] window.Echo not available.')
+      console.warn('[WebRTC] window.Echo not available')
       return
     }
 
     window.Echo.private(`user.${myUserId}`)
       .listen('.webrtc.signal', async (event) => {
         const { type, payload, room_id } = event
-        if (room_id !== currentRoomId.value) return
+        console.log('[WebRTC] Signal received:', type, 'room:', room_id)
 
+        // offer 도착 — 수신 중이면 버퍼링
         if (type === 'offer') {
-          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp))
-          const answer = await pc.createAnswer()
-          await pc.setLocalDescription(answer)
-          axios.post('/api/comms/calls/signal', {
-            target_user_id: incomingCall.value?.caller_id,
-            room_id,
-            type:    'answer',
-            payload: { sdp: answer },
-          })
-        } else if (type === 'answer') {
-          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp))
-        } else if (type === 'ice-candidate') {
-          await pc.addIceCandidate(new RTCIceCandidate(payload.candidate))
+          if (callStatus.value === 'ringing' || currentRoomId.value === room_id) {
+            pendingOffer = { sdp: payload.sdp, room_id }
+            console.log('[WebRTC] Offer buffered (waiting for user to answer)')
+          }
+          return
+        }
+
+        // answer 도착 — 발신자가 받음
+        if (type === 'answer') {
+          if (pc && currentRoomId.value === room_id) {
+            console.log('[WebRTC] Setting remote answer')
+            await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp))
+          }
+          return
+        }
+
+        // ICE 후보
+        if (type === 'ice-candidate') {
+          if (pc && pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)).catch(() => {})
+          } else {
+            // PC가 아직 없거나 remoteDescription이 없으면 버퍼
+            pendingIceCandidates.push(payload.candidate)
+            console.log('[WebRTC] ICE candidate buffered')
+          }
+          return
+        }
+
+        if (type === 'call-answered') {
           if (callStatus.value === 'calling') {
             callStatus.value = 'connected'
             startDurationTimer()
           }
-        } else if (type === 'call-answered') {
-          callStatus.value = 'connected'
-        } else if (type === 'call-ended') {
-          await endCall(false)
+          return
+        }
+
+        if (type === 'call-ended') {
+          endCall(false)
         }
       })
       .listen('.call.initiated', (event) => {
+        console.log('[WebRTC] Incoming call:', event)
         incomingCall.value = event
-        callStatus.value   = 'ringing'
+        currentRoomId.value = event.room_id  // ← 중요! offer 매칭을 위해 미리 설정
+        callStatus.value = 'ringing'
         startRingtone()
 
-        // 30 seconds missed call timeout
+        // 30초 부재중 처리
         missedTimer = setTimeout(() => {
           if (callStatus.value === 'ringing') {
             stopRingtone()
             if (incomingCall.value?.call_id) {
-              axios.post(`/api/comms/calls/${incomingCall.value.call_id}/end`)
+              axios.post(`/api/comms/calls/${incomingCall.value.call_id}/end`).catch(() => {})
             }
             incomingCall.value = null
-            callStatus.value   = 'idle'
+            currentRoomId.value = null
+            callStatus.value = 'idle'
           }
         }, 30000)
       })
   }
 
-  // ── Outgoing call ───────────────────────────────────────────────
+  // ── 발신 ───────────────────────────────────────────────────────
   async function startCall(targetUser) {
     if (callStatus.value !== 'idle') return
     remoteUser.value = targetUser
     callStatus.value = 'calling'
 
     try {
-      const { data } = await axios.post('/api/comms/calls/initiate', {
-        callee_id: targetUser.id,
-      })
+      const { data } = await axios.post('/api/comms/calls/initiate', { callee_id: targetUser.id })
       currentCallId.value = data.call_id
       currentRoomId.value = data.room_id
 
-      await getLocalStream()
+      const stream = await getLocalStream()
       createPeerConnection(data.room_id, targetUser.id)
-      localStream.getTracks().forEach(t => pc.addTrack(t, localStream))
+      stream.getTracks().forEach(t => pc.addTrack(t, stream))
 
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
+
       await axios.post('/api/comms/calls/signal', {
         target_user_id: targetUser.id,
-        room_id:        data.room_id,
-        type:           'offer',
-        payload:        { sdp: offer },
+        room_id: data.room_id,
+        type: 'offer',
+        payload: { sdp: offer },
       })
+      console.log('[WebRTC] Offer sent to', targetUser.name)
     } catch (err) {
-      callStatus.value = 'idle'
+      console.error('[WebRTC] startCall failed:', err)
+      handleCallEnded()
       throw err
     }
   }
 
-  // ── Answer incoming call ────────────────────────────────────────
+  // ── 수신 수락 ──────────────────────────────────────────────────
   async function answerCall() {
     if (!incomingCall.value) return
     stopRingtone()
-    clearTimeout(missedTimer)
+    if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
 
-    const { call_id, room_id, caller_id } = incomingCall.value
+    const { call_id, room_id, caller_id, caller_name, caller_avatar } = incomingCall.value
     currentCallId.value = call_id
     currentRoomId.value = room_id
-    callStatus.value    = 'connected'
+    remoteUser.value = { id: caller_id, name: caller_name, avatar: caller_avatar }
 
-    await axios.post(`/api/comms/calls/${call_id}/answer`)
-    await getLocalStream()
-    createPeerConnection(room_id, caller_id)
-    localStream.getTracks().forEach(t => pc.addTrack(t, localStream))
-    incomingCall.value = null
-    startDurationTimer()
+    try {
+      // 서버에 수락 알림
+      await axios.post(`/api/comms/calls/${call_id}/answer`)
+
+      // 마이크 스트림
+      const stream = await getLocalStream()
+      createPeerConnection(room_id, caller_id)
+      stream.getTracks().forEach(t => pc.addTrack(t, stream))
+
+      // 버퍼된 offer 처리
+      if (pendingOffer && pendingOffer.room_id === room_id) {
+        console.log('[WebRTC] Processing buffered offer')
+        await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.sdp))
+        const answer = await pc.createAnswer()
+        await pc.setLocalDescription(answer)
+
+        await axios.post('/api/comms/calls/signal', {
+          target_user_id: caller_id,
+          room_id,
+          type: 'answer',
+          payload: { sdp: answer },
+        })
+        pendingOffer = null
+        console.log('[WebRTC] Answer sent back to caller')
+      } else {
+        console.warn('[WebRTC] No buffered offer — waiting for offer to arrive')
+      }
+
+      callStatus.value = 'connected'
+      incomingCall.value = null
+      startDurationTimer()
+    } catch (err) {
+      console.error('[WebRTC] answerCall failed:', err)
+      handleCallEnded()
+    }
   }
 
-  // ── Decline incoming call ───────────────────────────────────────
+  // ── 수신 거부 ──────────────────────────────────────────────────
   async function declineCall() {
     if (!incomingCall.value) return
     stopRingtone()
-    clearTimeout(missedTimer)
-    await axios.post(`/api/comms/calls/${incomingCall.value.call_id}/end`)
+    if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
+    await axios.post(`/api/comms/calls/${incomingCall.value.call_id}/end`).catch(() => {})
     incomingCall.value = null
-    callStatus.value   = 'idle'
+    currentRoomId.value = null
+    pendingOffer = null
+    pendingIceCandidates = []
+    callStatus.value = 'idle'
   }
 
-  // ── End active call ─────────────────────────────────────────────
+  // ── 통화 종료 ──────────────────────────────────────────────────
   async function endCall(notifyServer = true) {
     if (notifyServer && currentCallId.value) {
-      await axios.post(`/api/comms/calls/${currentCallId.value}/end`)
+      await axios.post(`/api/comms/calls/${currentCallId.value}/end`).catch(() => {})
     }
     handleCallEnded()
   }
 
-  // ── Toggle mute ─────────────────────────────────────────────────
+  // ── 음소거 토글 ────────────────────────────────────────────────
   function toggleMute() {
     localStream?.getAudioTracks().forEach(t => (t.enabled = !t.enabled))
     isMuted.value = !isMuted.value
   }
 
-  // ── Formatted duration ──────────────────────────────────────────
+  // ── 스피커폰 토글 ─────────────────────────────────────────────
+  async function toggleSpeaker() {
+    isSpeaker.value = !isSpeaker.value
+    const audio = document.getElementById('sk-remote-audio')
+    if (audio && typeof audio.setSinkId === 'function') {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const speakers = devices.filter(d => d.kind === 'audiooutput')
+        if (speakers.length > 1) {
+          // 스피커폰이면 기본(스피커), 아니면 이어피스(첫번째 장치)
+          const targetId = isSpeaker.value ? 'default' : speakers[0].deviceId
+          await audio.setSinkId(targetId)
+        }
+      } catch (e) {
+        console.warn('[WebRTC] setSinkId failed:', e)
+      }
+    }
+  }
+
   const durationFormatted = computed(() => {
     const m = Math.floor(callDuration.value / 60).toString().padStart(2, '0')
     const s = (callDuration.value % 60).toString().padStart(2, '0')
     return `${m}:${s}`
   })
 
-  // ── Cleanup on unmount ──────────────────────────────────────────
-  onUnmounted(() => {
-    endCall(false)
-  })
+  onUnmounted(() => { endCall(false) })
 
   return {
-    callStatus,
-    callDuration,
-    durationFormatted,
-    isMuted,
-    isSpeaker,
-    currentCallId,
-    currentRoomId,
-    remoteUser,
-    incomingCall,
-    listenForSignals,
-    startCall,
-    answerCall,
-    declineCall,
-    endCall,
-    toggleMute,
+    callStatus, callDuration, durationFormatted, isMuted, isSpeaker,
+    currentCallId, currentRoomId, remoteUser, incomingCall,
+    listenForSignals, startCall, answerCall, declineCall, endCall,
+    toggleMute, toggleSpeaker,
   }
 }

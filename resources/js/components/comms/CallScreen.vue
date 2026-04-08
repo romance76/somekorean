@@ -99,6 +99,20 @@
             <span class="text-xs text-white/60">{{ isMuted ? '음소거 해제' : '음소거' }}</span>
           </div>
 
+          <!-- Speaker -->
+          <div class="flex flex-col items-center gap-2">
+            <button @click="$emit('toggle-speaker')"
+                    class="w-14 h-14 rounded-full flex items-center justify-center transition-colors"
+                    :class="isSpeaker ? 'bg-white/30' : 'bg-white/12 hover:bg-white/20'">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path v-if="isSpeaker" d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+                <line v-else x1="23" y1="9" x2="17" y2="15"/>
+              </svg>
+            </button>
+            <span class="text-xs text-white/60">{{ isSpeaker ? '스피커 ON' : '스피커 OFF' }}</span>
+          </div>
+
           <!-- End call -->
           <div class="flex flex-col items-center gap-2">
             <button @click="$emit('end')"
@@ -128,7 +142,7 @@ defineProps({
   durationFormatted: String,
 })
 
-defineEmits(['answer', 'decline', 'end', 'toggle-mute'])
+defineEmits(['answer', 'decline', 'end', 'toggle-mute', 'toggle-speaker'])
 </script>
 
 <!--
