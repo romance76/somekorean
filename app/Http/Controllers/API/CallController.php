@@ -123,6 +123,15 @@ class CallController extends Controller
     }
 
     /**
+     * Debug log from client (temporary).
+     */
+    public function clientLog(Request $request)
+    {
+        \Log::info('[CLIENT] ' . ($request->message ?? ''), $request->only(['data']));
+        return response()->json(['ok' => true]);
+    }
+
+    /**
      * Get call history for the authenticated user.
      */
     public function status(Call $call)

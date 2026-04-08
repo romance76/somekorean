@@ -243,6 +243,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/calls/{call}/end', [CallController::class, 'end']);
         Route::get('/calls/{call}/status', [CallController::class, 'status']);
         Route::get('/calls/history', [CallController::class, 'history']);
+        Route::post('/calls/client-log', [CallController::class, 'clientLog']);
 
         // 차단
         Route::post('/users/{user}/block', [UserBlockController::class, 'block']);

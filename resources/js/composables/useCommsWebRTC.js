@@ -361,49 +361,57 @@ export function useCommsWebRTC() {
     stopRingtone()
     if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
 
+    // 서버로 디버그 로그 전송 함수
+    const dbg = (msg, data) => {
+      console.log('[WebRTC]', msg, data || '')
+      axios.post('/api/comms/calls/client-log', { message: msg, data: data || {} }).catch(() => {})
+    }
+
     // ★ getUserMedia — 마이크 권한
-    console.log('[WebRTC] Getting microphone...')
+    dbg('answerCall: getting mic', { call_id, room_id, caller_id })
     const stream = await getLocalStream()
-    console.log('[WebRTC] Mic result:', stream ? 'OK' : 'FAILED')
+    dbg('answerCall: mic result', { hasMic: !!stream })
 
     startCallMonitor()
 
     try {
       // 서버에 수락 알림
-      console.log('[WebRTC] Sending answer API for call', call_id)
-      await axios.post(`/api/comms/calls/${call_id}/answer`).catch(e => {
-        console.warn('[WebRTC] Answer API error:', e.response?.status)
-      })
+      await axios.post(`/api/comms/calls/${call_id}/answer`).catch(() => {})
+      dbg('answerCall: answer API sent')
 
       // PeerConnection 생성 + 트랙 추가
       createPeerConnection(room_id, caller_id)
       if (stream && pc) {
         stream.getTracks().forEach(t => pc.addTrack(t, stream))
-        console.log('[WebRTC] Local tracks added')
-      } else {
-        console.warn('[WebRTC] No local tracks (stream:', !!stream, 'pc:', !!pc, ')')
+        dbg('answerCall: local tracks added')
       }
 
       // 버퍼된 offer 처리 (저장한 변수 사용!)
       const offer = savedPendingOffer || pendingOffer
-      console.log('[WebRTC] Offer available:', !!offer, 'room match:',
-        offer?.room_id === room_id, 'offer room:', offer?.room_id, 'call room:', room_id)
+      dbg('answerCall: offer check', {
+        hasSaved: !!savedPendingOffer,
+        hasPending: !!pendingOffer,
+        savedRoom: savedPendingOffer?.room_id,
+        pendingRoom: pendingOffer?.room_id,
+        callRoom: room_id,
+        match: offer?.room_id === room_id,
+      })
 
       if (offer && offer.room_id === room_id) {
-        console.log('[WebRTC] Setting remote description...')
+        dbg('answerCall: setRemoteDescription')
         await pc.setRemoteDescription(sanitizeSdp(offer.sdp))
 
         // ICE 후보 처리
         const iceCandidates = savedIceCandidates.length > 0 ? savedIceCandidates : pendingIceCandidates
         if (iceCandidates.length > 0) {
-          console.log('[WebRTC] Adding', iceCandidates.length, 'ICE candidates')
+          dbg('answerCall: adding ICE', { count: iceCandidates.length })
           for (const c of iceCandidates) await pc.addIceCandidate(c).catch(() => {})
         }
         pendingIceCandidates = []
 
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
-        console.log('[WebRTC] Answer SDP created, sending...')
+        dbg('answerCall: answer SDP created, sending signal')
 
         await axios.post('/api/comms/calls/signal', {
           target_user_id: caller_id,
@@ -412,13 +420,15 @@ export function useCommsWebRTC() {
           payload: { sdp: { type: answer.type, sdp: answer.sdp } },
         })
         pendingOffer = null
-        console.log('[WebRTC] ✅ Answer sent to caller!')
+        dbg('answerCall: ✅ DONE — answer sent!')
       } else {
-        console.error('[WebRTC] ❌ NO OFFER! Cannot create answer.',
-          'pendingOffer:', !!pendingOffer, 'saved:', !!savedPendingOffer)
+        dbg('answerCall: ❌ NO OFFER — cannot answer', {
+          hasSaved: !!savedPendingOffer,
+          hasPending: !!pendingOffer,
+        })
       }
     } catch (err) {
-      console.error('[WebRTC] ❌ answerCall error:', err.message || err, err)
+      dbg('answerCall: ❌ ERROR', { error: err.message || String(err) })
     }
   }
 
