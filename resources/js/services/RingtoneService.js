@@ -52,7 +52,7 @@ export async function startRingtone() {
     }
 
     // Vibrate pattern for mobile devices
-    navigator.vibrate?.([700, 300, 700, 300, 700, 1000, 700, 300, 700])
+    try { navigator.vibrate?.([700, 300, 700, 300, 700]) } catch (e) { /* 터치 없으면 무시 */ }
   } catch (err) {
     console.warn('[RingtoneService] playback failed:', err)
   }
@@ -60,7 +60,7 @@ export async function startRingtone() {
 
 export function stopRingtone() {
   isPlaying = false
-  navigator.vibrate?.(0)
+  try { navigator.vibrate?.(0) } catch (e) { /* ignore */ }
   ringtoneNodes.forEach(n => {
     try { n.disconnect() } catch {}
     try { n.stop?.() } catch {}
