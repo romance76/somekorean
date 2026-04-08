@@ -410,8 +410,17 @@ export function useCommsWebRTC() {
       })
 
       if (offer && offer.room_id === room_id) {
-        dbg('answerCall: setRemoteDescription')
-        await pc.setRemoteDescription(sanitizeSdp(offer.sdp))
+        const cleanSdp = sanitizeSdp(offer.sdp)
+        // SDP에서 candidate 줄 수 확인
+        const candidateCount = (cleanSdp.sdp.match(/^a=candidate:/gm) || []).length
+        const hasAudio = cleanSdp.sdp.includes('m=audio')
+        dbg('answerCall: setRemoteDescription', {
+          sdpType: cleanSdp.type,
+          sdpLen: cleanSdp.sdp.length,
+          candidatesInSdp: candidateCount,
+          hasAudio,
+        })
+        await pc.setRemoteDescription(cleanSdp)
 
         // ICE 후보 처리
         const iceCandidates = savedIceCandidates.length > 0 ? savedIceCandidates : pendingIceCandidates
