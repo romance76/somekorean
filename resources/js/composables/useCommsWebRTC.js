@@ -288,9 +288,14 @@ export function useCommsWebRTC() {
 
     try {
       // 1. 서버에 수락 알림
-      console.log('[WebRTC] Step 1: Answering call', call_id)
-      await axios.post(`/api/comms/calls/${call_id}/answer`)
-      console.log('[WebRTC] Step 1 OK: Server notified')
+      console.log('[WebRTC] Step 1: Answering call', call_id, 'room', room_id)
+      try {
+        const resp = await axios.post(`/api/comms/calls/${call_id}/answer`)
+        console.log('[WebRTC] Step 1 OK: Server responded', resp.status, resp.data)
+      } catch (apiErr) {
+        console.error('[WebRTC] Step 1 FAILED: API error', apiErr.response?.status, apiErr.response?.data)
+        // API 실패해도 계속 진행 (로컬 통화는 시도)
+      }
 
       // 2. 마이크 스트림 (실패해도 계속 진행)
       let stream = null

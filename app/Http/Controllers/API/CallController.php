@@ -57,8 +57,10 @@ class CallController extends Controller
      */
     public function answer(Request $request, Call $call)
     {
+        \Log::info('[CALL] Answer API called', ['call_id' => $call->id, 'user_id' => $request->user()->id, 'callee_id' => $call->callee_id]);
         abort_unless($call->callee_id === $request->user()->id, 403);
         $call->answer();
+        \Log::info('[CALL] Call answered OK', ['call_id' => $call->id]);
         // 발신자에게 알림
         broadcast(new CommWebRtcSignal($call->caller_id, $call->room_id, 'call-answered', []));
         // 수신자의 다른 기기에도 알림 (다른 기기에서 벨 중지)
