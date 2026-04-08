@@ -86,7 +86,7 @@
         <div v-if="mobileMenu" class="fixed inset-0 bg-black/40 z-[999]" @click="mobileMenu=false"></div>
       </Transition>
       <Transition name="menu-slide">
-        <div v-if="mobileMenu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-[1000] shadow-2xl overflow-y-auto"
+        <div v-if="mobileMenu" class="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white z-[1000] shadow-2xl overflow-y-auto"
              style="padding-top: var(--sat); padding-bottom: var(--sab)">
           <!-- 헤더 -->
           <div class="flex items-center justify-between px-4 py-3 border-b">
