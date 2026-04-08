@@ -196,16 +196,18 @@ export function useCommsWebRTC() {
           return
         }
 
-        // 다른 기기에서 수락됨 → 이 기기에서 벨 중지
+        // 다른 기기에서 수락됨 → 이 기기가 벨 울리는 중이면 중지
         if (type === 'call-answered-elsewhere') {
-          console.log('[WebRTC] Call answered on another device')
-          stopRingtone()
-          if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
-          incomingCall.value = null
-          currentRoomId.value = null
-          pendingOffer = null
-          pendingIceCandidates = []
-          callStatus.value = 'idle'
+          if (callStatus.value === 'ringing') {
+            console.log('[WebRTC] Call answered on another device — stopping ring')
+            stopRingtone()
+            if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
+            incomingCall.value = null
+            currentRoomId.value = null
+            pendingOffer = null
+            pendingIceCandidates = []
+            callStatus.value = 'idle'
+          }
           return
         }
 
@@ -269,7 +271,11 @@ export function useCommsWebRTC() {
 
   // ── 수신 수락 ──────────────────────────────────────────────────
   async function answerCall() {
-    if (!incomingCall.value) return
+    console.log('[WebRTC] answerCall called, incomingCall:', JSON.stringify(incomingCall.value), 'status:', callStatus.value)
+    if (!incomingCall.value) {
+      console.warn('[WebRTC] answerCall: no incomingCall!')
+      return
+    }
     stopRingtone()
     if (missedTimer) { clearTimeout(missedTimer); missedTimer = null }
 
