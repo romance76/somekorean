@@ -108,10 +108,12 @@ const unreadCount = ref(0)
 
 function formatDate(dt) {
   if (!dt) return ''
-  const h = Math.floor((Date.now() - new Date(dt).getTime()) / 3600000)
-  if (h < 1) return '방금'
-  if (h < 24) return h + '시간 전'
-  return Math.floor(h / 24) + '일 전'
+  const d = new Date(dt), now = new Date()
+  const m = d.getMonth() + 1, day = d.getDate()
+  const hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0')
+  if (d.getFullYear() === now.getFullYear() && m === now.getMonth() + 1 && day === now.getDate()) return `오늘 ${hh}:${mm}`
+  if (d.getFullYear() === now.getFullYear()) return `${m}/${day} ${hh}:${mm}`
+  return `${d.getFullYear()}.${m}.${day} ${hh}:${mm}`
 }
 
 async function loadMessages() {
