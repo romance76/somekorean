@@ -1,27 +1,27 @@
 {
-  "_AdminUserModal-Ftigrn4-.js": {
-    "file": "assets/AdminUserModal-Ftigrn4-.js",
+  "_AdminUserModal-CkpDC6Xb.js": {
+    "file": "assets/AdminUserModal-CkpDC6Xb.js",
     "name": "AdminUserModal",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_CommentSection-Bw2Bzm50.js": {
-    "file": "assets/CommentSection-Bw2Bzm50.js",
+  "_CommentSection-BlJOfoA5.js": {
+    "file": "assets/CommentSection-BlJOfoA5.js",
     "name": "CommentSection",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_SidebarWidgets-jg6KmLkb.js": {
-    "file": "assets/SidebarWidgets-jg6KmLkb.js",
+  "_SidebarWidgets-BxsVFI_J.js": {
+    "file": "assets/SidebarWidgets-BxsVFI_J.js",
     "name": "SidebarWidgets",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_leaflet-src-BicZ7b6Q.js": {
-    "file": "assets/leaflet-src-BicZ7b6Q.js",
+  "_leaflet-src-gSHvUsVN.js": {
+    "file": "assets/leaflet-src-gSHvUsVN.js",
     "name": "leaflet-src",
     "isDynamicEntry": true,
     "imports": [
@@ -32,22 +32,22 @@
     "file": "assets/useBlindSchedule-C3SFDW4w.js",
     "name": "useBlindSchedule"
   },
-  "_useLocation-BxYPnU2Q.js": {
-    "file": "assets/useLocation-BxYPnU2Q.js",
+  "_useLocation-O5duZkNA.js": {
+    "file": "assets/useLocation-O5duZkNA.js",
     "name": "useLocation",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_useMenuConfig--joyE-nH.js": {
-    "file": "assets/useMenuConfig--joyE-nH.js",
+  "_useMenuConfig-CPru6n4Y.js": {
+    "file": "assets/useMenuConfig-CPru6n4Y.js",
     "name": "useMenuConfig",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_usePokerWallet-Bf-vFSWy.js": {
-    "file": "assets/usePokerWallet-Bf-vFSWy.js",
+  "_usePokerWallet-DlsGQ3AY.js": {
+    "file": "assets/usePokerWallet-DlsGQ3AY.js",
     "name": "usePokerWallet",
     "imports": [
       "resources/js/app.js"
@@ -79,7 +79,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-D1VZPA_9.js",
+    "file": "assets/app-8sU_kicz.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -238,7 +238,7 @@
     ]
   },
   "resources/js/pages/Home.vue": {
-    "file": "assets/Home-C4ANNUTA.js",
+    "file": "assets/Home-BTsDGY3D.js",
     "name": "Home",
     "src": "resources/js/pages/Home.vue",
     "isDynamicEntry": true,
@@ -247,7 +247,7 @@
     ]
   },
   "resources/js/pages/NotFound.vue": {
-    "file": "assets/NotFound-BmZXCCFE.js",
+    "file": "assets/NotFound-CtB-Y5y_.js",
     "name": "NotFound",
     "src": "resources/js/pages/NotFound.vue",
     "isDynamicEntry": true,
@@ -256,7 +256,7 @@
     ]
   },
   "resources/js/pages/Notifications.vue": {
-    "file": "assets/Notifications-DUNtuN8x.js",
+    "file": "assets/Notifications-CbUu0y8M.js",
     "name": "Notifications",
     "src": "resources/js/pages/Notifications.vue",
     "isDynamicEntry": true,
@@ -265,7 +265,7 @@
     ]
   },
   "resources/js/pages/PointRules.vue": {
-    "file": "assets/PointRules-D7tR8x1u.js",
+    "file": "assets/PointRules-BOHAaJF9.js",
     "name": "PointRules",
     "src": "resources/js/pages/PointRules.vue",
     "isDynamicEntry": true,
@@ -274,7 +274,7 @@
     ]
   },
   "resources/js/pages/Search.vue": {
-    "file": "assets/Search-D4CtS5I4.js",
+    "file": "assets/Search-D4TyW0Wo.js",
     "name": "Search",
     "src": "resources/js/pages/Search.vue",
     "isDynamicEntry": true,
@@ -283,57 +283,57 @@
     ]
   },
   "resources/js/pages/admin/AdminClubs.vue": {
-    "file": "assets/AdminClubs-3tfd-sR5.js",
+    "file": "assets/AdminClubs-CDmwyeyt.js",
     "name": "AdminClubs",
     "src": "resources/js/pages/admin/AdminClubs.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminEvents.vue": {
-    "file": "assets/AdminEvents-CvgpxNbg.js",
+    "file": "assets/AdminEvents-BYRzMGvN.js",
     "name": "AdminEvents",
     "src": "resources/js/pages/admin/AdminEvents.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminFriends.vue": {
-    "file": "assets/AdminFriends-BdFJ0-dq.js",
+    "file": "assets/AdminFriends-Beu7I0Um.js",
     "name": "AdminFriends",
     "src": "resources/js/pages/admin/AdminFriends.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminGames.vue": {
-    "file": "assets/AdminGames-D3dDPMUP.js",
+    "file": "assets/AdminGames-BCXBGnkT.js",
     "name": "AdminGames",
     "src": "resources/js/pages/admin/AdminGames.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminJobs.vue": {
-    "file": "assets/AdminJobs-CTKoXA9T.js",
+    "file": "assets/AdminJobs-DHpFxPCP.js",
     "name": "AdminJobs",
     "src": "resources/js/pages/admin/AdminJobs.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminLayout.vue": {
-    "file": "assets/AdminLayout-Re8PY_b0.js",
+    "file": "assets/AdminLayout-B1DkZehe.js",
     "name": "AdminLayout",
     "src": "resources/js/pages/admin/AdminLayout.vue",
     "isDynamicEntry": true,
@@ -342,17 +342,17 @@
     ]
   },
   "resources/js/pages/admin/AdminMarket.vue": {
-    "file": "assets/AdminMarket-BMYgu0PT.js",
+    "file": "assets/AdminMarket-CuRH3TuM.js",
     "name": "AdminMarket",
     "src": "resources/js/pages/admin/AdminMarket.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminMusic.vue": {
-    "file": "assets/AdminMusic-CLVk54_9.js",
+    "file": "assets/AdminMusic-D32ARdjS.js",
     "name": "AdminMusic",
     "src": "resources/js/pages/admin/AdminMusic.vue",
     "isDynamicEntry": true,
@@ -361,17 +361,17 @@
     ]
   },
   "resources/js/pages/admin/AdminNews.vue": {
-    "file": "assets/AdminNews-rJK2bjKA.js",
+    "file": "assets/AdminNews-BnLV5-YG.js",
     "name": "AdminNews",
     "src": "resources/js/pages/admin/AdminNews.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AdminUserModal-Ftigrn4-.js"
+      "_AdminUserModal-CkpDC6Xb.js"
     ]
   },
   "resources/js/pages/admin/AdminPointSettings.vue": {
-    "file": "assets/AdminPointSettings-BJh7_cfp.js",
+    "file": "assets/AdminPointSettings-DxqwNIDb.js",
     "name": "AdminPointSettings",
     "src": "resources/js/pages/admin/AdminPointSettings.vue",
     "isDynamicEntry": true,
@@ -380,7 +380,7 @@
     ]
   },
   "resources/js/pages/admin/AdminPoker.vue": {
-    "file": "assets/AdminPoker-DJwO4h8I.js",
+    "file": "assets/AdminPoker-CLH0T1um.js",
     "name": "AdminPoker",
     "src": "resources/js/pages/admin/AdminPoker.vue",
     "isDynamicEntry": true,
@@ -389,37 +389,37 @@
     ]
   },
   "resources/js/pages/admin/AdminQa.vue": {
-    "file": "assets/AdminQa-UtwIsoQi.js",
+    "file": "assets/AdminQa-Bb99g4dt.js",
     "name": "AdminQa",
     "src": "resources/js/pages/admin/AdminQa.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminRealestate.vue": {
-    "file": "assets/AdminRealestate-yWod3BeT.js",
+    "file": "assets/AdminRealestate-DlMTTag9.js",
     "name": "AdminRealestate",
     "src": "resources/js/pages/admin/AdminRealestate.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminRecipes.vue": {
-    "file": "assets/AdminRecipes-BiAhCmC6.js",
+    "file": "assets/AdminRecipes-BHGHC-z1.js",
     "name": "AdminRecipes",
     "src": "resources/js/pages/admin/AdminRecipes.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminSecurity.vue": {
-    "file": "assets/AdminSecurity-Bd8n0mNe.js",
+    "file": "assets/AdminSecurity-DQg-xuSR.js",
     "name": "AdminSecurity",
     "src": "resources/js/pages/admin/AdminSecurity.vue",
     "isDynamicEntry": true,
@@ -428,27 +428,27 @@
     ]
   },
   "resources/js/pages/admin/AdminShopping.vue": {
-    "file": "assets/AdminShopping-DYnmhUL5.js",
+    "file": "assets/AdminShopping-D7uQyjks.js",
     "name": "AdminShopping",
     "src": "resources/js/pages/admin/AdminShopping.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/AdminShorts.vue": {
-    "file": "assets/AdminShorts-dY99WjsM.js",
+    "file": "assets/AdminShorts-CDxuT5pw.js",
     "name": "AdminShorts",
     "src": "resources/js/pages/admin/AdminShorts.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AdminUserModal-Ftigrn4-.js"
+      "_AdminUserModal-CkpDC6Xb.js"
     ]
   },
   "resources/js/pages/admin/Banners.vue": {
-    "file": "assets/Banners-DQgX_Ff5.js",
+    "file": "assets/Banners-BsnZ9EBA.js",
     "name": "Banners",
     "src": "resources/js/pages/admin/Banners.vue",
     "isDynamicEntry": true,
@@ -457,7 +457,7 @@
     ]
   },
   "resources/js/pages/admin/BoardManager.vue": {
-    "file": "assets/BoardManager-Bsi6wJs9.js",
+    "file": "assets/BoardManager-DwvH24-R.js",
     "name": "BoardManager",
     "src": "resources/js/pages/admin/BoardManager.vue",
     "isDynamicEntry": true,
@@ -466,17 +466,17 @@
     ]
   },
   "resources/js/pages/admin/Business.vue": {
-    "file": "assets/Business-DbhK4z4R.js",
+    "file": "assets/Business-BcRFjwCW.js",
     "name": "Business",
     "src": "resources/js/pages/admin/Business.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/Chats.vue": {
-    "file": "assets/Chats-y8k6Q32H.js",
+    "file": "assets/Chats-BqyljhGn.js",
     "name": "Chats",
     "src": "resources/js/pages/admin/Chats.vue",
     "isDynamicEntry": true,
@@ -485,7 +485,7 @@
     ]
   },
   "resources/js/pages/admin/Content.vue": {
-    "file": "assets/Content-Dk_4Nb-N.js",
+    "file": "assets/Content-CMcR5eIf.js",
     "name": "Content",
     "src": "resources/js/pages/admin/Content.vue",
     "isDynamicEntry": true,
@@ -494,7 +494,7 @@
     ]
   },
   "resources/js/pages/admin/Elder.vue": {
-    "file": "assets/Elder-D1POVhRe.js",
+    "file": "assets/Elder-CBpog8Pg.js",
     "name": "Elder",
     "src": "resources/js/pages/admin/Elder.vue",
     "isDynamicEntry": true,
@@ -503,17 +503,17 @@
     ]
   },
   "resources/js/pages/admin/GroupBuy.vue": {
-    "file": "assets/GroupBuy-COVe9NtE.js",
+    "file": "assets/GroupBuy-CVXEPi93.js",
     "name": "GroupBuy",
     "src": "resources/js/pages/admin/GroupBuy.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AdminUserModal-Ftigrn4-.js",
+      "_AdminUserModal-CkpDC6Xb.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/pages/admin/Members.vue": {
-    "file": "assets/Members-2t1l6MAv.js",
+    "file": "assets/Members-CPjJ65L1.js",
     "name": "Members",
     "src": "resources/js/pages/admin/Members.vue",
     "isDynamicEntry": true,
@@ -522,7 +522,7 @@
     ]
   },
   "resources/js/pages/admin/Overview.vue": {
-    "file": "assets/Overview-DJq7DxBA.js",
+    "file": "assets/Overview-C-E644Fi.js",
     "name": "Overview",
     "src": "resources/js/pages/admin/Overview.vue",
     "isDynamicEntry": true,
@@ -531,7 +531,7 @@
     ]
   },
   "resources/js/pages/admin/Payments.vue": {
-    "file": "assets/Payments-YiYq2t-0.js",
+    "file": "assets/Payments-BPtdgXRW.js",
     "name": "Payments",
     "src": "resources/js/pages/admin/Payments.vue",
     "isDynamicEntry": true,
@@ -540,7 +540,7 @@
     ]
   },
   "resources/js/pages/admin/SiteSettings.vue": {
-    "file": "assets/SiteSettings-BvU7vVIq.js",
+    "file": "assets/SiteSettings-BT1lUvlG.js",
     "name": "SiteSettings",
     "src": "resources/js/pages/admin/SiteSettings.vue",
     "isDynamicEntry": true,
@@ -552,7 +552,7 @@
     ]
   },
   "resources/js/pages/admin/System.vue": {
-    "file": "assets/System-DJtUGJbl.js",
+    "file": "assets/System-CEpUNBl2.js",
     "name": "System",
     "src": "resources/js/pages/admin/System.vue",
     "isDynamicEntry": true,
@@ -561,7 +561,7 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-DEL79Byw.js",
+    "file": "assets/ForgotPassword-Cu1-afiK.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
@@ -570,7 +570,7 @@
     ]
   },
   "resources/js/pages/auth/Login.vue": {
-    "file": "assets/Login-BPKbeCKb.js",
+    "file": "assets/Login-D3CtVqVM.js",
     "name": "Login",
     "src": "resources/js/pages/auth/Login.vue",
     "isDynamicEntry": true,
@@ -579,7 +579,7 @@
     ]
   },
   "resources/js/pages/auth/Register.vue": {
-    "file": "assets/Register-DNXR35Vx.js",
+    "file": "assets/Register-BWh-vR4e.js",
     "name": "Register",
     "src": "resources/js/pages/auth/Register.vue",
     "isDynamicEntry": true,
@@ -588,7 +588,7 @@
     ]
   },
   "resources/js/pages/chat/ChatRoom.vue": {
-    "file": "assets/ChatRoom-D06L8Iav.js",
+    "file": "assets/ChatRoom-qUUgnFY5.js",
     "name": "ChatRoom",
     "src": "resources/js/pages/chat/ChatRoom.vue",
     "isDynamicEntry": true,
@@ -597,7 +597,7 @@
     ]
   },
   "resources/js/pages/chat/ChatRooms.vue": {
-    "file": "assets/ChatRooms-DFcgUitf.js",
+    "file": "assets/ChatRooms-B5sdY3Vx.js",
     "name": "ChatRooms",
     "src": "resources/js/pages/chat/ChatRooms.vue",
     "isDynamicEntry": true,
@@ -606,7 +606,7 @@
     ]
   },
   "resources/js/pages/comms/CommsHome.vue": {
-    "file": "assets/CommsHome-yrqM1c2h.js",
+    "file": "assets/CommsHome-CsYyZOCD.js",
     "name": "CommsHome",
     "src": "resources/js/pages/comms/CommsHome.vue",
     "isDynamicEntry": true,
@@ -615,39 +615,39 @@
     ]
   },
   "resources/js/pages/community/BoardList.vue": {
-    "file": "assets/BoardList-vb5o-i-d.js",
+    "file": "assets/BoardList-nzqAtNaA.js",
     "name": "BoardList",
     "src": "resources/js/pages/community/BoardList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/community/ClubDetail.vue": {
-    "file": "assets/ClubDetail-XTWr2whA.js",
+    "file": "assets/ClubDetail-3HEcHjJK.js",
     "name": "ClubDetail",
     "src": "resources/js/pages/community/ClubDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/community/ClubList.vue": {
-    "file": "assets/ClubList-CHNmmJAM.js",
+    "file": "assets/ClubList-DVVoP_e7.js",
     "name": "ClubList",
     "src": "resources/js/pages/community/ClubList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js"
     ]
   },
   "resources/js/pages/community/CommunityHome.vue": {
-    "file": "assets/CommunityHome-CaepKWOb.js",
+    "file": "assets/CommunityHome-CrfIlCRw.js",
     "name": "CommunityHome",
     "src": "resources/js/pages/community/CommunityHome.vue",
     "isDynamicEntry": true,
@@ -656,18 +656,18 @@
     ]
   },
   "resources/js/pages/community/PostDetail.vue": {
-    "file": "assets/PostDetail-D7_yO94r.js",
+    "file": "assets/PostDetail-Cibuy9wq.js",
     "name": "PostDetail",
     "src": "resources/js/pages/community/PostDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/community/PostWrite.vue": {
-    "file": "assets/PostWrite-C17cYpCi.js",
+    "file": "assets/PostWrite-BDVMNFhZ.js",
     "name": "PostWrite",
     "src": "resources/js/pages/community/PostWrite.vue",
     "isDynamicEntry": true,
@@ -676,33 +676,33 @@
     ]
   },
   "resources/js/pages/directory/BusinessDetail.vue": {
-    "file": "assets/BusinessDetail-Bsylffg4.js",
+    "file": "assets/BusinessDetail-UFK7zGUw.js",
     "name": "BusinessDetail",
     "src": "resources/js/pages/directory/BusinessDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_CommentSection-Bw2Bzm50.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_CommentSection-BlJOfoA5.js",
+      "_SidebarWidgets-BxsVFI_J.js"
     ],
     "dynamicImports": [
-      "_leaflet-src-BicZ7b6Q.js"
+      "_leaflet-src-gSHvUsVN.js"
     ]
   },
   "resources/js/pages/directory/BusinessList.vue": {
-    "file": "assets/BusinessList-CqMTLMdC.js",
+    "file": "assets/BusinessList-DTb4LaZN.js",
     "name": "BusinessList",
     "src": "resources/js/pages/directory/BusinessList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_useMenuConfig--joyE-nH.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_useMenuConfig-CPru6n4Y.js"
     ]
   },
   "resources/js/pages/directory/BusinessRegister.vue": {
-    "file": "assets/BusinessRegister-CngA7U2Z.js",
+    "file": "assets/BusinessRegister-0MbuoxQD.js",
     "name": "BusinessRegister",
     "src": "resources/js/pages/directory/BusinessRegister.vue",
     "isDynamicEntry": true,
@@ -711,7 +711,7 @@
     ]
   },
   "resources/js/pages/elder/ElderCheckin.vue": {
-    "file": "assets/ElderCheckin-DlzKQueq.js",
+    "file": "assets/ElderCheckin-BWOW7m9e.js",
     "name": "ElderCheckin",
     "src": "resources/js/pages/elder/ElderCheckin.vue",
     "isDynamicEntry": true,
@@ -720,7 +720,7 @@
     ]
   },
   "resources/js/pages/elder/ElderHome.vue": {
-    "file": "assets/ElderHome-C0Juf9PQ.js",
+    "file": "assets/ElderHome-CbMrhohs.js",
     "name": "ElderHome",
     "src": "resources/js/pages/elder/ElderHome.vue",
     "isDynamicEntry": true,
@@ -729,7 +729,7 @@
     ]
   },
   "resources/js/pages/elder/GuardianDashboard.vue": {
-    "file": "assets/GuardianDashboard-DPp--V2T.js",
+    "file": "assets/GuardianDashboard-_FoFUOG9.js",
     "name": "GuardianDashboard",
     "src": "resources/js/pages/elder/GuardianDashboard.vue",
     "isDynamicEntry": true,
@@ -738,7 +738,7 @@
     ]
   },
   "resources/js/pages/events/EventCreate.vue": {
-    "file": "assets/EventCreate-DsvWYnny.js",
+    "file": "assets/EventCreate-C2Pf-yPt.js",
     "name": "EventCreate",
     "src": "resources/js/pages/events/EventCreate.vue",
     "isDynamicEntry": true,
@@ -747,30 +747,30 @@
     ]
   },
   "resources/js/pages/events/EventDetail.vue": {
-    "file": "assets/EventDetail-BPuvndch.js",
+    "file": "assets/EventDetail-CUS6l4yf.js",
     "name": "EventDetail",
     "src": "resources/js/pages/events/EventDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/events/EventList.vue": {
-    "file": "assets/EventList-DsgUX_LR.js",
+    "file": "assets/EventList-Ds9QasYI.js",
     "name": "EventList",
     "src": "resources/js/pages/events/EventList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_useMenuConfig--joyE-nH.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_useMenuConfig-CPru6n4Y.js"
     ]
   },
   "resources/js/pages/friends/FriendList.vue": {
-    "file": "assets/FriendList-C5lIs3GM.js",
+    "file": "assets/FriendList-D3ovbm2u.js",
     "name": "FriendList",
     "src": "resources/js/pages/friends/FriendList.vue",
     "isDynamicEntry": true,
@@ -779,7 +779,7 @@
     ]
   },
   "resources/js/pages/games/ArcadeGame.vue": {
-    "file": "assets/ArcadeGame-0RPDITX-.js",
+    "file": "assets/ArcadeGame-CQRjrjOw.js",
     "name": "ArcadeGame",
     "src": "resources/js/pages/games/ArcadeGame.vue",
     "isDynamicEntry": true,
@@ -791,7 +791,7 @@
     ]
   },
   "resources/js/pages/games/BingoGame.vue": {
-    "file": "assets/BingoGame-BKfPCX9c.js",
+    "file": "assets/BingoGame-ZALMkFlX.js",
     "name": "BingoGame",
     "src": "resources/js/pages/games/BingoGame.vue",
     "isDynamicEntry": true,
@@ -803,7 +803,7 @@
     ]
   },
   "resources/js/pages/games/Blackjack.vue": {
-    "file": "assets/Blackjack-Bmp9a9WC.js",
+    "file": "assets/Blackjack-C3vexO5T.js",
     "name": "Blackjack",
     "src": "resources/js/pages/games/Blackjack.vue",
     "isDynamicEntry": true,
@@ -812,7 +812,7 @@
     ]
   },
   "resources/js/pages/games/Game2048.vue": {
-    "file": "assets/Game2048-C29XJOp3.js",
+    "file": "assets/Game2048-DAxa3JcA.js",
     "name": "Game2048",
     "src": "resources/js/pages/games/Game2048.vue",
     "isDynamicEntry": true,
@@ -821,7 +821,7 @@
     ]
   },
   "resources/js/pages/games/GameAlphabet.vue": {
-    "file": "assets/GameAlphabet-BvMTbaMo.js",
+    "file": "assets/GameAlphabet-oYKMdyKQ.js",
     "name": "GameAlphabet",
     "src": "resources/js/pages/games/GameAlphabet.vue",
     "isDynamicEntry": true,
@@ -833,7 +833,7 @@
     ]
   },
   "resources/js/pages/games/GameAnimals.vue": {
-    "file": "assets/GameAnimals-CeQwRv1Y.js",
+    "file": "assets/GameAnimals-Cmkb6jxQ.js",
     "name": "GameAnimals",
     "src": "resources/js/pages/games/GameAnimals.vue",
     "isDynamicEntry": true,
@@ -845,7 +845,7 @@
     ]
   },
   "resources/js/pages/games/GameBingo.vue": {
-    "file": "assets/GameBingo-j3VBkcyT.js",
+    "file": "assets/GameBingo-CRXzjUuD.js",
     "name": "GameBingo",
     "src": "resources/js/pages/games/GameBingo.vue",
     "isDynamicEntry": true,
@@ -857,7 +857,7 @@
     ]
   },
   "resources/js/pages/games/GameBreathing.vue": {
-    "file": "assets/GameBreathing-CA9jdsUF.js",
+    "file": "assets/GameBreathing-DstwChUt.js",
     "name": "GameBreathing",
     "src": "resources/js/pages/games/GameBreathing.vue",
     "isDynamicEntry": true,
@@ -869,7 +869,7 @@
     ]
   },
   "resources/js/pages/games/GameCarJump.vue": {
-    "file": "assets/GameCarJump-D44keS4G.js",
+    "file": "assets/GameCarJump-ClwdA1fA.js",
     "name": "GameCarJump",
     "src": "resources/js/pages/games/GameCarJump.vue",
     "isDynamicEntry": true,
@@ -878,7 +878,7 @@
     ]
   },
   "resources/js/pages/games/GameCodingQuiz.vue": {
-    "file": "assets/GameCodingQuiz-QH_6PIse.js",
+    "file": "assets/GameCodingQuiz-C4yNDSdb.js",
     "name": "GameCodingQuiz",
     "src": "resources/js/pages/games/GameCodingQuiz.vue",
     "isDynamicEntry": true,
@@ -890,7 +890,7 @@
     ]
   },
   "resources/js/pages/games/GameColors.vue": {
-    "file": "assets/GameColors--3xVI2Pd.js",
+    "file": "assets/GameColors-D_ZgB7Rr.js",
     "name": "GameColors",
     "src": "resources/js/pages/games/GameColors.vue",
     "isDynamicEntry": true,
@@ -902,7 +902,7 @@
     ]
   },
   "resources/js/pages/games/GameCounting.vue": {
-    "file": "assets/GameCounting-DpnoEJ3J.js",
+    "file": "assets/GameCounting-Dr_6d5W8.js",
     "name": "GameCounting",
     "src": "resources/js/pages/games/GameCounting.vue",
     "isDynamicEntry": true,
@@ -914,7 +914,7 @@
     ]
   },
   "resources/js/pages/games/GameDuckHunt.vue": {
-    "file": "assets/GameDuckHunt-CkLeFK3w.js",
+    "file": "assets/GameDuckHunt-5J7h2goh.js",
     "name": "GameDuckHunt",
     "src": "resources/js/pages/games/GameDuckHunt.vue",
     "isDynamicEntry": true,
@@ -924,7 +924,7 @@
     ]
   },
   "resources/js/pages/games/GameEngCard.vue": {
-    "file": "assets/GameEngCard-CXUmOsPv.js",
+    "file": "assets/GameEngCard-DMn2nC_-.js",
     "name": "GameEngCard",
     "src": "resources/js/pages/games/GameEngCard.vue",
     "isDynamicEntry": true,
@@ -936,7 +936,7 @@
     ]
   },
   "resources/js/pages/games/GameFlappy.vue": {
-    "file": "assets/GameFlappy-1o9Wozgp.js",
+    "file": "assets/GameFlappy-B3RAkqMT.js",
     "name": "GameFlappy",
     "src": "resources/js/pages/games/GameFlappy.vue",
     "isDynamicEntry": true,
@@ -946,7 +946,7 @@
     ]
   },
   "resources/js/pages/games/GameHangul.vue": {
-    "file": "assets/GameHangul-BUXt_7NT.js",
+    "file": "assets/GameHangul-DFHkNhdC.js",
     "name": "GameHangul",
     "src": "resources/js/pages/games/GameHangul.vue",
     "isDynamicEntry": true,
@@ -958,7 +958,7 @@
     ]
   },
   "resources/js/pages/games/GameHanja.vue": {
-    "file": "assets/GameHanja-CdlQzyXd.js",
+    "file": "assets/GameHanja-ZYxBXaeA.js",
     "name": "GameHanja",
     "src": "resources/js/pages/games/GameHanja.vue",
     "isDynamicEntry": true,
@@ -970,7 +970,7 @@
     ]
   },
   "resources/js/pages/games/GameHealth.vue": {
-    "file": "assets/GameHealth-CXFv5DvR.js",
+    "file": "assets/GameHealth-ChVtT3ch.js",
     "name": "GameHealth",
     "src": "resources/js/pages/games/GameHealth.vue",
     "isDynamicEntry": true,
@@ -982,7 +982,7 @@
     ]
   },
   "resources/js/pages/games/GameHextris.vue": {
-    "file": "assets/GameHextris-CbqyCDm-.js",
+    "file": "assets/GameHextris-DjrrmQwZ.js",
     "name": "GameHextris",
     "src": "resources/js/pages/games/GameHextris.vue",
     "isDynamicEntry": true,
@@ -992,7 +992,7 @@
     ]
   },
   "resources/js/pages/games/GameHistory.vue": {
-    "file": "assets/GameHistory-BnIuFeRF.js",
+    "file": "assets/GameHistory-IQuNeycD.js",
     "name": "GameHistory",
     "src": "resources/js/pages/games/GameHistory.vue",
     "isDynamicEntry": true,
@@ -1004,7 +1004,7 @@
     ]
   },
   "resources/js/pages/games/GameLobby.vue": {
-    "file": "assets/GameLobby-DQyK39Qk.js",
+    "file": "assets/GameLobby-hh6nmh9J.js",
     "name": "GameLobby",
     "src": "resources/js/pages/games/GameLobby.vue",
     "isDynamicEntry": true,
@@ -1013,7 +1013,7 @@
     ]
   },
   "resources/js/pages/games/GameMahjong.vue": {
-    "file": "assets/GameMahjong-CapGIKcG.js",
+    "file": "assets/GameMahjong-CXTNChnd.js",
     "name": "GameMahjong",
     "src": "resources/js/pages/games/GameMahjong.vue",
     "isDynamicEntry": true,
@@ -1023,7 +1023,7 @@
     ]
   },
   "resources/js/pages/games/GameMathBasic.vue": {
-    "file": "assets/GameMathBasic-CjDXWQrt.js",
+    "file": "assets/GameMathBasic-BHgM1F66.js",
     "name": "GameMathBasic",
     "src": "resources/js/pages/games/GameMathBasic.vue",
     "isDynamicEntry": true,
@@ -1035,7 +1035,7 @@
     ]
   },
   "resources/js/pages/games/GameMathChallenge.vue": {
-    "file": "assets/GameMathChallenge-D76nkfDz.js",
+    "file": "assets/GameMathChallenge-DTX2GKZp.js",
     "name": "GameMathChallenge",
     "src": "resources/js/pages/games/GameMathChallenge.vue",
     "isDynamicEntry": true,
@@ -1047,7 +1047,7 @@
     ]
   },
   "resources/js/pages/games/GameMaze.vue": {
-    "file": "assets/GameMaze-DazgNhoF.js",
+    "file": "assets/GameMaze-CyE9spK6.js",
     "name": "GameMaze",
     "src": "resources/js/pages/games/GameMaze.vue",
     "isDynamicEntry": true,
@@ -1059,7 +1059,7 @@
     ]
   },
   "resources/js/pages/games/GameMemory.vue": {
-    "file": "assets/GameMemory-D1oErnwU.js",
+    "file": "assets/GameMemory-DidQmBCm.js",
     "name": "GameMemory",
     "src": "resources/js/pages/games/GameMemory.vue",
     "isDynamicEntry": true,
@@ -1071,7 +1071,7 @@
     ]
   },
   "resources/js/pages/games/GameMultiplication.vue": {
-    "file": "assets/GameMultiplication-CWsjpHHI.js",
+    "file": "assets/GameMultiplication-BLT550hv.js",
     "name": "GameMultiplication",
     "src": "resources/js/pages/games/GameMultiplication.vue",
     "isDynamicEntry": true,
@@ -1083,7 +1083,7 @@
     ]
   },
   "resources/js/pages/games/GameNumberMemory.vue": {
-    "file": "assets/GameNumberMemory-UKoL_dj7.js",
+    "file": "assets/GameNumberMemory-S78E5xk6.js",
     "name": "GameNumberMemory",
     "src": "resources/js/pages/games/GameNumberMemory.vue",
     "isDynamicEntry": true,
@@ -1092,7 +1092,7 @@
     ]
   },
   "resources/js/pages/games/GamePacman.vue": {
-    "file": "assets/GamePacman-COhga2YY.js",
+    "file": "assets/GamePacman-D_FNGjCJ.js",
     "name": "GamePacman",
     "src": "resources/js/pages/games/GamePacman.vue",
     "isDynamicEntry": true,
@@ -1102,7 +1102,7 @@
     ]
   },
   "resources/js/pages/games/GameProverb.vue": {
-    "file": "assets/GameProverb-DCsLbWMU.js",
+    "file": "assets/GameProverb-BmN1Glkw.js",
     "name": "GameProverb",
     "src": "resources/js/pages/games/GameProverb.vue",
     "isDynamicEntry": true,
@@ -1114,7 +1114,7 @@
     ]
   },
   "resources/js/pages/games/GamePuzzle.vue": {
-    "file": "assets/GamePuzzle-CBabLaJy.js",
+    "file": "assets/GamePuzzle-DgfjxSrZ.js",
     "name": "GamePuzzle",
     "src": "resources/js/pages/games/GamePuzzle.vue",
     "isDynamicEntry": true,
@@ -1126,7 +1126,7 @@
     ]
   },
   "resources/js/pages/games/GameSATWords.vue": {
-    "file": "assets/GameSATWords-ZfZu3QIB.js",
+    "file": "assets/GameSATWords-Dr7RCcin.js",
     "name": "GameSATWords",
     "src": "resources/js/pages/games/GameSATWords.vue",
     "isDynamicEntry": true,
@@ -1138,7 +1138,7 @@
     ]
   },
   "resources/js/pages/games/GameSeniorMemory.vue": {
-    "file": "assets/GameSeniorMemory-DzJ2n_Q0.js",
+    "file": "assets/GameSeniorMemory-DtNFvuCA.js",
     "name": "GameSeniorMemory",
     "src": "resources/js/pages/games/GameSeniorMemory.vue",
     "isDynamicEntry": true,
@@ -1150,7 +1150,7 @@
     ]
   },
   "resources/js/pages/games/GameShapes.vue": {
-    "file": "assets/GameShapes-DZMH-CT4.js",
+    "file": "assets/GameShapes-C-j9TQlH.js",
     "name": "GameShapes",
     "src": "resources/js/pages/games/GameShapes.vue",
     "isDynamicEntry": true,
@@ -1162,7 +1162,7 @@
     ]
   },
   "resources/js/pages/games/GameSlots.vue": {
-    "file": "assets/GameSlots-CN3YT05Y.js",
+    "file": "assets/GameSlots-d2i1MJyh.js",
     "name": "GameSlots",
     "src": "resources/js/pages/games/GameSlots.vue",
     "isDynamicEntry": true,
@@ -1172,7 +1172,7 @@
     ]
   },
   "resources/js/pages/games/GameSnake.vue": {
-    "file": "assets/GameSnake-CpbPbfhk.js",
+    "file": "assets/GameSnake-DgGMtO6z.js",
     "name": "GameSnake",
     "src": "resources/js/pages/games/GameSnake.vue",
     "isDynamicEntry": true,
@@ -1182,7 +1182,7 @@
     ]
   },
   "resources/js/pages/games/GameSpeedCalc.vue": {
-    "file": "assets/GameSpeedCalc-pl0l8YuK.js",
+    "file": "assets/GameSpeedCalc-JxEHf4Ox.js",
     "name": "GameSpeedCalc",
     "src": "resources/js/pages/games/GameSpeedCalc.vue",
     "isDynamicEntry": true,
@@ -1194,7 +1194,7 @@
     ]
   },
   "resources/js/pages/games/GameSpelling.vue": {
-    "file": "assets/GameSpelling-CQqx60Qr.js",
+    "file": "assets/GameSpelling-K9TFC2i4.js",
     "name": "GameSpelling",
     "src": "resources/js/pages/games/GameSpelling.vue",
     "isDynamicEntry": true,
@@ -1206,7 +1206,7 @@
     ]
   },
   "resources/js/pages/games/GameStockSim.vue": {
-    "file": "assets/GameStockSim-RUcFoDog.js",
+    "file": "assets/GameStockSim-C9n0wGKA.js",
     "name": "GameStockSim",
     "src": "resources/js/pages/games/GameStockSim.vue",
     "isDynamicEntry": true,
@@ -1218,7 +1218,7 @@
     ]
   },
   "resources/js/pages/games/GameStroop.vue": {
-    "file": "assets/GameStroop-b9AYXV1f.js",
+    "file": "assets/GameStroop-Cvwum5aS.js",
     "name": "GameStroop",
     "src": "resources/js/pages/games/GameStroop.vue",
     "isDynamicEntry": true,
@@ -1230,7 +1230,7 @@
     ]
   },
   "resources/js/pages/games/GameTowerDefense.vue": {
-    "file": "assets/GameTowerDefense-C-d5ysoS.js",
+    "file": "assets/GameTowerDefense-GoXQa-_J.js",
     "name": "GameTowerDefense",
     "src": "resources/js/pages/games/GameTowerDefense.vue",
     "isDynamicEntry": true,
@@ -1242,7 +1242,7 @@
     ]
   },
   "resources/js/pages/games/GameTyping.vue": {
-    "file": "assets/GameTyping-SHBEhvTD.js",
+    "file": "assets/GameTyping-CjiSCfCH.js",
     "name": "GameTyping",
     "src": "resources/js/pages/games/GameTyping.vue",
     "isDynamicEntry": true,
@@ -1254,7 +1254,7 @@
     ]
   },
   "resources/js/pages/games/GameUSLife.vue": {
-    "file": "assets/GameUSLife-B6QNugWK.js",
+    "file": "assets/GameUSLife-DnPmCprg.js",
     "name": "GameUSLife",
     "src": "resources/js/pages/games/GameUSLife.vue",
     "isDynamicEntry": true,
@@ -1266,7 +1266,7 @@
     ]
   },
   "resources/js/pages/games/GameWordBlank.vue": {
-    "file": "assets/GameWordBlank-CURNOFl0.js",
+    "file": "assets/GameWordBlank-Cx1aMpPf.js",
     "name": "GameWordBlank",
     "src": "resources/js/pages/games/GameWordBlank.vue",
     "isDynamicEntry": true,
@@ -1278,7 +1278,7 @@
     ]
   },
   "resources/js/pages/games/GameWordCard.vue": {
-    "file": "assets/GameWordCard-BM3RWXY7.js",
+    "file": "assets/GameWordCard-BCKerzIb.js",
     "name": "GameWordCard",
     "src": "resources/js/pages/games/GameWordCard.vue",
     "isDynamicEntry": true,
@@ -1290,7 +1290,7 @@
     ]
   },
   "resources/js/pages/games/GameWordChain.vue": {
-    "file": "assets/GameWordChain-0z95zjFV.js",
+    "file": "assets/GameWordChain-C3-iebR4.js",
     "name": "GameWordChain",
     "src": "resources/js/pages/games/GameWordChain.vue",
     "isDynamicEntry": true,
@@ -1302,7 +1302,7 @@
     ]
   },
   "resources/js/pages/games/GameWordle.vue": {
-    "file": "assets/GameWordle-DVKTWw4w.js",
+    "file": "assets/GameWordle-BLXMfY29.js",
     "name": "GameWordle",
     "src": "resources/js/pages/games/GameWordle.vue",
     "isDynamicEntry": true,
@@ -1311,7 +1311,7 @@
     ]
   },
   "resources/js/pages/games/GameWorldGeo.vue": {
-    "file": "assets/GameWorldGeo-Bsb_KRn0.js",
+    "file": "assets/GameWorldGeo-C_K2VAN3.js",
     "name": "GameWorldGeo",
     "src": "resources/js/pages/games/GameWorldGeo.vue",
     "isDynamicEntry": true,
@@ -1323,7 +1323,7 @@
     ]
   },
   "resources/js/pages/games/GoStop.vue": {
-    "file": "assets/GoStop-vZrTufeN.js",
+    "file": "assets/GoStop-CUVDkOtg.js",
     "name": "GoStop",
     "src": "resources/js/pages/games/GoStop.vue",
     "isDynamicEntry": true,
@@ -1332,7 +1332,7 @@
     ]
   },
   "resources/js/pages/games/GoStopSolo.vue": {
-    "file": "assets/GoStopSolo-C0kWDq1s.js",
+    "file": "assets/GoStopSolo-B4PmpfGL.js",
     "name": "GoStopSolo",
     "src": "resources/js/pages/games/GoStopSolo.vue",
     "isDynamicEntry": true,
@@ -1344,7 +1344,7 @@
     ]
   },
   "resources/js/pages/games/HoldemSolo.vue": {
-    "file": "assets/HoldemSolo-C2ehvjzo.js",
+    "file": "assets/HoldemSolo-DPDRck4O.js",
     "name": "HoldemSolo",
     "src": "resources/js/pages/games/HoldemSolo.vue",
     "isDynamicEntry": true,
@@ -1356,7 +1356,7 @@
     ]
   },
   "resources/js/pages/games/Leaderboard.vue": {
-    "file": "assets/Leaderboard-CGpeZQfn.js",
+    "file": "assets/Leaderboard-DvuChC9y.js",
     "name": "Leaderboard",
     "src": "resources/js/pages/games/Leaderboard.vue",
     "isDynamicEntry": true,
@@ -1365,7 +1365,7 @@
     ]
   },
   "resources/js/pages/games/MemoryGame.vue": {
-    "file": "assets/MemoryGame-gxSg_aBp.js",
+    "file": "assets/MemoryGame-B7nyULLv.js",
     "name": "MemoryGame",
     "src": "resources/js/pages/games/MemoryGame.vue",
     "isDynamicEntry": true,
@@ -1377,7 +1377,7 @@
     ]
   },
   "resources/js/pages/games/OmokGame.vue": {
-    "file": "assets/OmokGame-BHapoRAU.js",
+    "file": "assets/OmokGame-D4U8KT0r.js",
     "name": "OmokGame",
     "src": "resources/js/pages/games/OmokGame.vue",
     "isDynamicEntry": true,
@@ -1389,7 +1389,7 @@
     ]
   },
   "resources/js/pages/games/PointShop.vue": {
-    "file": "assets/PointShop-CX9nC94O.js",
+    "file": "assets/PointShop-BQbtBcp3.js",
     "name": "PointShop",
     "src": "resources/js/pages/games/PointShop.vue",
     "isDynamicEntry": true,
@@ -1398,17 +1398,17 @@
     ]
   },
   "resources/js/pages/games/PokerLobby.vue": {
-    "file": "assets/PokerLobby-Cbc1SfMd.js",
+    "file": "assets/PokerLobby-Bil80Cqp.js",
     "name": "PokerLobby",
     "src": "resources/js/pages/games/PokerLobby.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_usePokerWallet-Bf-vFSWy.js"
+      "_usePokerWallet-DlsGQ3AY.js"
     ]
   },
   "resources/js/pages/games/PokerMulti.vue": {
-    "file": "assets/PokerMulti-kB8U0J9c.js",
+    "file": "assets/PokerMulti-DoZtdacF.js",
     "name": "PokerMulti",
     "src": "resources/js/pages/games/PokerMulti.vue",
     "isDynamicEntry": true,
@@ -1417,31 +1417,31 @@
     ]
   },
   "resources/js/pages/games/PokerPlay.vue": {
-    "file": "assets/PokerPlay-DQVYKATH.js",
+    "file": "assets/PokerPlay-CTcFGY-1.js",
     "name": "PokerPlay",
     "src": "resources/js/pages/games/PokerPlay.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_useBlindSchedule-C3SFDW4w.js",
-      "_usePokerWallet-Bf-vFSWy.js"
+      "_usePokerWallet-DlsGQ3AY.js"
     ]
   },
   "resources/js/pages/games/PokerTournamentWait.vue": {
-    "file": "assets/PokerTournamentWait-Bz9WHttt.js",
+    "file": "assets/PokerTournamentWait-CW_xAPhz.js",
     "name": "PokerTournamentWait",
     "src": "resources/js/pages/games/PokerTournamentWait.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_usePokerWallet-Bf-vFSWy.js"
+      "_usePokerWallet-DlsGQ3AY.js"
     ],
     "css": [
       "assets/PokerTournamentWait-BXB_HnEc.css"
     ]
   },
   "resources/js/pages/games/PokerTutorial.vue": {
-    "file": "assets/PokerTutorial-BB9x90Pk.js",
+    "file": "assets/PokerTutorial-MIsVgTE2.js",
     "name": "PokerTutorial",
     "src": "resources/js/pages/games/PokerTutorial.vue",
     "isDynamicEntry": true,
@@ -1451,7 +1451,7 @@
     ]
   },
   "resources/js/pages/games/QuizGame.vue": {
-    "file": "assets/QuizGame-DVIOAo-z.js",
+    "file": "assets/QuizGame-Zf6bNOHI.js",
     "name": "QuizGame",
     "src": "resources/js/pages/games/QuizGame.vue",
     "isDynamicEntry": true,
@@ -1460,40 +1460,40 @@
     ]
   },
   "resources/js/pages/groupbuy/GroupBuyHome.vue": {
-    "file": "assets/GroupBuyHome-Co7ZOm6I.js",
+    "file": "assets/GroupBuyHome-BUFPXGEQ.js",
     "name": "GroupBuyHome",
     "src": "resources/js/pages/groupbuy/GroupBuyHome.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js"
     ]
   },
   "resources/js/pages/jobs/JobDetail.vue": {
-    "file": "assets/JobDetail-CyhILhl-.js",
+    "file": "assets/JobDetail-DYUDZYVh.js",
     "name": "JobDetail",
     "src": "resources/js/pages/jobs/JobDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/jobs/JobList.vue": {
-    "file": "assets/JobList-BfRVEwTz.js",
+    "file": "assets/JobList-BzwPt3ZE.js",
     "name": "JobList",
     "src": "resources/js/pages/jobs/JobList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js"
     ]
   },
   "resources/js/pages/jobs/JobWrite.vue": {
-    "file": "assets/JobWrite-BKfbIWl0.js",
+    "file": "assets/JobWrite-BcCvmM-R.js",
     "name": "JobWrite",
     "src": "resources/js/pages/jobs/JobWrite.vue",
     "isDynamicEntry": true,
@@ -1502,30 +1502,30 @@
     ]
   },
   "resources/js/pages/market/MarketDetail.vue": {
-    "file": "assets/MarketDetail-3oXeatFp.js",
+    "file": "assets/MarketDetail-n85H7Gzo.js",
     "name": "MarketDetail",
     "src": "resources/js/pages/market/MarketDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/market/MarketList.vue": {
-    "file": "assets/MarketList-CDZo4s1M.js",
+    "file": "assets/MarketList-DXJNLO4Z.js",
     "name": "MarketList",
     "src": "resources/js/pages/market/MarketList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_useMenuConfig--joyE-nH.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_useMenuConfig-CPru6n4Y.js"
     ]
   },
   "resources/js/pages/market/MarketWrite.vue": {
-    "file": "assets/MarketWrite-C9Yj9MnQ.js",
+    "file": "assets/MarketWrite-DHm28PsX.js",
     "name": "MarketWrite",
     "src": "resources/js/pages/market/MarketWrite.vue",
     "isDynamicEntry": true,
@@ -1534,7 +1534,7 @@
     ]
   },
   "resources/js/pages/messages/MessageInbox.vue": {
-    "file": "assets/MessageInbox-DRTYETLy.js",
+    "file": "assets/MessageInbox-BJ_M2Pfp.js",
     "name": "MessageInbox",
     "src": "resources/js/pages/messages/MessageInbox.vue",
     "isDynamicEntry": true,
@@ -1543,7 +1543,7 @@
     ]
   },
   "resources/js/pages/music/MusicHome.vue": {
-    "file": "assets/MusicHome-Bg00xeN0.js",
+    "file": "assets/MusicHome-BlANTZPh.js",
     "name": "MusicHome",
     "src": "resources/js/pages/music/MusicHome.vue",
     "isDynamicEntry": true,
@@ -1555,28 +1555,28 @@
     ]
   },
   "resources/js/pages/news/NewsDetail.vue": {
-    "file": "assets/NewsDetail-l5wurRwa.js",
+    "file": "assets/NewsDetail-Cl5GjlT5.js",
     "name": "NewsDetail",
     "src": "resources/js/pages/news/NewsDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/news/NewsList.vue": {
-    "file": "assets/NewsList-CVIk8b64.js",
+    "file": "assets/NewsList-B7TIj6bc.js",
     "name": "NewsList",
     "src": "resources/js/pages/news/NewsList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_SidebarWidgets-BxsVFI_J.js"
     ]
   },
   "resources/js/pages/points/PointDashboard.vue": {
-    "file": "assets/PointDashboard-Cx5-gSZg.js",
+    "file": "assets/PointDashboard-Dsu6B0Jp.js",
     "name": "PointDashboard",
     "src": "resources/js/pages/points/PointDashboard.vue",
     "isDynamicEntry": true,
@@ -1585,7 +1585,7 @@
     ]
   },
   "resources/js/pages/profile/ProfileEdit.vue": {
-    "file": "assets/ProfileEdit-C_HK2P8t.js",
+    "file": "assets/ProfileEdit-8fUnZ6il.js",
     "name": "ProfileEdit",
     "src": "resources/js/pages/profile/ProfileEdit.vue",
     "isDynamicEntry": true,
@@ -1594,7 +1594,7 @@
     ]
   },
   "resources/js/pages/profile/UserDashboard.vue": {
-    "file": "assets/UserDashboard-D4GkaTC6.js",
+    "file": "assets/UserDashboard-2osXN4Le.js",
     "name": "UserDashboard",
     "src": "resources/js/pages/profile/UserDashboard.vue",
     "isDynamicEntry": true,
@@ -1603,7 +1603,7 @@
     ]
   },
   "resources/js/pages/profile/UserProfile.vue": {
-    "file": "assets/UserProfile-C0H1a-pb.js",
+    "file": "assets/UserProfile-CF04HkFq.js",
     "name": "UserProfile",
     "src": "resources/js/pages/profile/UserProfile.vue",
     "isDynamicEntry": true,
@@ -1612,7 +1612,7 @@
     ]
   },
   "resources/js/pages/qa/QAWrite.vue": {
-    "file": "assets/QAWrite-5-j1hFNW.js",
+    "file": "assets/QAWrite-DO2jxrfi.js",
     "name": "QAWrite",
     "src": "resources/js/pages/qa/QAWrite.vue",
     "isDynamicEntry": true,
@@ -1621,50 +1621,50 @@
     ]
   },
   "resources/js/pages/qa/QaDetail.vue": {
-    "file": "assets/QaDetail-COELowIr.js",
+    "file": "assets/QaDetail-6rBMg94x.js",
     "name": "QaDetail",
     "src": "resources/js/pages/qa/QaDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_SidebarWidgets-BxsVFI_J.js"
     ]
   },
   "resources/js/pages/qa/QaList.vue": {
-    "file": "assets/QaList-CgwR_aOx.js",
+    "file": "assets/QaList-DZjIJ85m.js",
     "name": "QaList",
     "src": "resources/js/pages/qa/QaList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js"
+      "_SidebarWidgets-BxsVFI_J.js"
     ]
   },
   "resources/js/pages/realestate/RealEstateDetail.vue": {
-    "file": "assets/RealEstateDetail-Dwqb1EyN.js",
+    "file": "assets/RealEstateDetail-j2wfoDSK.js",
     "name": "RealEstateDetail",
     "src": "resources/js/pages/realestate/RealEstateDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/realestate/RealEstateList.vue": {
-    "file": "assets/RealEstateList-C2BOKV9Q.js",
+    "file": "assets/RealEstateList-lRymrftD.js",
     "name": "RealEstateList",
     "src": "resources/js/pages/realestate/RealEstateList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useLocation-BxYPnU2Q.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_useMenuConfig--joyE-nH.js"
+      "_useLocation-O5duZkNA.js",
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_useMenuConfig-CPru6n4Y.js"
     ]
   },
   "resources/js/pages/realestate/RealEstateWrite.vue": {
-    "file": "assets/RealEstateWrite-CXnHEcGG.js",
+    "file": "assets/RealEstateWrite-DuT5Zt72.js",
     "name": "RealEstateWrite",
     "src": "resources/js/pages/realestate/RealEstateWrite.vue",
     "isDynamicEntry": true,
@@ -1673,7 +1673,7 @@
     ]
   },
   "resources/js/pages/recipes/RecipeCreate.vue": {
-    "file": "assets/RecipeCreate-BaI3WCcB.js",
+    "file": "assets/RecipeCreate-VNbXPkvl.js",
     "name": "RecipeCreate",
     "src": "resources/js/pages/recipes/RecipeCreate.vue",
     "isDynamicEntry": true,
@@ -1682,29 +1682,29 @@
     ]
   },
   "resources/js/pages/recipes/RecipeDetail.vue": {
-    "file": "assets/RecipeDetail-CusYBxDD.js",
+    "file": "assets/RecipeDetail-Dlw9X2jV.js",
     "name": "RecipeDetail",
     "src": "resources/js/pages/recipes/RecipeDetail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_CommentSection-Bw2Bzm50.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_CommentSection-BlJOfoA5.js"
     ]
   },
   "resources/js/pages/recipes/RecipeList.vue": {
-    "file": "assets/RecipeList-YbP1kqvA.js",
+    "file": "assets/RecipeList-CkqOb_52.js",
     "name": "RecipeList",
     "src": "resources/js/pages/recipes/RecipeList.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_SidebarWidgets-jg6KmLkb.js",
-      "_useMenuConfig--joyE-nH.js"
+      "_SidebarWidgets-BxsVFI_J.js",
+      "_useMenuConfig-CPru6n4Y.js"
     ]
   },
   "resources/js/pages/shopping/ShoppingHome.vue": {
-    "file": "assets/ShoppingHome-P58kRHFp.js",
+    "file": "assets/ShoppingHome-B29O3Tjq.js",
     "name": "ShoppingHome",
     "src": "resources/js/pages/shopping/ShoppingHome.vue",
     "isDynamicEntry": true,
@@ -1713,7 +1713,7 @@
     ]
   },
   "resources/js/pages/shorts/ShortsHome.vue": {
-    "file": "assets/ShortsHome-VZ60xXxE.js",
+    "file": "assets/ShortsHome-B6dwvMPE.js",
     "name": "ShortsHome",
     "src": "resources/js/pages/shorts/ShortsHome.vue",
     "isDynamicEntry": true,
@@ -1722,7 +1722,7 @@
     ]
   },
   "resources/js/pages/shorts/ShortsUpload.vue": {
-    "file": "assets/ShortsUpload-DXVMrLOb.js",
+    "file": "assets/ShortsUpload-JspRhIqY.js",
     "name": "ShortsUpload",
     "src": "resources/js/pages/shorts/ShortsUpload.vue",
     "isDynamicEntry": true,
@@ -1731,7 +1731,7 @@
     ]
   },
   "resources/js/pages/static/About.vue": {
-    "file": "assets/About-Roqc0XM3.js",
+    "file": "assets/About-ogWac0gf.js",
     "name": "About",
     "src": "resources/js/pages/static/About.vue",
     "isDynamicEntry": true,
@@ -1740,7 +1740,7 @@
     ]
   },
   "resources/js/pages/static/Privacy.vue": {
-    "file": "assets/Privacy-BBNZTxE6.js",
+    "file": "assets/Privacy-K6dacrV2.js",
     "name": "Privacy",
     "src": "resources/js/pages/static/Privacy.vue",
     "isDynamicEntry": true,
@@ -1749,7 +1749,7 @@
     ]
   },
   "resources/js/pages/static/Terms.vue": {
-    "file": "assets/Terms-CpNMJo7_.js",
+    "file": "assets/Terms-DvBOLAEp.js",
     "name": "Terms",
     "src": "resources/js/pages/static/Terms.vue",
     "isDynamicEntry": true,

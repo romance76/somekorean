@@ -36,9 +36,9 @@
     </div>
     <div class="col-span-12 lg:col-span-7">
 
-    <div v-if="activeCat" class="mb-3 text-sm text-gray-600">
-      <span class="font-bold text-amber-700">{{ eventCategories.find(c => c.value === activeCat)?.label || activeCat }}</span>
-      <button @click="activeCat=null; loadPage()" class="ml-2 text-xs text-gray-400 hover:text-gray-600">✕ 전체보기</button>
+    <div class="mb-3 pb-2 border-b border-gray-100">
+      <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (eventCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
+      <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 이벤트를 볼 수 있습니다</span>
     </div>
 
     <!-- 상세 모드 -->

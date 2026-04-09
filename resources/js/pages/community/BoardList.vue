@@ -39,9 +39,10 @@
           </select>
         </div>
 
-        <div v-if="activeBoard && !activeItem" class="mb-3 text-sm text-gray-600">
-          <span class="font-bold text-amber-700">{{ activeBoard.name }}</span>
-          <span v-if="activeBoard.description" class="text-xs text-gray-400 ml-2">{{ activeBoard.description }}</span>
+        <div v-if="!activeItem" class="mb-3 pb-2 border-b border-gray-100">
+          <span class="font-bold text-amber-700 text-sm">{{ activeBoard ? activeBoard.name : '전체' }}</span>
+          <span v-if="activeBoard?.description" class="text-xs text-gray-400 ml-2">{{ activeBoard.description }}</span>
+          <span v-if="!activeBoard" class="text-xs text-gray-400 ml-2">모든 게시판의 글을 볼 수 있습니다</span>
         </div>
 
         <!-- ═══ 상세 모드 ═══ -->
