@@ -119,6 +119,20 @@
         </div>
         <div v-if="spinResult" class="text-center text-sm font-bold text-green-600 mb-4">🎉 {{ spinResult }}P 적립!</div>
         <div class="text-3xl font-black text-amber-600 mb-4">{{ ptBalance.toLocaleString() }}P</div>
+        <!-- 포인트 구매 -->
+        <div class="border-t pt-4 mt-4 mb-4">
+          <h3 class="font-bold text-gray-700 text-sm mb-3">🛒 포인트 구매</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <button v-for="pkg in packages" :key="pkg.key" @click="buyPackage(pkg)"
+              class="border-2 rounded-xl p-3 text-center hover:border-amber-400 hover:bg-amber-50 transition"
+              :class="selectedPkg===pkg.key ? 'border-amber-400 bg-amber-50' : 'border-gray-200'">
+              <div class="text-lg font-black text-amber-600">{{ (pkg.points + pkg.bonus).toLocaleString() }}P</div>
+              <div v-if="pkg.bonus" class="text-[10px] text-green-600 font-bold">+{{ pkg.bonus.toLocaleString() }}P 보너스</div>
+              <div class="text-sm font-bold text-gray-800 mt-1">${{ pkg.price }}</div>
+              <div class="text-[9px] text-gray-400">{{ pkg.label }}</div>
+            </button>
+          </div>
+        </div>
         <h3 class="font-bold text-gray-700 text-sm mb-2">📋 적립/사용 내역</h3>
         <div v-if="!ptHistory.length" class="text-sm text-gray-400 py-4 text-center">내역이 없습니다</div>
         <div v-else class="space-y-1 max-h-80 overflow-y-auto">
@@ -408,9 +422,28 @@ async function changePw() {
 
 // ─── 포인트 ───
 const ptBalance = ref(0); const ptHistory = ref([]); const spun = ref(false); const spinResult = ref(null)
+const packages = ref([]); const selectedPkg = ref('')
 async function loadPoints() {
   try { const { data } = await axios.get('/api/points/balance'); ptBalance.value = data.balance || data.points || 0; spun.value = data.daily_spin_done || false } catch {}
   try { const { data } = await axios.get('/api/points/history'); ptHistory.value = data.data?.data || data.data || [] } catch {}
+  // 패키지 로드
+  try {
+    const { data } = await axios.get('/api/settings/points')
+    const ps = data.data || {}
+    packages.value = Object.entries(ps).filter(([k]) => k.startsWith('pkg_')).map(([k, v]) => {
+      const [price, points, bonus] = v.split('|').map(Number)
+      return { key: k, label: { pkg_starter:'스타터', pkg_basic:'베이직', pkg_standard:'스탠다드', pkg_pro:'프로', pkg_business:'비즈니스' }[k] || k, price, points, bonus }
+    })
+  } catch {}
+}
+async function buyPackage(pkg) {
+  selectedPkg.value = pkg.key
+  try {
+    const { data } = await axios.post('/api/payments/create-intent', { package_key: pkg.key, amount: pkg.price, points: pkg.points + pkg.bonus })
+    if (data.data?.url) window.location.href = data.data.url
+    else alert('결제 페이지 준비 중입니다. Stripe 연동이 필요합니다.')
+  } catch (e) { alert(e.response?.data?.message || '결제 실패') }
+  selectedPkg.value = ''
 }
 async function dailySpin() {
   try { const { data } = await axios.post('/api/points/daily-spin'); spinResult.value = data.points || data.amount; spun.value = true; ptBalance.value += (data.points || data.amount || 0); await auth.fetchUser() }

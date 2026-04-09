@@ -292,4 +292,23 @@ class AdminSettingsController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Firebase 설정 저장 완료']);
     }
+
+    // ─── 포인트 설정 ───
+    public function getPointSettings() {
+        $settings = \DB::table('point_settings')->orderBy('category')->orderBy('id')->get();
+        $grouped = $settings->groupBy('category');
+        return response()->json(['success' => true, 'data' => $grouped]);
+    }
+
+    public function savePointSettings(Request $request) {
+        $items = $request->input('settings', []);
+        foreach ($items as $item) {
+            if (!isset($item['key'], $item['value'])) continue;
+            \DB::table('point_settings')->where('key', $item['key'])->update([
+                'value' => $item['value'],
+                'updated_at' => now(),
+            ]);
+        }
+        return response()->json(['success' => true, 'message' => '포인트 설정이 저장되었습니다.']);
+    }
 }

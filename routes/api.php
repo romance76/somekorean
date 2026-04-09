@@ -86,6 +86,10 @@ Route::get('/music/tracks/{categoryId}', [MusicController::class, 'tracks']);
 Route::get('/search', [SearchController::class, 'search']);
 Route::get('/comments/{type}/{id}', [CommentController::class, 'index']);
 Route::get('/settings/public', [AdminSettingsController::class, 'getPublic']);
+Route::get('/settings/points', function () {
+    $settings = \DB::table('point_settings')->pluck('value', 'key');
+    return response()->json(['success' => true, 'data' => $settings]);
+});
 Route::get('/games/leaderboard/{gameType}', [GameScoreController::class, 'leaderboard']);
 
 // ─── Public Poker ───
@@ -354,6 +358,10 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     // Firebase 설정
     Route::get('/firebase', [AdminSettingsController::class, 'getFirebase']);
     Route::post('/firebase', [AdminSettingsController::class, 'saveFirebase']);
+
+    // 포인트 설정
+    Route::get('/point-settings', [AdminSettingsController::class, 'getPointSettings']);
+    Route::post('/point-settings', [AdminSettingsController::class, 'savePointSettings']);
 
     // 수동 수집
     Route::post('/fetch-music', function () {

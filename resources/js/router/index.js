@@ -176,6 +176,7 @@ const routes = [
       { path: 'payments', component: p('admin/Payments') },
       { path: 'security', component: p('admin/AdminSecurity') },
       { path: 'settings', component: p('admin/SiteSettings') },
+      { path: 'point-settings', component: p('admin/AdminPointSettings') },
       { path: 'system', component: p('admin/System') },
     ]
   },
