@@ -10,6 +10,14 @@ class FriendController extends Controller
     // 전체 친구 목록 (모든 상태 + 온라인 정보)
     public function index(Request $request) {
         $userId = auth()->id();
+
+        // 만료된 pending 요청 자동 삭제
+        Friend::where('status', 'pending')
+            ->whereNotNull('expires_at')->where('expires_at', '<', now())
+            ->where(function($q) use ($userId) {
+                $q->where('user_id', $userId)->orWhere('friend_id', $userId);
+            })->delete();
+
         $query = Friend::query()
             ->where(function($q) use ($userId) {
                 $q->where('user_id', $userId)->orWhere('friend_id', $userId);
@@ -48,6 +56,8 @@ class FriendController extends Controller
                 'source' => $f->source,
                 'online_status' => $status,
                 'is_sender' => $isSender,
+                'can_cancel' => $isSender && $f->canCancel(),
+                'expires_at' => $f->expires_at,
                 'created_at' => $f->created_at,
             ];
         })->filter()->values();
@@ -60,16 +70,62 @@ class FriendController extends Controller
         $target = User::find($userId);
         if (!$target) return response()->json(['success' => false, 'message' => '사용자를 찾을 수 없습니다'], 404);
         if (!$target->allow_friend_request) return response()->json(['success' => false, 'message' => '이 사용자는 친구 요청을 받지 않습니다'], 403);
-        if (Friend::where('user_id', auth()->id())->where('friend_id', $userId)->exists())
-            return response()->json(['success' => false, 'message' => '이미 요청했습니다'], 400);
 
-        Friend::create([
+        // 만료된 요청 자동 삭제 (양방향)
+        Friend::where('status', 'pending')->whereNotNull('expires_at')->where('expires_at', '<', now())
+            ->where(function($q) use ($userId) {
+                $q->where(function($q2) use ($userId) {
+                    $q2->where('user_id', auth()->id())->where('friend_id', $userId);
+                })->orWhere(function($q2) use ($userId) {
+                    $q2->where('user_id', $userId)->where('friend_id', auth()->id());
+                });
+            })->delete();
+
+        // 내가 이미 보낸 요청 체크
+        $existing = Friend::where('user_id', auth()->id())->where('friend_id', $userId)->first();
+        if ($existing) {
+            if ($existing->status === 'accepted') return response()->json(['success' => false, 'message' => '이미 친구입니다'], 400);
+            return response()->json(['success' => false, 'message' => '이미 요청했습니다'], 400);
+        }
+
+        // 상대방이 나에게 보낸 pending 요청이 있으면 → 자동 수락
+        $reverse = Friend::where('user_id', $userId)->where('friend_id', auth()->id())->where('status', 'pending')->first();
+        if ($reverse) {
+            $reverse->update(['status' => 'accepted', 'expires_at' => null]);
+            Friend::firstOrCreate(
+                ['user_id' => auth()->id(), 'friend_id' => $userId],
+                ['status' => 'accepted', 'source' => $request->source ?? 'community']
+            );
+            return response()->json(['success' => true, 'message' => '서로 친구가 되었습니다!', 'auto_accepted' => true]);
+        }
+
+        // 이미 친구인지 체크 (역방향 accepted)
+        $reverseAccepted = Friend::where('user_id', $userId)->where('friend_id', auth()->id())->where('status', 'accepted')->first();
+        if ($reverseAccepted) return response()->json(['success' => false, 'message' => '이미 친구입니다'], 400);
+
+        $friend = Friend::create([
             'user_id' => auth()->id(),
             'friend_id' => $userId,
             'status' => 'pending',
             'source' => $request->source ?? 'community',
+            'expires_at' => now()->addDays(7),
         ]);
-        return response()->json(['success' => true, 'message' => '친구 요청을 보냈습니다']);
+        return response()->json(['success' => true, 'message' => '친구 요청을 보냈습니다', 'data' => $friend]);
+    }
+
+    public function cancelRequest($id) {
+        $req = Friend::where('user_id', auth()->id())->where('id', $id)->where('status', 'pending')->firstOrFail();
+
+        if ($req->created_at->diffInHours(now()) < 24) {
+            return response()->json([
+                'success' => false,
+                'message' => '요청 후 24시간이 지나야 취소할 수 있습니다.',
+                'can_cancel_at' => $req->created_at->addHours(24)->toISOString(),
+            ], 403);
+        }
+
+        $req->delete();
+        return response()->json(['success' => true, 'message' => '친구 요청을 취소했습니다']);
     }
 
     public function accept($id) {

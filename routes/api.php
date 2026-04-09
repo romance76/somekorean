@@ -173,6 +173,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/friends/request/{userId}', [FriendController::class, 'sendRequest']);
     Route::post('/friends/accept/{id}', [FriendController::class, 'accept']);
     Route::post('/friends/block/{userId}', [FriendController::class, 'block']);
+    Route::delete('/friends/cancel/{id}', [FriendController::class, 'cancelRequest']);
     Route::delete('/friends/{id}', [FriendController::class, 'remove']);
     Route::post('/friends/private-chat', [FriendController::class, 'createPrivateChat']);
     Route::post('/friends/group-chat', [FriendController::class, 'createGroupChat']);
