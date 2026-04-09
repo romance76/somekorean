@@ -274,7 +274,7 @@
               </template>
               <template v-if="w._type==='scheduled'">
                 <div><label class="text-[10px] font-bold text-gray-500">하루 몇 번</label>
-                  <select v-model="w._calls_per_day" class="border rounded px-2 py-1 text-xs ml-1">
+                  <select v-model="w._calls_per_day" @change="w._times = w._times.slice(0, w._calls_per_day)" class="border rounded px-2 py-1 text-xs ml-1">
                     <option :value="1">1회</option><option :value="2">2회</option><option :value="3">3회</option>
                   </select>
                 </div>
@@ -292,7 +292,7 @@
                       <input type="time" v-model="w._times[ti]" class="border-0 bg-transparent text-xs py-1 px-1 outline-none w-20" />
                       <button @click="w._times.splice(ti,1)" class="text-red-400 hover:text-red-600 text-xs px-1">✕</button>
                     </div>
-                    <button @click="w._times.push('12:00')" class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-green-200">+ 시간 추가</button>
+                    <button v-if="w._times.length < w._calls_per_day" @click="w._times.push('12:00')" class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-green-200">+ 시간 추가</button>
                   </div>
                 </div>
                 <p class="text-[10px] text-amber-600">* 스케줄 전화는 1회당 50P가 차감됩니다.</p>
