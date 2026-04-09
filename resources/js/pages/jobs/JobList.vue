@@ -39,6 +39,11 @@
     </div>
     <div class="col-span-12 lg:col-span-7">
 
+    <div class="mb-2">
+      <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (jobCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
+      <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 채용 공고를 볼 수 있습니다</span>
+    </div>
+
     <!-- ═══ 상세 모드 ═══ -->
     <div v-if="activeItem">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -79,10 +84,6 @@
 
     <!-- ═══ 목록 모드 ═══ -->
     <div v-else>
-    <div class="mb-2">
-      <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (jobCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
-      <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 채용 공고를 볼 수 있습니다</span>
-    </div>
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="!items.length" class="text-center py-12">
       <div class="text-4xl mb-3">💼</div>

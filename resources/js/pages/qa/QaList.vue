@@ -28,6 +28,11 @@
       <!-- 메인: 목록 또는 상세 (인라인 전환) -->
       <div class="col-span-12 lg:col-span-7">
 
+        <div class="mb-2">
+          <span class="font-bold text-amber-700 text-sm">{{ activeCat ? activeCat.name : '전체' }}</span>
+          <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 질문을 볼 수 있습니다</span>
+        </div>
+
         <!-- ═══ 상세 모드 ═══ -->
         <div v-if="activeItem">
 
@@ -86,11 +91,6 @@
               <option :value="null">전체 카테고리</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
             </select>
-          </div>
-
-          <div class="mb-2">
-            <span class="font-bold text-amber-700 text-sm">{{ activeCat ? activeCat.name : '전체' }}</span>
-            <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 질문을 볼 수 있습니다</span>
           </div>
 
           <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
