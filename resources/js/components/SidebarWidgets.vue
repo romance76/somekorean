@@ -35,7 +35,7 @@
   </div>
 
   <!-- 실시간/바로가기 -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+  <div v-if="quickLabel" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">⚡ {{ quickLabel }}</div>
     <div class="py-1">
       <component v-for="item in quickItems" :key="item.id"
@@ -70,7 +70,7 @@ const props = defineProps({
   currentId: { type: [Number, String], default: 0 },
   label: { type: String, default: '글' },
   recommendLabel: { type: String, default: '추천 글' },
-  quickLabel: { type: String, default: '실시간' },
+  quickLabel: { type: String, default: '' },
   links: { type: Array, default: () => [] },
   filterParams: { type: Object, default: () => ({}) },
   inline: { type: Boolean, default: false }, // true면 클릭 시 emit
