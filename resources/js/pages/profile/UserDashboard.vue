@@ -224,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
@@ -358,9 +358,12 @@ async function deleteAccount() {
   try { await axios.delete('/api/user/delete'); await auth.logout(); router.push('/') } catch (e) { alert(e.response?.data?.message || '실패') }
 }
 
+let msgPoll = null
 onMounted(() => {
   loadProfile(); loaded.profile = true
-  // URL 쿼리로 탭 지정된 경우 해당 탭 로드
   if (tab.value !== 'profile') { loadTab(tab.value); loaded[tab.value] = true }
+  // 쪽지 탭 열려있으면 15초마다 자동 갱신
+  msgPoll = setInterval(() => { if (tab.value === 'messages') loadMessages() }, 15000)
 })
+onUnmounted(() => { if (msgPoll) clearInterval(msgPoll) })
 </script>
