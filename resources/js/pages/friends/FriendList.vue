@@ -144,6 +144,33 @@
       </div>
     </div>
 
+    <!-- 쪽지 보내기 모달 -->
+    <div v-if="msgTarget" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="msgTarget=null">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center text-sm font-bold text-white">{{ (msgTarget.name || '?')[0] }}</div>
+            <span class="text-white font-bold text-sm">{{ msgTarget.name }}님에게 쪽지</span>
+          </div>
+          <button @click="msgTarget=null; msgText=''" class="text-white/70 hover:text-white text-lg">✕</button>
+        </div>
+        <div class="p-5">
+          <textarea v-model="msgText" rows="5" maxlength="500" placeholder="쪽지 내용을 입력하세요..."
+            class="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"></textarea>
+          <div class="flex justify-between items-center mt-3">
+            <span class="text-xs text-gray-400">{{ msgText.length }}/500</span>
+            <div class="flex gap-2">
+              <button @click="msgTarget=null; msgText=''" class="bg-gray-100 text-gray-600 text-sm font-bold px-4 py-2 rounded-lg hover:bg-gray-200">취소</button>
+              <button @click="doSendMsg" :disabled="msgSending || !msgText.trim()" class="bg-blue-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                {{ msgSending ? '전송중...' : '보내기' }}
+              </button>
+            </div>
+          </div>
+          <div v-if="msgDone" class="mt-3 text-center text-sm text-green-600 font-bold">✅ 쪽지를 보냈습니다!</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 그룹 채팅방 생성 모달 -->
     <div v-if="showGroupModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showGroupModal=false">
       <div class="bg-white rounded-xl p-5 w-full max-w-md shadow-xl">
@@ -182,6 +209,12 @@ const sourceFilter = ref('')
 const showGroupModal = ref(false)
 const groupName = ref('')
 const selectedFriends = ref([])
+
+// 쪽지 모달
+const msgTarget = ref(null)
+const msgText = ref('')
+const msgSending = ref(false)
+const msgDone = ref(false)
 
 const statusTabs = [
   { key: '', icon: '👫', label: '전체' },
@@ -273,7 +306,23 @@ function startCall(friend) {
 }
 
 function sendMessageTo(friend) {
-  router.push('/messages')
+  msgTarget.value = friend
+  msgText.value = ''
+  msgDone.value = false
+}
+
+async function doSendMsg() {
+  if (!msgText.value.trim() || !msgTarget.value) return
+  msgSending.value = true
+  try {
+    await axios.post('/api/messages', { receiver_id: msgTarget.value.id, content: msgText.value.trim() })
+    msgDone.value = true
+    msgText.value = ''
+    setTimeout(() => { msgTarget.value = null; msgDone.value = false }, 1500)
+  } catch (e) {
+    alert(e.response?.data?.message || '전송 실패')
+  }
+  msgSending.value = false
 }
 
 async function createGroupChat() {

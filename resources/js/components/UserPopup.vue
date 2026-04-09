@@ -2,7 +2,7 @@
 <div v-if="show && user" class="fixed inset-0 z-50" @click.self="$emit('close')">
   <div class="absolute inset-0"></div>
   <!-- 팝업 컨테이너 -->
-  <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl border border-gray-200 w-64 overflow-hidden animate-in">
+  <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-in transition-all duration-200" :class="view === 'message' ? 'w-80' : 'w-64'">
 
     <!-- 헤더 -->
     <div class="bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-2 flex items-center justify-between">
@@ -88,7 +88,7 @@
     <!-- 쪽지 보내기 뷰 -->
     <div v-else-if="view === 'message'" class="p-3">
       <p class="text-xs font-bold text-gray-700 mb-2">✉️ {{ user.name }}님에게 쪽지</p>
-      <textarea v-model="msgContent" rows="3" maxlength="500" placeholder="쪽지 내용을 입력하세요..." class="w-full border border-gray-200 rounded-lg p-2 text-xs resize-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 outline-none"></textarea>
+      <textarea v-model="msgContent" rows="5" maxlength="500" placeholder="쪽지 내용을 입력하세요..." class="w-full border border-gray-200 rounded-lg p-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"></textarea>
       <div class="flex justify-between items-center mt-1.5">
         <span class="text-[10px] text-gray-400">{{ msgContent.length }}/500</span>
         <div class="flex gap-1.5">
