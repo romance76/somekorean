@@ -624,33 +624,39 @@ async function confirmPay() {
 }
 async function startRoulette() {
   if (spinning.value || spun.value) return
+
+  // 먼저 API 호출 (룰렛 보여주기 전에 성공 여부 확인)
+  let won = 0
+  try {
+    const { data } = await axios.post('/api/points/daily-spin')
+    won = data.points || data.amount || 1
+  } catch (e) {
+    spun.value = true
+    showAlert(e.response?.data?.message || '이미 출석 룰렛을 돌렸습니다', '출석체크')
+    return
+  }
+
+  // API 성공 → 룰렛 애니메이션 시작
   spinning.value = true
   showRoulette.value = true
   spinResult.value = null
+  rouletteAngle.value = 0
 
-  try {
-    const { data } = await axios.post('/api/points/daily-spin')
-    const won = data.points || data.amount || 1
-    // 당첨 포인트에 해당하는 구획 찾기
-    const segIdx = rouletteSegments.findIndex(s => s.points === won) ?? 0
-    const segAngle = 360 / rouletteSegments.length
-    // 최종 각도: 5바퀴(1800) + 해당 구획 중앙에 멈추기
-    const targetAngle = 1800 + (360 - segIdx * segAngle - segAngle / 2)
-    rouletteAngle.value = targetAngle
+  await new Promise(r => setTimeout(r, 50)) // DOM 업데이트 대기
 
-    // 4초 후 결과 표시
-    setTimeout(() => {
-      spinResult.value = won
-      spun.value = true
-      spinning.value = false
-      ptBalance.value += won
-      auth.fetchUser()
-    }, 4200)
-  } catch (e) {
+  const segIdx = rouletteSegments.findIndex(s => s.points === won) ?? 0
+  const segAngle = 360 / rouletteSegments.length
+  const targetAngle = 1800 + (360 - segIdx * segAngle - segAngle / 2)
+  rouletteAngle.value = targetAngle
+
+  // 4초 후 결과 표시
+  setTimeout(() => {
+    spinResult.value = won
+    spun.value = true
     spinning.value = false
-    showRoulette.value = false
-    showAlert(e.response?.data?.message || '실패', '오류')
-  }
+    ptBalance.value += won
+    auth.fetchUser()
+  }, 4200)
 }
 
 // ─── 쪽지 ───
