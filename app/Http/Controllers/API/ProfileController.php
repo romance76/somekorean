@@ -15,7 +15,7 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
-        $user->update($request->only('name','nickname','bio','phone','address1','address2','city','state','zipcode','language','allow_friend_request','allow_messages','allow_elder_service'));
+        $user->update($request->only('name','nickname','bio','phone','address1','address2','city','state','zipcode','default_radius','language','allow_friend_request','allow_messages','allow_elder_service'));
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');

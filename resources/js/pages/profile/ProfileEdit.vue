@@ -29,6 +29,16 @@
         <div><label class="text-sm font-semibold text-gray-700">우편번호</label><input v-model="form.zipcode" type="text" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       </div>
       <div>
+        <label class="text-sm font-semibold text-gray-700">📍 기본 검색 반경</label>
+        <select v-model="form.default_radius" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
+          <option :value="10">10마일 이내</option>
+          <option :value="30">30마일 이내</option>
+          <option :value="50">50마일 이내</option>
+          <option :value="100">100마일 이내</option>
+        </select>
+        <p class="text-xs text-gray-400 mt-1">구인구직, 중고장터, 부동산 등 위치 기반 게시판의 기본 검색 범위입니다</p>
+      </div>
+      <div>
         <label class="text-sm font-semibold text-gray-700">친구 요청 허용</label>
         <div class="flex gap-4 mt-1">
           <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" v-model="form.allow_friend_request" :value="true" class="text-amber-500" /><span class="text-sm text-gray-600">수락</span></label>
@@ -62,7 +72,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
 const auth = useAuthStore()
-const form = reactive({ name:'',nickname:'',bio:'',phone:'',city:'',state:'',zipcode:'',language:'ko',allow_friend_request:true })
+const form = reactive({ name:'',nickname:'',bio:'',phone:'',city:'',state:'',zipcode:'',default_radius:30,language:'ko',allow_friend_request:true })
 const msg = ref('')
 const msgType = ref('')
 const saving = ref(false)

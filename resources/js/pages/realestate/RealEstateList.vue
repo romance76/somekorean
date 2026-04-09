@@ -186,7 +186,7 @@ async function deleteActiveItem() {
 const page = ref(1)
 const lastPage = ref(1)
 const search = ref('')
-const radius = ref('30')
+const radius = ref(String(auth.user?.default_radius || 30))
 const selectedCityIdx = ref('-2') // -2=내위치, -1=전국, 0~=도시
 const myCity = ref(null)
 

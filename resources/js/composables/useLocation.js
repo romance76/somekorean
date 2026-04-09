@@ -44,6 +44,7 @@ export function useLocation() {
       const res = await fetch('/api/user', { headers: { Authorization: 'Bearer ' + token } })
       const data = await res.json()
       const u = data.data || data.user || data
+      if (u.default_radius) radius.value = String(u.default_radius)
       if (u.city && u.state) {
         const c = {
           name: u.city, state: u.state,

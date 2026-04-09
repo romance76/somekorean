@@ -13,7 +13,7 @@ class User extends Authenticatable implements JWTSubject
 
     protected $fillable = [
         'name', 'nickname', 'email', 'password', 'phone',
-        'address', 'city', 'state', 'zipcode', 'latitude', 'longitude',
+        'address', 'city', 'state', 'zipcode', 'latitude', 'longitude', 'default_radius',
         'avatar', 'bio', 'language', 'points', 'game_points',
         'address1', 'address2',
         'role', 'is_banned', 'ban_reason', 'allow_friend_request', 'allow_messages', 'allow_elder_service',

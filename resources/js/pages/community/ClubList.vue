@@ -97,7 +97,7 @@ const clubCategories = [
 ]
 const type = ref('')
 const search = ref('')
-const radius = ref('30')
+const radius = ref(String(auth.user?.default_radius || 30))
 const selectedCityIdx = ref('-2')
 const myCity = ref(null)
 
