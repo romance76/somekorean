@@ -46,8 +46,12 @@
     <!-- 상세 모드 -->
     <div v-if="activeItem">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- 사진 갤러리 -->
+        <div v-if="activeItem.images?.length" class="flex gap-1 overflow-x-auto p-2 bg-gray-50">
+          <img v-for="(img, i) in activeItem.images" :key="i" :src="img" class="h-32 rounded-lg object-cover flex-shrink-0" @error="e=>e.target.style.display='none'" />
+        </div>
         <div class="px-5 py-4">
-          <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.category }}</span>
+          <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.subcategory || activeItem.category }}</span>
           <h2 class="text-lg font-bold text-gray-900 mt-2">🏪 {{ activeItem.name }}</h2>
           <div class="flex items-center gap-1 mt-1"><span class="text-amber-400">{{'★'.repeat(Math.round(activeItem.rating))}}</span><span class="text-sm text-gray-600">{{ activeItem.rating }}</span><span class="text-xs text-gray-400">({{ activeItem.review_count }}리뷰)</span></div>
         </div>
@@ -81,14 +85,20 @@
         </div>
 
         <!-- 구글 리뷰 + 사이트 리뷰 -->
-        <div class="divide-y max-h-80 overflow-y-auto">
+        <div class="divide-y max-h-96 overflow-y-auto">
           <div v-for="r in activeReviews" :key="r.id" class="px-5 py-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-amber-400 text-xs">{{'★'.repeat(r.rating)}}{{'☆'.repeat(5-r.rating)}}</span>
-              <span class="text-xs font-bold text-gray-700">{{ r.user?.name || r.author || '익명' }}</span>
-              <span class="text-[10px] text-gray-400">{{ r.relative_time || formatDate(r.created_at) }}</span>
+            <div class="flex items-start gap-2">
+              <img v-if="r.profile_photo" :src="r.profile_photo" class="w-7 h-7 rounded-full flex-shrink-0 mt-0.5" @error="e=>e.target.style.display='none'" />
+              <div class="w-7 h-7 bg-amber-100 rounded-full flex items-center justify-center text-[10px] font-bold text-amber-700 flex-shrink-0 mt-0.5" v-else>{{ (r.user?.name || r.author || '?')[0] }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-xs font-bold text-gray-700">{{ r.user?.name || r.author || '익명' }}</span>
+                  <span class="text-amber-400 text-[10px]">{{'★'.repeat(r.rating)}}</span>
+                  <span class="text-[10px] text-gray-400">{{ r.relative_time || r.time || formatDate(r.created_at) }}</span>
+                </div>
+                <div class="text-xs text-gray-600 leading-relaxed">{{ r.content || r.text }}</div>
+              </div>
             </div>
-            <div class="text-xs text-gray-600">{{ r.content || r.text }}</div>
           </div>
           <div v-if="!activeReviews.length" class="px-5 py-6 text-center text-xs text-gray-400">아직 리뷰가 없습니다</div>
         </div>

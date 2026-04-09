@@ -10,15 +10,14 @@ use Illuminate\Support\Facades\DB;
 
 class ImportGooglePlaces extends Command
 {
-    protected $signature = 'places:import {--fresh : 기존 데이터 삭제 후 시작} {--limit=0 : 최대 임포트 수 (0=무제한)}';
-    protected $description = 'Google Places API에서 미국 한인 업소 데이터 임포트';
+    protected $signature = 'places:import {--fresh : 기존 데이터 삭제 후 시작} {--limit=0 : 최대 임포트 수 (0=무제한)} {--city= : 특정 도시만}';
+    protected $description = 'Google Places API에서 미국 한인 업소 데이터 임포트 (한글 리뷰 + 사진 포함)';
 
     private $apiKey;
     private $imported = 0;
     private $updated = 0;
     private $errors = 0;
 
-    // 한인 밀집 도시
     private $cities = [
         ['name' => 'Los Angeles', 'state' => 'CA', 'lat' => 34.0522, 'lng' => -118.2437],
         ['name' => 'New York', 'state' => 'NY', 'lat' => 40.7128, 'lng' => -74.0060],
@@ -39,14 +38,18 @@ class ImportGooglePlaces extends Command
         ['name' => 'Denver', 'state' => 'CO', 'lat' => 39.7392, 'lng' => -104.9903],
     ];
 
-    // 검색 키워드 → 카테고리 매핑
     private $searches = [
         'Korean restaurant' => 'restaurant',
+        'Korean BBQ' => 'restaurant',
+        'Korean bakery' => 'restaurant',
+        'Korean cafe' => 'restaurant',
         'Korean grocery' => 'mart',
         'Korean market' => 'mart',
+        'Korean supermarket' => 'mart',
         'Korean beauty salon' => 'beauty',
         'Korean nail salon' => 'beauty',
         'Korean hair salon' => 'beauty',
+        'Korean spa' => 'beauty',
         'Korean church' => 'etc',
         'Korean auto repair' => 'auto',
         'Korean dentist' => 'medical',
@@ -55,20 +58,19 @@ class ImportGooglePlaces extends Command
         'Korean accountant' => 'professional',
         'Korean real estate' => 'realestate',
         'Korean school' => 'education',
-        'Korean spa' => 'beauty',
-        'Korean bakery' => 'restaurant',
-        'Korean BBQ' => 'restaurant',
+        'Korean academy' => 'education',
     ];
 
     public function handle()
     {
-        $this->apiKey = config('services.google_places.key') ?: env('GOOGLE_PLACES_API_KEY');
+        $this->apiKey = env('GOOGLE_PLACES_API_KEY');
         if (!$this->apiKey) {
-            $this->error('GOOGLE_PLACES_API_KEY가 설정되지 않았습니다.');
+            $this->error('GOOGLE_PLACES_API_KEY 없음');
             return 1;
         }
 
         $limit = (int) $this->option('limit');
+        $onlyCity = $this->option('city');
 
         if ($this->option('fresh')) {
             $this->warn('기존 데이터 삭제 중...');
@@ -82,29 +84,33 @@ class ImportGooglePlaces extends Command
 
         $this->info("Google Places API 임포트 시작...");
 
-        foreach ($this->cities as $city) {
+        $cities = $this->cities;
+        if ($onlyCity) {
+            $cities = array_filter($cities, fn($c) => stripos($c['name'], $onlyCity) !== false);
+        }
+
+        foreach ($cities as $city) {
             foreach ($this->searches as $query => $category) {
                 if ($limit > 0 && $this->imported >= $limit) {
-                    $this->info("리밋 {$limit}개 도달. 중단합니다.");
                     $this->printSummary();
                     return 0;
                 }
 
-                $this->info("🔍 {$city['name']}: {$query}");
+                $this->line("🔍 {$city['name']}: {$query}");
 
                 try {
-                    $this->searchAndImport($query, $city, $category);
+                    $this->searchAndImport($query, $city, $category, $limit);
                 } catch (\Exception $e) {
                     if (str_contains($e->getMessage(), 'OVER_QUERY_LIMIT') || str_contains($e->getMessage(), 'quota')) {
                         $this->error("⚠️ API 할당량 초과! 내일 다시 실행하세요.");
                         $this->printSummary();
                         return 0;
                     }
-                    $this->error("에러: {$e->getMessage()}");
+                    $this->error("에러: " . substr($e->getMessage(), 0, 100));
                     $this->errors++;
                 }
 
-                usleep(200000); // 0.2초 대기 (rate limit 방지)
+                usleep(200000);
             }
         }
 
@@ -112,39 +118,51 @@ class ImportGooglePlaces extends Command
         return 0;
     }
 
-    private function searchAndImport(string $query, array $city, string $category)
+    private function searchAndImport(string $query, array $city, string $category, int $limit)
     {
-        // Text Search API
         $response = Http::get('https://maps.googleapis.com/maps/api/place/textsearch/json', [
             'query' => "{$query} in {$city['name']}, {$city['state']}",
             'key' => $this->apiKey,
-            'language' => 'en',
+            'language' => 'ko',
         ]);
 
         $data = $response->json();
-
-        if (($data['status'] ?? '') === 'OVER_QUERY_LIMIT') {
-            throw new \Exception('OVER_QUERY_LIMIT');
-        }
+        if (($data['status'] ?? '') === 'OVER_QUERY_LIMIT') throw new \Exception('OVER_QUERY_LIMIT');
 
         $results = $data['results'] ?? [];
-        $this->line("  → {$query}: " . count($results) . "개 발견");
+        $this->line("  → " . count($results) . "개 발견");
 
+        $this->processResults($results, $category, $city, $limit);
+
+        // 2, 3 페이지도 가져오기
+        for ($page = 0; $page < 2; $page++) {
+            if (empty($data['next_page_token'])) break;
+            if ($limit > 0 && $this->imported >= $limit) break;
+            sleep(2);
+            $data = Http::get('https://maps.googleapis.com/maps/api/place/textsearch/json', [
+                'pagetoken' => $data['next_page_token'],
+                'key' => $this->apiKey,
+            ])->json();
+            $this->processResults($data['results'] ?? [], $category, $city, $limit);
+        }
+    }
+
+    private function processResults(array $results, string $category, array $city, int $limit)
+    {
         foreach ($results as $place) {
+            if ($limit > 0 && $this->imported >= $limit) return;
+
             $placeId = $place['place_id'] ?? null;
             if (!$placeId) continue;
 
-            // 이미 존재하면 스킵 (daily update에서는 업데이트)
             $existing = Business::where('google_place_id', $placeId)->first();
 
-            // Place Details 가져오기
             $details = $this->getPlaceDetails($placeId);
             if (!$details) continue;
 
             $bizData = $this->mapPlaceData($details, $category, $city);
 
             if ($existing) {
-                // 기존 데이터 업데이트 (rating, review_count, reviews)
                 $existing->update([
                     'rating' => $bizData['rating'],
                     'review_count' => $bizData['review_count'],
@@ -152,48 +170,13 @@ class ImportGooglePlaces extends Command
                     'phone' => $bizData['phone'] ?: $existing->phone,
                     'website' => $bizData['website'] ?: $existing->website,
                     'hours' => $bizData['hours'] ?: $existing->hours,
+                    'images' => $bizData['images'] ?: $existing->images,
                 ]);
                 $this->updated++;
             } else {
-                // 새로 생성
                 $biz = Business::create($bizData);
-
-                // 구글 리뷰를 BusinessReview로도 저장
-                $this->importReviews($biz, $details['reviews'] ?? []);
                 $this->imported++;
             }
-
-            usleep(100000); // 0.1초 대기
-        }
-
-        // 다음 페이지가 있으면 가져오기 (최대 1회 추가)
-        if (!empty($data['next_page_token'])) {
-            sleep(2); // next_page_token은 2초 후 활성화
-            $this->fetchNextPage($data['next_page_token'], $category, $city);
-        }
-    }
-
-    private function fetchNextPage(string $token, string $category, array $city)
-    {
-        $response = Http::get('https://maps.googleapis.com/maps/api/place/textsearch/json', [
-            'pagetoken' => $token,
-            'key' => $this->apiKey,
-        ]);
-
-        $data = $response->json();
-        $results = $data['results'] ?? [];
-
-        foreach ($results as $place) {
-            $placeId = $place['place_id'] ?? null;
-            if (!$placeId || Business::where('google_place_id', $placeId)->exists()) continue;
-
-            $details = $this->getPlaceDetails($placeId);
-            if (!$details) continue;
-
-            $bizData = $this->mapPlaceData($details, $category, $city);
-            $biz = Business::create($bizData);
-            $this->importReviews($biz, $details['reviews'] ?? []);
-            $this->imported++;
 
             usleep(100000);
         }
@@ -201,25 +184,50 @@ class ImportGooglePlaces extends Command
 
     private function getPlaceDetails(string $placeId): ?array
     {
+        // 한글 리뷰 먼저 시도
         $response = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
             'place_id' => $placeId,
             'key' => $this->apiKey,
-            'fields' => 'name,formatted_phone_number,formatted_address,geometry,website,opening_hours,rating,user_ratings_total,reviews,address_components',
-            'language' => 'en',
+            'fields' => 'name,formatted_phone_number,formatted_address,geometry,website,opening_hours,rating,user_ratings_total,reviews,address_components,photos,price_level,types',
+            'language' => 'ko',
+            'reviews_sort' => 'newest',
         ]);
 
         $data = $response->json();
+        if (($data['status'] ?? '') === 'OVER_QUERY_LIMIT') throw new \Exception('OVER_QUERY_LIMIT');
 
-        if (($data['status'] ?? '') === 'OVER_QUERY_LIMIT') {
-            throw new \Exception('OVER_QUERY_LIMIT');
+        $result = $data['result'] ?? null;
+        if (!$result) return null;
+
+        // 한글 리뷰가 부족하면 영어 리뷰도 가져오기
+        $koReviews = $result['reviews'] ?? [];
+        if (count($koReviews) < 5) {
+            try {
+                $enResponse = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
+                    'place_id' => $placeId,
+                    'key' => $this->apiKey,
+                    'fields' => 'reviews',
+                    'language' => 'en',
+                    'reviews_sort' => 'newest',
+                ]);
+                $enReviews = $enResponse->json()['result']['reviews'] ?? [];
+                // 중복 제거 후 합치기
+                $existingAuthors = collect($koReviews)->pluck('author_name')->toArray();
+                foreach ($enReviews as $r) {
+                    if (!in_array($r['author_name'] ?? '', $existingAuthors)) {
+                        $koReviews[] = $r;
+                    }
+                }
+                usleep(100000);
+            } catch (\Exception $e) {}
         }
 
-        return $data['result'] ?? null;
+        $result['reviews'] = $koReviews;
+        return $result;
     }
 
     private function mapPlaceData(array $details, string $category, array $city): array
     {
-        // 주소 파싱
         $components = $details['address_components'] ?? [];
         $cityName = $city['name'];
         $stateName = $city['state'];
@@ -231,34 +239,62 @@ class ImportGooglePlaces extends Command
             if (in_array('postal_code', $c['types'])) $zipcode = $c['long_name'];
         }
 
-        // 영업시간 파싱
+        // 영업시간
         $hours = null;
         if (!empty($details['opening_hours']['weekday_text'])) {
             $hours = [];
             foreach ($details['opening_hours']['weekday_text'] as $line) {
                 $parts = explode(': ', $line, 2);
-                if (count($parts) === 2) {
-                    $hours[$parts[0]] = $parts[1];
-                }
+                if (count($parts) === 2) $hours[$parts[0]] = $parts[1];
             }
         }
 
-        // 구글 리뷰 저장
+        // 사진 URL (최대 5장)
+        $images = [];
+        foreach (array_slice($details['photos'] ?? [], 0, 5) as $photo) {
+            $ref = $photo['photo_reference'] ?? null;
+            if ($ref) {
+                $images[] = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={$ref}&key={$this->apiKey}";
+            }
+        }
+
+        // 리뷰 (한글 우선, 최대 10개)
         $googleReviews = [];
-        foreach (($details['reviews'] ?? []) as $r) {
+        foreach (array_slice($details['reviews'] ?? [], 0, 10) as $r) {
             $googleReviews[] = [
-                'author' => $r['author_name'] ?? 'Anonymous',
+                'author' => $r['author_name'] ?? '익명',
                 'rating' => $r['rating'] ?? 5,
                 'text' => $r['text'] ?? '',
                 'time' => $r['relative_time_description'] ?? '',
+                'profile_photo' => $r['profile_photo_url'] ?? '',
+                'language' => $r['language'] ?? 'en',
             ];
         }
+
+        // 카테고리 세분화
+        $subcategory = '';
+        $types = $details['types'] ?? [];
+        if (in_array('restaurant', $types)) $subcategory = '한식';
+        elseif (in_array('bakery', $types)) $subcategory = '베이커리';
+        elseif (in_array('cafe', $types)) $subcategory = '카페';
+        elseif (in_array('grocery_or_supermarket', $types)) $subcategory = '식료품';
+        elseif (in_array('beauty_salon', $types)) $subcategory = '뷰티';
+        elseif (in_array('hair_care', $types)) $subcategory = '헤어';
+        elseif (in_array('dentist', $types)) $subcategory = '치과';
+        elseif (in_array('doctor', $types)) $subcategory = '병원';
+        elseif (in_array('lawyer', $types)) $subcategory = '법률';
+        elseif (in_array('accounting', $types)) $subcategory = '회계';
+        elseif (in_array('church', $types)) $subcategory = '교회';
+        elseif (in_array('school', $types)) $subcategory = '학원';
+        elseif (in_array('car_repair', $types)) $subcategory = '정비';
+        elseif (in_array('real_estate_agency', $types)) $subcategory = '부동산';
 
         return [
             'google_place_id' => $details['place_id'] ?? null,
             'name' => $details['name'] ?? 'Unknown',
             'description' => '',
             'category' => $category,
+            'subcategory' => $subcategory,
             'phone' => $details['formatted_phone_number'] ?? null,
             'website' => $details['website'] ?? null,
             'address' => $details['formatted_address'] ?? null,
@@ -267,25 +303,13 @@ class ImportGooglePlaces extends Command
             'zipcode' => $zipcode,
             'lat' => $details['geometry']['location']['lat'] ?? $city['lat'],
             'lng' => $details['geometry']['location']['lng'] ?? $city['lng'],
+            'images' => $images,
             'hours' => $hours,
             'rating' => $details['rating'] ?? 0,
             'review_count' => $details['user_ratings_total'] ?? 0,
             'google_reviews' => $googleReviews,
             'is_verified' => true,
         ];
-    }
-
-    private function importReviews(Business $biz, array $reviews)
-    {
-        foreach ($reviews as $r) {
-            // 구글 리뷰는 user_id 없이 저장 (user_id=0 또는 nullable)
-            BusinessReview::create([
-                'business_id' => $biz->id,
-                'user_id' => 1, // 시스템 유저
-                'rating' => $r['rating'] ?? 5,
-                'content' => ($r['author_name'] ?? 'Google User') . ': ' . ($r['text'] ?? ''),
-            ]);
-        }
     }
 
     private function printSummary()
