@@ -191,6 +191,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markOneRead']);
 
     Route::get('/points/history', [PointController::class, 'history']);
     Route::get('/points/balance', [PointController::class, 'balance']);

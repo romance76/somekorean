@@ -31,10 +31,35 @@
       <!-- Auth -->
       <div class="flex items-center gap-1.5 flex-shrink-0">
         <template v-if="auth.isLoggedIn">
-          <RouterLink to="/notifications" class="relative p-1 text-gray-500 hover:text-amber-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            <span v-if="unreadCount>0" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
-          </RouterLink>
+          <div class="relative notif-bell">
+            <button @click="toggleNotifs" class="relative p-1 text-gray-500 hover:text-amber-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span v-if="unreadCount>0" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+            </button>
+            <!-- 알림 드롭다운 -->
+            <div v-if="showNotifs" class="absolute right-0 top-9 bg-white border border-gray-200 rounded-xl shadow-xl w-80 z-50 overflow-hidden">
+              <div class="px-4 py-2.5 border-b flex items-center justify-between bg-amber-50">
+                <span class="text-sm font-bold text-amber-900">🔔 알림</span>
+                <button v-if="notifList.some(n=>!n.read_at)" @click="markAllRead" class="text-[10px] text-amber-600 hover:text-amber-800 font-bold">전체 읽음</button>
+              </div>
+              <div class="max-h-80 overflow-y-auto">
+                <div v-if="!notifList.length" class="px-4 py-8 text-center text-gray-400 text-sm">알림이 없습니다</div>
+                <div v-for="n in notifList" :key="n.id" @click="clickNotif(n)"
+                  class="px-4 py-2.5 border-b last:border-0 cursor-pointer hover:bg-amber-50/50 transition"
+                  :class="n.read_at ? '' : 'bg-amber-50'">
+                  <div class="flex items-start gap-2">
+                    <span v-if="!n.read_at" class="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0 mt-1.5"></span>
+                    <span v-else class="w-2 h-2 flex-shrink-0"></span>
+                    <div class="min-w-0 flex-1">
+                      <div class="text-xs font-bold text-gray-800 truncate">{{ n.title }}</div>
+                      <div class="text-[11px] text-gray-500 truncate">{{ n.content }}</div>
+                      <div class="text-[10px] text-gray-400 mt-0.5">{{ formatNotifDate(n.created_at) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="relative">
             <button @click="showDropdown=!showDropdown" class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">
               {{ (auth.user?.name || '?')[0] }}
@@ -136,6 +161,8 @@ const searchQ = ref('')
 const showDropdown = ref(false)
 const mobileMenu = ref(false)
 const unreadCount = ref(0)
+const showNotifs = ref(false)
+const notifList = ref([])
 const menuConfig = ref(null)
 
 const defaultMenus = [
@@ -199,7 +226,45 @@ async function loadUnread() {
   try {
     const { data } = await axios.get('/api/notifications')
     unreadCount.value = data.unread_count || 0
+    notifList.value = data.data?.data || data.data || []
   } catch {}
+}
+
+function formatNotifDate(dt) {
+  if (!dt) return ''
+  const h = Math.floor((Date.now() - new Date(dt).getTime()) / 3600000)
+  if (h < 1) return '방금'
+  if (h < 24) return h + '시간 전'
+  return Math.floor(h / 24) + '일 전'
+}
+
+async function toggleNotifs() {
+  showNotifs.value = !showNotifs.value
+  if (showNotifs.value) await loadUnread()
+}
+
+async function markAllRead() {
+  try {
+    await axios.post('/api/notifications/read')
+    notifList.value.forEach(n => n.read_at = new Date().toISOString())
+    unreadCount.value = 0
+  } catch {}
+}
+
+function clickNotif(n) {
+  // 읽음 처리
+  if (!n.read_at) {
+    n.read_at = new Date().toISOString()
+    unreadCount.value = Math.max(0, unreadCount.value - 1)
+    axios.post(`/api/notifications/${n.id}/read`).catch(() => {})
+  }
+  showNotifs.value = false
+  // 쪽지 알림이면 쪽지 페이지로
+  if (n.type === 'message') {
+    router.push('/messages')
+  } else if (n.data?.url) {
+    router.push(n.data.url)
+  }
 }
 
 async function handleLogout() {
@@ -210,6 +275,7 @@ async function handleLogout() {
 if (typeof window !== 'undefined') {
   window.addEventListener('click', (e) => {
     if (showDropdown.value && !e.target.closest('.relative')) showDropdown.value = false
+    if (showNotifs.value && !e.target.closest('.notif-bell')) showNotifs.value = false
   })
 }
 
