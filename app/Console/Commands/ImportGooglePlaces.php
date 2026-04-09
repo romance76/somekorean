@@ -72,8 +72,11 @@ class ImportGooglePlaces extends Command
 
         if ($this->option('fresh')) {
             $this->warn('기존 데이터 삭제 중...');
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
             DB::table('business_reviews')->truncate();
+            DB::table('business_claims')->truncate();
             DB::table('businesses')->truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
             $this->info('삭제 완료.');
         }
 
