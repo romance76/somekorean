@@ -36,8 +36,8 @@
         scrollbar-color: #f59e0b transparent;
     }
     *::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+        width: 4px;
+        height: 4px;
     }
     *::-webkit-scrollbar-track {
         background: transparent;

@@ -135,10 +135,14 @@
         </div>
         <h3 class="font-bold text-gray-700 text-sm mb-2">📋 적립/사용 내역</h3>
         <div v-if="!ptHistory.length" class="text-sm text-gray-400 py-4 text-center">내역이 없습니다</div>
-        <div v-else class="space-y-1 max-h-80 overflow-y-auto">
-          <div v-for="h in ptHistory" :key="h.id" class="flex items-center justify-between py-2 border-b last:border-0 text-sm">
-            <div><div class="text-gray-800">{{ h.reason }}</div><div class="text-[10px] text-gray-400">{{ fmtDate(h.created_at) }}</div></div>
-            <span :class="h.amount>0?'text-green-600':'text-red-500'" class="font-bold">{{ h.amount>0?'+':'' }}{{ h.amount }}P</span>
+        <div v-else class="max-h-80 overflow-y-auto pr-2">
+          <div v-for="h in ptHistory" :key="h.id" class="flex items-center justify-between py-1.5 border-b last:border-0">
+            <!-- 데스크톱: 한줄 / 모바일: 두줄 -->
+            <div class="flex items-center gap-2 min-w-0 flex-1 sm:flex-row flex-col sm:items-center items-start">
+              <span class="text-xs text-gray-800 truncate">{{ h.reason }}</span>
+              <span class="text-[10px] text-gray-400 flex-shrink-0">{{ fmtDate(h.created_at) }}</span>
+            </div>
+            <span :class="h.amount>0?'text-green-600':'text-red-500'" class="text-xs font-bold flex-shrink-0 ml-3">{{ h.amount>0?'+':'' }}{{ h.amount }}P</span>
           </div>
         </div>
       </div>
