@@ -106,7 +106,7 @@
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{{ sentContent }}</div>
         <div class="flex gap-1.5 mt-2">
           <button @click="msgSent = false; msgContent = ''" class="flex-1 bg-blue-500 text-white text-[11px] font-bold py-1.5 rounded-lg hover:bg-blue-600">새 쪽지 쓰기</button>
-          <button @click="view = 'main'; msgSent = false; msgContent = ''" class="flex-1 bg-gray-100 text-gray-600 text-[11px] font-bold py-1.5 rounded-lg hover:bg-gray-200">닫기</button>
+          <button @click="msgSent = false; msgContent = ''; sentContent = ''; closeAll()" class="flex-1 bg-gray-100 text-gray-600 text-[11px] font-bold py-1.5 rounded-lg hover:bg-gray-200">닫기</button>
         </div>
       </template>
     </div>

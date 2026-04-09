@@ -34,7 +34,7 @@
         </ol>
       </div>
       <div class="px-5 py-4 text-sm text-gray-700 whitespace-pre-wrap">{{ recipe.content }}</div>
-      <div class="px-5 py-3 border-t text-xs text-gray-400">{{ recipe.user?.name }} · {{ formatDate(recipe.created_at) }}</div>
+      <div class="px-5 py-3 border-t text-xs text-gray-400"><UserName :userId="recipe.user?.id" :name="recipe.user?.name" /> · {{ formatDate(recipe.created_at) }}</div>
     </div>
     <!-- 사이드바 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">

@@ -25,7 +25,7 @@
             <span v-if="qa.is_resolved" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">✅ 해결됨</span>
           </div>
           <h1 class="text-lg font-bold text-gray-900">{{ qa.title }}</h1>
-          <div class="text-xs text-gray-400 mt-2">{{ qa.user?.name }} · {{ qa.view_count }}조회 · 답변 {{ qa.answer_count }}개</div>
+          <div class="text-xs text-gray-400 mt-2"><UserName :userId="qa.user?.id" :name="qa.user?.name" className="text-xs text-gray-400 inline" /> · {{ qa.view_count }}조회 · 답변 {{ qa.answer_count }}개</div>
         </div>
         <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ qa.content }}</div>
       </div>
@@ -40,7 +40,7 @@
           <div class="px-5 py-4">
             <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ ans.content }}</div>
             <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
-              <span class="font-semibold text-gray-600">{{ ans.user?.name }}</span>
+              <UserName :userId="ans.user?.id" :name="ans.user?.name" className="font-semibold text-gray-600" />
               <span>❤️ {{ ans.like_count }}</span>
               <span>{{ formatDate(ans.created_at) }}</span>
             </div>

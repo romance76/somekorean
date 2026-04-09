@@ -29,7 +29,7 @@
           <div class="px-5 py-3 border-b font-bold text-sm text-amber-900">📝 동호회 게시글</div>
           <div v-for="post in posts" :key="post.id" class="px-5 py-3 border-b last:border-0">
             <div class="text-sm font-medium text-gray-800">{{ post.title }}</div>
-            <div class="text-xs text-gray-400 mt-0.5">{{ post.user?.name }} · {{ formatDate(post.created_at) }}</div>
+            <div class="text-xs text-gray-400 mt-0.5"><UserName :userId="post.user?.id" :name="post.user?.name" /> · {{ formatDate(post.created_at) }}</div>
           </div>
           <div v-if="!posts.length" class="px-5 py-6 text-center text-sm text-gray-400">아직 게시글이 없습니다</div>
         </div>

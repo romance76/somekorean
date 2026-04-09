@@ -105,7 +105,8 @@
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
             <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-              <span v-if="item.user?.name || item.company || item.organizer">{{ item.user?.name || item.company || item.organizer }}</span>
+              <span v-if="item.user?.name"><UserName :userId="item.user?.id" :name="item.user?.name" /></span>
+              <span v-else-if="item.company || item.organizer">{{ item.company || item.organizer }}</span>
               <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
               <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
               <span v-if="item.view_count">👁{{ item.view_count }}</span>

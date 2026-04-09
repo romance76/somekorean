@@ -35,7 +35,7 @@
               <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">🍳</div>
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
-                <div class="text-[10px] text-gray-400">{{ item.category?.name || '기타' }} · {{ item.user?.name }}</div>
+                <div class="text-[10px] text-gray-400">{{ item.category?.name || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" /></div>
               </div>
             </div>
             <div class="text-xs text-gray-500 line-clamp-2 mb-2">{{ (item.content || '').slice(0, 80) }}</div>
@@ -55,7 +55,7 @@
           <RouterLink v-for="item in items" :key="item.id" :to="'/recipes/' + item.id"
             class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
             <div class="text-sm font-medium text-gray-800">{{ item.title }}</div>
-            <div class="text-xs text-gray-400 mt-1">{{ item.user?.name }} · {{ item.category?.name || '' }} · {{ item.view_count || 0 }}조회</div>
+            <div class="text-xs text-gray-400 mt-1"><UserName :userId="item.user?.id" :name="item.user?.name" className="text-xs text-gray-400 inline" /> · {{ item.category?.name || '' }} · {{ item.view_count || 0 }}조회</div>
           </RouterLink>
         </div>
 

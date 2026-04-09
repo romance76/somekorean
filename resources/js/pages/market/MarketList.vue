@@ -76,7 +76,7 @@
           <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">{{ item.category==='electronics'?'📱':item.category==='furniture'?'🪑':item.category==='auto'?'🚗':item.category==='clothing'?'👕':'📦' }}</div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
-            <div class="text-[10px] text-gray-400">{{ item.category || '기타' }} · {{ item.user?.name }}</div>
+            <div class="text-[10px] text-gray-400">{{ item.category || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" /></div>
           </div>
           <div class="text-amber-600 font-black text-sm">${{ Number(item.price || 0).toLocaleString() }}</div>
         </div>
@@ -98,7 +98,7 @@
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
             <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-              <span v-if="item.user?.name || item.company || item.organizer">{{ item.user?.name || item.company || item.organizer }}</span>
+              <UserName v-if="item.user?.id" :userId="item.user?.id" :name="item.user?.name || item.company || item.organizer" className="text-gray-600" /><span v-else-if="item.company || item.organizer">{{ item.company || item.organizer }}</span>
               <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
               <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
               <span v-if="item.view_count">👁{{ item.view_count }}</span>

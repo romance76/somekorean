@@ -7,7 +7,10 @@ import { useAuthStore } from './stores/auth'
 import { useSiteStore } from './stores/site'
 
 const pinia = createPinia()
+import UserName from './components/UserName.vue'
+
 const app = createApp(App)
+app.component('UserName', UserName)
 app.use(pinia)
 app.use(router)
 

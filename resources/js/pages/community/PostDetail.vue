@@ -20,7 +20,7 @@
             </div>
             <h1 class="text-lg font-bold text-gray-900">{{ post.title }}</h1>
             <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
-              <span>{{ post.user?.name }}</span>
+              <UserName :userId="post.user?.id" :name="post.user?.name" className="text-gray-800" />
               <span>{{ formatDate(post.created_at) }}</span>
               <span>조회 {{ post.view_count }}</span>
               <span>좋아요 {{ post.like_count }}</span>
@@ -89,7 +89,7 @@
           <!-- 댓글 목록 -->
           <div v-for="comment in comments" :key="comment.id" class="px-5 py-3 border-b last:border-0">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-sm font-semibold text-gray-800">{{ comment.user?.name }}</span>
+              <UserName :userId="comment.user?.id" :name="comment.user?.name" className="text-sm font-semibold text-gray-800" />
               <span class="text-xs text-gray-400">{{ formatDate(comment.created_at) }}</span>
               <template v-if="auth.user?.id === comment.user_id">
                 <button v-if="editingComment!==comment.id" @click="startEditComment(comment)" class="text-[10px] text-gray-400 hover:text-amber-600 ml-auto">수정</button>
@@ -112,7 +112,7 @@
             <!-- 대댓글 목록 -->
             <div v-for="reply in (comment.replies || [])" :key="reply.id" class="ml-6 mt-2 pl-3 border-l-2 border-gray-100">
               <div class="flex items-center gap-2 mb-0.5">
-                <span class="text-sm font-semibold text-gray-700">{{ reply.user?.name }}</span>
+                <UserName :userId="reply.user?.id" :name="reply.user?.name" className="text-sm font-semibold text-gray-700" />
                 <span class="text-xs text-gray-400">{{ formatDate(reply.created_at) }}</span>
                 <template v-if="auth.user?.id === reply.user_id">
                   <button @click="deleteComment(reply.id)" class="text-[10px] text-gray-400 hover:text-red-500 ml-auto">삭제</button>
@@ -134,7 +134,7 @@
           <RouterLink :to="`/profile/${post.user?.id}`" class="flex items-center gap-2 hover:bg-amber-50 -mx-2 px-2 py-1 rounded-lg transition">
             <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-sm font-bold text-amber-700">{{ (post.user?.name || '?')[0] }}</div>
             <div>
-              <div class="text-sm text-gray-700 font-semibold">{{ post.user?.name }}</div>
+              <UserName :userId="post.user?.id" :name="post.user?.name" className="text-sm text-gray-700 font-semibold" />
               <div v-if="post.user?.bio" class="text-[10px] text-gray-400 truncate max-w-[120px]">{{ post.user.bio }}</div>
             </div>
           </RouterLink>
