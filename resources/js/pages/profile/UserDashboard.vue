@@ -336,6 +336,27 @@
       </div>
     </div>
 
+    <!-- 결제 모달 -->
+    <div v-if="payModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="payModal=false">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-400 to-orange-400 px-5 py-3">
+          <div class="text-sm font-black text-amber-900">💳 포인트 구매</div>
+        </div>
+        <div class="p-5">
+          <div class="text-center mb-4">
+            <div class="text-2xl font-black text-amber-600">{{ payPkg?.label }}</div>
+            <div class="text-lg font-bold text-gray-800">{{ ((payPkg?.points||0)+(payPkg?.bonus||0)).toLocaleString() }}P — ${{ payPkg?.price }}</div>
+          </div>
+          <div id="card-element" class="border-2 border-gray-200 rounded-lg p-3 mb-3 min-h-[40px]"></div>
+          <div v-if="payError" class="text-sm text-red-500 mb-2">{{ payError }}</div>
+          <div class="flex gap-2">
+            <button @click="payModal=false" class="flex-1 bg-gray-100 text-gray-600 font-bold py-2.5 rounded-lg text-sm hover:bg-gray-200">취소</button>
+            <button @click="confirmPay" :disabled="paying" class="flex-1 bg-amber-500 text-white font-bold py-2.5 rounded-lg text-sm hover:bg-amber-600 disabled:opacity-50">{{ paying ? '결제중...' : '결제하기' }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 계정 관리 -->
     <div class="bg-white rounded-xl shadow-sm border p-5 mt-5">
       <h2 class="font-bold text-gray-700 mb-3">⚙️ 계정 관리</h2>
@@ -426,6 +447,8 @@ async function changePw() {
 // ─── 포인트 ───
 const ptBalance = ref(0); const ptHistory = ref([]); const spun = ref(false); const spinResult = ref(null)
 const packages = ref([]); const selectedPkg = ref('')
+const payModal = ref(false); const payPkg = ref(null); const payError = ref(''); const paying = ref(false)
+let stripe = null; let cardElement = null; let clientSecret = null
 async function loadPoints() {
   try { const { data } = await axios.get('/api/points/balance'); ptBalance.value = data.balance || data.points || 0; spun.value = data.daily_spin_done || false } catch {}
   try { const { data } = await axios.get('/api/points/history'); ptHistory.value = data.data?.data || data.data || [] } catch {}
@@ -442,18 +465,49 @@ async function loadPoints() {
 async function buyPackage(pkg) {
   const ok = await showConfirm(`${pkg.label} (${(pkg.points+pkg.bonus).toLocaleString()}P) — $${pkg.price}\n구매하시겠습니까?`, '포인트 구매')
   if (!ok) return
-  selectedPkg.value = pkg.key
+  payPkg.value = pkg; payError.value = ''
   try {
     const { data } = await axios.post('/api/payments/create-intent', { package_key: pkg.key })
-    if (data.data?.client_secret) {
-      await showAlert('Stripe 결제 창으로 이동합니다. (추후 구현)', '결제')
+    clientSecret = data.data?.client_secret
+    if (!clientSecret) { await showAlert('결제 생성 실패', '오류'); return }
+    // Stripe.js 로드
+    if (!stripe) {
+      if (!window.Stripe) {
+        const s = document.createElement('script'); s.src = 'https://js.stripe.com/v3/'; document.head.appendChild(s)
+        await new Promise(r => s.onload = r)
+      }
+      const { data: sd } = await axios.get('/api/settings/points')
+      stripe = window.Stripe(document.querySelector('meta[name="stripe-key"]')?.content || 'pk_test_51THnmRPg1ubIggWTCCl54BiED9Q9ZE0ZvrUTtK5ddJBU3EcLCfZUKYWvPIM2acKqbDo1S76auDkfD0RlEeuIdFty00helczpYq')
     }
+    payModal.value = true
+    // Stripe Elements 마운트
+    setTimeout(() => {
+      const elements = stripe.elements()
+      cardElement = elements.create('card', { style: { base: { fontSize: '14px', color: '#1f2937' } } })
+      cardElement.mount('#card-element')
+    }, 100)
   } catch (e) {
     const msg = e.response?.data?.message || '결제 실패'
-    if (msg.includes('Stripe')) await showAlert('결제 시스템 준비 중입니다.\n관리자에게 문의하세요.', '안내')
-    else await showAlert(msg, '오류')
+    await showAlert(msg, '오류')
   }
-  selectedPkg.value = ''
+}
+
+async function confirmPay() {
+  if (!stripe || !cardElement || !clientSecret) return
+  paying.value = true; payError.value = ''
+  const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardElement } })
+  if (error) { payError.value = error.message; paying.value = false; return }
+  if (paymentIntent.status === 'succeeded') {
+    try {
+      const { data } = await axios.post('/api/payments/confirm', { payment_intent_id: paymentIntent.id })
+      payModal.value = false; paying.value = false
+      await showAlert(`${data.data?.points_added?.toLocaleString()}P가 지급되었습니다!`, '구매 완료')
+      ptBalance.value = data.data?.total_points || ptBalance.value
+      await auth.fetchUser()
+      await loadPoints()
+    } catch (e) { payError.value = e.response?.data?.message || '포인트 지급 실패' }
+  }
+  paying.value = false
 }
 async function dailySpin() {
   try { const { data } = await axios.post('/api/points/daily-spin'); spinResult.value = data.points || data.amount; spun.value = true; ptBalance.value += (data.points || data.amount || 0); await auth.fetchUser() }
