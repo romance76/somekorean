@@ -285,8 +285,15 @@
                     </label>
                   </div>
                 </div>
-                <div><label class="text-[10px] font-bold text-gray-500">시간 (쉼표로 구분)</label>
-                  <input v-model="w._scheduled_times_str" placeholder="09:00, 14:00, 18:00" class="w-full border rounded px-2 py-1 text-xs mt-1" />
+                <div>
+                  <label class="text-[10px] font-bold text-gray-500">전화 시간</label>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    <div v-for="(t, ti) in w._times" :key="ti" class="flex items-center gap-0.5 bg-green-50 border border-green-200 rounded-lg px-1">
+                      <input type="time" v-model="w._times[ti]" class="border-0 bg-transparent text-xs py-1 px-1 outline-none w-20" />
+                      <button @click="w._times.splice(ti,1)" class="text-red-400 hover:text-red-600 text-xs px-1">✕</button>
+                    </div>
+                    <button @click="w._times.push('12:00')" class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-green-200">+ 시간 추가</button>
+                  </div>
                 </div>
                 <p class="text-[10px] text-amber-600">* 스케줄 전화는 1회당 50P가 차감됩니다.</p>
               </template>
@@ -465,7 +472,7 @@ async function loadElder() {
     elderWards.value = (data.data || []).map(w => ({
       ...w, _type: w.schedule?.type || 'random', _time_start: w.schedule?.time_start || '09:00', _time_end: w.schedule?.time_end || '18:00',
       _calls_per_day: w.schedule?.calls_per_day || 1, _days: w.schedule?.days || ['mon','tue','wed','thu','fri'],
-      _scheduled_times_str: (w.schedule?.scheduled_times || []).join(', '), _schedMsg: '', _schedOk: false,
+      _times: w.schedule?.scheduled_times || ['09:00'], _schedMsg: '', _schedOk: false,
     }))
   } catch {}
 }
@@ -474,7 +481,7 @@ async function saveSchedule(w) {
     await axios.post('/api/elder/save-schedule', {
       elder_guardian_id: w.id, type: w._type, time_start: w._time_start, time_end: w._time_end,
       calls_per_day: w._calls_per_day, days: w._days,
-      scheduled_times: w._type === 'scheduled' ? w._scheduled_times_str.split(',').map(t => t.trim()).filter(Boolean) : [],
+      scheduled_times: w._type === 'scheduled' ? w._times.filter(Boolean) : [],
     })
     w._schedMsg = '저장됨!'; w._schedOk = true
   } catch (e) { w._schedMsg = e.response?.data?.message || '실패'; w._schedOk = false }
