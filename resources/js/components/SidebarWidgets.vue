@@ -31,7 +31,7 @@
   </div>
 
   <!-- 추천 글 -->
-  <div v-if="recommendItems.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+  <div v-if="recommendLabel && recommendItems.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">👍 {{ recommendLabel }}</div>
     <div class="py-1">
       <component v-for="item in recommendItems" :key="item.id"
@@ -78,7 +78,7 @@ const props = defineProps({
   detailPath: { type: String, required: true },
   currentId: { type: [Number, String], default: 0 },
   label: { type: String, default: '글' },
-  recommendLabel: { type: String, default: '추천 글' },
+  recommendLabel: { type: String, default: '' },
   quickLabel: { type: String, default: '' },
   links: { type: Array, default: () => [] },
   filterParams: { type: Object, default: () => ({}) },
@@ -138,11 +138,13 @@ onMounted(async () => {
   // 인기 + 최신 동시 로드
   await Promise.allSettled([loadTab('views', 1), loadTab('latest', 1)])
 
-  // 추천
-  try {
-    const { data } = await axios.get(props.apiUrl, { params: { per_page: 5 } })
-    recommendItems.value = (data.data?.data || []).filter(i => i.id !== Number(props.currentId)).slice(0, 5)
-  } catch {}
+  // 추천 (recommendLabel 있을 때만)
+  if (props.recommendLabel) {
+    try {
+      const { data } = await axios.get(props.apiUrl, { params: { per_page: 5 } })
+      recommendItems.value = (data.data?.data || []).filter(i => i.id !== Number(props.currentId)).slice(0, 5)
+    } catch {}
+  }
 
   // 실시간 = 최신 상위 6개
   quickItems.value = latestItemsData.value.slice(0, 6)
