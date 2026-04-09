@@ -105,6 +105,12 @@ Route::get('/game-leaderboard', function () {
 // ─── Authenticated ───
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // 온라인 heartbeat
+    Route::post('/heartbeat', function () {
+        auth()->user()->update(['last_active_at' => now()]);
+        return response()->json(['success' => true]);
+    });
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/user/profile', [ProfileController::class, 'update']);
     Route::post('/user/avatar', [ProfileController::class, 'uploadAvatar']);

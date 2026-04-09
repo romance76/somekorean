@@ -23,10 +23,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth'         => \App\Http\Middleware\Authenticate::class,
         ]);
 
-        // IP 차단 + 봇 감지 미들웨어를 API 전체에 적용
+        // IP 차단 + 봇 감지 + 온라인 상태 미들웨어를 API 전체에 적용
         $middleware->api(prepend: [
             \App\Http\Middleware\CheckIpBan::class,
             \App\Http\Middleware\DetectBot::class,
+        ]);
+        $middleware->api(append: [
+            \App\Http\Middleware\UpdateLastActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

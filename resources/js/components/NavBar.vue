@@ -122,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -198,8 +198,7 @@ async function loadUnread() {
   if (!auth.isLoggedIn) return
   try {
     const { data } = await axios.get('/api/notifications')
-    const list = data.data?.data || data.data || []
-    unreadCount.value = list.filter(n => !n.is_read).length
+    unreadCount.value = data.unread_count || 0
   } catch {}
 }
 
@@ -226,7 +225,20 @@ function goSearch() {
   }
 }
 
-onMounted(() => { loadUnread(); loadMenuConfig() })
+let pollInterval = null
+onMounted(() => {
+  loadUnread()
+  loadMenuConfig()
+  // 30초마다 알림 카운트 + 온라인 heartbeat
+  if (auth.isLoggedIn) {
+    pollInterval = setInterval(() => {
+      loadUnread()
+      axios.post('/api/heartbeat').catch(() => {})
+    }, 30000)
+  }
+})
+
+onUnmounted(() => { if (pollInterval) clearInterval(pollInterval) })
 </script>
 
 <style scoped>
