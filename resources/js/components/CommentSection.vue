@@ -7,7 +7,7 @@
     <div class="flex gap-3">
       <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-xs font-bold text-amber-700 flex-shrink-0 mt-0.5">{{ (auth.user?.name||'?')[0] }}</div>
       <div class="flex-1">
-        <textarea v-model="newComment" rows="1" placeholder="댓글 추가..." class="w-full border-0 border-b border-gray-200 px-0 pb-1 text-sm resize-none outline-none focus:border-amber-400 transition leading-snug" @focus="$event.target.rows=2" @blur="if(!newComment.trim()) $event.target.rows=1"></textarea>
+        <textarea v-model="newComment" rows="1" placeholder="댓글 추가..." class="w-full border-0 border-b border-gray-200 px-0 pb-1 text-sm resize-none outline-none focus:border-amber-400 transition leading-snug" @focus="$event.target.rows=2" @blur="blurComment($event)"></textarea>
         <div v-if="newComment.trim()" class="flex justify-end gap-2 mt-2">
           <button @click="newComment=''" class="text-xs text-gray-500 px-3 py-1.5 rounded-full hover:bg-gray-100">취소</button>
           <button @click="submitComment(null)" class="text-xs bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-full hover:bg-amber-500">댓글</button>
@@ -75,6 +75,8 @@ const totalCount = computed(() => {
   comments.value.forEach(cm => { c += cm.replies?.length || 0 })
   return c
 })
+
+function blurComment(e) { if (!newComment.value.trim()) e.target.rows = 1 }
 
 function openReply(commentId, userName) {
   replyTo.value = commentId
