@@ -120,8 +120,9 @@ async function loadTab(tab, page = 1) {
   const sort = tab === 'views' ? 'popular' : 'latest'
   try {
     const { data } = await axios.get(props.apiUrl, { params: { sort, per_page: 10, page, ...props.filterParams } })
-    const items = (data.data?.data || []).filter(i => i.id !== Number(props.currentId))
-    const lastPg = data.data?.last_page || 1
+    const items = (data.data?.data || []).filter(i => i.id !== Number(props.currentId)).slice(0, 10)
+    const totalItems = data.data?.total || items.length
+    const lastPg = Math.ceil(totalItems / 10) || 1
     if (tab === 'views') { viewsItems.value = items; viewsPage.value = page; viewsLastPage.value = lastPg }
     else { latestItemsData.value = items; latestPage.value = page; latestLastPage.value = lastPg }
   } catch {}
