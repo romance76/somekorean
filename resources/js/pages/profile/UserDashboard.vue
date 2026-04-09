@@ -59,6 +59,18 @@
           <div><label class="text-xs font-bold text-gray-600 mb-1 block">우편번호</label><input v-model="pf.zipcode" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
         </div>
 
+        <!-- 기본 검색 반경 -->
+        <div class="mb-3">
+          <label class="text-xs font-bold text-gray-600 mb-1 block">📍 기본 검색 반경</label>
+          <select v-model="pf.default_radius" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option :value="10">10마일 이내</option>
+            <option :value="30">30마일 이내</option>
+            <option :value="50">50마일 이내</option>
+            <option :value="100">100마일 이내</option>
+          </select>
+          <p class="text-[10px] text-gray-400 mt-1">구인구직, 중고장터, 부동산 등 위치 기반 게시판의 기본 검색 범위</p>
+        </div>
+
         <!-- 프라이버시 설정 -->
         <div class="border-t pt-4 mt-4">
           <h3 class="font-bold text-gray-700 text-sm mb-3">🔐 프라이버시 설정</h3>
@@ -113,11 +125,42 @@
       <div class="bg-white rounded-xl shadow-sm border p-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-gray-800">💰 포인트</h2>
-          <button @click="dailySpin" :disabled="spun" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ spun ? '✅ 오늘 완료' : '🎰 출석 체크' }}
+          <button @click="startRoulette" :disabled="spun || spinning" class="font-bold px-4 py-2 rounded-lg text-sm transition"
+            :class="spun ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-amber-400 text-amber-900 hover:bg-amber-500'">
+            {{ spun ? '✅ 오늘 완료' : spinning ? '🎰 돌리는 중...' : '🎰 출석 체크' }}
           </button>
         </div>
-        <div v-if="spinResult" class="text-center text-sm font-bold text-green-600 mb-4">🎉 {{ spinResult }}P 적립!</div>
+
+        <!-- 룰렛 -->
+        <div v-if="showRoulette" class="flex flex-col items-center mb-4">
+          <div class="relative w-48 h-48 mb-3">
+            <!-- 화살표 -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 z-10 text-red-500 text-2xl">▼</div>
+            <!-- 회전 원판 -->
+            <div class="w-48 h-48 rounded-full border-4 border-amber-400 overflow-hidden relative transition-transform"
+              :style="{ transform: `rotate(${rouletteAngle}deg)`, transitionDuration: spinning ? '4s' : '0s', transitionTimingFunction: 'cubic-bezier(0.17,0.67,0.12,0.99)' }">
+              <div v-for="(seg, i) in rouletteSegments" :key="i"
+                class="absolute w-full h-full flex items-start justify-center pt-3"
+                :style="{ transform: `rotate(${i * (360/rouletteSegments.length)}deg)` }">
+                <span class="text-xs font-black" :class="seg.color">{{ seg.points }}P</span>
+              </div>
+              <!-- 중심 원 -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-14 h-14 bg-white rounded-full border-2 border-amber-300 flex items-center justify-center text-lg">🎰</div>
+              </div>
+              <!-- 색상 구획 배경 -->
+              <svg class="absolute inset-0 w-full h-full -z-10" viewBox="0 0 100 100">
+                <circle v-for="(seg, i) in rouletteSegments" :key="'bg'+i" cx="50" cy="50" r="48"
+                  fill="none" :stroke="seg.bg" stroke-width="48"
+                  :stroke-dasharray="`${(100*Math.PI/rouletteSegments.length)} ${100*Math.PI}`"
+                  :stroke-dashoffset="`${-(100*Math.PI/rouletteSegments.length)*i}`" />
+              </svg>
+            </div>
+          </div>
+          <div v-if="spinResult" class="text-center animate-bounce">
+            <span class="text-xl font-black text-amber-600">🎉 {{ spinResult }}P 당첨!</span>
+          </div>
+        </div>
         <div class="text-3xl font-black text-amber-600 mb-4">{{ (auth.user?.points || ptBalance).toLocaleString() }}P</div>
         <!-- 포인트 구매 -->
         <div class="border-t pt-4 mt-4 mb-4">
@@ -459,7 +502,7 @@ td:last-child{text-align:right;font-weight:600}
 }
 
 // ─── 프로필 ───
-const pf = reactive({ name: '', nickname: '', bio: '', phone: '', address1: '', address2: '', city: '', state: '', zipcode: '', language: 'ko', allow_friend_request: true, allow_messages: true, allow_elder_service: false })
+const pf = reactive({ name: '', nickname: '', bio: '', phone: '', address1: '', address2: '', city: '', state: '', zipcode: '', default_radius: 30, language: 'ko', allow_friend_request: true, allow_messages: true, allow_elder_service: false })
 const pfMsg = ref(''); const pfMsgType = ref(''); const pfSaving = ref(false); const avatarMsg = ref('')
 const pw = reactive({ current_password: '', password: '', password_confirmation: '' })
 const pwMsg = ref(''); const pwMsgType = ref(''); const pwSaving = ref(false)
@@ -492,6 +535,17 @@ async function changePw() {
 
 // ─── 포인트 ───
 const ptBalance = ref(0); const ptHistory = ref([]); const spun = ref(false); const spinResult = ref(null)
+const spinning = ref(false); const showRoulette = ref(false); const rouletteAngle = ref(0)
+const rouletteSegments = [
+  { points: 1, color: 'text-gray-600', bg: '#fef3c7' },
+  { points: 5, color: 'text-amber-700', bg: '#fde68a' },
+  { points: 3, color: 'text-gray-600', bg: '#fef9c3' },
+  { points: 10, color: 'text-red-600', bg: '#fed7aa' },
+  { points: 2, color: 'text-gray-600', bg: '#fef3c7' },
+  { points: 7, color: 'text-amber-700', bg: '#fde68a' },
+  { points: 1, color: 'text-gray-600', bg: '#fef9c3' },
+  { points: 50, color: 'text-red-600', bg: '#fca5a5' },
+]
 const packages = ref([]); const selectedPkg = ref('')
 const payModal = ref(false); const payPkg = ref(null); const payError = ref(''); const paying = ref(false)
 let stripe = null; let cardElement = null; let clientSecret = null
@@ -555,9 +609,35 @@ async function confirmPay() {
   }
   paying.value = false
 }
-async function dailySpin() {
-  try { const { data } = await axios.post('/api/points/daily-spin'); spinResult.value = data.points || data.amount; spun.value = true; ptBalance.value += (data.points || data.amount || 0); await auth.fetchUser() }
-  catch (e) { showAlert(e.response?.data?.message || '실패', '오류') }
+async function startRoulette() {
+  if (spinning.value || spun.value) return
+  spinning.value = true
+  showRoulette.value = true
+  spinResult.value = null
+
+  try {
+    const { data } = await axios.post('/api/points/daily-spin')
+    const won = data.points || data.amount || 1
+    // 당첨 포인트에 해당하는 구획 찾기
+    const segIdx = rouletteSegments.findIndex(s => s.points === won) ?? 0
+    const segAngle = 360 / rouletteSegments.length
+    // 최종 각도: 5바퀴(1800) + 해당 구획 중앙에 멈추기
+    const targetAngle = 1800 + (360 - segIdx * segAngle - segAngle / 2)
+    rouletteAngle.value = targetAngle
+
+    // 4초 후 결과 표시
+    setTimeout(() => {
+      spinResult.value = won
+      spun.value = true
+      spinning.value = false
+      ptBalance.value += won
+      auth.fetchUser()
+    }, 4200)
+  } catch (e) {
+    spinning.value = false
+    showRoulette.value = false
+    showAlert(e.response?.data?.message || '실패', '오류')
+  }
 }
 
 // ─── 쪽지 ───
