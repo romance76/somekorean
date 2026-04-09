@@ -67,6 +67,9 @@
         </div>
         <div v-if="!reviews.length" class="px-5 py-6 text-center text-sm text-gray-400">아직 리뷰가 없습니다</div>
       </div>
+
+      <!-- 댓글 -->
+      <CommentSection v-if="biz.id" :type="'business'" :typeId="biz.id" class="mt-4" />
       </div>
       <!-- 사이드바 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
@@ -82,6 +85,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import CommentSection from '../../components/CommentSection.vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import LeafletMap from '../../components/LeafletMap.vue'
 import axios from 'axios'

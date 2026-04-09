@@ -20,6 +20,7 @@ class CommentController extends Controller
             'event' => 'App\\Models\\Event',
             'groupbuy' => 'App\\Models\\GroupBuy',
             'realestate' => 'App\\Models\\RealEstateListing',
+            'business' => 'App\\Models\\Business',
             default => null,
         };
     }
