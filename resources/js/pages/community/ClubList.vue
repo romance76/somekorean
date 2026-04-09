@@ -70,7 +70,7 @@
     <!-- 오른쪽 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets api-url="/api/clubs" detail-path="/clubs/" :current-id="0"
-        label="동호회" />
+        label="동호회" :filter-params="locationParams" />
     </div>
     </div>
   </div>
@@ -100,6 +100,15 @@ const search = ref('')
 const radius = ref('30')
 const selectedCityIdx = ref('-2')
 const myCity = ref(null)
+
+const locationParams = computed(() => {
+  const idx = parseInt(selectedCityIdx.value)
+  if (idx === -1) return {}
+  let lat, lng
+  if (idx >= 0) { lat = koreanCities[idx]?.lat; lng = koreanCities[idx]?.lng }
+  else if (myCity.value?.lat) { lat = myCity.value.lat; lng = myCity.value.lng }
+  return lat && lng ? { lat, lng, radius: parseInt(radius.value) } : {}
+})
 
 const types = [
   { value: '', label: '전체' },

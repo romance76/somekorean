@@ -73,7 +73,7 @@
     </div>
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets api-url="/api/groupbuys" detail-path="/groupbuy/" :current-id="0"
-        label="공동구매" />
+        label="공동구매" :filter-params="locationParams" />
     </div>
     </div>
   </div>
@@ -104,6 +104,15 @@ const search = ref('')
 const radius = ref('30')
 const selectedCityIdx = ref('-2') // -2=내위치, -1=전국, 0~=도시
 const myCity = ref(null)
+
+const locationParams = computed(() => {
+  const idx = parseInt(selectedCityIdx.value)
+  if (idx === -1) return {}
+  let lat, lng
+  if (idx >= 0) { lat = koreanCities[idx]?.lat; lng = koreanCities[idx]?.lng }
+  else if (myCity.value?.lat) { lat = myCity.value.lat; lng = myCity.value.lng }
+  return lat && lng ? { lat, lng, radius: parseInt(radius.value) } : {}
+})
 
 const locationInfo = computed(() => {
   if (selectedCityIdx.value === -1 || selectedCityIdx.value === '-1') return '전국 검색 중'

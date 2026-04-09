@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -133,6 +133,12 @@ function goPage(pg) {
   if (pg < 1 || pg > currentLastPage.value) return
   loadTab(popTab.value, pg)
 }
+
+// filterParams 변경 시 리로드 (위치 변경 등)
+watch(() => props.filterParams, () => {
+  loadTab('views', 1)
+  loadTab('latest', 1)
+}, { deep: true })
 
 onMounted(async () => {
   // 인기 + 최신 동시 로드
