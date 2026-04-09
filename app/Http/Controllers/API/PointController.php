@@ -14,7 +14,8 @@ class PointController extends Controller
 
     public function balance() {
         $u = auth()->user();
-        return response()->json(['success' => true, 'data' => ['points' => $u->points, 'game_points' => $u->game_points]]);
+        $spunToday = UserDailySpin::where('user_id', $u->id)->whereDate('spun_at', now()->toDateString())->exists();
+        return response()->json(['success' => true, 'data' => ['points' => $u->points, 'game_points' => $u->game_points], 'daily_spin_done' => $spunToday]);
     }
 
     public function dailySpin() {

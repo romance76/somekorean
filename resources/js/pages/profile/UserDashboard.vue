@@ -629,7 +629,7 @@ async function startRoulette() {
   let won = 0
   try {
     const { data } = await axios.post('/api/points/daily-spin')
-    won = data.points || data.amount || 1
+    won = data.data?.points_won || data.points || data.amount || 1
   } catch (e) {
     spun.value = true
     showAlert(e.response?.data?.message || '이미 출석 룰렛을 돌렸습니다', '출석체크')
