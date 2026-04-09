@@ -57,6 +57,46 @@
           <div v-if="activeItem.website">🌐 <a :href="activeItem.website" target="_blank" class="text-amber-600">{{ activeItem.website }}</a></div>
         </div>
         <div v-if="activeItem.description" class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.description }}</div>
+        <!-- 영업시간 -->
+        <div v-if="activeItem.hours && Object.keys(activeItem.hours).length" class="px-5 py-3 border-t">
+          <div class="text-xs font-bold text-gray-700 mb-1">🕐 영업시간</div>
+          <div v-for="(time, day) in activeItem.hours" :key="day" class="flex justify-between text-xs text-gray-500 py-0.5">
+            <span>{{ day }}</span><span>{{ time }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 리뷰 섹션 -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3">
+        <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">⭐ 리뷰 {{ activeItem.review_count || 0 }}개</div>
+
+        <!-- 리뷰 작성 -->
+        <div v-if="auth.isLoggedIn" class="px-5 py-3 border-b">
+          <div class="flex items-center gap-1 mb-2">
+            <span class="text-xs text-gray-500 mr-1">평점:</span>
+            <button v-for="s in 5" :key="s" @click="reviewRating=s" class="text-lg transition" :class="s<=reviewRating?'text-amber-400':'text-gray-300'">★</button>
+          </div>
+          <textarea v-model="reviewText" rows="2" placeholder="리뷰를 작성하세요..." class="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-amber-400 outline-none"></textarea>
+          <button @click="submitReview" :disabled="!reviewRating" class="mt-2 bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-amber-500 disabled:opacity-50">리뷰 등록</button>
+        </div>
+
+        <!-- 구글 리뷰 + 사이트 리뷰 -->
+        <div class="divide-y max-h-80 overflow-y-auto">
+          <div v-for="r in activeReviews" :key="r.id" class="px-5 py-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-amber-400 text-xs">{{'★'.repeat(r.rating)}}{{'☆'.repeat(5-r.rating)}}</span>
+              <span class="text-xs font-bold text-gray-700">{{ r.user?.name || r.author || '익명' }}</span>
+              <span class="text-[10px] text-gray-400">{{ r.relative_time || formatDate(r.created_at) }}</span>
+            </div>
+            <div class="text-xs text-gray-600">{{ r.content || r.text }}</div>
+          </div>
+          <div v-if="!activeReviews.length" class="px-5 py-6 text-center text-xs text-gray-400">아직 리뷰가 없습니다</div>
+        </div>
+      </div>
+
+      <!-- 이전글/다음글 -->
+      <div class="flex justify-between mt-3">
+        <button @click="activeItem=null" class="text-xs text-gray-400 hover:text-gray-600">← 목록</button>
       </div>
     </div>
     <!-- 목록 모드 -->
@@ -136,11 +176,36 @@ const activeCat = ref('')
 const { loadConfig, getDefaultView } = useMenuConfig()
 const viewMode = ref('list')
 const activeItem = ref(null)
+const activeReviews = ref([])
+const reviewRating = ref(0)
+const reviewText = ref('')
+
 async function openItem(item) {
   try { const { data } = await axios.get(`/api/businesses/${item.id}`); activeItem.value = data.data }
   catch { activeItem.value = item }
+  if (activeItem.value?.category) activeCat.value = activeItem.value.category
+  // 리뷰 로드 (구글리뷰 + 사이트리뷰 합치기)
+  activeReviews.value = []
+  reviewRating.value = 0; reviewText.value = ''
+  try {
+    const { data } = await axios.get(`/api/businesses/${activeItem.value.id}/reviews`)
+    const siteReviews = data.data?.data || data.data || []
+    const googleReviews = (activeItem.value.google_reviews || []).map((r, i) => ({ id: 'g'+i, author: r.author, rating: r.rating, text: r.text, relative_time: r.time }))
+    activeReviews.value = [...siteReviews, ...googleReviews]
+  } catch {}
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+
+async function submitReview() {
+  if (!reviewRating.value || !activeItem.value) return
+  try {
+    await axios.post(`/api/businesses/${activeItem.value.id}/reviews`, { rating: reviewRating.value, content: reviewText.value })
+    reviewText.value = ''; reviewRating.value = 0
+    openItem(activeItem.value) // 리뷰 새로고침
+  } catch (e) { alert(e.response?.data?.message || '리뷰 등록 실패') }
+}
+
+function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR') : '' }
 const bizCategories = [
   { value: '', label: '전체' },{ value: 'restaurant', label: '🍽️ 음식점' },{ value: 'grocery', label: '🛒 마트' },
   { value: 'beauty', label: '💅 미용' },{ value: 'medical', label: '🏥 의료' },{ value: 'professional', label: '💼 전문서비스' },
