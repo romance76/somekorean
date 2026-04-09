@@ -60,23 +60,29 @@
           <div v-if="activeItem.address">📍 {{ activeItem.address }}</div>
           <div v-if="activeItem.website">🌐 <a :href="activeItem.website" target="_blank" class="text-amber-600 hover:underline truncate block">{{ activeItem.website }}</a></div>
         </div>
-        <!-- 지도 -->
-        <div v-if="activeItem.lat && activeItem.lng" class="px-5 py-3 border-t">
-          <div class="rounded-lg overflow-hidden border">
-            <iframe :src="`https://www.openstreetmap.org/export/embed.html?bbox=${Number(activeItem.lng)-0.008},${Number(activeItem.lat)-0.004},${Number(activeItem.lng)+0.008},${Number(activeItem.lat)+0.004}&layer=mapnik&marker=${activeItem.lat},${activeItem.lng}`"
-              class="w-full h-40 border-0" loading="lazy"></iframe>
-          </div>
-          <a :href="`https://www.google.com/maps/search/?api=1&query=${activeItem.lat},${activeItem.lng}`"
-            target="_blank" class="block bg-gray-50 px-3 py-1.5 text-xs text-amber-600 font-bold text-center rounded-b-lg border border-t-0 hover:bg-amber-50 transition">
-            📍 Google Maps에서 보기 →
-          </a>
-        </div>
         <div v-if="activeItem.description" class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.description }}</div>
-        <!-- 영업시간 -->
-        <div v-if="activeItem.hours && Object.keys(activeItem.hours).length" class="px-5 py-3 border-t">
-          <div class="text-xs font-bold text-gray-700 mb-1">🕐 영업시간</div>
-          <div v-for="(time, day) in activeItem.hours" :key="day" class="flex justify-between text-xs text-gray-500 py-0.5">
-            <span>{{ day }}</span><span>{{ time }}</span>
+        <!-- 영업시간 + 지도 (좌우 배치) -->
+        <div v-if="(activeItem.hours && Object.keys(activeItem.hours).length) || (activeItem.lat && activeItem.lng)" class="px-5 py-3 border-t">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- 왼쪽: 영업시간 -->
+            <div v-if="activeItem.hours && Object.keys(activeItem.hours).length">
+              <div class="text-xs font-bold text-gray-700 mb-2">🕐 영업시간</div>
+              <div v-for="(time, day) in activeItem.hours" :key="day" class="flex justify-between text-xs text-gray-500 py-0.5">
+                <span>{{ day }}</span><span class="ml-2">{{ time }}</span>
+              </div>
+            </div>
+            <!-- 오른쪽: 지도 -->
+            <div v-if="activeItem.lat && activeItem.lng">
+              <div class="text-xs font-bold text-gray-700 mb-2">📍 위치</div>
+              <div class="rounded-lg overflow-hidden border">
+                <iframe :src="`https://www.openstreetmap.org/export/embed.html?bbox=${Number(activeItem.lng)-0.008},${Number(activeItem.lat)-0.004},${Number(activeItem.lng)+0.008},${Number(activeItem.lat)+0.004}&layer=mapnik&marker=${activeItem.lat},${activeItem.lng}`"
+                  class="w-full h-44 border-0" loading="lazy"></iframe>
+              </div>
+              <a :href="`https://www.google.com/maps/search/?api=1&query=${activeItem.lat},${activeItem.lng}`"
+                target="_blank" class="block text-xs text-amber-600 font-bold text-center mt-1 hover:underline">
+                Google Maps에서 보기 →
+              </a>
+            </div>
           </div>
         </div>
       </div>
