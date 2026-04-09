@@ -87,19 +87,28 @@
 
     <!-- 쪽지 보내기 뷰 -->
     <div v-else-if="view === 'message'" class="p-3">
-      <p class="text-xs font-bold text-gray-700 mb-2">✉️ {{ user.name }}님에게 쪽지</p>
-      <textarea v-model="msgContent" rows="5" maxlength="500" placeholder="쪽지 내용을 입력하세요..." class="w-full border border-gray-200 rounded-lg p-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"></textarea>
-      <div class="flex justify-between items-center mt-1.5">
-        <span class="text-[10px] text-gray-400">{{ msgContent.length }}/500</span>
-        <div class="flex gap-1.5">
-          <button @click="view = 'main'; msgContent = ''" class="bg-gray-100 text-gray-600 text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200">취소</button>
-          <button @click="sendMsg" :disabled="sending || !msgContent.trim()" class="bg-blue-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50">
-            {{ sending ? '전송중...' : '보내기' }}
-          </button>
+      <template v-if="!msgSent">
+        <p class="text-xs font-bold text-gray-700 mb-2">✉️ {{ user.name }}님에게 쪽지</p>
+        <textarea v-model="msgContent" rows="5" maxlength="500" placeholder="쪽지 내용을 입력하세요..." class="w-full border border-gray-200 rounded-lg p-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"></textarea>
+        <div class="flex justify-between items-center mt-1.5">
+          <span class="text-[10px] text-gray-400">{{ msgContent.length }}/500</span>
+          <div class="flex gap-1.5">
+            <button @click="view = 'main'; msgContent = ''" class="bg-gray-100 text-gray-600 text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200">취소</button>
+            <button @click="sendMsg" :disabled="sending || !msgContent.trim()" class="bg-blue-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50">
+              {{ sending ? '전송중...' : '보내기' }}
+            </button>
+          </div>
         </div>
-      </div>
-      <!-- 전송 완료 메시지 -->
-      <div v-if="msgSent" class="mt-2 text-center text-[11px] text-green-600 font-bold animate-fade">✅ 쪽지를 보냈습니다!</div>
+      </template>
+      <!-- 전송 완료 → 보낸 내용 표시 -->
+      <template v-else>
+        <p class="text-xs font-bold text-green-600 mb-2">✅ 쪽지를 보냈습니다</p>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{{ sentContent }}</div>
+        <div class="flex gap-1.5 mt-2">
+          <button @click="msgSent = false; msgContent = ''" class="flex-1 bg-blue-500 text-white text-[11px] font-bold py-1.5 rounded-lg hover:bg-blue-600">새 쪽지 쓰기</button>
+          <button @click="view = 'main'; msgSent = false; msgContent = ''" class="flex-1 bg-gray-100 text-gray-600 text-[11px] font-bold py-1.5 rounded-lg hover:bg-gray-200">닫기</button>
+        </div>
+      </template>
     </div>
 
   </div>
@@ -134,6 +143,7 @@ const acceptMsg = ref('')
 const msgContent = ref('')
 const sending = ref(false)
 const msgSent = ref(false)
+const sentContent = ref('')
 
 const isMe = computed(() => auth.user?.id == props.userId)
 
@@ -233,9 +243,9 @@ async function sendMsg() {
   sending.value = true
   try {
     await axios.post('/api/messages', { receiver_id: user.value.id, content: msgContent.value.trim() })
+    sentContent.value = msgContent.value.trim()
     msgSent.value = true
     msgContent.value = ''
-    setTimeout(() => { msgSent.value = false; view.value = 'main' }, 1500)
   } catch (e) {
     alert(e.response?.data?.message || '전송 실패')
   }
