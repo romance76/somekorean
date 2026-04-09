@@ -75,6 +75,7 @@
         <RouterLink :to="`/realestate/write?edit=${activeItem.id}`" class="text-xs text-amber-600 hover:text-amber-800">✏️ 수정</RouterLink>
         <button @click="deleteActiveItem" class="text-xs text-red-400 hover:text-red-600">🗑️ 삭제</button>
       </div>
+      <CommentSection v-if="activeItem.id" type="realestate" :typeId="activeItem.id" class="mt-3" />
       <div class="flex justify-between mt-3">
         <button @click="navItem(-1)" :disabled="currentIdx <= 0" class="text-xs text-gray-500 hover:text-amber-700 disabled:opacity-30">← 이전글</button>
         <button @click="activeItem=null" class="text-xs text-gray-400 hover:text-gray-600">목록</button>
@@ -150,6 +151,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
+import CommentSection from '../../components/CommentSection.vue'
 import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 

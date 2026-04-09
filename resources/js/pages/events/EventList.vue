@@ -63,6 +63,7 @@
       <div v-if="auth.user?.id === activeItem.user_id" class="flex gap-2 mt-3 justify-end">
         <button @click="deleteActiveItem('events')" class="text-xs text-red-400 hover:text-red-600">🗑️ 삭제</button>
       </div>
+      <CommentSection v-if="activeItem.id" type="event" :typeId="activeItem.id" class="mt-3" />
       <div class="flex justify-between mt-2">
         <button @click="navItem(-1)" :disabled="currentIdx<=0" class="text-xs text-gray-500 hover:text-amber-700 disabled:opacity-30">← 이전글</button>
         <button @click="activeItem=null" class="text-xs text-gray-400">목록</button>
@@ -137,6 +138,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
+import CommentSection from '../../components/CommentSection.vue'
 import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 
