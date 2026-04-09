@@ -23,18 +23,19 @@ class PaymentController extends Controller
     // Stripe PaymentIntent 생성
     public function createIntent(Request $request)
     {
-        $request->validate(['package_id' => 'required|integer']);
+        $request->validate(['package_key' => 'required|string']);
 
-        $packages = [
-            1 => ['points' => 100, 'price' => 99], // cents
-            2 => ['points' => 550, 'price' => 499],
-            3 => ['points' => 1200, 'price' => 999],
-            4 => ['points' => 6500, 'price' => 3999],
-            5 => ['points' => 14000, 'price' => 6999],
-        ];
+        // point_settings에서 패키지 정보 로드
+        $setting = \DB::table('point_settings')->where('key', $request->package_key)->first();
+        if (!$setting) return response()->json(['success' => false, 'message' => '잘못된 패키지'], 400);
 
-        $pkg = $packages[$request->package_id] ?? null;
-        if (!$pkg) return response()->json(['success' => false, 'message' => '잘못된 패키지'], 400);
+        $parts = explode('|', $setting->value); // 가격|포인트|보너스
+        $price = (float) ($parts[0] ?? 0);
+        $points = (int) ($parts[1] ?? 0);
+        $bonus = (int) ($parts[2] ?? 0);
+        $totalPoints = $points + $bonus;
+
+        $pkg = ['points' => $totalPoints, 'price' => (int) round($price * 100)]; // cents
 
         $stripeSecret = config('services.stripe.secret');
         if (!$stripeSecret) {
@@ -50,7 +51,7 @@ class PaymentController extends Controller
                 'metadata' => [
                     'user_id' => auth()->id(),
                     'points' => $pkg['points'],
-                    'package_id' => $request->package_id,
+                    'package_key' => $request->package_key,
                 ],
             ]);
 
