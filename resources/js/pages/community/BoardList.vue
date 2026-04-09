@@ -10,8 +10,6 @@
           <option value="views">조회순</option>
           <option value="comments">댓글순</option>
         </select>
-        <button @click="viewMode='list'" class="p-1.5 rounded" :class="viewMode==='list'?'bg-amber-100 text-amber-700':'text-gray-400'">☰</button>
-        <button @click="viewMode='card'" class="p-1.5 rounded" :class="viewMode==='card'?'bg-amber-100 text-amber-700':'text-gray-400'">⊞</button>
         <RouterLink v-if="auth.isLoggedIn" to="/community/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">✏️ 글쓰기</RouterLink>
       </div>
     </div>
@@ -102,7 +100,7 @@
         <div v-else-if="!items.length" class="text-center py-12 text-gray-400">게시글이 없습니다</div>
 
         <!-- 리스트 뷰 -->
-        <div v-else-if="viewMode==='list'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div v-for="item in items" :key="item.id" @click="openItem(item)"
             class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
             <div class="flex items-center gap-2">
@@ -119,20 +117,6 @@
           </div>
         </div>
 
-        <!-- 카드 뷰 -->
-        <div v-else class="grid grid-cols-2 gap-3">
-          <div v-for="item in items" :key="item.id" @click="openItem(item)"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition cursor-pointer">
-            <div v-if="item.images?.length" class="aspect-video bg-gray-100 rounded-lg mb-2 overflow-hidden">
-              <img :src="'/storage/'+item.images[0]" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
-            </div>
-            <div v-else class="aspect-video bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg mb-2 flex items-center justify-center text-3xl">💬</div>
-            <div class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold inline-block mb-1">{{ item.board?.name || '자유' }}</div>
-            <div class="text-sm font-medium text-gray-800 line-clamp-2">{{ item.title }}</div>
-            <div class="text-[10px] text-gray-400 mt-1">{{ item.user?.name }} · {{ item.view_count }}조회</div>
-          </div>
-        </div>
-
         <!-- 페이지네이션 -->
         <div v-if="lastPage > 1" class="flex justify-center gap-1.5 mt-4">
           <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadPosts(pg)"
@@ -141,37 +125,22 @@
         </div>
       </div>
 
-      <!-- 오른쪽: 위젯 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
-        <!-- 인기글 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <!-- 오른쪽: 인기글 -->
+      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔥 인기 게시글</div>
           <div class="py-1">
             <button v-for="(p, i) in popularPosts" :key="p.id" @click="openItem(p)"
               class="flex items-start gap-2 px-3 py-1.5 hover:bg-amber-50/50 transition w-full text-left">
-              <span class="text-[10px] font-bold w-4 text-center" :class="i<3?'text-amber-600':'text-gray-400'">{{ i+1 }}</span>
-              <span class="text-xs text-gray-700 leading-snug line-clamp-2 flex-1">{{ p.title }}</span>
+              <span class="text-[10px] font-bold w-4 text-center flex-shrink-0" :class="i<3?'text-amber-600':'text-gray-400'">{{ i+1 }}</span>
+              <span class="text-xs text-gray-700 leading-snug line-clamp-1 flex-1">{{ p.title }}</span>
             </button>
           </div>
-        </div>
-
-        <!-- 최신 구인 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">💼 최신 구인</div>
-          <RouterLink v-for="j in recentJobs" :key="j.id" :to="`/jobs/${j.id}`"
-            class="block px-3 py-1.5 hover:bg-amber-50/50 transition">
-            <div class="text-xs text-gray-700 truncate">{{ j.title }}</div>
-            <div class="text-[10px] text-gray-400">{{ j.company }}</div>
-          </RouterLink>
-          <div v-if="!recentJobs.length" class="px-3 py-3 text-xs text-gray-400 text-center">구인 없음</div>
-        </div>
-
-        <!-- 바로가기 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
-          <div class="font-bold text-xs text-gray-800 mb-2">⚡ 바로가기</div>
-          <RouterLink to="/qa" class="block text-xs text-gray-600 hover:text-amber-700 py-1">❓ Q&A</RouterLink>
-          <RouterLink to="/clubs" class="block text-xs text-gray-600 hover:text-amber-700 py-1">👥 동호회</RouterLink>
-          <RouterLink to="/news" class="block text-xs text-gray-600 hover:text-amber-700 py-1">📰 뉴스</RouterLink>
+          <!-- 인기글 페이지네이션 -->
+          <div v-if="popLastPage > 1" class="px-3 py-2 border-t flex justify-center gap-1">
+            <button v-for="pg in popLastPage" :key="pg" @click="loadPopular(pg)"
+              class="w-6 h-6 rounded text-[10px]" :class="pg===popPage?'bg-amber-400 text-amber-900 font-bold':'text-gray-400 hover:bg-amber-50'">{{ pg }}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -191,11 +160,11 @@ const auth = useAuthStore()
 const items = ref([])
 const boards = ref([])
 const popularPosts = ref([])
-const recentJobs = ref([])
 const activeBoard = ref(null)
 const mobileBoardId = ref(null)
-const viewMode = ref('list')
 const sortBy = ref('latest')
+const popPage = ref(1)
+const popLastPage = ref(1)
 const loading = ref(true)
 const page = ref(1)
 const lastPage = ref(1)
@@ -263,6 +232,15 @@ function onMobileBoard() {
   loadPosts()
 }
 
+async function loadPopular(p = 1) {
+  popPage.value = p
+  try {
+    const { data } = await axios.get('/api/posts', { params: { sort: 'popular', per_page: 15, page: p } })
+    popularPosts.value = data.data?.data || []
+    popLastPage.value = data.data?.last_page || 1
+  } catch {}
+}
+
 async function loadPosts(p = 1) {
   loading.value = true
   page.value = p
@@ -278,16 +256,13 @@ async function loadPosts(p = 1) {
 
 onMounted(async () => {
   // 게시판 목록 + 게시글 + 인기글 + 구인 동시 로딩
-  const [bRes, pRes, popRes, jRes] = await Promise.allSettled([
+  const [bRes, pRes] = await Promise.allSettled([
     axios.get('/api/boards'),
     axios.get('/api/posts?per_page=20'),
-    axios.get('/api/posts?sort=popular&per_page=10'),
-    axios.get('/api/jobs?per_page=5'),
   ])
   if (bRes.status === 'fulfilled') boards.value = bRes.value.data?.data || []
   if (pRes.status === 'fulfilled') { items.value = pRes.value.data?.data?.data || []; lastPage.value = pRes.value.data?.data?.last_page || 1 }
-  if (popRes.status === 'fulfilled') popularPosts.value = (popRes.value.data?.data?.data || []).slice(0, 10)
-  if (jRes.status === 'fulfilled') recentJobs.value = (jRes.value.data?.data?.data || []).slice(0, 5)
+  loadPopular()
 
   // URL에 board slug가 있으면 해당 게시판 자동 선택
   const boardSlug = route.params.board
