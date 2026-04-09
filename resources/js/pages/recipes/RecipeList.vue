@@ -24,7 +24,7 @@
       </div>
 
       <div class="col-span-12 lg:col-span-7">
-        <div class="mb-3 pb-2 border-b border-gray-100">
+        <div class="mb-2">
           <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (categories.find(c => c.id === activeCat)?.name || activeCat) : '전체' }}</span>
           <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 레시피를 볼 수 있습니다</span>
         </div>

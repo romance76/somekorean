@@ -88,7 +88,7 @@
             </select>
           </div>
 
-          <div class="mb-3 pb-2 border-b border-gray-100">
+          <div class="mb-2">
             <span class="font-bold text-amber-700 text-sm">{{ activeCat ? activeCat.name : '전체' }}</span>
             <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 질문을 볼 수 있습니다</span>
           </div>

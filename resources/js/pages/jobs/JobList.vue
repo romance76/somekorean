@@ -79,7 +79,7 @@
 
     <!-- ═══ 목록 모드 ═══ -->
     <div v-else>
-    <div class="mb-3 pb-2 border-b border-gray-100">
+    <div class="mb-2">
       <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (jobCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
       <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 채용 공고를 볼 수 있습니다</span>
     </div>
