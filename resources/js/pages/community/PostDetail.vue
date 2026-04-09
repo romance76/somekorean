@@ -74,56 +74,7 @@
         </div>
 
         <!-- 댓글 섹션 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mt-4 overflow-hidden">
-          <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">💬 댓글 {{ comments.length }}개</div>
-
-          <!-- 댓글 입력 -->
-          <div v-if="auth.isLoggedIn" class="px-5 py-3 border-b">
-            <div class="flex gap-2">
-              <input v-model="newComment" @keyup.enter="submitComment" type="text" placeholder="댓글을 입력하세요..."
-                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none" />
-              <button @click="submitComment" :disabled="!newComment.trim()" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50">등록</button>
-            </div>
-          </div>
-
-          <!-- 댓글 목록 -->
-          <div v-for="comment in comments" :key="comment.id" class="px-5 py-3 border-b last:border-0">
-            <div class="flex items-center gap-2 mb-1">
-              <UserName :userId="comment.user?.id" :name="comment.user?.name" className="text-sm font-semibold text-gray-800" />
-              <span class="text-xs text-gray-400">{{ formatDate(comment.created_at) }}</span>
-              <template v-if="auth.user?.id === comment.user_id">
-                <button v-if="editingComment!==comment.id" @click="startEditComment(comment)" class="text-[10px] text-gray-400 hover:text-amber-600 ml-auto">수정</button>
-                <button @click="deleteComment(comment.id)" class="text-[10px] text-gray-400 hover:text-red-500">삭제</button>
-              </template>
-              <button v-if="auth.isLoggedIn" @click="replyTo=replyTo===comment.id?null:comment.id" class="text-[10px] text-gray-400 hover:text-amber-600" :class="{'ml-auto': auth.user?.id !== comment.user_id}">답글</button>
-            </div>
-            <!-- 댓글 수정 모드 -->
-            <div v-if="editingComment===comment.id" class="flex gap-2 mt-1">
-              <input v-model="editCommentText" class="flex-1 border rounded-lg px-2 py-1 text-sm" @keyup.enter="saveEditComment(comment.id)" />
-              <button @click="saveEditComment(comment.id)" class="text-amber-600 text-xs font-bold">저장</button>
-              <button @click="editingComment=null" class="text-gray-400 text-xs">취소</button>
-            </div>
-            <div v-else class="text-sm text-gray-600">{{ comment.content }}</div>
-            <!-- 대댓글 입력 -->
-            <div v-if="replyTo===comment.id" class="mt-2 flex gap-2">
-              <input v-model="replyText" @keyup.enter="submitReply(comment.id)" type="text" placeholder="답글 입력..." class="flex-1 border rounded-lg px-2 py-1.5 text-xs" />
-              <button @click="submitReply(comment.id)" class="text-amber-600 text-xs font-bold">등록</button>
-            </div>
-            <!-- 대댓글 목록 -->
-            <div v-for="reply in (comment.replies || [])" :key="reply.id" class="ml-6 mt-2 pl-3 border-l-2 border-gray-100">
-              <div class="flex items-center gap-2 mb-0.5">
-                <UserName :userId="reply.user?.id" :name="reply.user?.name" className="text-sm font-semibold text-gray-700" />
-                <span class="text-xs text-gray-400">{{ formatDate(reply.created_at) }}</span>
-                <template v-if="auth.user?.id === reply.user_id">
-                  <button @click="deleteComment(reply.id)" class="text-[10px] text-gray-400 hover:text-red-500 ml-auto">삭제</button>
-                </template>
-              </div>
-              <div class="text-sm text-gray-500">{{ reply.content }}</div>
-            </div>
-          </div>
-
-          <div v-if="!comments.length" class="px-5 py-6 text-center text-sm text-gray-400">아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</div>
-        </div>
+        <CommentSection :type="'post'" :typeId="post.id" class="mt-4" />
       </div>
 
       <!-- 사이드바 -->
@@ -165,6 +116,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
+import CommentSection from '../../components/CommentSection.vue'
 import axios from 'axios'
 
 const route = useRoute()

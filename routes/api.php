@@ -170,6 +170,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/comments', [CommentController::class, 'store']);
     Route::put('/comments/{id}', [CommentController::class, 'update']);
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
+    Route::post('/comments/{id}/vote', [CommentController::class, 'vote']);
 
     Route::post('/bookmarks', [BookmarkController::class, 'toggle']);
     Route::get('/bookmarks', [BookmarkController::class, 'index']);

@@ -19,9 +19,9 @@
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 게시판</div>
-          <button @click="activeBoard=null; activeItem=null; comments=[]; loadPosts()" class="w-full text-left px-3 py-2 text-xs transition"
+          <button @click="activeBoard=null; activeItem=null; loadPosts()" class="w-full text-left px-3 py-2 text-xs transition"
             :class="!activeBoard ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
-          <button v-for="b in boards" :key="b.id" @click="activeBoard=b; activeItem=null; comments=[]; loadPosts()"
+          <button v-for="b in boards" :key="b.id" @click="activeBoard=b; activeItem=null; loadPosts()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="activeBoard?.id === b.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
             {{ b.name }}
@@ -68,28 +68,12 @@
           </div>
 
           <!-- 댓글 -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">💬 댓글 {{ comments.length }}개</div>
-            <div v-if="auth.isLoggedIn" class="px-5 py-3 border-b">
-              <div class="flex gap-2">
-                <input v-model="newComment" @keyup.enter="submitComment" type="text" placeholder="댓글 입력..." class="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none" />
-                <button @click="submitComment" :disabled="!newComment.trim()" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-50">등록</button>
-              </div>
-            </div>
-            <div v-for="c in comments" :key="c.id" class="px-5 py-3 border-b last:border-0">
-              <div class="flex items-center gap-2 mb-1">
-                <button @click="openPopup(c.user?.id || c.user_id)" class="text-sm font-semibold text-gray-800 hover:text-amber-700">{{ c.user?.name }}</button>
-                <span class="text-xs text-gray-400">{{ formatDate(c.created_at) }}</span>
-              </div>
-              <div class="text-sm text-gray-600">{{ c.content }}</div>
-            </div>
-            <div v-if="!comments.length" class="px-5 py-6 text-center text-sm text-gray-400">첫 댓글을 남겨보세요!</div>
-          </div>
+          <CommentSection :type="'post'" :typeId="activeItem.id" ref="commentSection" />
 
           <!-- 이전/다음글 -->
           <div class="flex justify-between mt-3">
             <button @click="navItem(-1)" :disabled="currentIdx <= 0" class="text-xs text-gray-500 hover:text-amber-700 disabled:opacity-30">← 이전글</button>
-            <button @click="activeItem=null; comments=[]" class="text-xs text-gray-400 hover:text-gray-600">목록</button>
+            <button @click="activeItem=null" class="text-xs text-gray-400 hover:text-gray-600">목록</button>
             <button @click="navItem(1)" :disabled="currentIdx >= items.length-1" class="text-xs text-gray-500 hover:text-amber-700 disabled:opacity-30">다음글 →</button>
           </div>
         </div>
@@ -152,6 +136,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import CommentSection from '../../components/CommentSection.vue'
 import axios from 'axios'
 
 const route = useRoute()
@@ -172,9 +157,8 @@ const lastPage = ref(1)
 // 인라인 상세
 const activeItem = ref(null)
 const currentIdx = ref(-1)
-const comments = ref([])
-const newComment = ref('')
 const liked = ref(false)
+const commentSection = ref(null)
 
 function navItem(dir) {
   const newIdx = currentIdx.value + dir
@@ -186,10 +170,6 @@ async function openItem(item) {
   try {
     const { data } = await axios.get(`/api/posts/${item.id}`)
     activeItem.value = data.data
-    try {
-      const { data: cData } = await axios.get(`/api/comments/post/${item.id}`)
-      comments.value = cData.data || []
-    } catch { comments.value = [] }
   } catch { activeItem.value = item }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -200,18 +180,6 @@ async function toggleLike() {
     const { data } = await axios.post(`/api/posts/${activeItem.value.id}/like`)
     liked.value = data.liked
     activeItem.value.like_count += data.liked ? 1 : -1
-  } catch {}
-}
-
-async function submitComment() {
-  if (!newComment.value.trim() || !activeItem.value) return
-  try {
-    const { data } = await axios.post('/api/comments', {
-      commentable_type: 'post', commentable_id: activeItem.value.id, content: newComment.value
-    })
-    comments.value.unshift(data.data)
-    newComment.value = ''
-    activeItem.value.comment_count++
   } catch {}
 }
 

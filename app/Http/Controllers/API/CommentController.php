@@ -79,4 +79,29 @@ class CommentController extends Controller
         $comment->update(['is_hidden' => true]);
         return response()->json(['success' => true, 'message' => '삭제되었습니다']);
     }
+
+    public function vote(Request $request, $id)
+    {
+        $request->validate(['vote' => 'required|in:like,dislike']);
+        $comment = Comment::findOrFail($id);
+        $existing = \DB::table('comment_votes')->where('comment_id', $id)->where('user_id', auth()->id())->first();
+
+        if ($existing) {
+            if ($existing->vote === $request->vote) {
+                // 같은 투표 → 취소
+                \DB::table('comment_votes')->where('id', $existing->id)->delete();
+                $comment->decrement($request->vote === 'like' ? 'likes' : 'dislikes');
+                return response()->json(['success' => true, 'action' => 'removed', 'likes' => $comment->fresh()->likes, 'dislikes' => $comment->fresh()->dislikes]);
+            }
+            // 다른 투표 → 전환
+            \DB::table('comment_votes')->where('id', $existing->id)->update(['vote' => $request->vote, 'updated_at' => now()]);
+            $comment->increment($request->vote === 'like' ? 'likes' : 'dislikes');
+            $comment->decrement($request->vote === 'like' ? 'dislikes' : 'likes');
+        } else {
+            \DB::table('comment_votes')->insert(['comment_id' => $id, 'user_id' => auth()->id(), 'vote' => $request->vote, 'created_at' => now(), 'updated_at' => now()]);
+            $comment->increment($request->vote === 'like' ? 'likes' : 'dislikes');
+        }
+
+        return response()->json(['success' => true, 'action' => $request->vote, 'likes' => $comment->fresh()->likes, 'dislikes' => $comment->fresh()->dislikes]);
+    }
 }
