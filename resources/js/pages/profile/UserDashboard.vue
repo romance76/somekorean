@@ -118,7 +118,7 @@
           </button>
         </div>
         <div v-if="spinResult" class="text-center text-sm font-bold text-green-600 mb-4">🎉 {{ spinResult }}P 적립!</div>
-        <div class="text-3xl font-black text-amber-600 mb-4">{{ ptBalance.toLocaleString() }}P</div>
+        <div class="text-3xl font-black text-amber-600 mb-4">{{ (auth.user?.points || ptBalance).toLocaleString() }}P</div>
         <!-- 포인트 구매 -->
         <div class="border-t pt-4 mt-4 mb-4">
           <h3 class="font-bold text-gray-700 text-sm mb-3">🛒 포인트 구매</h3>
@@ -329,12 +329,21 @@
         <h2 class="font-bold text-gray-800 mb-4">💳 결제 내역</h2>
         <div v-if="!payments.length" class="text-sm text-gray-400 py-6 text-center">결제 내역이 없습니다</div>
         <div v-else class="space-y-2">
-          <div v-for="p in payments" :key="p.id" class="flex items-center justify-between border rounded-lg p-3">
-            <div>
-              <div class="text-sm font-bold text-gray-800">${{ p.amount }} → {{ p.points_purchased?.toLocaleString() }}P</div>
-              <div class="text-[10px] text-gray-400">{{ fmtDate(p.created_at) }}</div>
+          <div v-for="p in payments" :key="p.id" class="border rounded-lg p-4 hover:bg-amber-50/30 transition">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-bold text-gray-800">포인트 구매 — {{ p.points_purchased?.toLocaleString() }}P</div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold" :class="p.status==='completed'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'">{{ p.status==='completed'?'완료':'대기' }}</span>
             </div>
-            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold" :class="p.status==='completed'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'">{{ p.status==='completed'?'완료':'대기' }}</span>
+            <div class="flex items-center justify-between text-xs text-gray-500">
+              <div>
+                <span class="font-semibold">${{ p.amount }}</span>
+                <span class="mx-1">|</span>
+                <span>{{ fmtDateFull(p.created_at) }}</span>
+              </div>
+              <button @click="printInvoice(p)" class="text-amber-600 hover:text-amber-800 font-bold flex items-center gap-1">
+                🧾 인보이스
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -416,6 +425,39 @@ function fmtDate(dt) {
   return `${y}.${m}.${day} ${hh}:${mm}`
 }
 
+function fmtDateFull(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+
+function printInvoice(p) {
+  const w = window.open('', '_blank', 'width=600,height=700')
+  w.document.write(`<!DOCTYPE html><html><head><title>Invoice #${p.id}</title>
+<style>body{font-family:'Noto Sans KR',sans-serif;padding:40px;color:#1f2937}
+.header{text-align:center;border-bottom:3px solid #f59e0b;padding-bottom:20px;margin-bottom:30px}
+.logo{font-size:24px;font-weight:900;color:#92400e}
+h1{font-size:18px;color:#374151;margin:10px 0 0}
+table{width:100%;border-collapse:collapse;margin:20px 0}
+td{padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:14px}
+td:last-child{text-align:right;font-weight:600}
+.total{font-size:18px;font-weight:900;color:#d97706;border-top:2px solid #f59e0b}
+.footer{text-align:center;margin-top:40px;font-size:11px;color:#9ca3af}
+@media print{body{padding:20px}}</style></head><body>
+<div class="header"><div class="logo">SomeKorean</div><h1>결제 인보이스</h1></div>
+<table>
+<tr><td>인보이스 번호</td><td>#${p.id}</td></tr>
+<tr><td>결제일</td><td>${fmtDateFull(p.created_at)}</td></tr>
+<tr><td>상태</td><td>${p.status==='completed'?'✅ 완료':'⏳ 대기'}</td></tr>
+<tr><td>구매자</td><td>${auth.user?.name} (${auth.user?.email})</td></tr>
+<tr><td>상품</td><td>포인트 ${p.points_purchased?.toLocaleString()}P</td></tr>
+<tr class="total"><td>결제 금액</td><td>$${p.amount} USD</td></tr>
+</table>
+<div class="footer">SomeKorean — 미국 한인 커뮤니티<br>이 인보이스는 자동 생성되었습니다.</div>
+<script>setTimeout(()=>window.print(),300)<\/script></body></html>`)
+  w.document.close()
+}
+
 // ─── 프로필 ───
 const pf = reactive({ name: '', nickname: '', bio: '', phone: '', address1: '', address2: '', city: '', state: '', zipcode: '', language: 'ko', allow_friend_request: true, allow_messages: true, allow_elder_service: false })
 const pfMsg = ref(''); const pfMsgType = ref(''); const pfSaving = ref(false); const avatarMsg = ref('')
@@ -454,7 +496,7 @@ const packages = ref([]); const selectedPkg = ref('')
 const payModal = ref(false); const payPkg = ref(null); const payError = ref(''); const paying = ref(false)
 let stripe = null; let cardElement = null; let clientSecret = null
 async function loadPoints() {
-  try { const { data } = await axios.get('/api/points/balance'); ptBalance.value = data.balance || data.points || 0; spun.value = data.daily_spin_done || false } catch {}
+  try { const { data } = await axios.get('/api/points/balance'); ptBalance.value = data.data?.points || data.points || auth.user?.points || 0; spun.value = data.daily_spin_done || false } catch { ptBalance.value = auth.user?.points || 0 }
   try { const { data } = await axios.get('/api/points/history'); ptHistory.value = data.data?.data || data.data || [] } catch {}
   // 패키지 로드
   try {
