@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
-use App\Models\{User, Post, JobPost, MarketItem, Business, Event, News, Report, Board, Banner, IpBan, Payment};
+use App\Models\{User, Post, JobPost, MarketItem, Business, BusinessClaim, Event, News, Report, Board, Banner, IpBan, Payment};
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -89,5 +89,26 @@ class AdminController extends Controller
     public function postDetail($id) {
         $post = Post::with('user:id,name,email','board:id,name,slug','comments.user:id,name')->findOrFail($id);
         return response()->json(['success'=>true,'data'=>$post]);
+    }
+
+    // ─── 업소 클레임 관리 ───
+    public function claims() {
+        $claims = BusinessClaim::with('business:id,name,category,city', 'user:id,name,email,phone')
+            ->orderByDesc('created_at')
+            ->paginate(20);
+        return response()->json(['success'=>true,'data'=>$claims]);
+    }
+
+    public function approveClaim($id) {
+        $claim = BusinessClaim::findOrFail($id);
+        $claim->update(['status' => 'approved']);
+        $claim->business->update(['is_claimed' => true, 'owner_id' => $claim->user_id]);
+        return response()->json(['success'=>true,'message'=>'클레임이 승인되었습니다']);
+    }
+
+    public function rejectClaim(Request $request, $id) {
+        $claim = BusinessClaim::findOrFail($id);
+        $claim->update(['status' => 'rejected', 'notes' => $request->notes]);
+        return response()->json(['success'=>true,'message'=>'클레임이 거절되었습니다']);
     }
 }

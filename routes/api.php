@@ -61,6 +61,7 @@ Route::get('/market/{id}', [MarketController::class, 'show']);
 Route::get('/businesses', [BusinessController::class, 'index']);
 Route::get('/businesses/{id}', [BusinessController::class, 'show']);
 Route::get('/businesses/{id}/reviews', [BusinessController::class, 'reviews']);
+Route::get('/businesses/{id}/menus', [BusinessController::class, 'menus']);
 Route::get('/realestate', [RealEstateController::class, 'index']);
 Route::get('/realestate/{id}', [RealEstateController::class, 'show']);
 Route::get('/clubs', [ClubController::class, 'index']);
@@ -141,6 +142,13 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/businesses', [BusinessController::class, 'store']);
     Route::post('/businesses/{id}/reviews', [BusinessController::class, 'storeReview']);
+    Route::post('/businesses/{id}/claim', [BusinessController::class, 'claim']);
+    Route::get('/my-businesses', [BusinessController::class, 'myBusinesses']);
+    Route::put('/my-businesses/{id}', [BusinessController::class, 'updateMyBusiness']);
+    Route::post('/my-businesses/{id}/photos', [BusinessController::class, 'uploadMyBusinessPhotos']);
+    Route::post('/my-businesses/{id}/menus', [BusinessController::class, 'storeMenu']);
+    Route::put('/my-businesses/{bizId}/menus/{menuId}', [BusinessController::class, 'updateMenu']);
+    Route::delete('/my-businesses/{bizId}/menus/{menuId}', [BusinessController::class, 'deleteMenu']);
 
     Route::post('/realestate', [RealEstateController::class, 'store']);
     Route::put('/realestate/{id}', [RealEstateController::class, 'update']);
@@ -335,6 +343,9 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/ip-bans', [AdminController::class, 'createIpBan']);
     Route::delete('/ip-bans/{id}', [AdminController::class, 'deleteIpBan']);
     Route::get('/payments', [AdminController::class, 'payments']);
+    Route::get('/claims', [AdminController::class, 'claims']);
+    Route::post('/claims/{id}/approve', [AdminController::class, 'approveClaim']);
+    Route::post('/claims/{id}/reject', [AdminController::class, 'rejectClaim']);
     Route::get('/settings', [AdminSettingsController::class, 'index']);
     Route::get('/settings/all', [AdminSettingsController::class, 'getAll']);
     Route::put('/settings', [AdminSettingsController::class, 'update']);

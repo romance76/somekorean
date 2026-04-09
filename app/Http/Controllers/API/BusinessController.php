@@ -4,6 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\BusinessClaim;
+use App\Models\BusinessMenu;
+use App\Models\BusinessMenuOption;
 use App\Models\BusinessReview;
 use Illuminate\Http\Request;
 
@@ -89,5 +92,137 @@ class BusinessController extends Controller
         $biz->update(['rating' => round($avg, 2), 'review_count' => $count]);
 
         return response()->json(['success' => true, 'data' => $review], 201);
+    }
+
+    // ─── 소유권 신청 ───
+    public function claim(Request $request, $id)
+    {
+        $request->validate(['phone' => 'required']);
+
+        $biz = Business::findOrFail($id);
+
+        if ($biz->is_claimed) {
+            return response()->json(['success' => false, 'message' => '이미 인증된 업소입니다'], 400);
+        }
+
+        if (BusinessClaim::where('business_id', $id)->where('user_id', auth()->id())->where('status', 'pending')->exists()) {
+            return response()->json(['success' => false, 'message' => '이미 신청 중입니다'], 400);
+        }
+
+        $claim = BusinessClaim::create([
+            'business_id' => $id,
+            'user_id' => auth()->id(),
+            'notes' => $request->phone,
+            'status' => 'pending',
+        ]);
+
+        return response()->json(['success' => true, 'data' => $claim], 201);
+    }
+
+    // ─── 내 업소 목록 ───
+    public function myBusinesses()
+    {
+        $businesses = Business::where('owner_id', auth()->id())
+            ->with('menus.options')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $businesses]);
+    }
+
+    // ─── 내 업소 수정 ───
+    public function updateMyBusiness(Request $request, $id)
+    {
+        $biz = Business::where('id', $id)->where('owner_id', auth()->id())->firstOrFail();
+        $biz->update($request->only('name', 'description', 'phone', 'website', 'address', 'city', 'state', 'zipcode', 'hours'));
+
+        return response()->json(['success' => true, 'data' => $biz]);
+    }
+
+    // ─── 내 업소 사진 업로드 ───
+    public function uploadMyBusinessPhotos(Request $request, $id)
+    {
+        $biz = Business::where('id', $id)->where('owner_id', auth()->id())->firstOrFail();
+
+        $images = $biz->images ?: [];
+        foreach ($request->file('photos') as $photo) {
+            $path = $photo->store('businesses', 'public');
+            $images[] = '/storage/' . $path;
+        }
+        $biz->update(['images' => $images]);
+
+        return response()->json(['success' => true, 'data' => $biz]);
+    }
+
+    // ─── 메뉴 목록 (공개) ───
+    public function menus($id)
+    {
+        $biz = Business::findOrFail($id);
+
+        $menus = BusinessMenu::where('business_id', $id)
+            ->with('options')
+            ->orderBy('category')
+            ->orderBy('sort_order')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $menus]);
+    }
+
+    // ─── 메뉴 등록 ───
+    public function storeMenu(Request $request, $id)
+    {
+        $biz = Business::where('id', $id)->where('owner_id', auth()->id())->firstOrFail();
+
+        $request->validate([
+            'name' => 'required',
+            'price' => 'required|numeric',
+        ]);
+
+        $menu = BusinessMenu::create(array_merge(
+            $request->only('name', 'description', 'price', 'category', 'sort_order', 'is_available'),
+            ['business_id' => $id]
+        ));
+
+        if ($request->options) {
+            foreach ($request->options as $opt) {
+                BusinessMenuOption::create([
+                    'business_menu_id' => $menu->id,
+                    'name' => $opt['name'],
+                    'price_add' => $opt['price_add'] ?? 0,
+                ]);
+            }
+        }
+
+        return response()->json(['success' => true, 'data' => $menu->load('options')], 201);
+    }
+
+    // ─── 메뉴 수정 ───
+    public function updateMenu(Request $request, $bizId, $menuId)
+    {
+        Business::where('id', $bizId)->where('owner_id', auth()->id())->firstOrFail();
+
+        $menu = BusinessMenu::where('id', $menuId)->where('business_id', $bizId)->firstOrFail();
+        $menu->update($request->only('name', 'description', 'price', 'category', 'sort_order', 'is_available'));
+
+        if ($request->has('options')) {
+            $menu->options()->delete();
+            foreach ($request->options as $opt) {
+                BusinessMenuOption::create([
+                    'business_menu_id' => $menu->id,
+                    'name' => $opt['name'],
+                    'price_add' => $opt['price_add'] ?? 0,
+                ]);
+            }
+        }
+
+        return response()->json(['success' => true, 'data' => $menu->load('options')]);
+    }
+
+    // ─── 메뉴 삭제 ───
+    public function deleteMenu(Request $request, $bizId, $menuId)
+    {
+        Business::where('id', $bizId)->where('owner_id', auth()->id())->firstOrFail();
+        BusinessMenu::where('id', $menuId)->where('business_id', $bizId)->firstOrFail()->delete();
+
+        return response()->json(['success' => true]);
     }
 }

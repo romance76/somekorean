@@ -52,7 +52,7 @@
         </div>
         <div class="px-5 py-4">
           <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.subcategory || activeItem.category }}</span>
-          <h2 class="text-lg font-bold text-gray-900 mt-2">🏪 {{ activeItem.name }}</h2>
+          <h2 class="text-lg font-bold text-gray-900 mt-2">🏪 {{ activeItem.name }} <span v-if="activeItem.is_claimed" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold align-middle">✅ 인증</span></h2>
           <div class="flex items-center gap-1 mt-1"><span class="text-amber-400">{{'★'.repeat(Math.round(activeItem.rating))}}</span><span class="text-sm text-gray-600">{{ activeItem.rating }}</span><span class="text-xs text-gray-400">({{ activeItem.review_count }}리뷰)</span></div>
         </div>
         <div class="px-5 py-3 border-t text-sm text-gray-600 space-y-1">
@@ -118,6 +118,20 @@
             </div>
           </div>
           <div v-if="!activeReviews.length" class="px-5 py-6 text-center text-xs text-gray-400">아직 리뷰가 없습니다</div>
+        </div>
+      </div>
+
+      <!-- 오너 클레임 -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3 px-5 py-3">
+        <div v-if="activeItem.is_claimed" class="flex items-center gap-2">
+          <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">✅ 인증된 업소</span>
+        </div>
+        <div v-else-if="auth.isLoggedIn">
+          <div v-if="claimStatus==='pending'" class="text-xs text-amber-600 font-bold">⏳ 소유권 승인 대기 중</div>
+          <div v-else>
+            <button @click="showClaimModal=true" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">🏪 내가 주인입니다</button>
+            <p class="text-[10px] text-gray-400 mt-1">이 업소의 실제 운영자라면 소유권을 신청하세요</p>
+          </div>
         </div>
       </div>
 
@@ -191,6 +205,21 @@
     <button @click="lightboxImg=null" class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300">✕</button>
     <img :src="lightboxImg" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl" @click.stop />
   </div>
+  <!-- 클레임 모달 -->
+  <div v-if="showClaimModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showClaimModal=false">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+      <h3 class="font-bold text-gray-800 mb-3">🏪 업소 소유권 신청</h3>
+      <p class="text-sm text-gray-600 mb-3">{{ activeItem?.name }}의 실제 운영자임을 확인합니다.</p>
+      <div class="mb-3">
+        <label class="text-xs font-bold text-gray-600 mb-1 block">연락처 (본인 확인용)</label>
+        <input v-model="claimPhone" placeholder="000-000-0000" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div class="flex gap-2">
+        <button @click="submitClaim" :disabled="!claimPhone" class="flex-1 bg-amber-400 text-amber-900 font-bold py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50">신청하기</button>
+        <button @click="showClaimModal=false" class="px-4 py-2 text-gray-500 text-sm">취소</button>
+      </div>
+    </div>
+  </div>
 </div>
 </template>
 <script setup>
@@ -214,6 +243,9 @@ const lightboxImg = ref(null)
 const googleKey = import.meta.env.VITE_GOOGLE_MAPS_KEY || 'AIzaSyAeG46feoDm6HJbre4_FODaxyhz9SBBsAE'
 const reviewRating = ref(0)
 const reviewText = ref('')
+const showClaimModal = ref(false)
+const claimPhone = ref('')
+const claimStatus = ref(null) // null, 'pending', 'approved'
 
 async function openItem(item) {
   try { const { data } = await axios.get(`/api/businesses/${item.id}`); activeItem.value = data.data }
@@ -222,12 +254,21 @@ async function openItem(item) {
   // 리뷰 로드 (구글리뷰 + 사이트리뷰 합치기)
   activeReviews.value = []
   reviewRating.value = 0; reviewText.value = ''
+  claimStatus.value = null
   try {
     const { data } = await axios.get(`/api/businesses/${activeItem.value.id}/reviews`)
     const siteReviews = data.data?.data || data.data || []
     const googleReviews = (activeItem.value.google_reviews || []).map((r, i) => ({ id: 'g'+i, author: r.author, rating: r.rating, text: r.text, relative_time: r.time }))
     activeReviews.value = [...siteReviews, ...googleReviews]
   } catch {}
+  // 클레임 상태 확인
+  if (auth.isLoggedIn) {
+    try {
+      const { data } = await axios.get(`/api/businesses/${activeItem.value.id}/claim`)
+      if (data.data?.status === 'pending') claimStatus.value = 'pending'
+      else if (data.data?.status === 'approved') claimStatus.value = 'approved'
+    } catch {}
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -238,6 +279,16 @@ async function submitReview() {
     reviewText.value = ''; reviewRating.value = 0
     openItem(activeItem.value) // 리뷰 새로고침
   } catch (e) { alert(e.response?.data?.message || '리뷰 등록 실패') }
+}
+
+async function submitClaim() {
+  try {
+    await axios.post(`/api/businesses/${activeItem.value.id}/claim`, { phone: claimPhone.value })
+    claimStatus.value = 'pending'
+    showClaimModal.value = false
+    claimPhone.value = ''
+    alert('소유권 신청이 완료되었습니다. 관리자 승인 후 이용 가능합니다.')
+  } catch(e) { alert(e.response?.data?.message || '신청 실패') }
 }
 
 function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR') : '' }

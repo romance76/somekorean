@@ -9,5 +9,6 @@ class Business extends Model
     public function owner() { return $this->belongsTo(User::class, 'owner_id'); }
     public function reviews() { return $this->hasMany(BusinessReview::class); }
     public function claims() { return $this->hasMany(BusinessClaim::class); }
+    public function menus() { return $this->hasMany(BusinessMenu::class); }
     public function scopeNearby($q,$lat,$lng,$r=50) { return $q->selectRaw("*, (3959*acos(cos(radians(?))*cos(radians(lat))*cos(radians(lng)-radians(?))+sin(radians(?))*sin(radians(lat)))) AS distance",[$lat,$lng,$lat])->having('distance','<',$r); }
 }

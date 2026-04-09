@@ -392,6 +392,121 @@
       </div>
     </div>
 
+    <!-- ═══ 내 업소 탭 ═══ -->
+    <div v-else-if="tab==='mybiz'" class="space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <h2 class="font-bold text-gray-800 mb-4">🏪 내 업소 관리</h2>
+        <div v-if="!myBizList.length" class="text-center py-8 text-gray-400">
+          <div class="text-3xl mb-2">🏪</div>
+          <div class="text-sm">등록된 업소가 없습니다</div>
+          <RouterLink to="/directory" class="text-xs text-amber-600 mt-2 inline-block">업소록에서 소유권 신청하기 →</RouterLink>
+        </div>
+
+        <!-- 업소 편집 모드 -->
+        <div v-else-if="editBiz" class="space-y-3">
+          <button @click="editBiz=null" class="text-xs text-gray-500 hover:text-gray-700">← 목록으로</button>
+          <h3 class="font-bold text-amber-700">{{ editBiz.name }}</h3>
+
+          <!-- 기본 정보 -->
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">가게 이름</label><input v-model="editBiz.name" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">전화번호</label><input v-model="editBiz.phone" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          </div>
+          <div><label class="text-xs font-bold text-gray-600 block mb-1">주소</label><input v-model="editBiz.address" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">도시</label><input v-model="editBiz.city" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">주</label><input v-model="editBiz.state" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">우편번호</label><input v-model="editBiz.zipcode" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          </div>
+          <div><label class="text-xs font-bold text-gray-600 block mb-1">웹사이트</label><input v-model="editBiz.website" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="text-xs font-bold text-gray-600 block mb-1">업소 소개</label><textarea v-model="editBiz.description" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm resize-none"></textarea></div>
+
+          <!-- 사진 관리 -->
+          <div>
+            <label class="text-xs font-bold text-gray-600 block mb-1">사진</label>
+            <div class="flex gap-2 flex-wrap mb-2">
+              <div v-for="(img, i) in editBiz.images" :key="i" class="relative">
+                <img :src="img" class="w-20 h-20 rounded-lg object-cover" />
+                <button @click="editBiz.images.splice(i,1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs">✕</button>
+              </div>
+            </div>
+            <label class="text-xs bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-amber-200 font-semibold">
+              📷 사진 추가
+              <input type="file" accept="image/*" multiple @change="uploadBizPhotos" class="hidden" />
+            </label>
+          </div>
+
+          <button @click="saveMyBiz" class="bg-amber-400 text-amber-900 font-bold px-6 py-2 rounded-lg hover:bg-amber-500">저장하기</button>
+
+          <!-- 메뉴 관리 -->
+          <div class="border-t pt-4 mt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-gray-700 text-sm">📋 메뉴 관리</h3>
+              <button @click="showMenuForm=true" class="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg">+ 메뉴 추가</button>
+            </div>
+
+            <!-- 메뉴 추가/수정 폼 -->
+            <div v-if="showMenuForm" class="bg-amber-50 rounded-lg p-3 mb-3 space-y-2">
+              <div class="grid grid-cols-3 gap-2">
+                <div class="col-span-2"><input v-model="menuForm.name" placeholder="메뉴 이름" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+                <div><input v-model.number="menuForm.price" type="number" step="0.01" placeholder="가격" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+              </div>
+              <input v-model="menuForm.description" placeholder="설명 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+              <select v-model="menuForm.category" class="border rounded-lg px-3 py-2 text-sm">
+                <option value="main">메인</option><option value="side">사이드</option><option value="drink">음료</option><option value="dessert">디저트</option><option value="etc">기타</option>
+              </select>
+
+              <!-- 옵션 (최대 5개) -->
+              <div class="text-xs font-bold text-gray-600">옵션 (최대 5개)</div>
+              <div v-for="(opt, i) in menuForm.options" :key="i" class="flex gap-2">
+                <input v-model="opt.name" placeholder="옵션명" class="flex-1 border rounded-lg px-2 py-1 text-xs" />
+                <input v-model.number="opt.price_add" type="number" step="0.01" placeholder="+$" class="w-20 border rounded-lg px-2 py-1 text-xs" />
+                <button @click="menuForm.options.splice(i,1)" class="text-red-400 text-xs">✕</button>
+              </div>
+              <button v-if="menuForm.options.length < 5" @click="menuForm.options.push({name:'',price_add:0})" class="text-xs text-amber-600">+ 옵션 추가</button>
+
+              <div class="flex gap-2">
+                <button @click="saveMenu" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs">저장</button>
+                <button @click="showMenuForm=false; menuForm={name:'',description:'',price:0,category:'main',options:[]}" class="text-xs text-gray-500">취소</button>
+              </div>
+            </div>
+
+            <!-- 기존 메뉴 목록 -->
+            <div v-for="menu in editBiz.menus" :key="menu.id" class="border rounded-lg p-3 mb-2">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-sm font-bold text-gray-800">{{ menu.name }}</span>
+                  <span class="text-xs text-gray-400 ml-2">{{ menu.category }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-amber-600">${{ Number(menu.price).toFixed(2) }}</span>
+                  <button @click="editMenuItem(menu)" class="text-xs text-amber-600">수정</button>
+                  <button @click="deleteMenu(menu)" class="text-xs text-red-400">삭제</button>
+                </div>
+              </div>
+              <div v-if="menu.options?.length" class="mt-1 flex gap-2 flex-wrap">
+                <span v-for="opt in menu.options" :key="opt.id" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full">{{ opt.name }} +${{ opt.price_add }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 업소 목록 -->
+        <div v-else class="space-y-2">
+          <div v-for="biz in myBizList" :key="biz.id" @click="editBiz=biz" class="border rounded-lg p-3 cursor-pointer hover:border-amber-400 transition">
+            <div class="flex items-center gap-3">
+              <img v-if="biz.images?.length" :src="biz.images[0]" class="w-12 h-12 rounded-lg object-cover" />
+              <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-xl" v-else>🏪</div>
+              <div>
+                <div class="text-sm font-bold text-gray-800">{{ biz.name }}</div>
+                <div class="text-xs text-gray-400">{{ biz.category }} · {{ biz.city }}, {{ biz.state }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 결제 모달 -->
     <div v-if="payModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="payModal=false">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
@@ -447,6 +562,7 @@ const tabs = [
   { key: 'bookmarks', icon: '🔖', label: '북마크' },
   { key: 'elder', icon: '🛡️', label: '안심' },
   { key: 'payments', icon: '💳', label: '결제' },
+  { key: 'mybiz', icon: '🏪', label: '내 업소' },
 ]
 
 const loaded = reactive({})
@@ -733,9 +849,64 @@ async function saveSchedule(w) {
 const payments = ref([])
 async function loadPayments() { try { const { data } = await axios.get('/api/payments/history'); payments.value = data.data?.data || data.data || [] } catch {} }
 
+// ─── 내 업소 ───
+const myBizList = ref([])
+const editBiz = ref(null)
+const showMenuForm = ref(false)
+const menuForm = ref({ name: '', description: '', price: 0, category: 'main', options: [] })
+
+async function loadMyBiz() {
+  try { const { data } = await axios.get('/api/my-businesses'); myBizList.value = data.data || [] } catch {}
+}
+async function saveMyBiz() {
+  try {
+    await axios.put(`/api/my-businesses/${editBiz.value.id}`, editBiz.value)
+    await loadMyBiz()
+    editBiz.value = myBizList.value.find(b => b.id === editBiz.value.id) || null
+    showAlert('저장되었습니다!', '업소 수정')
+  } catch(e) { showAlert(e.response?.data?.message || '저장 실패', '오류') }
+}
+async function uploadBizPhotos(e) {
+  const files = e.target.files
+  if (!files.length) return
+  const fd = new FormData()
+  for (const f of files) fd.append('photos[]', f)
+  try {
+    const { data } = await axios.post(`/api/my-businesses/${editBiz.value.id}/photos`, fd)
+    editBiz.value.images = data.data?.images || editBiz.value.images
+    await loadMyBiz()
+  } catch {}
+}
+async function saveMenu() {
+  try {
+    if (menuForm.value.id) {
+      await axios.put(`/api/my-businesses/${editBiz.value.id}/menus/${menuForm.value.id}`, menuForm.value)
+    } else {
+      await axios.post(`/api/my-businesses/${editBiz.value.id}/menus`, menuForm.value)
+    }
+    showMenuForm.value = false
+    menuForm.value = { name: '', description: '', price: 0, category: 'main', options: [] }
+    await loadMyBiz()
+    editBiz.value = myBizList.value.find(b => b.id === editBiz.value.id) || null
+  } catch(e) { showAlert(e.response?.data?.message || '저장 실패', '오류') }
+}
+function editMenuItem(menu) {
+  menuForm.value = { ...menu, options: (menu.options || []).map(o => ({...o})) }
+  showMenuForm.value = true
+}
+async function deleteMenu(menu) {
+  const ok = await showConfirm('메뉴를 삭제하시겠습니까?', '메뉴 삭제')
+  if (!ok) return
+  try {
+    await axios.delete(`/api/my-businesses/${editBiz.value.id}/menus/${menu.id}`)
+    await loadMyBiz()
+    editBiz.value = myBizList.value.find(b => b.id === editBiz.value.id) || null
+  } catch {}
+}
+
 // ─── 탭 로딩 ───
 function loadTab(key) {
-  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments }
+  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz }
   if (loaders[key]) loaders[key]()
 }
 
