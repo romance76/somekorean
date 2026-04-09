@@ -122,8 +122,7 @@
       <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
         <SidebarWidgets :inline="true" @select="openItem" api-url="/api/qa" detail-path="/qa/" :current-id="activeItem?.id || 0"
-          label="질문" recommend-label="인기 질문" quick-label="최신 질문"
-          :links="[{to:'/qa',icon:'📋',label:'전체 Q&A'},{to:'/qa/write',icon:'✏️',label:'질문하기'}]" />
+          label="질문" recommend-label="인기 질문" />
       </div>
     </div>
   </div>
