@@ -183,6 +183,10 @@ class FetchMusicTracks extends Command
                 if (preg_match('/Bollywood|Hindi|Tamil|Telugu|Punjabi|Arabic|Thai|Türk|Indo|Tagalog|Malay|Khmer|Chinese|Japanese|Mandarin|Cantonese|Vietnamese|Việt|中文|日本語|ภาษาไทย|Tiếng Việt|Myanmar|Lao|Cambodian|Filipino|Bahasa/i', $text)) continue;
                 // 인도 지역어 및 해시태그
                 if (preg_match('/Haryanvi|Haryana|Bhojpuri|Marathi|Gujarati|Bengali|Kannada|Malayalam|Urdu|Sindhi|Nepali|Sinhala|Desi|#haryanvi|#bhojpuri|#desi|#bollywood|#hindi/i', $text)) continue;
+                // 인도 로마자 흔한 단어
+                if (preg_match('/\b(hamare|tumhare|tumko|mujhko|kya|hai|kaise|kyun|nahi|nahin|bhai|dost|acha|achha|theek|bilkul|zaroor|shaadi|khushi|pyaar|ladka|ladki|bhaiya|didi|mera|meri|tera|teri|wala|wali|gaana|gaya|gayi|chalo|dekho|suno|bahut|thoda|zyada|kaam|ghar|log|dil|zindagi|mohabbat|ishq)\b/i', $text)) continue;
+                // 스페인어 로마자
+                if (preg_match('/\b(hola|gracias|por favor|amigo|amiga|hermano|hermana|cómo|como|qué|que|cuando|donde|porque|muy|mucho|poco|bueno|buena|malo|mala|grande|pequeño|dejan|hijo|hija|novio|novia|corazón|corazon|fiesta|gente|vida|amor)\b/i', $text)) continue;
                 if (preg_match('/español|castellano|México|Mexico|Argentina|España|Espana|Latino|Reggaeton|Bachata|Cumbia|Salsa/i', $text)) continue;
 
                 MusicTrack::create([

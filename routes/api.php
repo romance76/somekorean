@@ -431,4 +431,9 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/chat/rooms/{id}/reports/{reportId}/resolve', [AdminController::class, 'chatResolveReport']);
     Route::post('/chat/users/{userId}/permaban', [AdminController::class, 'chatPermaBan']);
     Route::get('/chat/permaban-list', [AdminController::class, 'chatPermaBanList']);
+
+    // Admin Shorts
+    Route::get('/shorts', [AdminController::class, 'shortsList']);
+    Route::delete('/shorts/{id}', [AdminController::class, 'shortsDelete']);
+    Route::get('/shorts/stats', [AdminController::class, 'shortsStats']);
 });

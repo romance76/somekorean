@@ -470,6 +470,30 @@ class AdminController extends Controller
         return response()->json(['success'=>true,'message'=>'메시지가 삭제되었습니다']);
     }
 
+    // ─── 숏츠 관리 ───
+    public function shortsList(Request $request) {
+        $query = \App\Models\Short::with('user:id,name,nickname')
+            ->when($request->search, fn($q, $v) => $q->where('title', 'like', "%{$v}%"))
+            ->orderByDesc('created_at');
+        $shorts = $query->paginate((int)($request->per_page ?? 20));
+        return response()->json(['success'=>true,'data'=>$shorts]);
+    }
+
+    public function shortsDelete($id) {
+        \App\Models\Short::findOrFail($id)->delete();
+        return response()->json(['success'=>true]);
+    }
+
+    public function shortsStats() {
+        return response()->json(['success'=>true,'data'=>[
+            'total' => \App\Models\Short::count(),
+            'active' => \App\Models\Short::where('is_active', true)->count(),
+            'user_uploaded' => \App\Models\Short::whereNotNull('user_id')->count(),
+            'system' => \App\Models\Short::whereNull('user_id')->count(),
+            'today' => \App\Models\Short::whereDate('created_at', today())->count(),
+        ]]);
+    }
+
     // ─── 신고 해결 ───
     public function chatResolveReport($id, $reportId) {
         Report::findOrFail($reportId)->update(['status' => 'resolved', 'admin_note' => '채팅 관리에서 해결 처리']);
