@@ -75,8 +75,6 @@
 
         <!-- ═══ 목록 모드 ═══ -->
         <div v-else>
-        <div v-if="activeCat" class="mb-3 text-sm font-bold text-amber-700">{{ activeCat.name }}</div>
-
         <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
         <div v-else-if="!items.length" class="text-center py-12 text-gray-400">뉴스가 없습니다</div>
         <div v-else class="space-y-2">
