@@ -448,13 +448,13 @@ class MusicController extends Controller
         }
 
         // 2. /channel/UCxxx 패턴
-        if (preg_match('#/channel/(UC[\w-]{20,})#', $decoded, $m)) {
+        if (preg_match('~/channel/(UC[\w-]{20,})~', $decoded, $m)) {
             return $m[1];
         }
 
         // 3. /@핸들 패턴 (한글/유니코드 지원)
-        if (preg_match('#/@([^/?#\s]+)#u', $decoded, $m)) {
-            $handle = $m[1];
+        if (preg_match('~/@([^/?\s]+)~u', $decoded, $m)) {
+            $handle = explode('#', $m[1])[0]; // 혹시 모를 # 이후 제거
             return $this->handleToChannelId($apiKey, $handle);
         }
 
@@ -464,8 +464,9 @@ class MusicController extends Controller
         }
 
         // 5. /c/xxx 또는 /user/xxx (legacy) → 검색으로 추정
-        if (preg_match('#/(?:c|user)/([^/?#\s]+)#u', $decoded, $m)) {
-            return $this->searchChannelByName($apiKey, $m[1]);
+        if (preg_match('~/(?:c|user)/([^/?\s]+)~u', $decoded, $m)) {
+            $name = explode('#', $m[1])[0];
+            return $this->searchChannelByName($apiKey, $name);
         }
 
         // 6. 그냥 채널 이름/검색어 입력
