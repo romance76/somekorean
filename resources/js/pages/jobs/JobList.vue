@@ -27,7 +27,7 @@
           <input v-model="search" type="text" placeholder="검색..." class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-amber-400 outline-none flex-1 min-w-0" />
           <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500 flex-shrink-0">검색</button>
         </form>
-        <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500 flex-shrink-0">✏️ 등록</RouterLink>
+        <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500 flex-shrink-0">✏️<span class="hidden sm:inline"> 등록</span></RouterLink>
       </div>
     </div>
 
