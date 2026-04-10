@@ -33,7 +33,7 @@ class BusinessController extends Controller
         elseif ($sort === 'reviews') $query->orderByDesc('review_count');
         elseif ($sort === 'views') $query->orderByDesc('view_count');
 
-        return response()->json(['success' => true, 'data' => $query->paginate(20)]);
+        return response()->json(['success' => true, 'data' => $query->paginate(10)]);
     }
 
     public function show($id)
