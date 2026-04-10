@@ -23,9 +23,13 @@
             <a :href="c.document_url" target="_blank" class="text-xs text-amber-600 hover:underline">📎 증빙서류 보기</a>
           </div>
         </div>
-        <div v-if="c.status==='pending'" class="flex gap-2 flex-shrink-0">
-          <button @click="approve(c)" class="bg-green-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-green-600">승인</button>
-          <button @click="reject(c)" class="bg-red-400 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-red-500">거절</button>
+        <div class="flex gap-2 flex-shrink-0">
+          <template v-if="c.status==='pending'">
+            <button @click="approve(c)" class="bg-green-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-green-600">승인</button>
+            <button @click="reject(c)" class="bg-red-400 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-red-500">거절</button>
+          </template>
+          <button v-else-if="c.status==='approved'" @click="revoke(c)" class="bg-gray-400 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-gray-500">승인취소</button>
+          <button v-else-if="c.status==='rejected'" @click="approve(c)" class="bg-green-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-green-600">재승인</button>
         </div>
       </div>
     </div>
@@ -54,6 +58,14 @@ async function approve(c) {
   try {
     await axios.post(`/api/admin/claims/${c.id}/approve`)
     c.status = 'approved'
+  } catch (e) { alert(e.response?.data?.message || '실패') }
+}
+
+async function revoke(c) {
+  if (!confirm(`${c.business?.name} 승인을 취소하시겠습니까?`)) return
+  try {
+    await axios.post(`/api/admin/claims/${c.id}/reject`, { notes: '관리자 승인 취소' })
+    c.status = 'rejected'
   } catch (e) { alert(e.response?.data?.message || '실패') }
 }
 

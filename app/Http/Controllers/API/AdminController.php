@@ -109,6 +109,7 @@ class AdminController extends Controller
     public function rejectClaim(Request $request, $id) {
         $claim = BusinessClaim::findOrFail($id);
         $claim->update(['status' => 'rejected', 'notes' => $request->notes]);
-        return response()->json(['success'=>true,'message'=>'클레임이 거절되었습니다']);
+        $claim->business->update(['is_claimed' => false, 'owner_id' => null]);
+        return response()->json(['success'=>true,'message'=>'클레임이 거절/취소되었습니다']);
     }
 }
