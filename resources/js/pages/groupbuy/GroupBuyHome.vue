@@ -26,7 +26,7 @@
 
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 상태 필터 -->
-    <div class="col-span-12 lg:col-span-2 hidden lg:block">
+    <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
         <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
         <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadPage()"
@@ -34,7 +34,7 @@
           :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
       </div>
     </div>
-    <div class="col-span-12 lg:col-span-7">
+    <div class="col-span-12 lg:col-span-6">
 
     <!-- 목록 -->
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
