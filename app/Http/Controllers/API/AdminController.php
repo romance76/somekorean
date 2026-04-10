@@ -164,6 +164,79 @@ class AdminController extends Controller
         ]]);
     }
 
+    public function elderGuardianDetail($id) {
+        $guardian = DB::table('elder_guardians')->where('id', $id)->first();
+        if (!$guardian) return response()->json(['success'=>false,'message'=>'매칭을 찾을 수 없습니다'], 404);
+
+        $guardianUser = User::select('id','name','nickname','email','phone','city','state','avatar')->find($guardian->guardian_user_id);
+        $wardUser = User::select('id','name','nickname','email','phone','city','state','address','avatar','allow_elder_service')->find($guardian->ward_user_id);
+
+        $schedule = DB::table('elder_schedules')->where('elder_guardian_id', $id)->first();
+        if ($schedule) {
+            $schedule->days = json_decode($schedule->days, true);
+            $schedule->scheduled_times = json_decode($schedule->scheduled_times, true);
+        }
+
+        // 서비스 타입: random = 무료, scheduled = 유료
+        $serviceType = $schedule ? ($schedule->type === 'scheduled' ? 'paid' : 'free') : 'none';
+
+        // 통화 로그 (최근 30일)
+        $callLogs = DB::table('elder_call_logs')
+            ->where('elder_guardian_id', $id)
+            ->orderByDesc('called_at')
+            ->limit(100)
+            ->get();
+
+        // 통화 통계
+        $callStats = [
+            'total' => $callLogs->count(),
+            'answered' => $callLogs->where('answered', true)->count(),
+            'unanswered' => $callLogs->where('answered', false)->count(),
+            'guardian_notified' => $callLogs->where('guardian_notified', true)->count(),
+            'total_attempts' => $callLogs->sum('attempts'),
+            'avg_attempts_to_answer' => $callLogs->where('answered', true)->count() > 0
+                ? round($callLogs->where('answered', true)->avg('attempts'), 1) : 0,
+            'last_call' => $callLogs->first()?->called_at,
+            'today_calls' => $callLogs->filter(fn($l) => \Carbon\Carbon::parse($l->called_at)->isToday())->count(),
+            'week_calls' => $callLogs->filter(fn($l) => \Carbon\Carbon::parse($l->called_at)->gte(now()->subWeek()))->count(),
+        ];
+
+        // 체크인 (ward의 것)
+        $recentCheckins = ElderCheckinLog::where('user_id', $guardian->ward_user_id)
+            ->orderByDesc('checked_in_at')
+            ->limit(20)
+            ->get();
+
+        // SOS (ward의 것)
+        $recentSos = ElderSosLog::where('user_id', $guardian->ward_user_id)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        // 체크인 통계
+        $checkinStats = [
+            'total' => ElderCheckinLog::where('user_id', $guardian->ward_user_id)->count(),
+            'ok' => ElderCheckinLog::where('user_id', $guardian->ward_user_id)->where('status','ok')->count(),
+            'missed' => ElderCheckinLog::where('user_id', $guardian->ward_user_id)->where('status','missed')->count(),
+            'sos' => ElderCheckinLog::where('user_id', $guardian->ward_user_id)->where('status','sos')->count(),
+        ];
+
+        return response()->json(['success'=>true,'data'=>[
+            'id' => $guardian->id,
+            'status' => $guardian->status,
+            'created_at' => $guardian->created_at,
+            'guardian' => $guardianUser,
+            'ward' => $wardUser,
+            'schedule' => $schedule,
+            'service_type' => $serviceType,  // free / paid / none
+            'call_logs' => $callLogs,
+            'call_stats' => $callStats,
+            'recent_checkins' => $recentCheckins,
+            'checkin_stats' => $checkinStats,
+            'recent_sos' => $recentSos,
+        ]]);
+    }
+
     public function elderDeleteGuardian($id) {
         DB::table('elder_schedules')->where('elder_guardian_id', $id)->delete();
         DB::table('elder_call_logs')->where('elder_guardian_id', $id)->delete();

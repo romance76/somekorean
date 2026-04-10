@@ -346,26 +346,6 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/claims', [AdminController::class, 'claims']);
     Route::post('/claims/{id}/approve', [AdminController::class, 'approveClaim']);
     Route::post('/claims/{id}/reject', [AdminController::class, 'rejectClaim']);
-
-    // 안심서비스 관리
-    Route::get('/elder/overview', [AdminController::class, 'elderOverview']);
-    Route::get('/elder/guardians', [AdminController::class, 'elderGuardians']);
-    Route::delete('/elder/guardians/{id}', [AdminController::class, 'elderDeleteGuardian']);
-    Route::get('/elder/call-logs', [AdminController::class, 'elderCallLogs']);
-    Route::get('/elder/checkins', [AdminController::class, 'elderCheckins']);
-    Route::get('/elder/sos', [AdminController::class, 'elderSosLogs']);
-
-    // 채팅 관리
-    Route::get('/chat/rooms', [AdminController::class, 'chatRooms']);
-    Route::post('/chat/rooms', [AdminController::class, 'chatCreateRoom']);
-    Route::delete('/chat/rooms/{id}', [AdminController::class, 'chatDeleteRoom']);
-    Route::get('/chat/rooms/{id}', [AdminController::class, 'chatRoomDetail']);
-    Route::get('/chat/rooms/{id}/messages', [AdminController::class, 'chatRoomMessages']);
-    Route::post('/chat/rooms/{id}/announce', [AdminController::class, 'chatAnnounce']);
-    Route::delete('/chat/rooms/{id}/members/{userId}', [AdminController::class, 'chatKickMember']);
-    Route::post('/chat/rooms/{id}/ban/{userId}', [AdminController::class, 'chatBanMember']);
-    Route::delete('/chat/rooms/{id}/ban/{userId}', [AdminController::class, 'chatUnbanMember']);
-    Route::delete('/chat/rooms/{id}/messages/{messageId}', [AdminController::class, 'chatDeleteMessage']);
     Route::get('/settings', [AdminSettingsController::class, 'index']);
     Route::get('/settings/all', [AdminSettingsController::class, 'getAll']);
     Route::put('/settings', [AdminSettingsController::class, 'update']);
@@ -431,6 +411,7 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     // ─── Admin 안심서비스 ───
     Route::get('/elder/overview', [AdminController::class, 'elderOverview']);
     Route::get('/elder/guardians', [AdminController::class, 'elderGuardians']);
+    Route::get('/elder/guardians/{id}/detail', [AdminController::class, 'elderGuardianDetail']);
     Route::delete('/elder/guardians/{id}', [AdminController::class, 'elderDeleteGuardian']);
     Route::get('/elder/calls', [AdminController::class, 'elderCallLogs']);
     Route::get('/elder/checkins', [AdminController::class, 'elderCheckins']);
