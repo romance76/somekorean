@@ -13,7 +13,16 @@ class MusicController extends Controller
 
     public function tracks(Request $request, $categoryId)
     {
-        $query = MusicTrack::where('category_id', $categoryId)->inRandomOrder();
+        // 유저에게 노출되는 트랙은 반드시 5분 이하(300s)여야 하며,
+        // duration=0(라이브/믹스)은 표시 안 함. 유저 업로드는 예외.
+        $query = MusicTrack::where('category_id', $categoryId)
+            ->where(function ($q) {
+                $q->where('is_user_submitted', true)
+                  ->orWhere(function ($q2) {
+                      $q2->where('duration', '>', 0)->where('duration', '<=', 300);
+                  });
+            })
+            ->inRandomOrder();
         $perPage = $request->per_page ?? 20;
         return response()->json(['success' => true, 'data' => $query->paginate($perPage)]);
     }
@@ -231,7 +240,7 @@ class MusicController extends Controller
         return response()->json(['success' => true, 'data' => $cat], 201);
     }
 
-    // 관리자: 트랙 추가
+    // 관리자: 트랙 추가 (YouTube API로 duration 조회 후 5분 이하만 허용)
     public function storeTrack(Request $request)
     {
         $request->validate(['title' => 'required', 'category_id' => 'required|exists:music_categories,id']);
@@ -243,13 +252,42 @@ class MusicController extends Controller
             $ytId = $m[1] ?? null;
         }
 
+        // YouTube API로 duration 조회
+        $duration = (int) ($request->duration ?? 0);
+        if ($ytId && $duration === 0) {
+            $apiKey = config('services.youtube.api_key');
+            if (!$apiKey && file_exists(base_path('.env')) && preg_match('/YOUTUBE_API_KEY=(.+)/', file_get_contents(base_path('.env')), $em)) {
+                $apiKey = trim($em[1]);
+            }
+            if ($apiKey) {
+                try {
+                    $resp = \Illuminate\Support\Facades\Http::timeout(5)->get('https://www.googleapis.com/youtube/v3/videos', [
+                        'key' => $apiKey, 'id' => $ytId, 'part' => 'contentDetails',
+                    ]);
+                    if ($resp->ok()) {
+                        $iso = $resp->json('items.0.contentDetails.duration', 'PT0S');
+                        preg_match('/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/', $iso, $dm);
+                        $duration = (intval($dm[1] ?? 0) * 3600) + (intval($dm[2] ?? 0) * 60) + intval($dm[3] ?? 0);
+                    }
+                } catch (\Exception $e) {}
+            }
+        }
+
+        // 5분 초과 차단 (관리자도 불가)
+        if ($duration > 300) {
+            return response()->json(['success' => false, 'message' => '5분 초과 영상은 추가할 수 없습니다 ('.floor($duration/60).'분 '.($duration%60).'초)'], 422);
+        }
+        if ($duration <= 0) {
+            return response()->json(['success' => false, 'message' => 'YouTube에서 영상 길이를 확인할 수 없습니다. 라이브/믹스는 허용되지 않습니다.'], 422);
+        }
+
         $track = MusicTrack::create([
             'category_id' => $request->category_id,
             'title' => $request->title,
             'artist' => $request->artist,
             'youtube_url' => $request->youtube_url,
             'youtube_id' => $ytId,
-            'duration' => $request->duration ?? 0,
+            'duration' => $duration,
         ]);
         return response()->json(['success' => true, 'data' => $track], 201);
     }

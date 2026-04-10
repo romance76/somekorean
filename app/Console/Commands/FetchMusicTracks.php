@@ -158,10 +158,12 @@ class FetchMusicTracks extends Command
                 $channel = $item['snippet']['channelTitle'] ?? '';
                 $seconds = $durations[$videoId] ?? 0;
 
+                // duration 정보 필수 (0이면 라이브/믹스 가능성 → 차단)
+                if ($seconds <= 0) continue;
                 // 5분(300초) 초과 필터링
                 if ($seconds > 300) continue;
-                // 10초 미만도 제외 (짧은 클립)
-                if ($seconds > 0 && $seconds < 10) continue;
+                // 10초 미만 제외 (짧은 클립)
+                if ($seconds < 10) continue;
 
                 if (MusicTrack::where('youtube_id', $videoId)->exists()) continue;
                 if (mb_strlen($title) < 3) continue;
@@ -243,8 +245,8 @@ class FetchMusicTracks extends Command
                             $c = $item2['snippet']['channelTitle'] ?? '';
                             $sec2 = $fbDurations[$vid] ?? 0;
 
-                            // 5분 초과 제외
-                            if ($sec2 > 300 || ($sec2 > 0 && $sec2 < 10)) continue;
+                            // duration 필수 + 5분 이하 + 10초 이상
+                            if ($sec2 <= 0 || $sec2 > 300 || $sec2 < 10) continue;
                             if (mb_strlen($t) < 3 || preg_match('/live stream|라이브|24\/7/i', $t)) continue;
 
                             // 언어 필터
