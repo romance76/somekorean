@@ -45,7 +45,7 @@
       </div>
 
       <!-- 오른쪽: 위젯 -->
-      <div class="col-span-12 lg:col-span-2 hidden lg:block space-y-3">
+      <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔥 인기 게임</div>
           <RouterLink v-for="g in popularGames" :key="g.path" :to="g.path"

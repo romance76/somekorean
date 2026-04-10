@@ -71,7 +71,7 @@
         class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white text-gray-600 border hover:bg-amber-50'">{{ pg }}</button>
     </div>
     </div>
-    <div class="col-span-12 lg:col-span-2 hidden lg:block">
+    <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets api-url="/api/groupbuys" detail-path="/groupbuy/" :current-id="0"
         label="공동구매" :filter-params="locationParams" />
     </div>

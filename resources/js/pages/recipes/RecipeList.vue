@@ -70,7 +70,7 @@
       </div>
 
       <!-- 오른쪽 위젯 -->
-      <div class="col-span-12 lg:col-span-2 hidden lg:block">
+      <div class="col-span-12 lg:col-span-3 hidden lg:block">
         <SidebarWidgets api-url="/api/recipes" detail-path="/recipes/" :current-id="0"
           label="레시피" />
       </div>
