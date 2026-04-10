@@ -146,7 +146,12 @@ const contentBlocks = computed(() => {
     if (i % 2 === 0) {
       const textPart = parts[i].trim()
       if (!textPart) continue
-      const paragraphs = textPart
+      const cleaned = textPart
+        .replace(/Your browser does not support the\s*audio element[.\d:]*/g, '')
+        .replace(/펼침.*?기사를 읽어드립니다/g, '')
+        .replace(/기자수정 \d{4}-\d{2}-\d{2} \d{2}:\d{2}/g, '')
+        .replace(/본문사회/g, '')
+      const paragraphs = cleaned
         .split(/\n{2,}/)
         .map(p => p.trim())
         .filter(p => p.length > 10)

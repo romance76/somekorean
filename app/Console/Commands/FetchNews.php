@@ -12,18 +12,21 @@ class FetchNews extends Command
     protected $description = '한인 뉴스 RSS 피드를 가져와 DB에 저장합니다';
 
     private array $feeds = [
-        // 미국 이민/비자 공식 정보
-        'USCIS'       => 'https://www.uscis.gov/news/news-releases.rss',
-        // 미주 한인 언론 (영문)
+        // 미주 한인 언론 (우선)
         '미주한국일보'  => 'https://www.koreatimes.com/rss/rss.asp',
         '미주중앙일보'  => 'https://www.koreadaily.com/rss/list.aspx',
-        '코리아헤럴드'  => 'https://www.koreaherald.com/rss.php',
         '코리아타임스'  => 'https://www.koreatimes.co.kr/www2/rss/rss.asp',
+        '한국일보'     => 'https://www.hankookilbo.com/rss/all',
+        '조선일보'     => 'https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml',
+        '동아일보'     => 'https://rss.donga.com/total.xml',
+        'SBS뉴스'     => 'https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER',
+        'MBC뉴스'     => 'https://imnews.imbc.com/rss/news.xml',
         // 한국 주요 언론
         '한겨레'       => 'https://www.hani.co.kr/rss/',
         '연합뉴스'     => 'https://www.yna.co.kr/rss/all.xml',
         'KBS월드'     => 'https://world.kbs.co.kr/rss/rss_news.htm?lang=k',
-        // 미국 한인 커뮤니티 관련
+        // 미국 관련
+        'USCIS'       => 'https://www.uscis.gov/news/news-releases.rss',
         'VOA한국어'   => 'https://www.voakorea.com/rss/zopvoy$pqpmo.rss',
     ];
 
