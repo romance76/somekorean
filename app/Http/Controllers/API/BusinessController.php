@@ -24,8 +24,10 @@ class BusinessController extends Controller
             $query->nearby($request->lat, $request->lng, $request->radius ?? 50);
         }
 
-        $sort = $request->sort ?? 'random';
+        $sort = $request->sort ?? ($request->lat ? 'distance' : 'popular');
         if ($sort === 'random') $query->inRandomOrder();
+        elseif ($sort === 'distance' && $request->lat) $query->orderBy('distance');
+        elseif ($sort === 'popular') $query->orderByDesc('view_count');
         elseif ($sort === 'rating') $query->orderByDesc('rating');
         elseif ($sort === 'newest') $query->orderByDesc('created_at');
         elseif ($sort === 'reviews') $query->orderByDesc('review_count');

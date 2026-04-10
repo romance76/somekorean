@@ -57,6 +57,10 @@ class ImportGooglePlaces extends Command
         'Lotte Plaza' => 'mart',
         'Hankook Supermarket' => 'mart',
         'Asian grocery' => 'mart',
+        'Asian supermarket' => 'mart',
+        'Asian market' => 'mart',
+        '아시아 식료품점' => 'mart',
+        'Korean food store' => 'mart',
         // 미용
         'Korean beauty salon' => 'beauty',
         'Korean nail salon' => 'beauty',
