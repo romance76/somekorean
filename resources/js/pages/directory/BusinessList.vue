@@ -29,12 +29,17 @@
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
         <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 업종</div>
-        <button v-for="c in bizCategories" :key="c.value" @click="activeCat=c.value; loadPage()"
+        <button v-for="c in bizCategories" :key="c.value" @click="activeCat=c.value; activeItem=null; loadPage()"
           class="w-full text-left px-3 py-2 text-xs transition"
           :class="activeCat===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
       </div>
     </div>
     <div class="col-span-12 lg:col-span-7">
+
+    <div class="mb-2">
+      <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (bizCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
+      <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 업소를 볼 수 있습니다</span>
+    </div>
 
     <!-- 목록 -->
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
