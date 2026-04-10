@@ -190,6 +190,11 @@ class ImportGooglePlaces extends Command
             if (!$placeId) continue;
 
             $existing = Business::where('google_place_id', $placeId)->first();
+            // 이름+전화번호 중복 체크
+            if (!$existing) {
+                $name = $place['name'] ?? '';
+                if ($name && Business::where('name', $name)->where('city', $place['vicinity'] ?? '')->exists()) continue;
+            }
 
             $details = $this->getPlaceDetails($placeId);
             if (!$details) continue;
