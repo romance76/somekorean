@@ -120,6 +120,7 @@ import { ref, computed, onMounted } from 'vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
+const route = useRoute()
 const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)
