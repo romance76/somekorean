@@ -60,7 +60,7 @@
                   <span v-else class="text-gray-400">{{ msg.user?.nickname || msg.user?.name }}</span>
                 </div>
                 <!-- 이미지 메시지 -->
-                <div v-if="msg.type === 'image' && msg.file_url" class="rounded-xl overflow-hidden max-w-xs"
+                <div v-if="msg.type === 'image' && msg.file_url" class="rounded-xl overflow-hidden max-w-[160px]"
                   :class="isAdminUser(msg.user) ? 'border-2 border-red-300' : ''">
                   <img :src="msg.file_url" @click="lightboxSrc = msg.file_url"
                     class="block w-full h-auto cursor-pointer hover:opacity-90 transition" />
