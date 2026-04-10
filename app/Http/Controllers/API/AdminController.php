@@ -1,8 +1,9 @@
 <?php
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
-use App\Models\{User, Post, JobPost, MarketItem, Business, BusinessClaim, Event, News, Report, Board, Banner, IpBan, Payment};
+use App\Models\{User, Post, JobPost, MarketItem, Business, BusinessClaim, Event, News, Report, Board, Banner, IpBan, Payment, ChatRoom, ChatRoomUser, ChatMessage, ElderCheckinLog, ElderSosLog};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -111,5 +112,229 @@ class AdminController extends Controller
         $claim->update(['status' => 'rejected', 'notes' => $request->notes]);
         $claim->business->update(['is_claimed' => false, 'owner_id' => null]);
         return response()->json(['success'=>true,'message'=>'클레임이 거절/취소되었습니다']);
+    }
+
+    // ═════════════════════════════════════
+    //   안심서비스 관리
+    // ═════════════════════════════════════
+
+    public function elderOverview() {
+        return response()->json(['success'=>true,'data'=>[
+            'active_guardians' => DB::table('elder_guardians')->where('status', 'active')->count(),
+            'pending_guardians' => DB::table('elder_guardians')->where('status', 'pending')->count(),
+            'calls_today' => DB::table('elder_call_logs')->whereDate('called_at', today())->count(),
+            'checkins_today' => ElderCheckinLog::whereDate('checked_in_at', today())->count(),
+            'sos_unresolved' => ElderSosLog::whereNull('resolved_at')->count(),
+            'total_schedules' => DB::table('elder_schedules')->where('is_active', true)->count(),
+        ]]);
+    }
+
+    public function elderGuardians(Request $request) {
+        $page = (int)($request->page ?? 1);
+        $perPage = 20;
+
+        $query = DB::table('elder_guardians as eg')
+            ->leftJoin('users as guardian', 'eg.guardian_user_id', '=', 'guardian.id')
+            ->leftJoin('users as ward', 'eg.ward_user_id', '=', 'ward.id')
+            ->leftJoin('elder_schedules as es', 'es.elder_guardian_id', '=', 'eg.id')
+            ->select(
+                'eg.id', 'eg.status', 'eg.created_at',
+                'guardian.id as guardian_id', 'guardian.name as guardian_name', 'guardian.email as guardian_email',
+                'ward.id as ward_id', 'ward.name as ward_name', 'ward.email as ward_email', 'ward.phone as ward_phone', 'ward.city as ward_city', 'ward.state as ward_state',
+                'es.type as schedule_type', 'es.time_start', 'es.time_end', 'es.calls_per_day', 'es.days', 'es.scheduled_times', 'es.is_active'
+            );
+
+        if ($request->search) {
+            $s = "%{$request->search}%";
+            $query->where(function($q) use ($s) {
+                $q->where('guardian.name','like',$s)->orWhere('guardian.email','like',$s)
+                  ->orWhere('ward.name','like',$s)->orWhere('ward.email','like',$s);
+            });
+        }
+        if ($request->status) {
+            $query->where('eg.status', $request->status);
+        }
+
+        $total = $query->count();
+        $items = $query->orderByDesc('eg.created_at')->offset(($page-1)*$perPage)->limit($perPage)->get();
+
+        return response()->json(['success'=>true,'data'=>[
+            'data'=>$items,'total'=>$total,'per_page'=>$perPage,'current_page'=>$page,
+            'last_page'=>max(1, ceil($total/$perPage)),
+        ]]);
+    }
+
+    public function elderDeleteGuardian($id) {
+        DB::table('elder_schedules')->where('elder_guardian_id', $id)->delete();
+        DB::table('elder_call_logs')->where('elder_guardian_id', $id)->delete();
+        DB::table('elder_guardians')->where('id', $id)->delete();
+        return response()->json(['success'=>true,'message'=>'매칭이 해제되었습니다']);
+    }
+
+    public function elderCallLogs(Request $request) {
+        $page = (int)($request->page ?? 1);
+        $perPage = 20;
+
+        $query = DB::table('elder_call_logs as cl')
+            ->leftJoin('elder_guardians as eg', 'cl.elder_guardian_id', '=', 'eg.id')
+            ->leftJoin('users as guardian', 'eg.guardian_user_id', '=', 'guardian.id')
+            ->leftJoin('users as ward', 'cl.ward_user_id', '=', 'ward.id')
+            ->select(
+                'cl.id', 'cl.called_at', 'cl.answered', 'cl.attempts', 'cl.guardian_notified', 'cl.notes',
+                'guardian.name as guardian_name', 'guardian.email as guardian_email',
+                'ward.name as ward_name', 'ward.email as ward_email'
+            );
+
+        $total = $query->count();
+        $items = $query->orderByDesc('cl.called_at')->offset(($page-1)*$perPage)->limit($perPage)->get();
+
+        return response()->json(['success'=>true,'data'=>[
+            'data'=>$items,'total'=>$total,'per_page'=>$perPage,'current_page'=>$page,
+            'last_page'=>max(1, ceil($total/$perPage)),
+        ]]);
+    }
+
+    public function elderCheckins(Request $request) {
+        $checkins = ElderCheckinLog::with('user:id,name,email')
+            ->orderByDesc('checked_in_at')->paginate(20);
+        return response()->json(['success'=>true,'data'=>$checkins]);
+    }
+
+    public function elderSosLogs(Request $request) {
+        $sos = ElderSosLog::with('user:id,name,email')
+            ->orderByDesc('created_at')->paginate(20);
+        return response()->json(['success'=>true,'data'=>$sos]);
+    }
+
+    // ═════════════════════════════════════
+    //   채팅 관리
+    // ═════════════════════════════════════
+
+    public function chatRooms(Request $request) {
+        $query = ChatRoom::withCount('users')
+            ->with(['messages' => fn($q) => $q->latest()->limit(1)->with('user:id,name,nickname')])
+            ->when($request->search, fn($q, $v) => $q->where('name', 'like', "%{$v}%"));
+
+        $rooms = $query->orderByDesc('updated_at')->paginate(20);
+        return response()->json(['success'=>true,'data'=>$rooms]);
+    }
+
+    public function chatCreateRoom(Request $request) {
+        $request->validate(['name' => 'required|string|max:100']);
+        $room = ChatRoom::create([
+            'name' => $request->name,
+            'type' => $request->type ?? 'group',
+            'created_by' => auth()->id(),
+        ]);
+        ChatRoomUser::create(['chat_room_id' => $room->id, 'user_id' => auth()->id()]);
+        return response()->json(['success'=>true,'data'=>$room],201);
+    }
+
+    public function chatDeleteRoom($id) {
+        DB::table('chat_room_bans')->where('chat_room_id', $id)->delete();
+        ChatRoom::findOrFail($id)->delete();
+        return response()->json(['success'=>true,'message'=>'방이 삭제되었습니다']);
+    }
+
+    public function chatRoomDetail($id) {
+        $room = ChatRoom::withCount('users')->findOrFail($id);
+
+        $members = DB::table('chat_room_users as cru')
+            ->join('users as u', 'cru.user_id', '=', 'u.id')
+            ->where('cru.chat_room_id', $id)
+            ->select('u.id', 'u.name', 'u.nickname', 'u.email', 'u.avatar', 'cru.created_at as joined_at')
+            ->orderBy('cru.created_at')
+            ->get();
+
+        $messages = ChatMessage::with('user:id,name,nickname,avatar')
+            ->where('chat_room_id', $id)
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        $bans = DB::table('chat_room_bans as crb')
+            ->join('users as u', 'crb.user_id', '=', 'u.id')
+            ->where('crb.chat_room_id', $id)
+            ->select('u.id', 'u.name', 'u.nickname', 'u.email', 'u.avatar', 'crb.reason', 'crb.created_at as banned_at')
+            ->get();
+
+        return response()->json(['success'=>true,'data'=>[
+            'room' => $room,
+            'members' => $members,
+            'messages' => $messages,
+            'bans' => $bans,
+        ]]);
+    }
+
+    public function chatRoomMessages($id, Request $request) {
+        $messages = ChatMessage::with('user:id,name,nickname,avatar')
+            ->where('chat_room_id', $id)
+            ->orderByDesc('created_at')
+            ->paginate(50);
+        return response()->json(['success'=>true,'data'=>$messages]);
+    }
+
+    public function chatAnnounce(Request $request, $id) {
+        $request->validate(['content' => 'required|string']);
+        ChatRoom::findOrFail($id);
+
+        $msg = ChatMessage::create([
+            'chat_room_id' => $id,
+            'user_id' => auth()->id(),
+            'content' => '📢 [공지] ' . $request->content,
+            'type' => 'system',
+        ]);
+
+        try { event(new \App\Events\MessageSent($msg->load('user:id,name,nickname,avatar'))); } catch (\Exception $e) {}
+        return response()->json(['success'=>true,'data'=>$msg->load('user:id,name,nickname,avatar'),'message'=>'공지가 발송되었습니다']);
+    }
+
+    public function chatKickMember($id, $userId) {
+        ChatRoomUser::where('chat_room_id', $id)->where('user_id', $userId)->delete();
+
+        // 시스템 메시지로 기록
+        try {
+            $user = User::find($userId);
+            ChatMessage::create([
+                'chat_room_id' => $id,
+                'user_id' => auth()->id(),
+                'content' => '🚪 ' . ($user->nickname ?? $user->name ?? "유저#{$userId}") . ' 님이 강퇴되었습니다.',
+                'type' => 'system',
+            ]);
+        } catch (\Exception $e) {}
+
+        return response()->json(['success'=>true,'message'=>'강퇴되었습니다']);
+    }
+
+    public function chatBanMember(Request $request, $id, $userId) {
+        ChatRoomUser::where('chat_room_id', $id)->where('user_id', $userId)->delete();
+
+        DB::table('chat_room_bans')->updateOrInsert(
+            ['chat_room_id' => $id, 'user_id' => $userId],
+            ['banned_by' => auth()->id(), 'reason' => $request->reason, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        // 시스템 메시지로 기록
+        try {
+            $user = User::find($userId);
+            ChatMessage::create([
+                'chat_room_id' => $id,
+                'user_id' => auth()->id(),
+                'content' => '🚫 ' . ($user->nickname ?? $user->name ?? "유저#{$userId}") . ' 님이 차단되었습니다.',
+                'type' => 'system',
+            ]);
+        } catch (\Exception $e) {}
+
+        return response()->json(['success'=>true,'message'=>'차단되었습니다']);
+    }
+
+    public function chatUnbanMember($id, $userId) {
+        DB::table('chat_room_bans')->where('chat_room_id', $id)->where('user_id', $userId)->delete();
+        return response()->json(['success'=>true,'message'=>'차단이 해제되었습니다']);
+    }
+
+    public function chatDeleteMessage($id, $messageId) {
+        ChatMessage::where('chat_room_id', $id)->where('id', $messageId)->delete();
+        return response()->json(['success'=>true,'message'=>'메시지가 삭제되었습니다']);
     }
 }

@@ -5,4 +5,8 @@ class ElderSosLog extends Model
 {
     protected $fillable = ['user_id','lat','lng','message','contacts_notified','resolved_at'];
     protected $casts = ['contacts_notified'=>'array','resolved_at'=>'datetime',];
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }
