@@ -14,7 +14,7 @@
 
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <button v-for="c in categories" :key="c.id||c" @click="activeCat=c.id||null; loadRecipes()"
@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-7">
         <div class="mb-2">
           <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (categories.find(c => c.id === activeCat)?.name || activeCat) : '전체' }}</span>
           <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 레시피를 볼 수 있습니다</span>
@@ -70,7 +70,7 @@
       </div>
 
       <!-- 오른쪽 위젯 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <SidebarWidgets api-url="/api/recipes" detail-path="/recipes/" :current-id="0"
           label="레시피" />
       </div>

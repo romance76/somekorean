@@ -16,7 +16,7 @@
 
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 게시판 카테고리 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 게시판</div>
           <button @click="activeBoard=null; activeItem=null; loadPosts()" class="w-full text-left px-3 py-2 text-xs transition"
@@ -30,7 +30,7 @@
       </div>
 
       <!-- 메인: 게시글 목록 -->
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-7">
         <!-- 모바일 게시판 선택 -->
         <div class="lg:hidden mb-3">
           <select v-model="mobileBoardId" @change="onMobileBoard" class="w-full border rounded-lg px-3 py-2 text-sm">
@@ -111,7 +111,7 @@
       </div>
 
       <!-- 오른쪽: 인기글 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔥 인기 게시글</div>
           <div class="py-1">

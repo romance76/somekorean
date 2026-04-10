@@ -26,7 +26,7 @@
 
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 카테고리 -->
-    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
         <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 업종</div>
         <button v-for="c in bizCategories" :key="c.value" @click="activeCat=c.value; activeItem=null; loadPage()"
@@ -34,7 +34,7 @@
           :class="activeCat===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
       </div>
     </div>
-    <div class="col-span-12 lg:col-span-6">
+    <div class="col-span-12 lg:col-span-7">
 
     <!-- 모바일 카테고리 -->
     <div class="lg:hidden mb-3">
@@ -204,7 +204,7 @@
     </div>
     </div>
     <!-- 오른쪽 위젯 -->
-    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <SidebarWidgets :inline="true" @select="openItem" api-url="/api/businesses" detail-path="/directory/" :current-id="0"
         label="업소" :filter-params="locationParams" />
     </div>

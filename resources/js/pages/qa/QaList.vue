@@ -8,7 +8,7 @@
 
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 + 상태 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <button @click="activeCat=null; activeItem=null; loadQa()" class="w-full text-left px-3 py-2 text-xs transition"
@@ -26,7 +26,7 @@
       </div>
 
       <!-- 메인: 목록 또는 상세 (인라인 전환) -->
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-7">
 
         <div class="mb-2">
           <span class="font-bold text-amber-700 text-sm">{{ activeCat ? activeCat.name : '전체' }}</span>
@@ -125,7 +125,7 @@
       </div>
 
       <!-- 오른쪽: 위젯 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <SidebarWidgets :inline="true" @select="openItem" api-url="/api/qa" detail-path="/qa/" :current-id="activeItem?.id || 0"
           label="질문" />
       </div>

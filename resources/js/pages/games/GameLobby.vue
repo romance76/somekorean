@@ -12,7 +12,7 @@
 
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <button v-for="cat in categories" :key="cat.key" @click="activeCat=cat.key"
@@ -24,7 +24,7 @@
       </div>
 
       <!-- 메인: 게임 카드 -->
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-7">
         <!-- 모바일 카테고리 -->
         <div class="lg:hidden flex gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-hide">
           <button v-for="cat in categories" :key="cat.key" @click="activeCat=cat.key"
@@ -45,7 +45,7 @@
       </div>
 
       <!-- 오른쪽: 위젯 -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
+      <div class="col-span-12 lg:col-span-2 hidden lg:block space-y-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔥 인기 게임</div>
           <RouterLink v-for="g in popularGames" :key="g.path" :to="g.path"

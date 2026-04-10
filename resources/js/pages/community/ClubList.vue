@@ -33,7 +33,7 @@
 
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 카테고리 -->
-    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
         <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 분류</div>
         <button v-for="c in clubCategories" :key="c.value" @click="catFilter=c.value; loadClubs()"
@@ -42,7 +42,7 @@
       </div>
     </div>
     <!-- 메인 -->
-    <div class="col-span-12 lg:col-span-6">
+    <div class="col-span-12 lg:col-span-7">
     <div v-if="!clubs.length && !loading" class="text-center py-12 text-gray-400">동호회가 없습니다</div>
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <RouterLink v-for="club in clubs" :key="club.id" :to="`/clubs/${club.id}`"
@@ -68,7 +68,7 @@
     </div>
     </div>
     <!-- 오른쪽 위젯 -->
-    <div class="col-span-12 lg:col-span-3 hidden lg:block">
+    <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <SidebarWidgets api-url="/api/clubs" detail-path="/clubs/" :current-id="0"
         label="동호회" :filter-params="locationParams" />
     </div>
