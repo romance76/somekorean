@@ -208,8 +208,20 @@ class FetchNews extends Command
 
             $text = null;
 
+            // 조선일보 전용: article_body
+            if (preg_match('/<section[^>]*class=["\'][^"\']*article_body[^"\']*["\'][^>]*>(.*?)<\/section>/si', $html, $matches)) {
+                $text = $matches[1];
+            }
+            // 동아일보: article_txt
+            elseif (preg_match('/<div[^>]*class=["\'][^"\']*article_txt[^"\']*["\'][^>]*>(.*?)<\/div>/si', $html, $matches)) {
+                $text = $matches[1];
+            }
+            // SBS: text_area
+            elseif (preg_match('/<div[^>]*class=["\'][^"\']*text_area[^"\']*["\'][^>]*>(.*?)<\/div>/si', $html, $matches)) {
+                $text = $matches[1];
+            }
             // <article> 태그에서 추출 시도
-            if (preg_match('/<article[^>]*>(.*?)<\/article>/si', $html, $matches)) {
+            elseif (preg_match('/<article[^>]*>(.*?)<\/article>/si', $html, $matches)) {
                 $text = $matches[1];
             }
             // article-body 클래스 div에서 추출 시도
