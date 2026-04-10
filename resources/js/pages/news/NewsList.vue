@@ -51,8 +51,8 @@
                 <span>👁 {{ activeItem.view_count }}조회</span>
               </div>
             </div>
-            <!-- 대표 이미지 -->
-            <div v-if="activeItem.image_url" class="px-5 pb-3">
+            <!-- 대표 이미지 (본문에 이미지가 없을 때만) -->
+            <div v-if="activeItem.image_url && !contentBlocks.some(b => b.type==='img')" class="px-5 pb-3">
               <img :src="activeItem.image_url" class="w-full max-h-80 object-cover rounded-lg" @error="e=>e.target.style.display='none'" />
             </div>
             <!-- 본문 (단락 구분 + 이미지) -->
