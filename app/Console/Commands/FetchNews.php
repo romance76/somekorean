@@ -144,6 +144,9 @@ class FetchNews extends Command
                     $categoryId = \App\Models\NewsCategory::where('name', 'like', "%{$category}%")->first()?->id
                         ?? \App\Models\NewsCategory::first()?->id;
 
+                    // 제목+소스 중복 방지
+                    if (News::where('title', $title)->where('source', $source)->exists()) continue;
+
                     News::create([
                         'title'        => $title,
                         'summary'      => $summary ?: mb_substr($content, 0, 300),
