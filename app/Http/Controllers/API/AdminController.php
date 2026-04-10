@@ -315,14 +315,14 @@ class AdminController extends Controller
         $members = DB::table('chat_room_users as cru')
             ->join('users as u', 'cru.user_id', '=', 'u.id')
             ->where('cru.chat_room_id', $id)
-            ->select('u.id', 'u.name', 'u.nickname', 'u.email', 'u.avatar', 'cru.created_at as joined_at')
+            ->select('u.id', 'u.name', 'u.nickname', 'u.email', 'u.avatar', 'u.created_at as user_joined_at', 'u.is_banned', 'cru.created_at as joined_at')
             ->orderBy('cru.created_at')
             ->get();
 
         $messages = ChatMessage::with('user:id,name,nickname,avatar')
             ->where('chat_room_id', $id)
             ->orderByDesc('created_at')
-            ->limit(50)
+            ->limit(100)
             ->get();
 
         $bans = DB::table('chat_room_bans as crb')
@@ -331,11 +331,70 @@ class AdminController extends Controller
             ->select('u.id', 'u.name', 'u.nickname', 'u.email', 'u.avatar', 'crb.reason', 'crb.created_at as banned_at')
             ->get();
 
+        // ─── 신고 (이 방의 메시지에 대한 것) ───
+        $messageIds = ChatMessage::where('chat_room_id', $id)->pluck('id');
+        $reports = DB::table('reports as r')
+            ->leftJoin('users as reporter', 'r.reporter_id', '=', 'reporter.id')
+            ->leftJoin('chat_messages as cm', 'cm.id', '=', 'r.reportable_id')
+            ->leftJoin('users as target', 'cm.user_id', '=', 'target.id')
+            ->where('r.reportable_type', 'chat_message')
+            ->whereIn('r.reportable_id', $messageIds)
+            ->select(
+                'r.id', 'r.reason', 'r.content as report_content', 'r.status', 'r.created_at',
+                'r.reportable_id as message_id',
+                'reporter.id as reporter_id', 'reporter.name as reporter_name', 'reporter.email as reporter_email',
+                'target.id as target_user_id', 'target.name as target_name', 'target.email as target_email',
+                'cm.content as message_content'
+            )
+            ->orderByDesc('r.created_at')
+            ->get();
+
+        // ─── 공지 (system 메시지) ───
+        $announcements = ChatMessage::with('user:id,name,nickname,avatar')
+            ->where('chat_room_id', $id)
+            ->where('type', 'system')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        // ─── 영구제명 리스트 (사이트 전체) ───
+        $permanentBanned = User::where('is_banned', true)
+            ->select('id','name','nickname','email','avatar','ban_reason','updated_at')
+            ->orderByDesc('updated_at')
+            ->limit(100)
+            ->get();
+
+        // ─── 유저별 신고 누적 카운트 (이 방 멤버 기준) ───
+        $memberIds = $members->pluck('id')->toArray();
+        $userReportCounts = [];
+        if (!empty($memberIds)) {
+            $counts = DB::table('reports as r')
+                ->join('chat_messages as cm', function($j) {
+                    $j->on('cm.id', '=', 'r.reportable_id');
+                })
+                ->where('r.reportable_type', 'chat_message')
+                ->whereIn('cm.user_id', $memberIds)
+                ->select('cm.user_id', DB::raw('COUNT(*) as cnt'))
+                ->groupBy('cm.user_id')
+                ->pluck('cnt', 'cm.user_id');
+            $userReportCounts = $counts->toArray();
+        }
+
+        // 각 메시지에 user_report_count 주입
+        $messages = $messages->map(function($m) use ($userReportCounts) {
+            $m->user_report_count = $userReportCounts[$m->user_id] ?? 0;
+            return $m;
+        });
+
         return response()->json(['success'=>true,'data'=>[
             'room' => $room,
             'members' => $members,
             'messages' => $messages,
             'bans' => $bans,
+            'reports' => $reports,
+            'announcements' => $announcements,
+            'permanent_banned' => $permanentBanned,
+            'user_report_counts' => $userReportCounts,
         ]]);
     }
 
@@ -409,5 +468,35 @@ class AdminController extends Controller
     public function chatDeleteMessage($id, $messageId) {
         ChatMessage::where('chat_room_id', $id)->where('id', $messageId)->delete();
         return response()->json(['success'=>true,'message'=>'메시지가 삭제되었습니다']);
+    }
+
+    // ─── 신고 해결 ───
+    public function chatResolveReport($id, $reportId) {
+        Report::findOrFail($reportId)->update(['status' => 'resolved', 'admin_note' => '채팅 관리에서 해결 처리']);
+        return response()->json(['success'=>true,'message'=>'신고가 해결 처리되었습니다']);
+    }
+
+    // ─── 영구제명 (사이트 전체) ───
+    public function chatPermaBan(Request $request, $userId) {
+        $user = User::findOrFail($userId);
+        if ($user->role === 'admin' || $user->role === 'super_admin') {
+            return response()->json(['success'=>false,'message'=>'관리자는 영구제명할 수 없습니다'], 403);
+        }
+        $user->update([
+            'is_banned' => true,
+            'ban_reason' => $request->reason ?: '채팅 관리자 영구제명',
+        ]);
+        // 모든 채팅방에서 즉시 제거
+        ChatRoomUser::where('user_id', $userId)->delete();
+        return response()->json(['success'=>true,'message'=>'영구제명되었습니다']);
+    }
+
+    // ─── 영구제명 리스트 ───
+    public function chatPermaBanList() {
+        $users = User::where('is_banned', true)
+            ->select('id','name','nickname','email','avatar','ban_reason','updated_at')
+            ->orderByDesc('updated_at')
+            ->get();
+        return response()->json(['success'=>true,'data'=>$users]);
     }
 }

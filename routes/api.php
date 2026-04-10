@@ -428,4 +428,7 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/chat/rooms/{id}/ban/{userId}', [AdminController::class, 'chatBanMember']);
     Route::delete('/chat/rooms/{id}/ban/{userId}', [AdminController::class, 'chatUnbanMember']);
     Route::delete('/chat/rooms/{id}/messages/{messageId}', [AdminController::class, 'chatDeleteMessage']);
+    Route::post('/chat/rooms/{id}/reports/{reportId}/resolve', [AdminController::class, 'chatResolveReport']);
+    Route::post('/chat/users/{userId}/permaban', [AdminController::class, 'chatPermaBan']);
+    Route::get('/chat/permaban-list', [AdminController::class, 'chatPermaBanList']);
 });

@@ -38,6 +38,11 @@ class ChatController extends Controller
     public function sendMessage(Request $request, $id) {
         $request->validate(['content' => 'required']);
 
+        // 영구제명된 유저 차단
+        if (auth()->user()->is_banned) {
+            return response()->json(['success'=>false,'message'=>'영구제명된 계정입니다: '.auth()->user()->ban_reason], 403);
+        }
+
         // 차단된 유저는 메시지 전송 불가
         $banned = DB::table('chat_room_bans')->where('chat_room_id', $id)->where('user_id', auth()->id())->exists();
         if ($banned) return response()->json(['success'=>false,'message'=>'이 채팅방에서 차단되었습니다.'], 403);
