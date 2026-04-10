@@ -22,17 +22,17 @@
             <option v-for="(c, i) in koreanCities" :key="i" :value="i">{{ c.label }}</option>
           </optgroup>
         </select>
-        <select v-if="selectedCityIdx !== '-1' && selectedCityIdx !== -1" v-model="radius" @change="loadClubs()" class="border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] text-gray-600 outline-none">
+        <select v-if="selectedCityIdx !== '-1' && selectedCityIdx !== -1" v-model="radius" @change="loadClubs()" class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-600 outline-none">
           <option value="10">10mi</option><option value="30">30mi</option><option value="50">50mi</option><option value="100">100mi</option>
         </select>
       </div>
       <!-- 3행: 검색 + 등록 -->
       <div class="flex gap-1.5">
         <form @submit.prevent="loadClubs()" class="flex gap-1 flex-1">
-          <input v-model="search" type="text" placeholder="검색..." class="border rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-amber-400 outline-none flex-1 min-w-0" />
-          <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-2 py-1 rounded-lg text-[10px] hover:bg-amber-500 flex-shrink-0">검색</button>
+          <input v-model="search" type="text" placeholder="검색..." class="border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none flex-1 min-w-0" />
+          <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500 flex-shrink-0">검색</button>
         </form>
-        <RouterLink v-if="auth.isLoggedIn" to="/clubs" class="bg-amber-400 text-amber-900 font-bold px-2 py-1 rounded-lg text-xs hover:bg-amber-500 flex-shrink-0">+<span class="hidden sm:inline"> 만들기</span></RouterLink>
+        <RouterLink v-if="auth.isLoggedIn" to="/clubs" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500 flex-shrink-0">+<span class="hidden sm:inline"> 만들기</span></RouterLink>
       </div>
     </div>
 
