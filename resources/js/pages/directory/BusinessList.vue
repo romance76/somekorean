@@ -41,13 +41,6 @@
       <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 업소를 볼 수 있습니다</span>
     </div>
 
-    <!-- 목록 -->
-    <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
-    <div v-else-if="!items.length" class="text-center py-12">
-      <div class="text-4xl mb-3">🏪</div>
-      <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
-      <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
-    </div>
     <!-- 상세 모드 -->
     <div v-if="activeItem">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -141,7 +134,12 @@
       </div>
     </div>
     <!-- 목록 모드 -->
-    <div v-else-if="!items.length" class="text-center py-12 text-gray-400">검색 결과 없음</div>
+    <div v-else-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
+    <div v-else-if="!items.length" class="text-center py-12">
+      <div class="text-4xl mb-3">🏪</div>
+      <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
+      <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
+    </div>
     <!-- 카드형 (Yelp 스타일) -->
     <div v-else-if="viewMode==='card'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div v-for="item in items" :key="item.id" @click="openItem(item)"
