@@ -12,6 +12,7 @@ use App\Http\Controllers\API\ClubController;
 use App\Http\Controllers\API\NewsController;
 use App\Http\Controllers\API\RecipeController;
 use App\Http\Controllers\API\AdminRecipeController;
+use App\Http\Controllers\API\ThumbnailController;
 use App\Http\Controllers\API\GroupBuyController;
 use App\Http\Controllers\API\EventController;
 use App\Http\Controllers\API\QaController;
@@ -71,6 +72,9 @@ Route::get('/clubs/{id}/posts', [ClubController::class, 'posts']);
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'categories']);
 Route::get('/news/{id}', [NewsController::class, 'show']);
+// 썸네일 프록시/캐시 (모든 리스트 페이지가 공유)
+Route::get('/thumb', [ThumbnailController::class, 'show']);
+
 Route::get('/recipes', [RecipeController::class, 'index']);
 Route::get('/recipes/categories', [RecipeController::class, 'categories']);
 Route::get('/recipes/{id}', [RecipeController::class, 'show']);

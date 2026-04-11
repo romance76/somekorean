@@ -81,9 +81,9 @@
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <RouterLink v-for="item in items" :key="item.id" :to="'/recipes/' + item.id"
             class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex h-32 relative">
-            <!-- 왼쪽: 사진 -->
+            <!-- 왼쪽: 사진 (썸네일 프록시) -->
             <div class="w-28 flex-shrink-0 bg-gray-100 relative">
-              <img v-if="item.thumbnail" :src="item.thumbnail" class="w-full h-full object-cover"
+              <img v-if="item.thumbnail" :src="thumb(item.thumbnail, 240)" loading="lazy" class="w-full h-full object-cover"
                 @error="e => e.target.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center text-3xl bg-amber-50\'>🍲</div>'" />
               <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-amber-50">🍲</div>
             </div>
@@ -137,6 +137,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
+import { thumb } from '../../utils/thumb'
 import axios from 'axios'
 
 const auth = useAuthStore()
