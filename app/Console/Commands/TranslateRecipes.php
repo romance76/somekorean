@@ -143,59 +143,84 @@ class TranslateRecipes extends Command
     }
 
     /**
-     * "주재료 > 아몬드가루 90g, 코코아가루 12g, ..." 같은 형태를 파싱해
-     * [{name_ko, name_en, amount}] 배열로 만든다.
+     * 식품안전나라 RCP_PARTS_DTLS 를 파싱해 [{name_ko, name_en, amount}] 배열로.
+     *
+     * 원본 포맷 예:
+     *   "새우두부계란찜\n연두부 75g(3/4모), 칵테일새우 20g(5마리), ...\n고명\n시금치 10g(3줄기)"
+     *   "주재료 > 아몬드가루 90g, 무가당 코코아가루① 12g, ..."
      */
     private function parseAndTranslateIngredients(string $text): ?array
     {
-        // 그룹 구분자 "주재료 > ..." 제거
-        $text = preg_replace('/[\n\r]+/', ', ', $text);
-        // 섹션 헤더 제거: "XXX >" 는 건너뛰기
-        $chunks = preg_split('/,\s*/', $text);
+        // 숫자/분수/단위 감지용
+        $hasQuantity = '/[0-9½⅓¼⅔¾⅛⅜⅝⅞]|약간|적당량/u';
+
+        // 줄바꿈 + "XXX >" 섹션도 분리
+        $text = preg_replace('/([가-힣\w ]+)\s*>\s*/u', "\n", $text);
+        $lines = preg_split('/[\n\r]+/', $text);
 
         $items = [];
-        foreach ($chunks as $chunk) {
-            $chunk = trim($chunk);
-            if ($chunk === '') continue;
-
-            // "주재료 >" 같은 섹션 헤더 제거
-            if (preg_match('/^([^>]+)>\s*(.*)$/u', $chunk, $m)) {
-                $chunk = trim($m[2]);
+        foreach ($lines as $line) {
+            // 각 줄을 콤마로 다시 분리
+            $chunks = preg_split('/,\s*/', trim($line));
+            foreach ($chunks as $chunk) {
+                $chunk = trim($chunk);
                 if ($chunk === '') continue;
-            }
 
-            // 뒤에서부터 분량 추출: 숫자 또는 기호 + 단위
-            // 예: "아몬드가루 90g" → name=아몬드가루, amount=90g
-            //     "소금 1작은술" → name=소금, amount=1작은술
-            //     "무가당 코코아가루① 12g" → name=무가당 코코아가루①, amount=12g
-            //     "약간" (분량만) 은 name 에 그대로
-            $name = $chunk;
-            $amount = '';
-            if (preg_match('/^(.+?)\s+([0-9½⅓¼⅔¾⅛⅜⅝⅞.\/~약간적당량]+\s*[가-힣a-zA-Z]*)\s*$/u', $chunk, $m)) {
-                $name = trim($m[1]);
-                $amount = trim($m[2]);
-            } elseif (preg_match('/^(.+?)\s+(약간|적당량)$/u', $chunk, $m)) {
-                $name = trim($m[1]);
-                $amount = trim($m[2]);
-            }
+                // 숫자/분량 기호가 전혀 없는 줄은 섹션 헤더로 간주 → 건너뛰기
+                if (!preg_match($hasQuantity, $chunk)) {
+                    continue;
+                }
 
-            $items[] = [
-                'name_ko' => $name,
-                'name_en' => '',
-                'amount' => $amount,
-            ];
+                // 분량 추출: 뒤쪽의 "숫자+단위(괄호)" 패턴
+                //   연두부 75g(3/4모) → name=연두부, amount=75g(3/4모)
+                //   소금 1작은술       → name=소금, amount=1작은술
+                //   참기름 약간        → name=참기름, amount=약간
+                $name = $chunk;
+                $amount = '';
+                if (preg_match('/^(.+?)\s+([0-9½⅓¼⅔¾⅛⅜⅝⅞.\/~]+\s*[가-힣a-zA-Z]*(?:\s*\([^)]*\))?)\s*$/u', $chunk, $m)) {
+                    $name = trim($m[1]);
+                    $amount = trim($m[2]);
+                } elseif (preg_match('/^(.+?)\s+(약간|적당량)$/u', $chunk, $m)) {
+                    $name = trim($m[1]);
+                    $amount = trim($m[2]);
+                } else {
+                    // 패턴 매칭 실패 — 숫자만 따로 분리 시도
+                    if (preg_match('/^(.+?)([0-9½⅓¼⅔¾]+.*)$/u', $chunk, $m)) {
+                        $name = trim($m[1]);
+                        $amount = trim($m[2]);
+                    }
+                }
+
+                if ($name === '') continue;
+                // 이름에 숫자/단위만 있는 경우 건너뜀
+                if (preg_match('/^[0-9.\/\s]+$/', $name)) continue;
+
+                $items[] = [
+                    'name_ko' => $name,
+                    'name_en' => '',
+                    'amount' => $amount,
+                ];
+            }
         }
 
         if (empty($items)) return null;
 
-        // 각 재료 이름을 영어로 번역 (batch 로 한 번에)
-        // "|" 구분자로 합쳐서 한 번에 번역 후 split
-        $joined = implode(' | ', array_map(fn($i) => $i['name_ko'], $items));
+        // 이름들만 batch 번역
+        $joined = implode(' ||| ', array_map(fn($i) => $i['name_ko'], $items));
         $translated = $this->googleTranslate($joined);
         if ($translated) {
-            $parts = array_map('trim', explode('|', $translated));
+            // Google 이 구분자를 변형할 수 있음 → 여러 패턴 시도
+            $parts = preg_split('/\s*\|{2,}\s*/', $translated);
+            if (count($parts) < count($items)) {
+                // 실패 시 하나씩 번역
+                $parts = [];
+                foreach ($items as $it) {
+                    $parts[] = $this->googleTranslate($it['name_ko']) ?: '';
+                    usleep(100000);
+                }
+            }
             foreach ($items as $i => &$item) {
-                if (isset($parts[$i])) $item['name_en'] = $parts[$i];
+                if (isset($parts[$i])) $item['name_en'] = trim($parts[$i]);
             }
             unset($item);
         }
