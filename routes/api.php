@@ -159,6 +159,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/clubs/{id}/join', [ClubController::class, 'join']);
     Route::post('/clubs/{id}/leave', [ClubController::class, 'leave']);
 
+    // Recipes (유저 작성/평점/찜)
+    Route::get('/recipes/my/favorites', [RecipeController::class, 'myFavorites']);
+    Route::post('/recipes', [RecipeController::class, 'store']);
+    Route::put('/recipes/{id}', [RecipeController::class, 'update']);
+    Route::delete('/recipes/{id}', [RecipeController::class, 'destroy']);
+    Route::post('/recipes/{id}/rate', [RecipeController::class, 'rate']);
+    Route::post('/recipes/{id}/favorite', [RecipeController::class, 'toggleFavorite']);
+
     Route::post('/groupbuys', [GroupBuyController::class, 'store']);
     Route::post('/groupbuys/{id}/join', [GroupBuyController::class, 'join']);
 

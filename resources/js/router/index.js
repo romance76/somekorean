@@ -53,8 +53,10 @@ const routes = [
   { path: '/news', name: 'news', component: p('news/NewsList') },
   { path: '/news/:id', name: 'news-detail', component: p('news/NewsList') },
 
-  // Recipes (식품안전나라 API 기반)
+  // Recipes (식품안전나라 API 기반 + 유저 레시피)
   { path: '/recipes', name: 'recipes', component: p('recipes/RecipeList') },
+  { path: '/recipes/write', name: 'recipe-create', component: p('recipes/RecipeCreate'), meta: { auth: true } },
+  { path: '/recipes/:id/edit', name: 'recipe-edit', component: p('recipes/RecipeCreate'), meta: { auth: true } },
   { path: '/recipes/:id', name: 'recipe-detail', component: p('recipes/RecipeDetail') },
 
   // GroupBuy

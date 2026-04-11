@@ -5,8 +5,8 @@
     <div class="flex border-b">
       <button @click="popTab='views'; loadTab('views')" class="flex-1 py-2.5 text-xs font-bold transition"
         :class="popTab==='views' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">많이 본 {{ label }}</button>
-      <button @click="popTab='latest'; loadTab('latest')" class="flex-1 py-2.5 text-xs font-bold transition"
-        :class="popTab==='latest' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">최신 {{ label }}</button>
+      <button @click="popTab='second'; loadTab('second')" class="flex-1 py-2.5 text-xs font-bold transition"
+        :class="popTab==='second' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">{{ secondTab?.label || '최신 ' + label }}</button>
     </div>
     <div class="py-1">
       <component v-for="(item, i) in currentItems" :key="item.id"
@@ -83,6 +83,9 @@ const props = defineProps({
   links: { type: Array, default: () => [] },
   filterParams: { type: Object, default: () => ({}) },
   inline: { type: Boolean, default: false },
+  // secondTab: 두 번째 탭 커스터마이즈 (기본 '최신')
+  // 예: { label: '별점 순', sort: 'rating' }
+  secondTab: { type: Object, default: null },
 })
 
 const emit = defineEmits(['select'])
@@ -94,16 +97,16 @@ const tabLoading = ref(false)
 const viewsItems = ref([])
 const viewsPage = ref(1)
 const viewsLastPage = ref(1)
-const latestItemsData = ref([])
-const latestPage = ref(1)
-const latestLastPage = ref(1)
+const secondItemsData = ref([])
+const secondPage = ref(1)
+const secondLastPage = ref(1)
 
 const recommendItems = ref([])
 const quickItems = ref([])
 
-const currentItems = computed(() => popTab.value === 'views' ? viewsItems.value : latestItemsData.value)
-const currentPage = computed(() => popTab.value === 'views' ? viewsPage.value : latestPage.value)
-const currentLastPage = computed(() => popTab.value === 'views' ? viewsLastPage.value : latestLastPage.value)
+const currentItems = computed(() => popTab.value === 'views' ? viewsItems.value : secondItemsData.value)
+const currentPage = computed(() => popTab.value === 'views' ? viewsPage.value : secondPage.value)
+const currentLastPage = computed(() => popTab.value === 'views' ? viewsLastPage.value : secondLastPage.value)
 
 const visiblePages = computed(() => {
   const p = currentPage.value
@@ -117,14 +120,16 @@ const visiblePages = computed(() => {
 
 async function loadTab(tab, page = 1) {
   tabLoading.value = true
-  const sort = tab === 'views' ? 'popular' : 'latest'
+  let sort = 'latest'
+  if (tab === 'views') sort = 'popular'
+  else if (props.secondTab?.sort) sort = props.secondTab.sort
   try {
     const { data } = await axios.get(props.apiUrl, { params: { sort, per_page: 10, page, ...props.filterParams } })
     const items = (data.data?.data || []).filter(i => i.id !== Number(props.currentId)).slice(0, 10)
     const totalItems = data.data?.total || items.length
     const lastPg = Math.ceil(totalItems / 10) || 1
     if (tab === 'views') { viewsItems.value = items; viewsPage.value = page; viewsLastPage.value = lastPg }
-    else { latestItemsData.value = items; latestPage.value = page; latestLastPage.value = lastPg }
+    else { secondItemsData.value = items; secondPage.value = page; secondLastPage.value = lastPg }
   } catch {}
   tabLoading.value = false
 }
@@ -137,12 +142,12 @@ function goPage(pg) {
 // filterParams 변경 시 리로드 (위치 변경 등)
 watch(() => props.filterParams, () => {
   loadTab('views', 1)
-  loadTab('latest', 1)
+  loadTab('second', 1)
 }, { deep: true })
 
 onMounted(async () => {
-  // 인기 + 최신 동시 로드
-  await Promise.allSettled([loadTab('views', 1), loadTab('latest', 1)])
+  // 인기 + 두 번째 탭 동시 로드
+  await Promise.allSettled([loadTab('views', 1), loadTab('second', 1)])
 
   // 추천 (recommendLabel 있을 때만)
   if (props.recommendLabel) {
@@ -152,7 +157,7 @@ onMounted(async () => {
     } catch {}
   }
 
-  // 실시간 = 최신 상위 6개
-  quickItems.value = latestItemsData.value.slice(0, 6)
+  // 실시간 = 두 번째 탭 상위 6개
+  quickItems.value = secondItemsData.value.slice(0, 6)
 })
 </script>
