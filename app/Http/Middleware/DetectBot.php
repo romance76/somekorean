@@ -12,9 +12,10 @@ class DetectBot
 {
     /**
      * 봇 감지 및 레이트 리미팅 미들웨어
-     * - API 요청: IP당 분당 최대 60회
+     * - 로그인된 유저: 무제한 (JWT 토큰 존재 시)
+     * - 비로그인 일반 API: IP당 분당 300회
+     * - 로그인/회원가입/비밀번호 등 auth 엔드포인트: IP당 분당 20회 (brute force 방지)
      * - Honeypot: 'website_url' 히든 필드가 채워지면 차단
-     * - 초과 시 429 응답
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -29,11 +30,23 @@ class DetectBot
             ], 403);
         }
 
-        // 2) 레이트 리미팅: IP당 분당 60회
-        $rateLimitKey = "api_rate:{$ip}";
+        // 2) 로그인된 유저는 제한 없음 (JWT Bearer 토큰 존재 여부)
+        if ($request->bearerToken()) {
+            return $next($request);
+        }
+
+        // 3) auth 엔드포인트는 별도 (낮은) 제한 — brute force 방지용
+        $path = $request->path();
+        $isAuthEndpoint = in_array($path, [
+            'api/login', 'api/register', 'api/password/reset', 'api/password/email',
+            'api/forgot-password', 'api/verify-email',
+        ]);
+
+        $limit = $isAuthEndpoint ? 20 : 300;
+        $rateLimitKey = ($isAuthEndpoint ? 'auth_rate:' : 'api_rate:') . $ip;
         $currentCount = (int) Cache::get($rateLimitKey, 0);
 
-        if ($currentCount >= 60) {
+        if ($currentCount >= $limit) {
             return response()->json([
                 'success' => false,
                 'message' => '너무 많은 요청입니다. 잠시 후 다시 시도하세요.',
@@ -41,7 +54,6 @@ class DetectBot
             ], 429);
         }
 
-        // 카운트 증가 (1분 TTL)
         if ($currentCount === 0) {
             Cache::put($rateLimitKey, 1, 60);
         } else {
@@ -65,7 +77,6 @@ class DetectBot
                 'updated_at' => now(),
             ]);
 
-            // 캐시도 즉시 갱신
             Cache::put("ip_ban:{$ip}", [
                 'banned'     => true,
                 'reason'     => $reason,
