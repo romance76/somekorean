@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -62,16 +62,46 @@ class ThumbnailController extends Controller
         $cachePath = $this->cachePath($url, $width);
 
         if (!file_exists($cachePath)) {
+            $body = $this->fetchUrl($url);
+            if ($body === null || strlen($body) < 100) {
+                \Log::warning('thumb fetch failed', ['url' => $url, 'size' => $body ? strlen($body) : 0]);
+                abort(404, 'source fetch failed');
+            }
             try {
-                $response = Http::timeout(15)->withOptions(['verify' => false])->get($url);
-                if (!$response->ok()) abort(404, 'source fetch failed');
-                $this->writeResized($response->body(), $cachePath, $width);
+                $this->writeResized($body, $cachePath, $width);
             } catch (\Exception $e) {
+                \Log::warning('thumb resize failed', ['url' => $url, 'err' => $e->getMessage()]);
                 abort(404, 'thumb generation failed: ' . $e->getMessage());
             }
         }
 
         return $this->serveFile($cachePath);
+    }
+
+    // 순수 curl 사용 (Guzzle 은 일부 환경에서 connection reset 발생)
+    private function fetchUrl(string $url): ?string
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SomeKorean-Thumb/1.0)',
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        ]);
+        $body = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+        if ($body === false || $code < 200 || $code >= 400) {
+            \Log::warning('thumb curl error', ['url' => $url, 'code' => $code, 'err' => $err]);
+            return null;
+        }
+        return $body;
     }
 
     private function resizeFromFile(string $sourcePath, int $width, string $cacheKey): BinaryFileResponse
