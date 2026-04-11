@@ -27,14 +27,17 @@ class RecipeController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        $sort = $request->sort ?? 'rating';
+        $sort = $request->sort ?? 'random';
         if ($sort === 'popular' || $sort === 'views') {
             $query->orderByDesc('view_count')->orderByDesc('id');
         } elseif ($sort === 'latest') {
             $query->orderByDesc('id');
-        } else {
-            // 기본: 별점 높은 순 (평가 많은 것 우선) + ID desc
+        } elseif ($sort === 'rating') {
             $query->orderByDesc('rating_avg')->orderByDesc('rating_count')->orderByDesc('id');
+        } else {
+            // 기본: 랜덤 (페이지네이션과 호환을 위해 seed 사용)
+            $seed = (int) ($request->seed ?: mt_rand(1, 999999));
+            $query->orderByRaw('RAND(?)', [$seed]);
         }
 
         $perPage = (int) ($request->per_page ?? 20);

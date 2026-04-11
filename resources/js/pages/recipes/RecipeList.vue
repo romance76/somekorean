@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
       <h1 class="text-xl font-black text-gray-800">🍳 레시피</h1>
       <div class="flex items-center gap-2 flex-wrap">
-        <form @submit.prevent="loadPage(1)" class="flex gap-1">
+        <form @submit.prevent="onSearch" class="flex gap-1">
           <input v-model="search" type="text" placeholder="검색..." class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-amber-400 outline-none w-40" />
           <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500">검색</button>
         </form>
@@ -56,15 +56,19 @@
             <span v-if="showFavorites" class="font-bold text-red-600 text-sm">💖 찜한 레시피</span>
             <template v-else>
               <span class="font-bold text-amber-700 text-sm">{{ activeCat || '전체' }}</span>
-              <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">평점 높은 순으로 표시</span>
+              <span v-if="sort === 'random'" class="text-xs text-gray-400 ml-2">랜덤 순서</span>
             </template>
           </div>
           <!-- 정렬 (찜 탭 아닐 때만) -->
-          <select v-if="!showFavorites" v-model="sort" @change="loadPage(1)" class="border rounded-lg px-2 py-1 text-xs outline-none">
-            <option value="rating">⭐ 별점 높은 순</option>
-            <option value="popular">👁 많이 본 순</option>
-            <option value="latest">🕐 최신 순</option>
-          </select>
+          <div v-if="!showFavorites" class="flex gap-1 items-center">
+            <button v-if="sort === 'random'" @click="reshuffle" class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-bold hover:bg-amber-200" title="새로 섞기">🔀 섞기</button>
+            <select v-model="sort" @change="onSortChange" class="border rounded-lg px-2 py-1 text-xs outline-none">
+              <option value="random">🎲 랜덤 (기본)</option>
+              <option value="rating">⭐ 별점 높은 순</option>
+              <option value="popular">👁 많이 본 순</option>
+              <option value="latest">🕐 최신 순</option>
+            </select>
+          </div>
         </div>
 
         <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
@@ -141,11 +145,31 @@ const items = ref([])
 const categories = ref([])
 const activeCat = ref('')
 const search = ref('')
-const sort = ref('rating')
+const sort = ref('random')
 const page = ref(1)
 const lastPage = ref(1)
 const loading = ref(true)
 const showFavorites = ref(false)
+const randomSeed = ref(Math.floor(Math.random() * 999999) + 1)
+
+function newSeed() {
+  randomSeed.value = Math.floor(Math.random() * 999999) + 1
+}
+
+function reshuffle() {
+  newSeed()
+  loadPage(1)
+}
+
+function onSortChange() {
+  if (sort.value === 'random') newSeed()
+  loadPage(1)
+}
+
+function onSearch() {
+  if (sort.value === 'random') newSeed()
+  loadPage(1)
+}
 
 async function loadPage(p = 1) {
   loading.value = true
@@ -157,6 +181,8 @@ async function loadPage(p = 1) {
     if (search.value) params.search = search.value
     if (activeCat.value) params.category = activeCat.value
     if (sort.value) params.sort = sort.value
+    // 랜덤 정렬일 때는 seed 를 전달해야 페이지 넘어가도 같은 셔플 유지
+    if (sort.value === 'random') params.seed = randomSeed.value
   }
 
   try {
@@ -177,6 +203,7 @@ async function loadCategories() {
 function selectCategory(cat, fav) {
   showFavorites.value = fav
   activeCat.value = cat
+  if (sort.value === 'random') newSeed() // 카테고리 바뀔 때마다 새 셔플
   loadPage(1)
 }
 
@@ -190,6 +217,7 @@ watch(() => route.query.category, (newCat) => {
   if (newCat !== undefined) {
     showFavorites.value = false
     activeCat.value = newCat || ''
+    if (sort.value === 'random') newSeed()
     loadPage(1)
   }
 })
