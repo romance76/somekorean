@@ -53,10 +53,9 @@ const routes = [
   { path: '/news', name: 'news', component: p('news/NewsList') },
   { path: '/news/:id', name: 'news-detail', component: p('news/NewsList') },
 
-  // Recipes
+  // Recipes (식품안전나라 API 기반)
   { path: '/recipes', name: 'recipes', component: p('recipes/RecipeList') },
-  { path: '/recipes/write', name: 'recipe-write', component: p('recipes/RecipeCreate'), meta: { auth: true } },
-  { path: '/recipes/:id', name: 'recipe-detail', component: p('recipes/RecipeList') },
+  { path: '/recipes/:id', name: 'recipe-detail', component: p('recipes/RecipeDetail') },
 
   // GroupBuy
   { path: '/groupbuy', name: 'groupbuy', component: p('groupbuy/GroupBuyHome') },

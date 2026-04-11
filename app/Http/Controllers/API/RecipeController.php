@@ -1,47 +1,48 @@
 <?php
 namespace App\Http\Controllers\API;
+
 use App\Http\Controllers\Controller;
 use App\Models\RecipePost;
-use App\Models\RecipeCategory;
 use Illuminate\Http\Request;
 
 class RecipeController extends Controller
 {
+    // GET /api/recipes — 공용 목록 (페이지네이션)
     public function index(Request $request)
     {
-        $query = RecipePost::with('user:id,name,nickname', 'category:id,name')
-            ->when($request->category_id, fn($q,$v) => $q->where('category_id', $v))
-            ->when($request->difficulty, fn($q,$v) => $q->where('difficulty', $v))
-            ->when($request->search, fn($q,$v) => $q->where('title', 'like', "%{$v}%"))
-            ->orderByDesc('created_at');
-        return response()->json(['success' => true, 'data' => $query->paginate(20)]);
+        $query = RecipePost::where('is_active', true);
+
+        if ($request->search) {
+            $query->where('title', 'like', "%{$request->search}%");
+        }
+        if ($request->category) {
+            $query->where('category', $request->category);
+        }
+
+        $perPage = (int) ($request->per_page ?? 12);
+        return response()->json(
+            $query->orderByDesc('id')->paginate($perPage)
+        );
     }
 
+    // GET /api/recipes/{id}
     public function show($id)
     {
-        $recipe = RecipePost::with('user:id,name,nickname,avatar', 'category:id,name')->findOrFail($id);
+        $recipe = RecipePost::where('is_active', true)->findOrFail($id);
         $recipe->increment('view_count');
-        return response()->json(['success' => true, 'data' => $recipe]);
+        return response()->json($recipe);
     }
 
-    public function store(Request $request)
+    // GET /api/recipes/categories — 카테고리 목록 (count 포함)
+    public function categories()
     {
-        $request->validate(['title' => 'required|max:200', 'content' => 'required']);
-        $images = [];
-        if ($request->hasFile('images')) foreach ($request->file('images') as $img) $images[] = $img->store('recipes', 'public');
-
-        $recipe = RecipePost::create(array_merge(
-            $request->only('title','title_ko','content','content_ko','ingredients','ingredients_ko','steps','steps_ko','category_id','servings','prep_time','cook_time','difficulty'),
-            ['user_id' => auth()->id(), 'images' => $images ?: null]
-        ));
-        return response()->json(['success' => true, 'data' => $recipe], 201);
-    }
-
-    public function categories() { return response()->json(['success' => true, 'data' => RecipeCategory::orderBy('sort_order')->get()]); }
-
-    public function destroy($id)
-    {
-        RecipePost::where('user_id', auth()->id())->findOrFail($id)->delete();
-        return response()->json(['success' => true]);
+        $cats = RecipePost::where('is_active', true)
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->groupBy('category')
+            ->selectRaw('category, count(*) as count')
+            ->orderByDesc('count')
+            ->get();
+        return response()->json($cats);
     }
 }

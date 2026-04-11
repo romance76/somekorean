@@ -49,4 +49,10 @@ return [
     'firebase' => [
         'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase-service-account.json')),
     ],
+
+    'foodsafety' => [
+        'api_key' => env('FOODSAFETY_API_KEY', 'e3ffc744a3fb41299c10'),
+        'url'     => env('FOODSAFETY_API_URL', 'http://openapi.foodsafetykorea.go.kr/api'),
+        'service' => env('FOODSAFETY_SERVICE', 'COOKRCP01'),
+    ],
 ];

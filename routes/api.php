@@ -11,6 +11,7 @@ use App\Http\Controllers\API\RealEstateController;
 use App\Http\Controllers\API\ClubController;
 use App\Http\Controllers\API\NewsController;
 use App\Http\Controllers\API\RecipeController;
+use App\Http\Controllers\API\AdminRecipeController;
 use App\Http\Controllers\API\GroupBuyController;
 use App\Http\Controllers\API\EventController;
 use App\Http\Controllers\API\QaController;
@@ -157,9 +158,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/clubs', [ClubController::class, 'store']);
     Route::post('/clubs/{id}/join', [ClubController::class, 'join']);
     Route::post('/clubs/{id}/leave', [ClubController::class, 'leave']);
-
-    Route::post('/recipes', [RecipeController::class, 'store']);
-    Route::delete('/recipes/{id}', [RecipeController::class, 'destroy']);
 
     Route::post('/groupbuys', [GroupBuyController::class, 'store']);
     Route::post('/groupbuys/{id}/join', [GroupBuyController::class, 'join']);
@@ -486,4 +484,16 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/shorts', [AdminController::class, 'shortsList']);
     Route::delete('/shorts/{id}', [AdminController::class, 'shortsDelete']);
     Route::get('/shorts/stats', [AdminController::class, 'shortsStats']);
+
+    // ─── Admin Recipes (식품안전나라 API) ───
+    Route::get('/recipes/stats', [AdminRecipeController::class, 'stats']);
+    Route::get('/recipes/test-connection', [AdminRecipeController::class, 'testConnection']);
+    Route::post('/recipes/sync', [AdminRecipeController::class, 'sync']);
+    Route::post('/recipes/sync-all', [AdminRecipeController::class, 'syncAll']);
+    Route::post('/recipes/clear-all', [AdminRecipeController::class, 'clearAll']);
+    Route::delete('/recipes/bulk-delete', [AdminRecipeController::class, 'bulkDelete']);
+    Route::get('/recipes', [AdminRecipeController::class, 'index']);
+    Route::put('/recipes/{id}', [AdminRecipeController::class, 'update']);
+    Route::patch('/recipes/{id}/toggle', [AdminRecipeController::class, 'toggle']);
+    Route::delete('/recipes/{id}', [AdminRecipeController::class, 'destroy']);
 });
