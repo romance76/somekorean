@@ -94,11 +94,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 
+const route = useRoute()
 const items = ref([])
 const categories = ref([])
 const activeCat = ref('')
@@ -133,8 +134,18 @@ function selectCategory(cat) {
   loadPage(1)
 }
 
+// URL 쿼리 파라미터 (?category=xxx) 감지
+watch(() => route.query.category, (newCat) => {
+  if (newCat !== undefined) {
+    activeCat.value = newCat || ''
+    loadPage(1)
+  }
+})
+
 onMounted(() => {
   loadCategories()
+  // 초기 URL 쿼리 반영
+  if (route.query.category) activeCat.value = route.query.category
   loadPage()
 })
 </script>
