@@ -122,19 +122,34 @@ class TranslateRecipes extends Command
             if ($structured) $out['ingredients_structured'] = $structured;
         }
 
-        // 3. 조리 순서 — 각 step 번역
+        // 3. 조리 순서 — 모든 step 을 한 번에 번역 (구분자로 join)
         if (is_array($recipe->steps) && count($recipe->steps)) {
+            $stepTexts = array_map(fn($s) => $s['text'] ?? '', $recipe->steps);
+            $joined = implode("\n@@@\n", $stepTexts);
+            $translated = $joined ? $this->googleTranslate($joined) : '';
+            $translatedSteps = [];
+            if ($translated) {
+                // "@@@" 가 번역 중 손상될 수 있으므로 여러 패턴 시도
+                $parts = preg_split('/\s*@{2,}\s*/', $translated);
+                if (count($parts) !== count($stepTexts)) {
+                    // 실패 시 개별 번역 fallback
+                    $parts = [];
+                    foreach ($stepTexts as $t) {
+                        $parts[] = $t ? $this->googleTranslate($t) : '';
+                        usleep(20000);
+                    }
+                }
+                $translatedSteps = $parts;
+            }
+
             $newSteps = [];
-            foreach ($recipe->steps as $s) {
-                $text = $s['text'] ?? '';
-                $textEn = $text ? $this->googleTranslate($text) : null;
+            foreach ($recipe->steps as $i => $s) {
                 $newSteps[] = [
-                    'order' => $s['order'] ?? (count($newSteps) + 1),
-                    'text' => $text,
-                    'text_en' => $textEn,
+                    'order' => $s['order'] ?? ($i + 1),
+                    'text' => $s['text'] ?? '',
+                    'text_en' => isset($translatedSteps[$i]) ? trim($translatedSteps[$i]) : null,
                     'image_url' => $s['image_url'] ?? null,
                 ];
-                usleep(30000); // 0.03s
             }
             $out['steps'] = $newSteps;
         }
