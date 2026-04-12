@@ -64,7 +64,7 @@ class FetchNews extends Command
 
     private function fetchArirang(): array
     {
-        $apiKey = ApiKey::getKey('arirang_news');
+        $apiKey = ApiKey::keyFor('arirang_news');
         if (!$apiKey) {
             $this->warn('  아리랑 API 키가 등록되지 않았습니다 (관리자 → API 키 관리)');
             return [0, 0];

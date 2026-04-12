@@ -22,7 +22,7 @@ class ApiKey extends Model
     /**
      * 서비스 코드로 활성 API 키 조회
      */
-    public static function getKey(string $service): ?string
+    public static function keyFor(string $service): ?string
     {
         return static::where('service', $service)->where('is_active', true)->value('api_key');
     }
