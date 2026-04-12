@@ -36,6 +36,8 @@ class ThumbnailController extends Controller
         'dimg.donga.com', 'image.donga.com', 'img.donga.com',
         'img.sbs.co.kr', 'mimgnews.pstatic.net', 'imgnews.pstatic.net',
         'news.kbs.co.kr', 'img.kbs.co.kr',
+        'newsimg.hankookilbo.com', 'www.hankookilbo.com',
+        'www.koreadaily.com', 'koreadaily.com',
         'somekorean.com',
         'www.somekorean.com',
     ];
