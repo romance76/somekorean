@@ -38,6 +38,17 @@ class FetchNews extends Command
 
     private array $categoryIdCache = [];
 
+    // 영어 키워드 → 카테고리 slug 매핑 (아리랑/TIME 공용)
+    private array $enCategoryRules = [
+        'sports' => ['soccer', 'football', 'baseball', 'basketball', 'golf', 'tennis', 'Olympic', 'athlete', 'FIFA', 'MLB', 'NBA', 'NFL', 'Premier League', 'Champions League', 'World Cup', 'BTS', 'K-pop', 'tournament', 'match', 'game score', 'season', 'league', 'coach', 'player'],
+        'entertainment' => ['movie', 'film', 'drama', 'Netflix', 'Disney', 'actor', 'actress', 'singer', 'concert', 'album', 'K-drama', 'celebrity', 'Oscar', 'Cannes', 'box office', 'streaming', 'TV show', 'entertainment', 'Hollywood', 'music', 'idol', 'award'],
+        'economy' => ['economy', 'economic', 'GDP', 'stock', 'market', 'trade', 'export', 'import', 'inflation', 'interest rate', 'unemployment', 'investment', 'Samsung', 'Hyundai', 'business', 'company', 'corporate', 'revenue', 'profit', 'dollar', 'won', 'currency', 'tariff', 'semiconductor', 'chip'],
+        'tech' => ['AI ', 'artificial intelligence', 'robot', 'tech', 'technology', 'digital', 'cyber', 'hack', 'software', 'startup', 'drone', 'EV ', 'electric vehicle', 'battery', 'semiconductor', 'chip', 'space', 'NASA', 'satellite', 'SpaceX', '5G', '6G', 'quantum'],
+        'society' => ['crime', 'police', 'court', 'trial', 'sentence', 'accident', 'crash', 'earthquake', 'typhoon', 'flood', 'fire', 'death', 'victim', 'protest', 'rally', 'human rights', 'discrimination', 'education', 'school', 'university', 'student'],
+        'politics' => ['president', 'minister', 'parliament', 'congress', 'election', 'vote', 'party', 'legislation', 'bill', 'policy', 'diplomatic', 'summit', 'sanction', 'impeach', 'Democrat', 'Republican', 'liberal', 'conservative', 'coalition'],
+        'lifestyle' => ['health', 'hospital', 'medical', 'disease', 'vaccine', 'diet', 'food', 'recipe', 'travel', 'tourism', 'hotel', 'weather', 'forecast', 'temperature', 'rain', 'snow', 'fashion', 'beauty', 'wellness'],
+    ];
+
     public function handle(): int
     {
         // 카테고리 slug → id 캐시
@@ -138,8 +149,10 @@ class FetchNews extends Command
                     $contentKo = $this->translateLongText($content) ?: $content;
                 }
 
-                // 카테고리: 아리랑은 국제뉴스 위주
-                $categoryId = $this->categoryIdCache['world'] ?? null;
+                // 카테고리: 영어 제목+본문 키워드로 분류
+                $classifyText = $title . ' ' . $content;
+                $categorySlug = $this->classifyByKeywords($classifyText);
+                $categoryId = $this->categoryIdCache[$categorySlug] ?? ($this->categoryIdCache['world'] ?? null);
 
                 $publishedAt = $broadcastDate ? Carbon::parse($broadcastDate) : now();
                 $source = ($titleKo === $title) ? '아리랑 (번역 실패)' : '아리랑';
@@ -195,14 +208,17 @@ class FetchNews extends Command
                      ?: $this->extractEnclosureImage($item)
                      ?: $this->extractFirstImgFromHtml($contentHtml);
 
-            // 카테고리
-            $categorySlug = 'world'; // 기본값
+            // 카테고리: RSS category 태그 우선, 없으면 키워드 분류
+            $categorySlug = null;
             foreach ($item->category as $cat) {
                 $catName = trim((string) $cat);
                 if (isset($this->timeCategoryMap[$catName])) {
                     $categorySlug = $this->timeCategoryMap[$catName];
                     break;
                 }
+            }
+            if (!$categorySlug) {
+                $categorySlug = $this->classifyByKeywords($title . ' ' . $contentEn);
             }
             $categoryId = $this->categoryIdCache[$categorySlug] ?? null;
 
@@ -236,6 +252,21 @@ class FetchNews extends Command
     }
 
     // ─────────────────────── RSS 로드 ───────────────────────
+
+    /**
+     * 영어 제목+본문에서 키워드 기반 카테고리 분류
+     */
+    private function classifyByKeywords(string $text): string
+    {
+        foreach ($this->enCategoryRules as $slug => $keywords) {
+            foreach ($keywords as $kw) {
+                if (stripos($text, $kw) !== false) {
+                    return $slug;
+                }
+            }
+        }
+        return 'world'; // 기본값: 국제
+    }
 
     private function loadRss(string $url): ?\SimpleXMLElement
     {
