@@ -53,12 +53,19 @@
             </div>
             <!-- 대표 이미지 (본문에 이미지가 없을 때만) -->
             <div v-if="activeItem.image_url && !contentBlocks.some(b => b.type==='img')" class="px-5 pb-3">
-              <img :src="activeItem.image_url" class="w-full max-h-80 object-cover rounded-lg" @error="e=>e.target.style.display='none'" />
+              <img :src="activeItem.image_url"
+                class="block mx-auto rounded-lg"
+                style="max-width: 100%; width: auto; height: auto; max-height: 480px;"
+                @error="e=>e.target.style.display='none'" />
             </div>
             <!-- 본문 (단락 구분 + 이미지) -->
             <div class="px-5 py-5 border-t text-sm text-gray-700 leading-7">
               <template v-for="(block, i) in contentBlocks" :key="i">
-                <img v-if="block.type==='img'" :src="block.src" class="w-full rounded-lg my-4" @error="e=>e.target.style.display='none'" />
+                <!-- 이미지: 원본 사이즈 유지 (작은 이미지는 작게, 큰 이미지는 컨테이너 너비로 제한) -->
+                <img v-if="block.type==='img'" :src="block.src"
+                  class="block mx-auto rounded-lg my-4"
+                  style="max-width: 100%; width: auto; height: auto;"
+                  @error="e=>e.target.style.display='none'" />
                 <p v-else class="mb-4" style="text-indent: 0.5em;">{{ block.text }}</p>
               </template>
               <!-- 짧은 본문일 때 안내 -->
