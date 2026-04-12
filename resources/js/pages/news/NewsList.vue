@@ -61,9 +61,17 @@
                 <img v-if="block.type==='img'" :src="block.src" class="w-full rounded-lg my-4" @error="e=>e.target.style.display='none'" />
                 <p v-else class="mb-4" style="text-indent: 0.5em;">{{ block.text }}</p>
               </template>
+              <!-- 짧은 본문일 때 안내 -->
+              <div v-if="(activeItem.content || '').length < 600 && activeItem.source_url"
+                class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                ⓘ 본문 일부만 표시됩니다. 전체 기사는 아래 <b>원문 보기</b> 링크에서 확인하세요.
+              </div>
             </div>
-            <div v-if="activeItem.source_url" class="px-5 py-3 border-t">
-              <a :href="activeItem.source_url" target="_blank" class="text-amber-600 text-sm hover:underline">📎 원문 보기 →</a>
+            <div v-if="activeItem.source_url" class="px-5 py-3 border-t bg-amber-50/30">
+              <a :href="activeItem.source_url" target="_blank"
+                class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500 transition">
+                📎 원문 전체 보기 →
+              </a>
             </div>
           </div>
           <div class="flex justify-between mt-3">
