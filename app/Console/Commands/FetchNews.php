@@ -11,23 +11,17 @@ class FetchNews extends Command
     protected $signature   = 'news:fetch';
     protected $description = '한인 뉴스 RSS 피드를 가져와 DB에 저장합니다';
 
+    // 각 피드: [url, type] — type 은 'rss' 또는 'sitemap_news' (Google News sitemap)
     private array $feeds = [
-        // 미주 한인 언론 (우선)
-        '미주한국일보'  => 'https://www.koreatimes.com/rss/rss.asp',
-        '미주중앙일보'  => 'https://www.koreadaily.com/rss/list.aspx',
-        '코리아타임스'  => 'https://www.koreatimes.co.kr/www2/rss/rss.asp',
-        '한국일보'     => 'https://www.hankookilbo.com/rss/all',
-        '조선일보'     => 'https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml',
-        '동아일보'     => 'https://rss.donga.com/total.xml',
-        'SBS뉴스'     => 'https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER',
-        'MBC뉴스'     => 'https://imnews.imbc.com/rss/news.xml',
+        // 미주 한인 언론
+        '미주중앙일보'  => ['url' => 'https://www.koreadaily.com/sitemap/latest-articles',  'type' => 'sitemap_news'],
+        '한국일보'     => ['url' => 'https://www.hankookilbo.com/sitemap/latest-articles', 'type' => 'sitemap_news'],
+        '코리아타임스'  => ['url' => 'https://www.koreatimes.co.kr/www2/common/rss.asp',   'type' => 'rss'],
         // 한국 주요 언론
-        '한겨레'       => 'https://www.hani.co.kr/rss/',
-        '연합뉴스'     => 'https://www.yna.co.kr/rss/all.xml',
-        'KBS월드'     => 'https://world.kbs.co.kr/rss/rss_news.htm?lang=k',
-        // 미국 관련
-        'USCIS'       => 'https://www.uscis.gov/news/news-releases.rss',
-        'VOA한국어'   => 'https://www.voakorea.com/rss/zopvoy$pqpmo.rss',
+        '조선일보'     => ['url' => 'https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml', 'type' => 'rss'],
+        '동아일보'     => ['url' => 'https://rss.donga.com/total.xml', 'type' => 'rss'],
+        'SBS뉴스'     => ['url' => 'https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER', 'type' => 'rss'],
+        '한겨레'       => ['url' => 'https://www.hani.co.kr/rss/', 'type' => 'rss'],
     ];
 
     private array $categoryKeywords = [
@@ -57,14 +51,16 @@ class FetchNews extends Command
         $created = 0;
         $skipped = 0;
 
-        foreach ($this->feeds as $source => $url) {
-            $this->info("피드 가져오는 중: {$source}");
+        foreach ($this->feeds as $source => $feedDef) {
+            $url = $feedDef['url'];
+            $type = $feedDef['type'];
+            $this->info("피드 가져오는 중: {$source} ({$type})");
 
             try {
                 $context = stream_context_create([
                     'http' => [
                         'timeout'    => 15,
-                        'user_agent' => 'Mozilla/5.0 (SomeKorean News Bot)',
+                        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     ],
                     'ssl' => [
                         'verify_peer'      => false,
@@ -84,11 +80,29 @@ class FetchNews extends Command
                     continue;
                 }
 
-                $items = $feed->channel->item ?? $feed->entry ?? [];
+                // sitemap_news 는 <urlset><url>...</url></urlset>, RSS 는 <channel><item>...</item></channel>
+                if ($type === 'sitemap_news') {
+                    $items = $feed->url ?? [];
+                } else {
+                    $items = $feed->channel->item ?? $feed->entry ?? [];
+                }
 
                 foreach ($items as $item) {
-                    $link  = (string) ($item->link ?? '');
-                    $title = (string) ($item->title ?? '');
+                    if ($type === 'sitemap_news') {
+                        // Google News sitemap: <url><loc>...</loc><news:news><news:title>...</news:title><news:publication_date>...</news:publication_date></news:news></url>
+                        $link = (string) ($item->loc ?? '');
+                        $namespaces = $item->getNameSpaces(true);
+                        $newsNode = isset($namespaces['news']) ? $item->children($namespaces['news']) : null;
+                        $newsItem = $newsNode?->news;
+                        $title = $newsItem ? (string) $newsItem->title : '';
+                        $pubDate = $newsItem ? (string) $newsItem->publication_date : (string) ($item->lastmod ?? '');
+                        $description = '';
+                    } else {
+                        $link  = (string) ($item->link ?? '');
+                        $title = (string) ($item->title ?? '');
+                        $pubDate = (string) ($item->pubDate ?? $item->published ?? '');
+                        $description = strip_tags((string) ($item->description ?? ''));
+                    }
 
                     if (!$link || !$title) {
                         continue;
@@ -99,43 +113,43 @@ class FetchNews extends Command
                         continue;
                     }
 
-                    $description = strip_tags((string) ($item->description ?? ''));
-                    $summary     = mb_substr($description, 0, 300);
+                    $summary = mb_substr($description, 0, 300);
 
                     // 전체 기사 본문 가져오기
                     $content = $this->fetchArticleContent($link);
                     if (!$content) {
-                        $content = $description; // RSS description을 폴백으로 사용
+                        $content = $description; // RSS description / sitemap 은 빈 문자열일 수 있음
                     }
 
                     // 이미지 URL 추출
                     $imageUrl = null;
-                    $namespaces = $item->getNameSpaces(true);
-                    if (isset($namespaces['media'])) {
-                        $media = $item->children($namespaces['media']);
-                        if (isset($media->content)) {
-                            $imageUrl = (string) $media->content->attributes()->url;
-                        } elseif (isset($media->thumbnail)) {
-                            $imageUrl = (string) $media->thumbnail->attributes()->url;
+                    if ($type !== 'sitemap_news') {
+                        $namespaces = $item->getNameSpaces(true);
+                        if (isset($namespaces['media'])) {
+                            $media = $item->children($namespaces['media']);
+                            if (isset($media->content)) {
+                                $imageUrl = (string) $media->content->attributes()->url;
+                            } elseif (isset($media->thumbnail)) {
+                                $imageUrl = (string) $media->thumbnail->attributes()->url;
+                            }
+                        }
+                        if (!$imageUrl && isset($item->enclosure)) {
+                            $encType = (string) $item->enclosure->attributes()->type;
+                            if (str_starts_with($encType, 'image/')) {
+                                $imageUrl = (string) $item->enclosure->attributes()->url;
+                            }
                         }
                     }
-                    if (!$imageUrl && isset($item->enclosure)) {
-                        $type = (string) $item->enclosure->attributes()->type;
-                        if (str_starts_with($type, 'image/')) {
-                            $imageUrl = (string) $item->enclosure->attributes()->url;
-                        }
-                    }
-                    // Try to extract og:image from article HTML if no image found yet in RSS
+                    // og:image fallback 으로 기사 HTML 에서 추출
                     if (!$imageUrl) {
                         $imageUrl = $this->extractArticleImage($link);
                     }
 
-                    // 발행일
-                    $pubDate = $item->pubDate ?? $item->published ?? null;
+                    // 발행일 파싱
                     $publishedAt = null;
                     if ($pubDate) {
                         try {
-                            $publishedAt = Carbon::parse((string) $pubDate);
+                            $publishedAt = Carbon::parse($pubDate);
                         } catch (\Exception $e) {
                             $publishedAt = null;
                         }
