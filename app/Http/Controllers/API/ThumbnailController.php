@@ -44,6 +44,8 @@ class ThumbnailController extends Controller
         'gcp-na-images.contentstack.com',
         // 아리랑 뉴스
         'img.arirang.com', 'www.arirang.com', 'm.arirang.com',
+        // 오마이뉴스
+        'ojsfile.ohmynews.com', 'www.ohmynews.com',
         'somekorean.com',
         'www.somekorean.com',
     ];

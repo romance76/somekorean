@@ -50,6 +50,24 @@ class FetchNews extends Command
         'lifestyle' => ['health', 'hospital', 'medical', 'disease', 'vaccine', 'diet', 'food', 'recipe', 'travel', 'tourism', 'hotel', 'weather', 'forecast', 'temperature', 'rain', 'snow', 'fashion', 'beauty', 'wellness'],
     ];
 
+    // 오마이뉴스 카테고리 → slug 매핑
+    private array $ohmyCategoryMap = [
+        '정치'     => 'politics',
+        '경제'     => 'economy',
+        '사회'     => 'society',
+        '교육'     => 'society',
+        '미디어'   => 'society',
+        '여성'     => 'society',
+        '민족·국제' => 'world',
+        '해외리포트' => 'world',
+        '스포츠'   => 'sports',
+        '스타'     => 'entertainment',
+        '만평·만화' => 'entertainment',
+        '문화'     => 'lifestyle',
+        '사는이야기' => 'lifestyle',
+        '책동네'   => 'lifestyle',
+    ];
+
     public function handle(): int
     {
         // 카테고리 slug → id 캐시
@@ -57,6 +75,11 @@ class FetchNews extends Command
 
         $totalCreated = 0;
         $totalSkipped = 0;
+
+        // 오마이뉴스 (한국어, 번역 불필요)
+        $this->info('=== 오마이뉴스 RSS ===');
+        [$c, $s] = $this->fetchOhmy();
+        $totalCreated += $c; $totalSkipped += $s;
 
         // 아리랑 뉴스 (공공데이터 API — 합법적)
         $this->info('=== 아리랑 뉴스 API ===');
@@ -70,6 +93,64 @@ class FetchNews extends Command
 
         $this->info("완료: 신규={$totalCreated} 중복={$totalSkipped}");
         return self::SUCCESS;
+    }
+
+    // ─────────────────────── 오마이뉴스 ───────────────────────
+
+    private function fetchOhmy(): array
+    {
+        $xml = $this->loadRss('https://rss.ohmynews.com/rss/ohmynews.xml');
+        if (!$xml) { $this->warn('오마이뉴스 RSS 로드 실패'); return [0, 0]; }
+
+        $created = 0; $skipped = 0;
+
+        foreach ($xml->channel->item as $item) {
+            $link  = trim((string) ($item->link ?? ''));
+            $title = trim((string) ($item->title ?? ''));
+            if (!$link || !$title) continue;
+            if (News::where('source_url', $link)->exists()) { $skipped++; continue; }
+
+            // description 에 HTML 본문 + 이미지 포함
+            $descHtml = (string) ($item->description ?? '');
+            $content = $this->htmlToText($descHtml);
+
+            // "전체 내용보기" 링크 제거
+            $content = preg_replace('/전체 내용보기\s*$/u', '', $content);
+            $content = trim($content);
+
+            // 이미지: description HTML 에서 첫 img 추출
+            $imageUrl = $this->extractFirstImgFromHtml($descHtml);
+
+            // 카테고리: <category> 태그
+            $categorySlug = 'society'; // 기본값
+            foreach ($item->category as $cat) {
+                $catName = trim((string) $cat);
+                if (isset($this->ohmyCategoryMap[$catName])) {
+                    $categorySlug = $this->ohmyCategoryMap[$catName];
+                    break;
+                }
+            }
+            $categoryId = $this->categoryIdCache[$categorySlug] ?? null;
+
+            // 발행일
+            $pubDate = (string) ($item->pubDate ?? '');
+            $publishedAt = $pubDate ? Carbon::parse($pubDate) : now();
+
+            News::create([
+                'title'        => $title,
+                'content'      => $content,
+                'summary'      => mb_substr($content ?: $title, 0, 300),
+                'source'       => '오마이뉴스',
+                'source_url'   => $link,
+                'image_url'    => $imageUrl ? html_entity_decode($imageUrl) : null,
+                'category_id'  => $categoryId,
+                'published_at' => $publishedAt,
+            ]);
+            $created++;
+        }
+
+        $this->info("  오마이뉴스: 신규={$created} 중복={$skipped}");
+        return [$created, $skipped];
     }
 
     // ─────────────────────── 아리랑 (공공데이터 API) ───────────────────────
