@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\News;
 use App\Models\NewsCategory;
+use App\Models\ApiKey;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
@@ -42,15 +43,128 @@ class FetchNews extends Command
         // 카테고리 slug → id 캐시
         $this->categoryIdCache = NewsCategory::pluck('id', 'slug')->toArray();
 
-        $this->info('=== TIME Magazine RSS ===');
-        [$created, $skipped] = $this->fetchTime();
+        $totalCreated = 0;
+        $totalSkipped = 0;
 
-        $this->info("완료: 신규={$created} 중복={$skipped}");
+        // 아리랑 뉴스 (공공데이터 API — 합법적)
+        $this->info('=== 아리랑 뉴스 API ===');
+        [$c, $s] = $this->fetchArirang();
+        $totalCreated += $c; $totalSkipped += $s;
+
+        // TIME Magazine RSS
+        $this->info('=== TIME Magazine RSS ===');
+        [$c, $s] = $this->fetchTime();
+        $totalCreated += $c; $totalSkipped += $s;
+
+        $this->info("완료: 신규={$totalCreated} 중복={$totalSkipped}");
         return self::SUCCESS;
     }
 
-    // ─────────────────────── SBS 제거됨 (RSS 재배포 금지 조항) ───────────────────────
-    // SBS RSS 이용약관: "피드를 이용한 게시 등의 무단 복제는 금지"
+    // ─────────────────────── 아리랑 (공공데이터 API) ───────────────────────
+
+    private function fetchArirang(): array
+    {
+        $apiKey = ApiKey::getKey('arirang_news');
+        if (!$apiKey) {
+            $this->warn('  아리랑 API 키가 등록되지 않았습니다 (관리자 → API 키 관리)');
+            return [0, 0];
+        }
+
+        $created = 0; $skipped = 0;
+        $page = 1;
+        $perPage = 50;
+
+        // 최대 3페이지 (150건) 까지 가져오기
+        while ($page <= 3) {
+            $url = 'https://apis.data.go.kr/B551024/openArirangNewsApi/news?' . http_build_query([
+                'serviceKey' => $apiKey,
+                'numOfRows' => $perPage,
+                'pageNo' => $page,
+                'type' => 'json',
+            ]);
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_TIMEOUT => 20,
+                CURLOPT_USERAGENT => 'Mozilla/5.0',
+            ]);
+            $body = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200 || !$body) {
+                $this->warn("  아리랑 API 응답 실패: HTTP={$httpCode}");
+                break;
+            }
+
+            $json = json_decode($body, true);
+            // data.go.kr 표준 응답: response.body.items 또는 직접 배열
+            $items = $json['response']['body']['items'] ?? $json['data'] ?? $json['items'] ?? $json ?? [];
+            if (is_array($items) && isset($items[0])) {
+                // 배열 직접
+            } elseif (isset($items['item'])) {
+                $items = $items['item'];
+            } else {
+                $this->warn("  아리랑 응답 구조 파싱 실패 (page={$page})");
+                break;
+            }
+
+            if (empty($items)) break;
+
+            foreach ($items as $item) {
+                $title = trim($item['title'] ?? $item['TITLE'] ?? '');
+                $newsUrl = trim($item['news_url'] ?? $item['NEWS_URL'] ?? $item['url'] ?? '');
+                $content = trim($item['content'] ?? $item['CONTENT'] ?? '');
+                $imgUrl = trim($item['img_url'] ?? $item['IMG_URL'] ?? $item['thumbnail'] ?? '');
+                $broadcastDate = $item['broadcast_date'] ?? $item['BROADCAST_DATE'] ?? $item['date'] ?? null;
+
+                if (!$title) continue;
+                $sourceUrl = $newsUrl ?: ('arirang-' . md5($title));
+
+                if (News::where('source_url', $sourceUrl)->exists()) { $skipped++; continue; }
+
+                // 번역 (아리랑은 영어 방송)
+                $this->info("  번역 중: " . mb_substr($title, 0, 40) . '...');
+                $titleKo = $this->translateText($title) ?: $title;
+
+                // 본문이 있으면 번역
+                $contentKo = '';
+                $contentEn = '';
+                if ($content && mb_strlen($content) > 50) {
+                    $contentEn = $content;
+                    $contentKo = $this->translateLongText($content) ?: $content;
+                }
+
+                // 카테고리: 아리랑은 국제뉴스 위주
+                $categoryId = $this->categoryIdCache['world'] ?? null;
+
+                $publishedAt = $broadcastDate ? Carbon::parse($broadcastDate) : now();
+                $source = ($titleKo === $title) ? '아리랑 (번역 실패)' : '아리랑';
+
+                News::create([
+                    'title'        => $titleKo,
+                    'title_en'     => $title,
+                    'content'      => $contentKo,
+                    'content_en'   => $contentEn ?: null,
+                    'summary'      => mb_substr($contentKo ?: $titleKo, 0, 300),
+                    'source'       => $source,
+                    'source_url'   => $sourceUrl,
+                    'image_url'    => $imgUrl ?: null,
+                    'category_id'  => $categoryId,
+                    'published_at' => $publishedAt,
+                ]);
+                $created++;
+            }
+
+            $page++;
+        }
+
+        $this->info("  아리랑: 신규={$created} 중복={$skipped}");
+        return [$created, $skipped];
+    }
 
     // ─────────────────────── TIME ───────────────────────
 
