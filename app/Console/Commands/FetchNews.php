@@ -17,22 +17,8 @@ use Carbon\Carbon;
  */
 class FetchNews extends Command
 {
-    protected $signature   = 'news:fetch {--source=all : sbs|time|all}';
-    protected $description = 'SBS + TIME RSS 에서 최신 뉴스 가져오기';
-
-    // SBS <category> 태그 → slug 매핑
-    private array $sbsCategoryMap = [
-        '정치'   => 'politics',
-        '경제'   => 'economy',
-        '사회'   => 'society',
-        '생활문화' => 'lifestyle',
-        '생활/문화' => 'lifestyle',
-        '국제'   => 'world',
-        '스포츠'  => 'sports',
-        'IT/과학' => 'tech',
-        'IT과학'  => 'tech',
-        '연예'   => 'entertainment',
-    ];
+    protected $signature   = 'news:fetch';
+    protected $description = 'TIME Magazine RSS 에서 최신 뉴스 가져오기 (Google Translate EN→KO)';
 
     // TIME <category> → slug 매핑
     private array $timeCategoryMap = [
@@ -53,97 +39,18 @@ class FetchNews extends Command
 
     public function handle(): int
     {
-        $source = $this->option('source');
-
         // 카테고리 slug → id 캐시
         $this->categoryIdCache = NewsCategory::pluck('id', 'slug')->toArray();
 
-        $created = 0;
-        $skipped = 0;
-
-        if ($source === 'all' || $source === 'sbs') {
-            $this->info('=== SBS 뉴스 RSS ===');
-            [$c, $s] = $this->fetchSbs();
-            $created += $c; $skipped += $s;
-        }
-
-        if ($source === 'all' || $source === 'time') {
-            $this->info('=== TIME Magazine RSS ===');
-            [$c, $s] = $this->fetchTime();
-            $created += $c; $skipped += $s;
-        }
+        $this->info('=== TIME Magazine RSS ===');
+        [$created, $skipped] = $this->fetchTime();
 
         $this->info("완료: 신규={$created} 중복={$skipped}");
         return self::SUCCESS;
     }
 
-    // ─────────────────────── SBS ───────────────────────
-
-    private function fetchSbs(): array
-    {
-        $xml = $this->loadRss('https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER');
-        if (!$xml) { $this->warn('SBS RSS 로드 실패'); return [0, 0]; }
-
-        $ns = $xml->channel->item[0]?->getNameSpaces(true) ?? [];
-        $created = 0; $skipped = 0;
-
-        foreach ($xml->channel->item as $item) {
-            $link  = trim((string) ($item->link ?? ''));
-            $title = trim((string) ($item->title ?? ''));
-            if (!$link || !$title) continue;
-            if (News::where('source_url', $link)->exists()) { $skipped++; continue; }
-
-            // content:encoded 에서 본문
-            $contentHtml = '';
-            $itemNs = $item->getNameSpaces(true);
-            if (isset($itemNs['content'])) {
-                $ce = $item->children($itemNs['content']);
-                $contentHtml = (string) ($ce->encoded ?? '');
-            }
-            $content = $this->htmlToText($contentHtml);
-
-            // description 폴백
-            $desc = strip_tags((string) ($item->description ?? ''));
-            if (mb_strlen($content) < 100 && mb_strlen($desc) > mb_strlen($content)) {
-                $content = $desc;
-            }
-
-            // 이미지: media:content → enclosure → content 내 첫 img
-            $imageUrl = $this->extractMediaImage($item, $itemNs)
-                     ?: $this->extractEnclosureImage($item)
-                     ?: $this->extractFirstImgFromHtml($contentHtml);
-
-            // 카테고리
-            $categorySlug = null;
-            foreach ($item->category as $cat) {
-                $catName = trim((string) $cat);
-                if (isset($this->sbsCategoryMap[$catName])) {
-                    $categorySlug = $this->sbsCategoryMap[$catName];
-                    break;
-                }
-            }
-            $categoryId = $categorySlug ? ($this->categoryIdCache[$categorySlug] ?? null) : null;
-
-            // 발행일
-            $pubDate = (string) ($item->pubDate ?? '');
-            $publishedAt = $pubDate ? Carbon::parse($pubDate) : now();
-
-            News::create([
-                'title'        => $title,
-                'content'      => $content,
-                'summary'      => mb_substr($content ?: $title, 0, 300),
-                'source'       => 'SBS뉴스',
-                'source_url'   => $link,
-                'image_url'    => $imageUrl ? html_entity_decode($imageUrl) : null,
-                'category_id'  => $categoryId,
-                'published_at' => $publishedAt,
-            ]);
-            $created++;
-        }
-
-        $this->info("  SBS: 신규={$created} 중복={$skipped}");
-        return [$created, $skipped];
-    }
+    // ─────────────────────── SBS 제거됨 (RSS 재배포 금지 조항) ───────────────────────
+    // SBS RSS 이용약관: "피드를 이용한 게시 등의 무단 복제는 금지"
 
     // ─────────────────────── TIME ───────────────────────
 
