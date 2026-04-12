@@ -149,6 +149,7 @@ class FetchNews extends Command
         // 스크립트/광고 제거
         $html = preg_replace('/<script[^>]*>.*?<\/script>/si', '', $html);
         $html = preg_replace('/<style[^>]*>.*?<\/style>/si', '', $html);
+        $html = preg_replace('/<figcaption[^>]*>.*?<\/figcaption>/si', '', $html);
 
         // img 태그 → 마커로 보존
         $imgs = [];
@@ -158,31 +159,26 @@ class FetchNews extends Command
             if (preg_match('/(logo|icon|pixel|banner|ad[_-]|ads?\/|tracking)/i', $src)) return '';
             $idx = count($imgs);
             $imgs[] = $src;
-            return "\n[IMG:{$idx}]\n";
+            return "\n\n![뉴스 이미지]({$src})\n\n";
         }, $html);
+
+        // 블록 요소 → 줄바꿈 (strip_tags 전에)
+        $html = preg_replace('/<\/?(p|div|h[1-6]|blockquote|li|tr|section|article)[^>]*>/i', "\n\n", $html);
+        $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
 
         // HTML→plain
         $text = strip_tags($html);
         $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
 
-        // 이미지 마커 복원
-        foreach ($imgs as $i => $src) {
-            $text = str_replace("[IMG:{$i}]", "\n![뉴스 이미지]({$src})\n", $text);
-        }
-
         // 정리
         $text = preg_replace('/[ \t]+/', ' ', $text);
-        $text = preg_replace('/\n\s*\n/', "\n\n", $text);
+        $text = preg_replace('/\n[ \t]+/', "\n", $text);
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
         $text = trim($text);
 
-        // 불필요한 SBS 꼬리 텍스트 제거
-        $text = preg_replace('/Copyright\s*Ⓒ\s*SBS.*$/s', '', $text);
-        $text = preg_replace('/좋아요\s+\d.*$/s', '', $text);
-        $text = preg_replace('/기자\s*페이지 바로가기.*$/s', '', $text);
-
-        // TIME "Read full article" 링크 제거
-        $text = preg_replace('/Read full article/i', '', $text);
-        $text = preg_replace('/Comments/i', '', $text);
+        // TIME "Read full article" / "Comments" 링크 제거
+        $text = preg_replace('/\s*Read full article\s*/i', '', $text);
+        $text = preg_replace('/\s*Comments\s*$/i', '', $text);
 
         if (mb_strlen($text) > 8000) $text = mb_substr($text, 0, 8000);
         return trim($text);
@@ -256,6 +252,7 @@ class FetchNews extends Command
     /**
      * 긴 텍스트를 단락 단위로 분할해서 번역.
      * 이미지 마커 ![alt](url) 는 번역 전 추출, 후 복원.
+     * 각 단락을 개별 번역해서 줄바꿈 유지.
      */
     private function translateLongText(string $text, string $to = 'ko', string $from = 'en'): ?string
     {
@@ -265,35 +262,57 @@ class FetchNews extends Command
         $imgMarkers = [];
         $text = preg_replace_callback('/!\[([^\]]*)\]\(([^)]+)\)/', function ($m) use (&$imgMarkers) {
             $idx = count($imgMarkers);
-            $imgMarkers[] = $m[0]; // 전체 마커 보존
+            $imgMarkers[] = $m[0];
             return "{{IMG{$idx}}}";
         }, $text);
 
-        // 단락 분할 + 4500자 청킹
+        // 단락별로 개별 번역 (줄바꿈 유지 위해)
         $paragraphs = preg_split('/\n{2,}/', $text);
-        $chunks = [];
-        $current = '';
-        foreach ($paragraphs as $p) {
-            if (mb_strlen($current) + mb_strlen($p) + 2 > 4500 && $current !== '') {
-                $chunks[] = $current;
-                $current = $p;
-            } else {
-                $current .= ($current ? "\n\n" : '') . $p;
-            }
-        }
-        if ($current !== '') $chunks[] = $current;
-
-        // 각 청크 번역
         $translated = [];
-        foreach ($chunks as $i => $chunk) {
-            $result = $this->translateText($chunk, $to, $from);
-            if ($result === null) {
-                // 재시도
-                usleep(3000000); // 3초 대기
-                $result = $this->translateText($chunk, $to, $from);
+
+        foreach ($paragraphs as $p) {
+            $p = trim($p);
+            if ($p === '') continue;
+
+            // 이미지 마커만 있는 줄은 번역하지 않음
+            if (preg_match('/^\{\{IMG\d+\}\}$/', $p)) {
+                $translated[] = $p;
+                continue;
             }
-            $translated[] = $result ?? $chunk; // 실패 시 원문 유지
-            usleep(300000); // 300ms 대기
+
+            // 짧은 단락은 개별 번역
+            if (mb_strlen($p) <= 4500) {
+                $result = $this->translateText($p, $to, $from);
+                if ($result === null) {
+                    usleep(3000000);
+                    $result = $this->translateText($p, $to, $from);
+                }
+                $translated[] = $result ?? $p;
+            } else {
+                // 긴 단락: 문장 단위로 분할
+                $sentences = preg_split('/(?<=[.!?])\s+/', $p);
+                $chunks = [];
+                $current = '';
+                foreach ($sentences as $s) {
+                    if (mb_strlen($current) + mb_strlen($s) + 1 > 4500 && $current !== '') {
+                        $chunks[] = $current;
+                        $current = $s;
+                    } else {
+                        $current .= ($current ? ' ' : '') . $s;
+                    }
+                }
+                if ($current !== '') $chunks[] = $current;
+
+                $chunkResults = [];
+                foreach ($chunks as $chunk) {
+                    $result = $this->translateText($chunk, $to, $from);
+                    $chunkResults[] = $result ?? $chunk;
+                    usleep(300000);
+                }
+                $translated[] = implode(' ', $chunkResults);
+            }
+
+            usleep(200000); // 200ms 대기
         }
 
         $output = implode("\n\n", $translated);

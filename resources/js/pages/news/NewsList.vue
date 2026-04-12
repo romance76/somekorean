@@ -66,7 +66,7 @@
                   class="block mx-auto rounded-lg my-4"
                   style="max-width: 100%; width: auto; height: auto;"
                   @error="e=>e.target.style.display='none'" />
-                <p v-else class="mb-4" style="text-indent: 0.5em;">{{ block.text }}</p>
+                <p v-else class="mb-5 leading-relaxed" style="text-indent: 0.5em;">{{ block.text }}</p>
               </template>
               <!-- 짧은 본문일 때 안내 -->
               <div v-if="(activeItem.content || '').length < 600 && activeItem.source_url"
@@ -185,7 +185,16 @@ function parseContentToBlocks(content) {
         .replace(/본문사회/g, '')
         .replace(/Read full article/gi, '')
         .replace(/Comments/gi, '')
-      const paragraphs = cleaned.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 10)
+      let paragraphs = cleaned.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 10)
+      // 줄바꿈 없이 긴 텍스트면 문장 단위로 자동 분할 (번역 결과가 한 덩어리일 때)
+      if (paragraphs.length <= 1 && cleaned.length > 500) {
+        paragraphs = cleaned.split(/(?<=[.!?。])\s+/).reduce((acc, sentence) => {
+          const last = acc[acc.length - 1]
+          if (last && last.length < 300) { acc[acc.length - 1] = last + ' ' + sentence }
+          else { acc.push(sentence) }
+          return acc
+        }, []).filter(p => p.length > 10)
+      }
       paragraphs.forEach(p => blocks.push({ type: 'text', text: p }))
     } else {
       blocks.push({ type: 'img', src: parts[i] })
