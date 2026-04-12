@@ -14,7 +14,8 @@ return new class extends Migration {
     {
         // 기존 카테고리 레코드 전부 제거 (외래키 cascade 는 news.category_id nullable 이어야 함)
         DB::statement('UPDATE news SET category_id = NULL');
-        DB::table('news_categories')->delete();
+        DB::statement('DELETE FROM news_categories');
+        DB::statement('ALTER TABLE news_categories AUTO_INCREMENT = 1');
 
         $groups = [
             '사회' => ['사회', '사건사고', '사람/커뮤니티', '이민/비자', '교육', '정치', '국제', '오피니언'],
@@ -23,19 +24,28 @@ return new class extends Migration {
             '연예·스포츠' => ['방송/연예', '영화', '스포츠', '한국야구', 'MLB', '농구', '풋볼', '골프', '축구'],
         ];
 
+        $parentSlugs = [
+            '사회' => 'society',
+            '경제' => 'economy',
+            '라이프' => 'life',
+            '연예·스포츠' => 'sports',
+        ];
+
         foreach ($groups as $parentName => $children) {
+            $parentSlug = $parentSlugs[$parentName];
             $parentId = DB::table('news_categories')->insertGetId([
                 'name' => $parentName,
-                'slug' => \Illuminate\Support\Str::slug($parentName),
+                'slug' => $parentSlug,
                 'parent_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            foreach ($children as $child) {
+            foreach ($children as $i => $child) {
                 DB::table('news_categories')->insert([
                     'name' => $child,
-                    'slug' => \Illuminate\Support\Str::slug($child) ?: $child,
+                    // 한글이라 Str::slug 가 빈 값이 되므로 parent-index 로 유니크 slug 생성
+                    'slug' => $parentSlug . '-' . ($i + 1),
                     'parent_id' => $parentId,
                     'created_at' => now(),
                     'updated_at' => now(),
