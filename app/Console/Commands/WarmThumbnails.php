@@ -97,13 +97,12 @@ class WarmThumbnails extends Command
         }
 
         if ($model === 'all' || $model === 'news') {
-            $this->info('→ News');
+            $this->info('→ News' . ($useShard ? " [worker $mod/$totalWorkers]" : ''));
             $q = DB::table('news')->whereNotNull('image_url')->where('image_url', '!=', '');
-            $bar = $this->output->createProgressBar($q->count());
-            $q->orderBy('id')->chunk(50, function ($rows) use ($process, $bar) {
-                foreach ($rows as $r) { $process($r->image_url); $bar->advance(); }
+            if ($useShard) $q->whereRaw('id % ? = ?', [(int)$totalWorkers, (int)$mod]);
+            $q->orderBy('id')->chunk(50, function ($rows) use ($process) {
+                foreach ($rows as $r) { $process($r->image_url); }
             });
-            $bar->finish();
             $this->newLine();
         }
 
