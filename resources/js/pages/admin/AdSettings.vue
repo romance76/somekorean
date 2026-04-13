@@ -57,8 +57,28 @@
         </div>
       </div>
 
-      <button @click="savePrices" :disabled="savingPrices" class="bg-amber-400 text-amber-900 font-bold px-6 py-2 rounded-lg text-xs hover:bg-amber-500 disabled:opacity-50">
-        {{ savingPrices ? '저장중...' : '입찰가 저장' }}
+      <div class="mt-4">
+        <h3 class="text-xs font-bold text-gray-700 mb-2">🌍 지역별 추가금</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-blue-700 block mb-1">주 (카운티 대비 추가)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="geoMarkup.state" min="0" step="500" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-amber-700 block mb-1">전국 (주 대비 추가)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="geoMarkup.national" min="0" step="500" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button @click="savePrices" :disabled="savingPrices" class="mt-4 bg-amber-400 text-amber-900 font-bold px-6 py-2 rounded-lg text-xs hover:bg-amber-500 disabled:opacity-50">
+        {{ savingPrices ? '저장중...' : '가격 설정 저장' }}
       </button>
       <span v-if="priceMsg" class="ml-3 text-xs text-green-600">{{ priceMsg }}</span>
     </div>
@@ -108,9 +128,10 @@ import axios from 'axios'
 
 const config = ref({})
 const minPrices = ref({
-  left_premium: 10000, left_standard: 7000, left_economy: 4000,
-  right_premium: 10000, right_economy: 4000
+  left_premium: 8000, left_standard: 7000, left_economy: 4000,
+  right_premium: 10000, right_economy: 6000
 })
+const geoMarkup = ref({ state: 2000, national: 3000 })
 const loading = ref(true)
 const saving = ref(false)
 const savingPrices = ref(false)
@@ -122,10 +143,10 @@ async function load() {
     const { data } = await axios.get('/api/admin/ad-settings')
     config.value = data.data || {}
   } catch {}
-  // 최소 입찰가 로드
   try {
     const { data } = await axios.get('/api/ad-settings/public')
-    if (data.data?.slot_min_prices) minPrices.value = data.data.slot_min_prices
+    if (data.data?.slot_min_prices) minPrices.value = { ...minPrices.value, ...data.data.slot_min_prices }
+    if (data.data?.geo_markup) geoMarkup.value = { ...geoMarkup.value, ...data.data.geo_markup }
   } catch {}
   loading.value = false
 }
@@ -142,8 +163,8 @@ async function save() {
 async function savePrices() {
   savingPrices.value = true; priceMsg.value = ''
   try {
-    const { data } = await axios.post('/api/admin/ad-slot-prices', { prices: minPrices.value })
-    priceMsg.value = data.message || '저장됨'
+    await axios.post('/api/admin/ad-slot-prices', { prices: minPrices.value, geo_markup: geoMarkup.value })
+    priceMsg.value = '저장됨!'
   } catch { priceMsg.value = '저장 실패' }
   savingPrices.value = false
 }

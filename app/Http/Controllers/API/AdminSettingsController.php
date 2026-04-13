@@ -321,7 +321,10 @@ class AdminSettingsController extends Controller
 
     public function saveSlotMinPrices(Request $request) {
         SiteSetting::updateOrCreate(['key' => 'ad_slot_min_prices'], ['value' => json_encode($request->prices)]);
-        return response()->json(['success' => true, 'message' => '최소 입찰가 저장됨']);
+        if ($request->geo_markup) {
+            SiteSetting::updateOrCreate(['key' => 'ad_geo_markup'], ['value' => json_encode($request->geo_markup)]);
+        }
+        return response()->json(['success' => true, 'message' => '가격 설정 저장됨']);
     }
 
     private function pageLabel($key) {
@@ -339,7 +342,13 @@ class AdminSettingsController extends Controller
         $config = $setting ? json_decode($setting->value, true) : $this->defaultAdPageConfig();
 
         $pricesSetting = SiteSetting::where('key', 'ad_slot_min_prices')->first();
-        $config['slot_min_prices'] = $pricesSetting ? json_decode($pricesSetting->value, true) : ['left' => 50, 'right' => 50];
+        $config['slot_min_prices'] = $pricesSetting ? json_decode($pricesSetting->value, true) : [
+            'left_premium' => 8000, 'left_standard' => 7000, 'left_economy' => 4000,
+            'right_premium' => 10000, 'right_economy' => 6000
+        ];
+
+        $geoSetting = SiteSetting::where('key', 'ad_geo_markup')->first();
+        $config['geo_markup'] = $geoSetting ? json_decode($geoSetting->value, true) : ['state' => 2000, 'national' => 3000];
 
         return response()->json(['success' => true, 'data' => $config]);
     }
