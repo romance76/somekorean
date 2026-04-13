@@ -90,9 +90,16 @@ class MarketController extends Controller
             $user->decrement('points', $extraCost);
         }
 
+        // 위치 정보 없으면 유저 프로필에서 가져오기
+        $user = auth()->user();
+        $lat = $request->lat ?: $user->latitude;
+        $lng = $request->lng ?: $user->longitude;
+        $city = $request->city ?: $user->city;
+        $state = $request->state ?: $user->state;
+
         $item = MarketItem::create(array_merge(
-            $request->only('title', 'content', 'price', 'category', 'condition', 'lat', 'lng', 'city', 'state', 'is_negotiable', 'hold_enabled', 'hold_price_per_6h', 'hold_max_hours'),
-            ['user_id' => auth()->id(), 'images' => $images ?: null]
+            $request->only('title', 'content', 'price', 'category', 'condition', 'is_negotiable', 'hold_enabled', 'hold_price_per_6h', 'hold_max_hours'),
+            ['user_id' => $user->id, 'images' => $images ?: null, 'lat' => $lat, 'lng' => $lng, 'city' => $city, 'state' => $state]
         ));
 
         return response()->json(['success' => true, 'data' => $item], 201);
