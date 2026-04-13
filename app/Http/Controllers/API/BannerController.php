@@ -17,35 +17,40 @@ class BannerController extends Controller
 
         // 유저 지역 정보 (로그인 시)
         $user = auth('api')->user();
-        $userCity = $user->city ?? null;
         $userState = $user->state ?? null;
+        $userCounty = $user->city ?? null; // city 필드를 county 매칭에도 사용
 
         $query = BannerAd::active()
             ->where('position', $position)
             ->where(function ($q) use ($page) {
-                // page 필드 또는 target_pages JSON에 해당 페이지 포함
                 $q->where('page', $page)
                   ->orWhere('page', 'all')
                   ->orWhereJsonContains('target_pages', $page);
             });
 
-        // 지역 타겟팅: 로그인 유저는 로컬 광고 우선, 비로그인은 전국만
-        if ($user && ($userCity || $userState)) {
-            // 로그인: 로컬 매칭 광고 + 전국 광고 모두 가져와서 로컬 우선 정렬
-            $banners = $query->orderByRaw("
-                CASE
-                    WHEN geo_scope = 'city' AND geo_value = ? THEN 1
-                    WHEN geo_scope = 'county' THEN 2
-                    WHEN geo_scope = 'state' AND geo_value = ? THEN 3
-                    WHEN geo_scope = 'all' THEN 4
-                    ELSE 5
-                END
-            ", [$userCity, $userState])
-            ->orderByDesc('bid_amount')
-            ->limit($limit)
-            ->get();
+        // 지역 타겟팅: 로그인=로컬 우선(카운티>주>전국), 비로그인=전국만
+        if ($user && $userState) {
+            $banners = $query->where(function ($q) use ($userState, $userCounty) {
+                    $q->where('geo_scope', 'all')
+                      ->orWhere(function ($q2) use ($userState) {
+                          $q2->where('geo_scope', 'state')->where('geo_value', $userState);
+                      })
+                      ->orWhere(function ($q2) use ($userCounty) {
+                          $q2->where('geo_scope', 'county')->where('geo_value', $userCounty);
+                      });
+                })
+                ->orderByRaw("
+                    CASE
+                        WHEN geo_scope = 'county' AND geo_value = ? THEN 1
+                        WHEN geo_scope = 'state' AND geo_value = ? THEN 2
+                        WHEN geo_scope = 'all' THEN 3
+                        ELSE 4
+                    END
+                ", [$userCounty, $userState])
+                ->orderByDesc('bid_amount')
+                ->limit($limit)
+                ->get();
         } else {
-            // 비로그인: 전국 광고만
             $banners = $query->where('geo_scope', 'all')
                 ->orderByDesc('bid_amount')
                 ->limit($limit)
@@ -87,6 +92,7 @@ class BannerController extends Controller
             'position' => 'required|in:left,right',
             'slot_number' => 'required|integer|min:1|max:5',
             'geo_scope' => 'required|in:all,state,county',
+            // city 제외 — 전국/주/카운티만
             'geo_value' => 'nullable|string|max:100',
             'bid_amount' => 'required|integer|min:50',
         ]);

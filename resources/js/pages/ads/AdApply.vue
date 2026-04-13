@@ -129,8 +129,8 @@
             <div class="grid grid-cols-2 gap-3">
               <select v-model="adForm.geo_scope" @change="onGeoScopeChange" class="w-full border rounded-lg px-3 py-2 text-sm">
                 <option value="all">전국 (비로그인 유저에게도 노출)</option>
-                <option value="state">주 (로그인 유저에게만)</option>
-                <option value="county">카운티 (로그인 유저에게만)</option>
+                <option value="state">주 (해당 주 로그인 유저)</option>
+                <option value="county">카운티 (해당 카운티 로그인 유저)</option>
               </select>
               <div v-if="adForm.geo_scope !== 'all'">
                 <div class="flex gap-2">
