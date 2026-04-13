@@ -75,6 +75,10 @@
                       class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-bold px-4 py-2 rounded-lg transition disabled:opacity-50">
                       {{ t._actionLoading ? '처리 중...' : '취소' }}
                     </button>
+                    <button v-else-if="isPast(t)" disabled
+                      class="bg-gray-700 text-gray-500 text-xs font-bold px-4 py-2 rounded-lg cursor-not-allowed">
+                      종료됨
+                    </button>
                     <button v-else
                       @click="registerTournament(t.id)"
                       :disabled="t._actionLoading || (t.registered_count >= t.max_players)"
@@ -111,6 +115,33 @@
                     class="bg-gray-700 text-gray-400 text-xs font-bold px-4 py-2 rounded-lg cursor-not-allowed">
                     관전 (준비 중)
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 종료된 토너먼트 -->
+          <div v-if="pastTournaments.length > 0" class="mt-4">
+            <h3 class="text-sm font-bold text-gray-500 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-gray-600"></span>
+              종료된 토너먼트
+            </h3>
+            <div class="space-y-2">
+              <div v-for="t in pastTournaments" :key="t.id"
+                class="bg-gray-900/50 rounded-xl border border-gray-800/50 p-3 opacity-60 hover:opacity-80 transition">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-bold text-gray-400 truncate">{{ t.title }}</span>
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-700 text-gray-500 font-bold">
+                        {{ t.status === 'finished' ? '완료' : '취소' }}
+                      </span>
+                    </div>
+                    <div class="text-[10px] text-gray-600 mt-0.5">
+                      {{ formatTournamentTime(t.scheduled_at) }} · {{ t.buy_in }}칩 · {{ t.registered_count || 0 }}명
+                    </div>
+                  </div>
+                  <button v-if="t.status === 'finished'" class="text-[10px] text-amber-600 hover:text-amber-400 font-bold">결과보기</button>
                 </div>
               </div>
             </div>
@@ -312,12 +343,24 @@ const bestPlacement = computed(() => {
 const tournaments = ref([])
 const tournamentsLoading = ref(false)
 
+const now = ref(Date.now())
+setInterval(() => now.value = Date.now(), 10000) // 10초마다 갱신
+
 const upcomingTournaments = computed(() =>
-  tournaments.value.filter(t => ['scheduled', 'registering', 'starting'].includes(t.status))
+  tournaments.value
+    .filter(t => ['scheduled', 'registering', 'starting'].includes(t.status) && new Date(t.scheduled_at) > new Date(now.value - 3600000))
+    .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
 )
 const liveTournaments = computed(() =>
   tournaments.value.filter(t => t.status === 'running')
 )
+const pastTournaments = computed(() =>
+  tournaments.value
+    .filter(t => ['finished', 'cancelled'].includes(t.status) || (new Date(t.scheduled_at) < new Date(now.value - 3600000) && t.status !== 'running'))
+    .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
+    .slice(0, 10)
+)
+function isPast(t) { return new Date(t.scheduled_at) < new Date(now.value) && !['running'].includes(t.status) }
 
 async function fetchTournaments() {
   tournamentsLoading.value = true
