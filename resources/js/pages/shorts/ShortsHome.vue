@@ -17,12 +17,19 @@
       <div class="w-full max-w-md h-full max-h-[90vh] relative">
         <iframe
           :key="current.youtube_id"
-          :src="`https://www.youtube.com/embed/${current.youtube_id}?autoplay=1&loop=1&controls=1&modestbranding=1`"
+          :src="`https://www.youtube.com/embed/${current.youtube_id}?autoplay=1&loop=1&controls=1&modestbranding=1&playsinline=1`"
           class="w-full h-full rounded-xl"
           frameborder="0"
           allow="autoplay; encrypted-media"
           allowfullscreen
         ></iframe>
+
+        <!-- 모바일 스와이프 터치 오버레이 (iframe 위에 양쪽 스와이프 영역) -->
+        <div class="absolute inset-y-0 left-0 w-16 z-10 lg:hidden"
+          @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd"></div>
+        <div class="absolute inset-y-0 right-16 left-16 top-0 bottom-24 z-10 lg:hidden"
+          @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd"
+          @click="togglePlay"></div>
 
         <!-- 오른쪽 액션 버튼 -->
         <div class="absolute right-3 bottom-32 flex flex-col items-center gap-5">
@@ -48,17 +55,20 @@
       </div>
     </div>
 
-    <!-- 위/아래 네비 버튼 -->
-    <!-- 위/아래 버튼: 영상 바로 오른쪽 옆 -->
-    <div class="absolute top-1/2 left-1/2 -translate-y-1/2 flex flex-col gap-3" style="margin-left: calc(224px + 16px);">
+    <!-- 위/아래 네비 버튼: PC는 옆, 모바일은 하단 -->
+    <!-- PC 버튼 -->
+    <div class="absolute top-1/2 left-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-3" style="margin-left: calc(224px + 16px);">
       <button @click="prev" :disabled="idx <= 0"
-        class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">
-        ▲
-      </button>
+        class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">▲</button>
       <button @click="next" :disabled="idx >= shorts.length - 1"
-        class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">
-        ▼
-      </button>
+        class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-xl hover:bg-white/40 disabled:opacity-20 transition">▼</button>
+    </div>
+    <!-- 모바일 버튼 (하단 중앙) -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-6 lg:hidden z-20">
+      <button @click="prev" :disabled="idx <= 0"
+        class="w-12 h-12 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xl active:bg-white/50 disabled:opacity-20 transition">▲</button>
+      <button @click="next" :disabled="idx >= shorts.length - 1"
+        class="w-12 h-12 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xl active:bg-white/50 disabled:opacity-20 transition">▼</button>
     </div>
 
     <!-- 카운터 -->
@@ -157,6 +167,26 @@ function onWheel(e) {
   if (e.deltaY > 0) next()
   else if (e.deltaY < 0) prev()
   setTimeout(() => { scrollCooldown = false }, 800)
+}
+
+// ─── 모바일 스와이프 ───
+let touchStartY = 0
+let touchStartTime = 0
+function onTouchStart(e) {
+  touchStartY = e.touches[0].clientY
+  touchStartTime = Date.now()
+}
+function onTouchEnd(e) {
+  const deltaY = touchStartY - e.changedTouches[0].clientY
+  const elapsed = Date.now() - touchStartTime
+  // 50px 이상 스와이프 & 1초 이내
+  if (Math.abs(deltaY) > 50 && elapsed < 1000) {
+    if (deltaY > 0) next()   // 위로 스와이프 = 다음
+    else prev()              // 아래로 스와이프 = 이전
+  }
+}
+function togglePlay() {
+  // 영상 중앙 탭 = 아무 동작 없음 (iframe 이 재생 제어)
 }
 
 onMounted(async () => {
