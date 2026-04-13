@@ -104,11 +104,10 @@ class PokerMultiController extends Controller
 
         Cache::put($queueKey, $queue, 300); // 5분 TTL
 
-        // 30초 대기 후 AI로 채워서 시작 (또는 2명 이상이면 즉시)
-        $waitTime = 30;
+        // 2명 이상이면 즉시, 1명이면 10초 후 AI로 채워서 시작
         $firstJoin = collect($queue)->min('joinedAt') ?? time();
         $waited = time() - $firstJoin;
-        $shouldStart = count($queue) >= 2 || $waited >= $waitTime;
+        $shouldStart = count($queue) >= 2 || (count($queue) >= 1 && $waited >= 10);
 
         if ($shouldStart) {
             $players = array_slice($queue, 0, min(count($queue), 9));

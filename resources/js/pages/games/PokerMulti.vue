@@ -44,7 +44,7 @@
           <div class="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
           <span class="font-bold">매칭 중... ({{ queueCount }}명 대기)</span>
         </div>
-        <div class="text-xs text-gray-500">{{ matchWait }}초 대기 · 30초 후 AI로 자동 시작</div>
+        <div class="text-xs text-gray-500">{{ matchWait }}초 대기 · {{ queueCount >= 2 ? '곧 시작!' : '10초 후 AI로 자동 시작' }}</div>
         <button @click="cancelMatch" class="text-gray-500 text-sm hover:text-gray-300">취소</button>
       </div>
 
