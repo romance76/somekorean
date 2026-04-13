@@ -227,6 +227,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/messages', [MessageController::class, 'index']);
     Route::post('/messages', [MessageController::class, 'store']);
     Route::post('/messages/{id}/read', [MessageController::class, 'markRead']);
+    Route::delete('/messages/{id}', [MessageController::class, 'destroy']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);

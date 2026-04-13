@@ -101,6 +101,26 @@
         </div>
       </div>
 
+      <!-- 메뉴 섹션 -->
+      <div v-if="activeItem.menus?.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3">
+        <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">🍽️ 메뉴 {{ activeItem.menus.length }}개</div>
+        <div class="divide-y">
+          <div v-for="menu in activeItem.menus" :key="menu.id" class="px-5 py-3 flex items-center gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold">{{ {main:'메인',side:'사이드',drink:'음료',dessert:'디저트',set:'세트',other:'기타'}[menu.category] || menu.category }}</span>
+                <span class="text-sm font-bold text-gray-800">{{ menu.name }}</span>
+              </div>
+              <div v-if="menu.description" class="text-xs text-gray-500 mt-0.5">{{ menu.description }}</div>
+              <div v-if="menu.options?.length" class="flex flex-wrap gap-1 mt-1">
+                <span v-for="opt in menu.options" :key="opt.name" class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{{ opt.name }} +${{ opt.price }}</span>
+              </div>
+            </div>
+            <div class="text-sm font-black text-amber-700">${{ Number(menu.price).toFixed(2) }}</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 리뷰 섹션 -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3">
         <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">⭐ 리뷰 {{ activeItem.review_count || 0 }}개</div>

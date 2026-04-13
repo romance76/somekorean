@@ -60,4 +60,13 @@ class MessageController extends Controller
         Message::where('id', $id)->where('receiver_id', auth()->id())->update(['is_read' => true]);
         return response()->json(['success' => true]);
     }
+
+    public function destroy($id) {
+        // 보낸 사람 또는 받은 사람만 삭제 가능
+        $msg = Message::where('id', $id)
+            ->where(function ($q) { $q->where('sender_id', auth()->id())->orWhere('receiver_id', auth()->id()); })
+            ->firstOrFail();
+        $msg->delete();
+        return response()->json(['success' => true, 'message' => '삭제되었습니다']);
+    }
 }

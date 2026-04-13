@@ -10,13 +10,22 @@
            class="flex flex-col items-center justify-center gap-6 flex-1 w-full max-w-xs px-6">
         <!-- Caller info -->
         <div class="text-center">
+          <!-- 안심 전화 표시 -->
+          <div v-if="isElderCall" class="mb-3">
+            <div class="inline-flex items-center gap-2 bg-purple-600/80 px-4 py-2 rounded-full">
+              <span class="text-lg">🛡️</span>
+              <span class="text-sm font-bold">안심서비스 전화</span>
+            </div>
+          </div>
           <div class="relative inline-block">
-            <img :src="incomingCall?.caller_avatar || '/images/default-avatar.svg'"
-                 class="w-24 h-24 rounded-full object-cover border-[3px] border-green-500/50 animate-pulse-ring"
+            <img :src="isElderCall ? '/images/logo_00.jpg' : (incomingCall?.caller_avatar || '/images/default-avatar.svg')"
+                 class="w-24 h-24 rounded-full object-cover border-[3px] animate-pulse-ring"
+                 :class="isElderCall ? 'border-purple-500/50' : 'border-green-500/50'"
                  @error="$event.target.src = '/images/default-avatar.svg'">
           </div>
-          <p class="text-2xl font-bold mt-4">{{ incomingCall?.caller_name }}</p>
-          <p class="text-sm text-white/60 mt-1">음성 통화 수신 중...</p>
+          <p class="text-2xl font-bold mt-4">{{ isElderCall ? '안심서비스' : incomingCall?.caller_name }}</p>
+          <p class="text-sm text-white/60 mt-1">{{ isElderCall ? '안심 확인 전화가 왔습니다' : '음성 통화 수신 중...' }}</p>
+          <p v-if="isElderCall" class="text-xs text-purple-300 mt-2">전화를 받으시면 안심 체크인이 완료됩니다</p>
         </div>
 
         <!-- Answer / Decline buttons -->
@@ -50,20 +59,25 @@
 
       <!-- ═══ Active call (calling / connected / ended) ═══ -->
       <div v-else class="flex flex-col items-center justify-between w-full max-w-xs flex-1 py-4">
+        <!-- 안심 전화 배지 -->
+        <div v-if="isElderCall" class="inline-flex items-center gap-2 bg-purple-600/80 px-3 py-1 rounded-full mb-2">
+          <span>🛡️</span><span class="text-xs font-bold">안심서비스</span>
+        </div>
+
         <!-- Status label -->
         <p class="text-sm text-white/60 mb-4 tracking-wide">
           <span v-if="callStatus === 'calling'">발신 중...</span>
           <span v-else-if="callStatus === 'connecting'">연결 중...</span>
-          <span v-else-if="callStatus === 'connected'">통화 중 &middot; {{ durationFormatted }}</span>
-          <span v-else-if="callStatus === 'ended'">통화 종료</span>
+          <span v-else-if="callStatus === 'connected'">{{ isElderCall ? '안심 확인 중' : '통화 중' }} &middot; {{ durationFormatted }}</span>
+          <span v-else-if="callStatus === 'ended'">{{ isElderCall ? '안심 체크인 완료' : '통화 종료' }}</span>
         </p>
 
         <!-- Remote user avatar + name -->
         <div class="text-center mb-4">
-          <img :src="remoteUser?.avatar || '/images/default-avatar.svg'"
+          <img :src="isElderCall ? '/images/logo_00.jpg' : (remoteUser?.avatar || '/images/default-avatar.svg')"
                class="w-28 h-28 rounded-full object-cover border-[3px] border-white/15 mx-auto"
                @error="$event.target.src = '/images/default-avatar.svg'">
-          <p class="text-2xl font-bold mt-4">{{ remoteUser?.name }}</p>
+          <p class="text-2xl font-bold mt-4">{{ isElderCall ? '안심서비스' : remoteUser?.name }}</p>
         </div>
 
         <!-- ★ 모바일 오디오 차단 시 "소리 켜기" 버튼 -->
@@ -135,7 +149,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   show:               Boolean,
   callStatus:         String,
   incomingCall:       Object,
@@ -144,6 +160,10 @@ defineProps({
   isSpeaker:          Boolean,
   durationFormatted:  String,
   remoteAudioBlocked: Boolean,
+})
+
+const isElderCall = computed(() => {
+  return props.incomingCall?.call_type === 'elder' || props.remoteUser?.call_type === 'elder'
 })
 
 defineEmits(['answer', 'decline', 'end', 'toggle-mute', 'toggle-speaker', 'unblock-audio'])

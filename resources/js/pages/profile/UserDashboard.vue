@@ -140,9 +140,9 @@
             <div class="w-48 h-48 rounded-full border-4 border-amber-400 overflow-hidden relative transition-transform"
               :style="{ transform: `rotate(${rouletteAngle}deg)`, transitionDuration: spinning ? '4s' : '0s', transitionTimingFunction: 'cubic-bezier(0.17,0.67,0.12,0.99)' }">
               <div v-for="(seg, i) in rouletteSegments" :key="i"
-                class="absolute w-full h-full flex items-start justify-center pt-3"
-                :style="{ transform: `rotate(${i * (360/rouletteSegments.length)}deg)` }">
-                <span class="text-xs font-black" :class="seg.color">{{ seg.points }}P</span>
+                class="absolute w-full h-full flex items-start justify-center"
+                :style="{ transform: `rotate(${i * (360/rouletteSegments.length) + (180/rouletteSegments.length)}deg)` }">
+                <span class="text-[10px] font-black mt-2" :class="seg.color">{{ seg.points }}P</span>
               </div>
               <!-- 중심 원 -->
               <div class="absolute inset-0 flex items-center justify-center">
@@ -212,6 +212,7 @@
               <div class="text-[11px] text-gray-500 truncate">{{ m.content }}</div>
             </div>
             <span class="text-[10px] text-gray-400 flex-shrink-0">{{ fmtDate(m.created_at) }}</span>
+            <button @click.stop="deleteMsg(m)" class="text-[10px] text-red-400 hover:text-red-600 flex-shrink-0 ml-1">✕</button>
           </div>
         </div>
       </div>
@@ -411,9 +412,12 @@
         <h2 class="font-bold text-gray-800 mb-4">🔖 북마크</h2>
         <div v-if="!bookmarks.length" class="text-sm text-gray-400 py-6 text-center">저장한 북마크가 없습니다</div>
         <div v-else class="space-y-2">
-          <div v-for="b in bookmarks" :key="b.id" class="border rounded-lg p-3">
-            <div class="text-sm font-bold text-gray-800">{{ b.bookmarkable?.title || b.bookmarkable_type + ' #' + b.bookmarkable_id }}</div>
-            <div class="text-[10px] text-gray-400 mt-1">{{ fmtDate(b.created_at) }}</div>
+          <div v-for="b in bookmarks" :key="b.id" class="border rounded-lg p-3 flex items-center gap-3">
+            <div class="flex-1 min-w-0 cursor-pointer hover:text-amber-700" @click="goBookmark(b)">
+              <div class="text-sm font-bold text-gray-800 truncate">{{ b.bookmarkable?.title || b.bookmarkable_type + ' #' + b.bookmarkable_id }}</div>
+              <div class="text-[10px] text-gray-400 mt-0.5">{{ fmtDate(b.created_at) }}</div>
+            </div>
+            <button @click="deleteBookmark(b)" class="text-xs text-red-400 hover:text-red-600 flex-shrink-0">삭제</button>
           </div>
         </div>
       </div>
@@ -967,6 +971,10 @@ async function sendReply() {
   replySending.value = false
 }
 
+async function deleteMsg(m) {
+  try { await axios.delete(`/api/messages/${m.id}`); msgList.value = msgList.value.filter(x => x.id !== m.id) } catch {}
+}
+
 // ─── 통화 내역 ───
 const callHistory = ref([])
 async function loadCallHistory() {
@@ -1007,6 +1015,16 @@ async function loadMyMarket() {
 // ─── 북마크 ───
 const bookmarks = ref([])
 async function loadBookmarks() { try { const { data } = await axios.get('/api/bookmarks'); bookmarks.value = data.data?.data || data.data || [] } catch {} }
+async function deleteBookmark(b) {
+  const ok = await showConfirm('이 북마크를 삭제하시겠습니까?', '삭제')
+  if (!ok) return
+  try { await axios.post('/api/bookmarks', { bookmarkable_type: b.bookmarkable_type, bookmarkable_id: b.bookmarkable_id }); bookmarks.value = bookmarks.value.filter(x => x.id !== b.id) } catch {}
+}
+function goBookmark(b) {
+  const typeMap = { 'App\\Models\\Post': '/community/free/', 'App\\Models\\MarketItem': '/market/', 'App\\Models\\JobPost': '/jobs/', 'App\\Models\\Business': '/directory/', 'App\\Models\\RecipePost': '/recipes/', 'App\\Models\\QaPost': '/qa/', 'App\\Models\\News': '/news/', 'App\\Models\\Event': '/events/' }
+  const base = typeMap[b.bookmarkable_type] || '/community/free/'
+  router.push(base + b.bookmarkable_id)
+}
 
 // ─── 안심서비스 ───
 const wardSearch = ref(''); const wardSearching = ref(false); const wardResult = ref(null)

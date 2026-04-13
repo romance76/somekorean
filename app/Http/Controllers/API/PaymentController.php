@@ -8,16 +8,24 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    // 포인트 패키지 목록
+    // 포인트 패키지 목록 (point_settings에서 로드)
     public function packages()
     {
-        return response()->json(['success' => true, 'data' => [
-            ['id' => 1, 'name' => '스타터', 'points' => 100, 'price' => 0.99, 'bonus' => 0],
-            ['id' => 2, 'name' => '베이직', 'points' => 500, 'price' => 4.99, 'bonus' => 50],
-            ['id' => 3, 'name' => '프리미엄', 'points' => 1000, 'price' => 9.99, 'bonus' => 200],
-            ['id' => 4, 'name' => '프로', 'points' => 5000, 'price' => 39.99, 'bonus' => 1500],
-            ['id' => 5, 'name' => '울트라', 'points' => 10000, 'price' => 69.99, 'bonus' => 4000],
-        ]]);
+        $pkgs = \DB::table('point_settings')
+            ->where('key', 'like', 'pkg_%')
+            ->orderBy('id')
+            ->get()
+            ->map(function ($s) {
+                $parts = explode('|', $s->value);
+                return [
+                    'key' => $s->key,
+                    'name' => $s->label ?? $s->key,
+                    'price' => (float) ($parts[0] ?? 0),
+                    'points' => (int) ($parts[1] ?? 0),
+                    'bonus' => (int) ($parts[2] ?? 0),
+                ];
+            });
+        return response()->json(['success' => true, 'data' => $pkgs]);
     }
 
     // Stripe PaymentIntent 생성

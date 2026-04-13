@@ -166,7 +166,13 @@ class ElderScheduledCallCommand extends Command
             'status'    => 'ringing',
         ]);
 
-        $this->line("  📞 Elder call to {$ward->name} (ID:{$ward->id}), call_id={$call->id}");
+        // 스케줄 전화 포인트 차감 (관리자 설정에서 로드)
+        $callCost = (int) (DB::table('point_settings')->where('key', 'elder_scheduled_call')->value('value') ?? 50);
+        if ($callCost > 0 && $guardianUser && $guardianUser->points >= $callCost) {
+            $guardianUser->addPoints(-$callCost, "안심서비스 전화: {$ward->name}", 'elder');
+        }
+
+        $this->line("  📞 Elder call to {$ward->name} (ID:{$ward->id}), call_id={$call->id}, cost={$callCost}P");
 
         // Echo 브로드캐스트 → 사이트 접속 중이면 전화벨
         try {
