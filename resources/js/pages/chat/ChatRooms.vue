@@ -1,14 +1,14 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-black text-gray-800">💬 채팅</h1>
-      <button @click="showCreate = true" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">+ 새 채팅</button>
-    </div>
 
     <div class="grid grid-cols-12 gap-4">
-      <!-- 왼쪽: 지역 채팅방 목록 -->
-      <div class="col-span-12 lg:col-span-3">
+      <!-- 왼쪽: 지역 채팅방 목록 (모바일: 채팅방 선택 전에만 표시) -->
+      <div class="col-span-12 lg:col-span-3" :class="{ 'hidden': activeRoom && isMobile }">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-xl font-black text-gray-800">💬 채팅</h1>
+          <button @click="showCreate = true" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">+ 새 채팅</button>
+        </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🌐 공개 채팅방</div>
           <div v-if="loading" class="py-4 text-center text-xs text-gray-400">로딩중...</div>
@@ -24,18 +24,22 @@
         </div>
       </div>
 
-      <!-- 메인: 채팅 창 -->
-      <div class="col-span-12 lg:col-span-6">
+      <!-- 메인: 채팅 창 (모바일: 채팅방 선택 후에만 표시) -->
+      <div class="col-span-12 lg:col-span-6" :class="{ 'hidden': !activeRoom && isMobile }">
         <div v-if="!activeRoom" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <div class="text-4xl mb-3">💬</div>
           <div class="text-gray-500 font-semibold">채팅방을 선택해주세요</div>
           <div class="text-xs text-gray-400 mt-1">왼쪽에서 지역 채팅방을 클릭하세요</div>
         </div>
 
-        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style="height: 70vh;">
+        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style="height: calc(100vh - 140px); height: calc(100dvh - 140px);">
           <!-- 채팅방 헤더 -->
           <div class="px-4 py-3 border-b bg-amber-50 flex items-center justify-between flex-shrink-0">
-            <div class="font-bold text-sm text-amber-900">{{ activeRoom.name }}</div>
+            <div class="flex items-center gap-2">
+              <!-- 모바일 뒤로가기 -->
+              <button @click="activeRoom = null; activeMessages = []" class="lg:hidden text-amber-700 text-sm font-bold mr-1">← 목록</button>
+              <div class="font-bold text-sm text-amber-900">{{ activeRoom.name }}</div>
+            </div>
             <span class="text-[10px] text-green-600 bg-green-100 px-2 py-0.5 rounded-full">🟢 공개 채팅방</span>
           </div>
 
@@ -114,17 +118,17 @@
             </div>
           </div>
 
-          <!-- 입력 -->
-          <div class="border-t px-4 py-3 flex-shrink-0">
+          <!-- 입력 (아이폰 safe-area 대응) -->
+          <div class="border-t px-3 py-2 flex-shrink-0" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom));">
             <form @submit.prevent="sendMsg" class="flex gap-2 items-center">
-              <label class="bg-gray-100 text-gray-600 w-10 h-10 flex items-center justify-center rounded-full text-base hover:bg-gray-200 cursor-pointer flex-shrink-0" :class="!auth.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''" title="이미지·압축파일 첨부">
+              <label class="bg-gray-100 text-gray-600 w-9 h-9 flex items-center justify-center rounded-full text-sm hover:bg-gray-200 cursor-pointer flex-shrink-0" :class="!auth.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''" title="이미지·압축파일 첨부">
                 📎
                 <input type="file" accept="image/*,.zip,.rar,.7z,.tar,.gz,.tgz,application/zip,application/x-rar-compressed,application/x-7z-compressed,application/gzip" multiple @change="onSelectFiles" class="hidden" :disabled="!auth.isLoggedIn" />
               </label>
               <input v-model="newMsg" type="text" :placeholder="auth.isLoggedIn ? '메시지 입력...' : '로그인 후 참여 가능'" :disabled="!auth.isLoggedIn"
-                class="flex-1 border rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none disabled:bg-gray-100" />
+                class="flex-1 min-w-0 border rounded-full px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none disabled:bg-gray-100" />
               <button type="submit" :disabled="(!newMsg.trim() && !selectedFiles.length) || !auth.isLoggedIn || sending"
-                class="bg-amber-400 text-amber-900 font-bold px-5 py-2 rounded-full text-sm hover:bg-amber-500 disabled:opacity-50">{{ sending ? '전송중' : '전송' }}</button>
+                class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-full text-sm hover:bg-amber-500 disabled:opacity-50 flex-shrink-0 whitespace-nowrap">{{ sending ? '...' : '전송' }}</button>
             </form>
           </div>
         </div>
@@ -186,6 +190,8 @@ import { compressImage, isImage, isArchive } from '../../utils/imageCompress'
 
 const router = useRouter()
 const auth = useAuthStore()
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < 1024)
 const rooms = ref([])
 const activeRoom = ref(null)
 const activeMessages = ref([])
@@ -391,17 +397,21 @@ async function createRoom() {
   } catch {}
 }
 
+const onResize = () => { windowWidth.value = window.innerWidth }
+
 onMounted(async () => {
+  window.addEventListener('resize', onResize)
   try {
     const { data } = await axios.get('/api/chat/rooms')
     rooms.value = data.data || []
-    // 첫 번째 방 자동 선택
-    if (rooms.value.length) selectRoom(rooms.value[0])
+    // PC에서만 첫 번째 방 자동 선택 (모바일은 목록 먼저 보여줌)
+    if (rooms.value.length && !isMobile.value) selectRoom(rooms.value[0])
   } catch {}
   loading.value = false
 })
 
 onUnmounted(() => {
   unsubscribeChannel()
+  window.removeEventListener('resize', onResize)
 })
 </script>
