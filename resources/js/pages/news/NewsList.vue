@@ -19,7 +19,8 @@
           <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; activeItem=null; loadNews()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="activeCat?.id===cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ cat.name }}</button>
-        </div>
+                <AdSlot page="news" position="left" :maxSlots="2" />
+      </div>
       </div>
 
       <!-- 메인: 뉴스 목록 -->
@@ -149,6 +150,7 @@
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
         <SidebarWidgets :inline="true" @select="openItem" api-url="/api/news" detail-path="/news/" :current-id="0"
           label="뉴스" />
+        <AdSlot page="news" position="right" :maxSlots="2" />
       </div>
     </div>
   </div>
@@ -160,6 +162,7 @@ import { ref, computed, onMounted } from 'vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import { thumb } from '../../utils/thumb'
 import axios from 'axios'
+import AdSlot from '../../components/AdSlot.vue'
 
 const route = useRoute()
 const items = ref([])

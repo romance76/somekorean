@@ -51,6 +51,8 @@
               <RouterLink to="/games" class="block text-sm text-gray-600 hover:text-amber-700">🎮 게임</RouterLink>
             </div>
           </div>
+          <!-- 왼쪽 광고 -->
+          <AdSlot page="home" position="left" :maxSlots="3" />
         </div>
 
         <!-- 메인 콘텐츠 -->
@@ -132,6 +134,8 @@
                 class="bg-amber-50 text-amber-700 px-2 py-1 rounded-lg text-xs font-medium cursor-pointer hover:bg-amber-100">#{{ tag }}</span>
             </div>
           </div>
+          <!-- 오른쪽 광고 -->
+          <AdSlot page="home" position="right" :maxSlots="2" />
         </div>
       </div>
     </div>
@@ -142,6 +146,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import AdSlot from '../components/AdSlot.vue'
 import axios from 'axios'
 
 const router = useRouter()

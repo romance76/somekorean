@@ -293,6 +293,43 @@ class AdminSettingsController extends Controller
         return response()->json(['success' => true, 'message' => 'Firebase 설정 저장 완료']);
     }
 
+    // ─── 광고 페이지 설정 ───
+    public function getAdPageSettings() {
+        $setting = SiteSetting::where('key', 'ad_page_config')->first();
+        $config = $setting ? json_decode($setting->value, true) : $this->defaultAdPageConfig();
+        return response()->json(['success' => true, 'data' => $config]);
+    }
+
+    public function saveAdPageSettings(Request $request) {
+        SiteSetting::updateOrCreate(['key' => 'ad_page_config'], ['value' => json_encode($request->config)]);
+        return response()->json(['success' => true, 'message' => '광고 페이지 설정이 저장되었습니다']);
+    }
+
+    private function defaultAdPageConfig() {
+        $pages = ['home','community','qa','jobs','market','realestate','directory','clubs','news','recipes','groupbuy','events'];
+        $config = [];
+        foreach ($pages as $p) {
+            $config[$p] = ['left_slots' => 2, 'right_slots' => 2, 'label' => $this->pageLabel($p)];
+        }
+        return $config;
+    }
+
+    private function pageLabel($key) {
+        return match($key) {
+            'home' => '홈', 'community' => '커뮤니티', 'qa' => 'Q&A', 'jobs' => '구인구직',
+            'market' => '중고장터', 'realestate' => '부동산', 'directory' => '업소록',
+            'clubs' => '동호회', 'news' => '뉴스', 'recipes' => '레시피',
+            'groupbuy' => '공동구매', 'events' => '이벤트', default => $key,
+        };
+    }
+
+    // 공개 API — 프론트엔드에서 광고 슬롯 수 가져오기
+    public function getAdPageSettingsPublic() {
+        $setting = SiteSetting::where('key', 'ad_page_config')->first();
+        $config = $setting ? json_decode($setting->value, true) : $this->defaultAdPageConfig();
+        return response()->json(['success' => true, 'data' => $config]);
+    }
+
     // ─── 포인트 설정 ───
     public function getPointSettings() {
         $settings = \DB::table('point_settings')->orderBy('category')->orderBy('id')->get();

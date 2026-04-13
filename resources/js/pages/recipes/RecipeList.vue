@@ -126,6 +126,7 @@
         <SidebarWidgets api-url="/api/recipes" detail-path="/recipes/" :current-id="0"
           label="레시피"
           :second-tab="{ label: '⭐ 별점 순', sort: 'rating' }" />
+        <AdSlot page="recipes" position="right" :maxSlots="2" />
       </div>
     </div>
   </div>
@@ -139,6 +140,7 @@ import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import { thumb } from '../../utils/thumb'
 import axios from 'axios'
+import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
 const route = useRoute()

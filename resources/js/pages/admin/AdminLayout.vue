@@ -75,6 +75,7 @@ const mainMenu = [
   { to: '/admin/members', icon: '👥', label: '회원', group: 'member' },
   { to: '/admin/content', icon: '📝', label: '콘텐츠', group: 'content' },
   { to: '/admin/directory', icon: '🏪', label: '서비스', group: 'service' },
+  { to: '/admin/banners', icon: '📢', label: '광고관리', group: 'ad' },
   { to: '/admin/settings', icon: '⚙️', label: '시스템', group: 'system' },
 ]
 
@@ -107,8 +108,11 @@ const subTabs = {
     { to: '/admin/elder', icon: '💙', label: '안심서비스' },
     { to: '/admin/chats', icon: '💬', label: '채팅' },
   ],
+  ad: [
+    { to: '/admin/banners', icon: '📢', label: '광고 목록' },
+    { to: '/admin/ad-settings', icon: '📐', label: '페이지별 설정' },
+  ],
   system: [
-    { to: '/admin/banners', icon: '📢', label: '광고관리' },
     { to: '/admin/payments', icon: '💳', label: '결제' },
     { to: '/admin/security', icon: '🔒', label: '보안' },
     { to: '/admin/settings', icon: '⚙️', label: '설정' },

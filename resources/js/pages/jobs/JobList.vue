@@ -35,6 +35,7 @@
         <button v-for="c in jobCategories" :key="c.value" @click="activeCat=c.value; activeItem=null; loadPage()"
           class="w-full text-left px-3 py-2 text-xs transition"
           :class="activeCat===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
+              <AdSlot page="jobs" position="left" :maxSlots="2" />
       </div>
     </div>
     <div class="col-span-12 lg:col-span-7">
@@ -123,6 +124,7 @@
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets :inline="true" @select="openItem" api-url="/api/jobs" detail-path="/jobs/" :current-id="0"
         label="채용" :filter-params="locationParams" />
+        <AdSlot page="jobs" position="right" :maxSlots="2" />
     </div>
     </div>
   </div>
@@ -136,6 +138,7 @@ import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
 import axios from 'axios'
+import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
 const route = useRoute()

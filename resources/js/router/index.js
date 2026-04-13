@@ -177,6 +177,7 @@ const routes = [
       { path: 'elder', component: p('admin/AdminElder') },
       { path: 'chats', component: p('admin/AdminChats') },
       { path: 'banners', component: p('admin/Banners') },
+      { path: 'ad-settings', component: p('admin/AdSettings') },
       { path: 'payments', component: p('admin/Payments') },
       { path: 'security', component: p('admin/AdminSecurity') },
       { path: 'settings', component: p('admin/SiteSettings') },

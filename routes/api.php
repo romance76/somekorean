@@ -76,6 +76,7 @@ Route::get('/news/{id}', [NewsController::class, 'show']);
 Route::get('/thumb', [ThumbnailController::class, 'show']);
 Route::get('/banners/active', [\App\Http\Controllers\API\BannerController::class, 'show']);
 Route::post('/banners/{id}/click', [\App\Http\Controllers\API\BannerController::class, 'click']);
+Route::get('/ad-settings/public', [\App\Http\Controllers\API\AdminSettingsController::class, 'getAdPageSettingsPublic']);
 
 Route::get('/recipes', [RecipeController::class, 'index']);
 Route::get('/recipes/categories', [RecipeController::class, 'categories']);
@@ -361,6 +362,8 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/reports', [AdminController::class, 'reports']);
     Route::put('/reports/{id}', [AdminController::class, 'updateReport']);
     Route::get('/banners', [AdminController::class, 'bannerList']);
+    Route::get('/ad-settings', [\App\Http\Controllers\API\AdminSettingsController::class, 'getAdPageSettings']);
+    Route::post('/ad-settings', [\App\Http\Controllers\API\AdminSettingsController::class, 'saveAdPageSettings']);
     Route::post('/banners', [AdminController::class, 'createBanner']);
     Route::post('/banners/{id}/approve', [AdminController::class, 'approveBanner']);
     Route::post('/banners/{id}/reject', [AdminController::class, 'rejectBanner']);

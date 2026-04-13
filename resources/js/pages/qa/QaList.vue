@@ -22,7 +22,8 @@
           <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; activeItem=null; loadQa()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
-        </div>
+                <AdSlot page="qa" position="left" :maxSlots="2" />
+      </div>
       </div>
 
       <!-- 메인: 목록 또는 상세 (인라인 전환) -->
@@ -128,6 +129,7 @@
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
         <SidebarWidgets :inline="true" @select="openItem" api-url="/api/qa" detail-path="/qa/" :current-id="activeItem?.id || 0"
           label="질문" />
+        <AdSlot page="qa" position="right" :maxSlots="2" />
       </div>
     </div>
   </div>
@@ -139,6 +141,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
+import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
 const route = useRoute()

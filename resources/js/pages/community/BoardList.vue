@@ -27,6 +27,7 @@
             {{ b.name }}
           </button>
         </div>
+        <AdSlot page="community" position="left" :maxSlots="2" />
       </div>
 
       <!-- 메인: 게시글 목록 -->
@@ -132,6 +133,7 @@
             <button @click="loadPopular(popLastPage)" :disabled="popPage>=popLastPage" class="text-[10px] text-gray-400 hover:text-amber-700 disabled:opacity-30 px-1">»</button>
           </div>
         </div>
+        <AdSlot page="community" position="right" :maxSlots="2" />
       </div>
     </div>
   </div>
@@ -142,6 +144,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import AdSlot from '../../components/AdSlot.vue'
 import CommentSection from '../../components/CommentSection.vue'
 import axios from 'axios'
 

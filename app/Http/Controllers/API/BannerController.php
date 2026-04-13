@@ -20,7 +20,8 @@ class BannerController extends Controller
             $query->where('position', $request->position);
         }
 
-        $banners = $query->inRandomOrder()->limit(5)->get();
+        $limit = $request->limit ?: 5;
+        $banners = $query->inRandomOrder()->limit($limit)->get();
 
         // 노출 수 증가
         BannerAd::whereIn('id', $banners->pluck('id'))->increment('impressions');

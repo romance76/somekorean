@@ -32,6 +32,7 @@
         <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadPage()"
           class="w-full text-left px-3 py-2 text-xs transition"
           :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
+              <AdSlot page="groupbuy" position="left" :maxSlots="2" />
       </div>
     </div>
     <div class="col-span-12 lg:col-span-7">
@@ -74,6 +75,7 @@
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets api-url="/api/groupbuys" detail-path="/groupbuy/" :current-id="0"
         label="공동구매" :filter-params="locationParams" />
+        <AdSlot page="groupbuy" position="right" :maxSlots="2" />
     </div>
     </div>
   </div>
@@ -86,6 +88,7 @@ import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
+import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
