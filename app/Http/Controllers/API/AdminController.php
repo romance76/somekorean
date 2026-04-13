@@ -84,6 +84,28 @@ class AdminController extends Controller
         return response()->json(['success'=>true]);
     }
 
+    // ─── 통화 내역 관리 ───
+    public function callLogs(Request $request) {
+        $query = \App\Models\Call::with(['caller:id,name,nickname,avatar', 'callee:id,name,nickname,avatar'])
+            ->orderByDesc('created_at');
+        if ($request->status) $query->where('status', $request->status);
+        if ($request->search) {
+            $query->whereHas('caller', fn($q) => $q->where('name', 'like', "%{$request->search}%"))
+                  ->orWhereHas('callee', fn($q) => $q->where('name', 'like', "%{$request->search}%"));
+        }
+        return response()->json(['success' => true, 'data' => $query->paginate(30)]);
+    }
+
+    public function callStats() {
+        return response()->json(['success' => true, 'data' => [
+            'total' => \App\Models\Call::count(),
+            'answered' => \App\Models\Call::where('status', 'answered')->orWhere('status', 'ended')->count(),
+            'missed' => \App\Models\Call::where('status', 'initiated')->count(),
+            'today' => \App\Models\Call::whereDate('created_at', today())->count(),
+            'avg_duration' => (int) \App\Models\Call::where('duration', '>', 0)->avg('duration'),
+        ]]);
+    }
+
     public function ipBans() { return response()->json(['success'=>true,'data'=>IpBan::orderByDesc('created_at')->get()]); }
     public function createIpBan(Request $request) { IpBan::create(['ip_address'=>$request->ip_address,'reason'=>$request->reason,'banned_by'=>auth()->id()]); return response()->json(['success'=>true]); }
     public function deleteIpBan($id) { IpBan::findOrFail($id)->delete(); return response()->json(['success'=>true]); }

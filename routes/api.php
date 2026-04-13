@@ -500,6 +500,10 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/elder/checkins', [AdminController::class, 'elderCheckins']);
     Route::get('/elder/sos', [AdminController::class, 'elderSosLogs']);
 
+    // ─── Admin 통화 내역 ───
+    Route::get('/calls', [AdminController::class, 'callLogs']);
+    Route::get('/calls/stats', [AdminController::class, 'callStats']);
+
     // ─── Admin 채팅 ───
     Route::get('/chat/rooms', [AdminController::class, 'chatRooms']);
     Route::post('/chat/rooms', [AdminController::class, 'chatCreateRoom']);

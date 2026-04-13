@@ -107,6 +107,7 @@ const subTabs = {
     { to: '/admin/groupbuy', icon: '🤝', label: '공동구매' },
     { to: '/admin/elder', icon: '💙', label: '안심서비스' },
     { to: '/admin/chats', icon: '💬', label: '채팅' },
+    { to: '/admin/calls', icon: '📞', label: '통화내역' },
   ],
   ad: [
     { to: '/admin/banners', icon: '📢', label: '광고 목록' },

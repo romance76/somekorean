@@ -372,6 +372,35 @@
       </div>
     </div>
 
+    <!-- ═══ 통화 내역 탭 ═══ -->
+    <div v-else-if="tab==='calls'" class="space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <h2 class="font-bold text-gray-800 mb-4">📞 통화 내역</h2>
+        <div v-if="!callHistory.length" class="text-sm text-gray-400 py-6 text-center">통화 기록이 없습니다</div>
+        <div v-else class="space-y-2">
+          <div v-for="c in callHistory" :key="c.id" class="border rounded-lg p-3 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+              :class="c.direction==='outgoing' ? 'bg-blue-500' : 'bg-green-500'">
+              {{ c.direction==='outgoing' ? '📤' : '📥' }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-gray-800">{{ c.partner_name }}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                  :class="c.status==='ended'||c.status==='answered' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                  {{ c.direction==='outgoing' ? '발신' : '수신' }} · {{ {ended:'완료',answered:'응답',initiated:'부재중'}[c.status]||c.status }}
+                </span>
+              </div>
+              <div class="text-[10px] text-gray-400 mt-0.5">{{ fmtDateFull(c.created_at) }}</div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <div class="text-sm font-bold" :class="c.duration && c.duration!=='0초' ? 'text-green-700' : 'text-gray-400'">{{ c.duration || '-' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ 북마크 탭 ═══ -->
     <div v-else-if="tab==='bookmarks'" class="space-y-4">
       <div class="bg-white rounded-xl shadow-sm border p-5">
@@ -666,6 +695,7 @@ const tabs = [
   { key: 'posts', icon: '📄', label: '내 글' },
   { key: 'market', icon: '🛒', label: '내 장터' },
   { key: 'ads', icon: '📢', label: '광고 신청', link: '/ad-apply' },
+  { key: 'calls', icon: '📞', label: '통화내역' },
   { key: 'bookmarks', icon: '🔖', label: '북마크' },
   { key: 'elder', icon: '🛡️', label: '안심' },
   { key: 'payments', icon: '💳', label: '결제' },
@@ -933,6 +963,12 @@ async function sendReply() {
   replySending.value = false
 }
 
+// ─── 통화 내역 ───
+const callHistory = ref([])
+async function loadCallHistory() {
+  try { const { data } = await axios.get('/api/comms/calls/history'); callHistory.value = data || [] } catch {}
+}
+
 // ─── 내 글 ───
 const myPosts = ref([])
 async function loadPosts() { try { const { data } = await axios.get(`/api/users/${auth.user?.id}/posts`); myPosts.value = data.data?.data || data.data || [] } catch {} }
@@ -1073,7 +1109,7 @@ async function deleteMenu(menu) {
 
 // ─── 탭 로딩 ───
 function loadTab(key) {
-  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, ads: loadMyAds, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz }
+  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, ads: loadMyAds, calls: loadCallHistory, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz }
   if (loaders[key]) loaders[key]()
 }
 
