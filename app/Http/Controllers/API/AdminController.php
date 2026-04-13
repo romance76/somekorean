@@ -62,14 +62,33 @@ class AdminController extends Controller
     public function createIpBan(Request $request) { IpBan::create(['ip_address'=>$request->ip_address,'reason'=>$request->reason,'banned_by'=>auth()->id()]); return response()->json(['success'=>true]); }
     public function deleteIpBan($id) { IpBan::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
 
-    public function payments(Request $request) { return response()->json(['success'=>true,'data'=>Payment::with('user:id,name')->orderByDesc('created_at')->paginate(20)]); }
+    public function payments(Request $request) {
+        $query = Payment::with('user:id,name,email')->orderByDesc('created_at');
+        if ($request->status) $query->where('status', $request->status);
+        if ($request->search) $query->whereHas('user', fn($q) => $q->where('name','like',"%{$request->search}%")->orWhere('email','like',"%{$request->search}%"));
+        return response()->json(['success'=>true,'data'=>$query->paginate(50)]);
+    }
+
+    public function refundPayment($id) {
+        $payment = Payment::findOrFail($id);
+        if ($payment->status !== 'completed') {
+            return response()->json(['success'=>false,'message'=>'완료된 결제만 환불 가능합니다'], 422);
+        }
+        // 포인트 회수
+        $user = User::find($payment->user_id);
+        if ($user) {
+            $user->addPoints(-$payment->points_purchased, "환불: 주문 #{$payment->id}", 'refund');
+        }
+        $payment->update(['status' => 'refunded']);
+        return response()->json(['success'=>true,'message'=>"주문 #{$id} 환불 완료. {$payment->points_purchased}P 회수됨"]);
+    }
 
     // 회원 상세 (관리자용 - 전체 정보)
     public function userDetail($id) {
         $user = User::findOrFail($id);
         $posts = Post::where('user_id',$id)->orderByDesc('created_at')->limit(20)->get();
         $payments = Payment::where('user_id',$id)->orderByDesc('created_at')->limit(20)->get();
-        $points = \App\Models\PointHistory::where('user_id',$id)->orderByDesc('created_at')->limit(30)->get();
+        $points = \App\Models\PointLog::where('user_id',$id)->orderByDesc('created_at')->limit(30)->get();
         $comments = \App\Models\Comment::where('user_id',$id)->orderByDesc('created_at')->limit(20)->get();
         $jobs = JobPost::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
         $market = MarketItem::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();

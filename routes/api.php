@@ -361,6 +361,7 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/ip-bans', [AdminController::class, 'createIpBan']);
     Route::delete('/ip-bans/{id}', [AdminController::class, 'deleteIpBan']);
     Route::get('/payments', [AdminController::class, 'payments']);
+    Route::post('/payments/{id}/refund', [AdminController::class, 'refundPayment']);
     Route::get('/claims', [AdminController::class, 'claims']);
     Route::post('/claims/{id}/approve', [AdminController::class, 'approveClaim']);
     Route::post('/claims/{id}/reject', [AdminController::class, 'rejectClaim']);
