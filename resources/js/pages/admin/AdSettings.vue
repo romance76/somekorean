@@ -5,28 +5,60 @@
   <div v-if="loading" class="text-center py-8 text-gray-400">로딩중...</div>
   <div v-else class="space-y-6">
 
-    <!-- 최소 입찰가 설정 -->
+    <!-- 등급별 최소 입찰가 설정 -->
     <div class="bg-amber-50 rounded-2xl border border-amber-200 p-5">
-      <h2 class="font-bold text-amber-800 text-sm mb-3">💰 슬롯별 최소 월 입찰가 (P)</h2>
-      <p class="text-xs text-amber-600 mb-4">이 값이 광고 신청 페이지에서 각 슬롯 옆에 표시됩니다</p>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="text-xs font-bold text-blue-700 block mb-1">좌측 슬롯 최소</label>
-          <div class="flex items-center gap-2">
-            <input type="number" v-model.number="minPrices.left" min="10" step="10" class="flex-1 border-2 border-blue-300 rounded-lg px-3 py-2 text-sm font-bold text-center" />
-            <span class="text-sm font-bold text-blue-700">P/월</span>
+      <h2 class="font-bold text-amber-800 text-sm mb-3">💰 등급별 최소 월 입찰가 (P)</h2>
+      <p class="text-xs text-amber-600 mb-4">광고 신청 페이지에서 각 슬롯 옆에 표시됩니다</p>
+
+      <div class="mb-4">
+        <h3 class="text-xs font-bold text-gray-700 mb-2">📌 좌측 사이드바</h3>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-yellow-700 block mb-1">🥇 프리미엄 (고정)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="minPrices.left_premium" min="100" step="100" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
           </div>
-        </div>
-        <div>
-          <label class="text-xs font-bold text-orange-700 block mb-1">우측 슬롯 최소</label>
-          <div class="flex items-center gap-2">
-            <input type="number" v-model.number="minPrices.right" min="10" step="10" class="flex-1 border-2 border-orange-300 rounded-lg px-3 py-2 text-sm font-bold text-center" />
-            <span class="text-sm font-bold text-orange-700">P/월</span>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-blue-700 block mb-1">🥈 스탠다드 (2개)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="minPrices.left_standard" min="100" step="100" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
+          </div>
+          <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-green-700 block mb-1">🥉 이코노미 (5개)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="minPrices.left_economy" min="100" step="100" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
           </div>
         </div>
       </div>
-      <button @click="savePrices" :disabled="savingPrices" class="mt-3 bg-amber-400 text-amber-900 font-bold px-6 py-2 rounded-lg text-xs hover:bg-amber-500 disabled:opacity-50">
-        {{ savingPrices ? '저장중...' : '최소 입찰가 저장' }}
+
+      <div class="mb-4">
+        <h3 class="text-xs font-bold text-gray-700 mb-2">📌 우측 사이드바</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-yellow-700 block mb-1">🥇 프리미엄 (고정)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="minPrices.right_premium" min="100" step="100" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
+          </div>
+          <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+            <label class="text-[10px] font-bold text-green-700 block mb-1">🥉 이코노미 (3개)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" v-model.number="minPrices.right_economy" min="100" step="100" class="flex-1 border rounded px-2 py-1.5 text-sm font-bold text-center" />
+              <span class="text-[10px] font-bold">P</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button @click="savePrices" :disabled="savingPrices" class="bg-amber-400 text-amber-900 font-bold px-6 py-2 rounded-lg text-xs hover:bg-amber-500 disabled:opacity-50">
+        {{ savingPrices ? '저장중...' : '입찰가 저장' }}
       </button>
       <span v-if="priceMsg" class="ml-3 text-xs text-green-600">{{ priceMsg }}</span>
     </div>
@@ -75,7 +107,10 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
 const config = ref({})
-const minPrices = ref({ left: 50, right: 50 })
+const minPrices = ref({
+  left_premium: 10000, left_standard: 7000, left_economy: 4000,
+  right_premium: 10000, right_economy: 4000
+})
 const loading = ref(true)
 const saving = ref(false)
 const savingPrices = ref(false)

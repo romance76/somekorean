@@ -8,61 +8,67 @@ use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
-    // 공개: 특정 페이지/위치의 활성 광고 가져오기 (지역 타겟팅 포함)
+    // 공개: 페이지/위치별 등급제 광고 가져오기 (로테이션 + 지역 타겟팅)
     public function show(Request $request)
     {
         $page = $request->page ?: 'home';
         $position = $request->position ?: 'left';
-        $limit = $request->limit ?: 5;
 
-        // 유저 지역 정보 (로그인 시)
         $user = auth('api')->user();
         $userState = $user->state ?? null;
-        $userCounty = $user->city ?? null; // city 필드를 county 매칭에도 사용
+        $userCounty = $user->city ?? null;
 
-        $query = BannerAd::active()
-            ->where('position', $position)
-            ->where(function ($q) use ($page) {
-                $q->where('page', $page)
-                  ->orWhere('page', 'all')
-                  ->orWhereJsonContains('target_pages', $page);
-            });
+        // 슬롯별 등급 정의
+        $slotConfig = $position === 'left'
+            ? [1 => ['tier' => 'premium', 'max' => 1], 2 => ['tier' => 'standard', 'max' => 2], 3 => ['tier' => 'economy', 'max' => 5]]
+            : [1 => ['tier' => 'premium', 'max' => 1], 2 => ['tier' => 'economy', 'max' => 3]];
 
-        // 지역 타겟팅: 로그인=로컬 우선(카운티>주>전국), 비로그인=전국만
-        if ($user && $userState) {
-            $banners = $query->where(function ($q) use ($userState, $userCounty) {
+        $results = [];
+
+        foreach ($slotConfig as $slotNum => $cfg) {
+            $query = BannerAd::active()
+                ->where('position', $position)
+                ->where('slot_number', $slotNum)
+                ->where(function ($q) use ($page) {
+                    $q->where('page', $page)
+                      ->orWhere('page', 'all')
+                      ->orWhere('page', 'sub')
+                      ->orWhereJsonContains('target_pages', $page);
+                });
+
+            // 지역 필터
+            if ($user && $userState) {
+                $query->where(function ($q) use ($userState, $userCounty) {
                     $q->where('geo_scope', 'all')
-                      ->orWhere(function ($q2) use ($userState) {
-                          $q2->where('geo_scope', 'state')->where('geo_value', $userState);
-                      })
-                      ->orWhere(function ($q2) use ($userCounty) {
-                          $q2->where('geo_scope', 'county')->where('geo_value', $userCounty);
-                      });
-                })
-                ->orderByRaw("
-                    CASE
-                        WHEN geo_scope = 'county' AND geo_value = ? THEN 1
-                        WHEN geo_scope = 'state' AND geo_value = ? THEN 2
-                        WHEN geo_scope = 'all' THEN 3
-                        ELSE 4
-                    END
-                ", [$userCounty, $userState])
-                ->orderByDesc('bid_amount')
-                ->limit($limit)
-                ->get();
-        } else {
-            $banners = $query->where('geo_scope', 'all')
-                ->orderByDesc('bid_amount')
-                ->limit($limit)
-                ->get();
+                      ->orWhere(function ($q2) use ($userState) { $q2->where('geo_scope', 'state')->where('geo_value', $userState); })
+                      ->orWhere(function ($q2) use ($userCounty) { $q2->where('geo_scope', 'county')->where('geo_value', $userCounty); });
+                });
+            } else {
+                $query->where('geo_scope', 'all');
+            }
+
+            // 등급별 처리
+            if ($cfg['tier'] === 'premium') {
+                // 프리미엄: 최고 입찰자 1개 고정
+                $ad = $query->orderByDesc('bid_amount')->first();
+                if ($ad) $results[] = $ad;
+            } else {
+                // 스탠다드/이코노미: 상위 N개 중 랜덤 1개 선택
+                $candidates = $query->orderByDesc('bid_amount')->limit($cfg['max'])->get();
+                if ($candidates->count()) {
+                    $picked = $candidates->random();
+                    $results[] = $picked;
+                }
+            }
         }
 
         // 노출 수 증가
-        if ($banners->count()) {
-            BannerAd::whereIn('id', $banners->pluck('id'))->increment('impressions');
+        $ids = collect($results)->pluck('id')->filter();
+        if ($ids->count()) {
+            BannerAd::whereIn('id', $ids)->increment('impressions');
         }
 
-        return response()->json(['success' => true, 'data' => $banners]);
+        return response()->json(['success' => true, 'data' => $results]);
     }
 
     // 배너 클릭 추적
@@ -90,9 +96,9 @@ class BannerController extends Controller
             'link_url' => 'nullable|url',
             'page' => 'required|in:home,sub,all',
             'position' => 'required|in:left,right',
-            'slot_number' => 'required|integer|min:1|max:5',
+            'slot_number' => 'required|integer|min:1|max:3',
+            'tier' => 'required|in:premium,standard,economy',
             'geo_scope' => 'required|in:all,state,county',
-            // city 제외 — 전국/주/카운티만
             'geo_value' => 'nullable|string|max:100',
             'bid_amount' => 'required|integer|min:50',
         ]);
