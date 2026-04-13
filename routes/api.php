@@ -74,6 +74,8 @@ Route::get('/news/categories', [NewsController::class, 'categories']);
 Route::get('/news/{id}', [NewsController::class, 'show']);
 // 썸네일 프록시/캐시 (모든 리스트 페이지가 공유)
 Route::get('/thumb', [ThumbnailController::class, 'show']);
+Route::get('/banners/active', [\App\Http\Controllers\API\BannerController::class, 'show']);
+Route::post('/banners/{id}/click', [\App\Http\Controllers\API\BannerController::class, 'click']);
 
 Route::get('/recipes', [RecipeController::class, 'index']);
 Route::get('/recipes/categories', [RecipeController::class, 'categories']);
@@ -145,6 +147,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/market/{id}/reserve', [MarketReservationController::class, 'reserve']);
     Route::post('/market/reservations/{id}/complete', [MarketReservationController::class, 'complete']);
     Route::post('/market/reservations/{id}/cancel', [MarketReservationController::class, 'cancel']);
+
+    // 배너 광고 신청
+    Route::get('/banners/my', [\App\Http\Controllers\API\BannerController::class, 'myBanners']);
+    Route::post('/banners/apply', [\App\Http\Controllers\API\BannerController::class, 'store']);
 
     // 홀드 (구매자가 포인트로 물건 예약)
     Route::post('/market/{id}/hold', [MarketController::class, 'hold']);
@@ -355,7 +361,11 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/reports', [AdminController::class, 'reports']);
     Route::put('/reports/{id}', [AdminController::class, 'updateReport']);
     Route::get('/banners', [AdminController::class, 'banners']);
+    Route::get('/banners', [AdminController::class, 'bannerList']);
     Route::post('/banners', [AdminController::class, 'createBanner']);
+    Route::post('/banners/{id}/approve', [AdminController::class, 'approveBanner']);
+    Route::post('/banners/{id}/reject', [AdminController::class, 'rejectBanner']);
+    Route::post('/banners/{id}/pause', [AdminController::class, 'pauseBanner']);
     Route::delete('/banners/{id}', [AdminController::class, 'deleteBanner']);
     Route::get('/ip-bans', [AdminController::class, 'ipBans']);
     Route::post('/ip-bans', [AdminController::class, 'createIpBan']);

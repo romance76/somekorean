@@ -55,8 +55,27 @@ class AdminController extends Controller
     public function updateReport(Request $request, $id) { Report::findOrFail($id)->update($request->only('status','admin_note')); return response()->json(['success'=>true]); }
 
     public function banners() { return response()->json(['success'=>true,'data'=>Banner::orderBy('sort_order')->get()]); }
-    public function createBanner(Request $request) { return response()->json(['success'=>true,'data'=>Banner::create($request->all())]); }
-    public function deleteBanner($id) { Banner::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
+    public function bannerList() {
+        return response()->json(['success'=>true,'data'=>\App\Models\BannerAd::with('user:id,name,email')->orderByDesc('created_at')->get()]);
+    }
+    public function createBanner(Request $request) { return response()->json(['success'=>true,'data'=>\App\Models\BannerAd::create($request->all())]); }
+    public function approveBanner($id) {
+        $b = \App\Models\BannerAd::findOrFail($id);
+        $b->update(['status' => 'active']);
+        return response()->json(['success'=>true,'message'=>'배너 승인됨']);
+    }
+    public function rejectBanner(Request $request, $id) {
+        $b = \App\Models\BannerAd::findOrFail($id);
+        $b->update(['status' => 'rejected', 'reject_reason' => $request->reason]);
+        // 포인트 환불
+        $b->user?->addPoints($b->total_cost, "배너 거절 환불: {$b->title}", 'banner_refund');
+        return response()->json(['success'=>true,'message'=>"거절됨. {$b->total_cost}P 환불"]);
+    }
+    public function pauseBanner($id) {
+        \App\Models\BannerAd::findOrFail($id)->update(['status' => 'paused']);
+        return response()->json(['success'=>true]);
+    }
+    public function deleteBanner($id) { \App\Models\BannerAd::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
 
     public function ipBans() { return response()->json(['success'=>true,'data'=>IpBan::orderByDesc('created_at')->get()]); }
     public function createIpBan(Request $request) { IpBan::create(['ip_address'=>$request->ip_address,'reason'=>$request->reason,'banned_by'=>auth()->id()]); return response()->json(['success'=>true]); }
