@@ -44,6 +44,7 @@
           <div class="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
           <span class="font-bold">매칭 중... ({{ queueCount }}명 대기)</span>
         </div>
+        <div class="text-xs text-gray-500">{{ matchWait }}초 대기 · 30초 후 AI로 자동 시작</div>
         <button @click="cancelMatch" class="text-gray-500 text-sm hover:text-gray-300">취소</button>
       </div>
 
@@ -148,8 +149,10 @@ const chatMessages = ref([])
 const chatInput = ref('')
 const turnCountdown = ref(0)
 const raiseAmount = ref(40)
+const matchWait = ref(0)
 
 let matchInterval = null
+let waitCounter = null
 let timeoutInterval = null
 let echoChannel = null
 
@@ -188,6 +191,8 @@ async function startMatch() {
   gameState.value = null
   resumeAudio()
 
+  matchWait.value = 0
+  waitCounter = setInterval(() => matchWait.value++, 1000)
   pollMatch()
   matchInterval = setInterval(pollMatch, 3000) // 3초마다 폴링
 }
@@ -217,7 +222,9 @@ async function pollMatch() {
 
 function cancelMatch() {
   matching.value = false
+  matchWait.value = 0
   if (matchInterval) { clearInterval(matchInterval); matchInterval = null }
+  if (waitCounter) { clearInterval(waitCounter); waitCounter = null }
 }
 
 // ── Echo WebSocket 연결 ──
@@ -247,8 +254,10 @@ function startTimeoutPoller(gameId) {
     try {
       const { data } = await axios.get(`/api/poker/multi/game/${gameId}/timeout`)
       turnCountdown.value = data.remaining || 0
-      if (data.timeout) {
-        // 서버가 자동 처리함 → 상태 새로고침
+      if (data.ai_acted && data.state) {
+        gameState.value = data.state
+        soundBet()
+      } else if (data.timeout) {
         const { data: fresh } = await axios.get(`/api/poker/multi/game/${gameId}`)
         gameState.value = fresh.data
       }
@@ -292,6 +301,7 @@ function leaveGame() {
 
 function cleanup() {
   if (matchInterval) { clearInterval(matchInterval); matchInterval = null }
+  if (waitCounter) { clearInterval(waitCounter); waitCounter = null }
   if (timeoutInterval) { clearInterval(timeoutInterval); timeoutInterval = null }
   if (echoChannel) { echoChannel.leave(); echoChannel = null }
 }

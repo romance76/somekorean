@@ -392,6 +392,37 @@ class PokerGameEngine
         return $state;
     }
 
+    // ── AI 자동 액션 (서버에서 처리) ──
+    public static function processAITurn(string $gameId): ?array
+    {
+        $state = self::getGameState($gameId);
+        if (!$state || $state['status'] !== 'playing') return null;
+
+        $actIdx = $state['actIdx'];
+        $seat = $state['seats'][$actIdx] ?? null;
+        if (!$seat || $seat['id'] > 0) return null; // 실제 유저면 스킵
+
+        // 간단한 AI 로직
+        $toCall = max(0, $state['betLevel'] - $seat['bet']);
+        $rand = mt_rand(1, 100);
+
+        if ($toCall === 0) {
+            // 체크 또는 레이즈
+            $action = $rand <= 70 ? 'check' : 'raise';
+            $amount = $state['bb'] * mt_rand(2, 4);
+        } elseif ($toCall > $seat['chips'] * 0.5) {
+            // 큰 베팅 → 60% 폴드, 30% 콜, 10% 올인
+            $action = $rand <= 60 ? 'fold' : ($rand <= 90 ? 'call' : 'allin');
+            $amount = 0;
+        } else {
+            // 보통 → 20% 폴드, 50% 콜, 30% 레이즈
+            $action = $rand <= 20 ? 'fold' : ($rand <= 70 ? 'call' : 'raise');
+            $amount = $state['betLevel'] * mt_rand(2, 3);
+        }
+
+        return self::processAction($gameId, $seat['id'], $action, $amount);
+    }
+
     // ── 유저에게 보낼 상태 (자기 카드만 보이게) ──
     public static function getPlayerView(array $state, int $userId): array
     {

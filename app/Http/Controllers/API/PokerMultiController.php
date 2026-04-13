@@ -104,9 +104,29 @@ class PokerMultiController extends Controller
 
         Cache::put($queueKey, $queue, 300); // 5분 TTL
 
-        // 인원 충족 시 게임 시작 (최소 2명, 최대 9명)
-        if (count($queue) >= 2) {
+        // 30초 대기 후 AI로 채워서 시작 (또는 2명 이상이면 즉시)
+        $waitTime = 30;
+        $firstJoin = collect($queue)->min('joinedAt') ?? time();
+        $waited = time() - $firstJoin;
+        $shouldStart = count($queue) >= 2 || $waited >= $waitTime;
+
+        if ($shouldStart) {
             $players = array_slice($queue, 0, min(count($queue), 9));
+
+            // AI로 빈 자리 채우기 (최소 2명 테이블)
+            $aiNames = [
+                ['name' => '대니얼', 'style' => 'TAG'], ['name' => '소피아', 'style' => 'LAG'],
+                ['name' => '재민', 'style' => 'TP'], ['name' => '린다', 'style' => 'LP'],
+                ['name' => '마이크', 'style' => 'maniac'], ['name' => '유나', 'style' => 'balanced'],
+                ['name' => '빅터', 'style' => 'nit'], ['name' => '하나', 'style' => 'tricky'],
+            ];
+            shuffle($aiNames);
+            $aiIdx = 0;
+            $targetCount = max(count($players) + 1, 4); // 최소 4명 테이블
+            while (count($players) < $targetCount && $aiIdx < count($aiNames)) {
+                $ai = $aiNames[$aiIdx++];
+                $players[] = ['id' => -$aiIdx, 'name' => $ai['name'] . ' (AI)', 'chips' => 15000, 'isAI' => true, 'style' => $ai['style']];
+            }
             Cache::forget($queueKey);
 
             $state = PokerGameEngine::createGame($players, [
@@ -209,26 +229,42 @@ class PokerMultiController extends Controller
             return response()->json(['success' => true, 'timeout' => false]);
         }
 
-        if (time() > $state['turnDeadline']) {
-            // 시간 초과 → 자동 체크/폴드
-            $actIdx = $state['actIdx'];
-            $seat = $state['seats'][$actIdx];
+        $actIdx = $state['actIdx'];
+        $seat = $state['seats'][$actIdx] ?? null;
+
+        // AI 턴이면 서버에서 자동 처리
+        if ($seat && $seat['id'] < 0) {
+            $result = PokerGameEngine::processAITurn($gameId);
+            if ($result && !isset($result['error'])) {
+                // AI 처리 후 다음도 AI면 연속 처리 (최대 8번)
+                for ($i = 0; $i < 8; $i++) {
+                    $nextState = PokerGameEngine::getGameState($gameId);
+                    if (!$nextState || $nextState['status'] !== 'playing') break;
+                    $nextSeat = $nextState['seats'][$nextState['actIdx']] ?? null;
+                    if (!$nextSeat || $nextSeat['id'] > 0) break; // 실제 유저 턴
+                    usleep(500000); // 0.5초 딜레이
+                    PokerGameEngine::processAITurn($gameId);
+                }
+
+                $finalState = PokerGameEngine::getGameState($gameId);
+                return response()->json([
+                    'success' => true,
+                    'timeout' => false,
+                    'ai_acted' => true,
+                    'state' => $finalState ? PokerGameEngine::getPlayerView($finalState, auth()->id()) : null,
+                    'remaining' => ($finalState['turnDeadline'] ?? time()) - time(),
+                ]);
+            }
+        }
+
+        // 유저 타임아웃
+        if (time() > $state['turnDeadline'] && $seat && $seat['id'] > 0) {
             $toCall = max(0, $state['betLevel'] - $seat['bet']);
             $action = $toCall === 0 ? 'check' : 'fold';
-
             $result = PokerGameEngine::processAction($gameId, $seat['id'], $action);
-
-            if (!isset($result['error'])) {
-                foreach ($result['seats'] as $s) {
-                    if (isset($s['id']) && $s['id'] > 0) {
-                        broadcast(new PokerAction($gameId, PokerGameEngine::getPlayerView($result, $s['id']), ['type' => 'timeout', 'action' => $action]));
-                    }
-                }
-            }
-
             return response()->json(['success' => true, 'timeout' => true, 'action' => $action]);
         }
 
-        return response()->json(['success' => true, 'timeout' => false, 'remaining' => $state['turnDeadline'] - time()]);
+        return response()->json(['success' => true, 'timeout' => false, 'remaining' => max(0, $state['turnDeadline'] - time())]);
     }
 }
