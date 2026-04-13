@@ -88,10 +88,11 @@ class MarketController extends Controller
         }
 
         if ($spamCost > 0) {
+            $postNum = $todaySameCategory + 1;
             if ($user->points < $spamCost) {
-                return response()->json(['success' => false, 'message' => "동일 카테고리 {$todaySameCategory+1}번째 등록에 {$spamCost}P 필요. 보유: {$user->points}P"], 422);
+                return response()->json(['success' => false, 'message' => "동일 카테고리 {$postNum}번째 등록에 {$spamCost}P 필요. 보유: {$user->points}P"], 422);
             }
-            $user->addPoints(-$spamCost, "장터 추가 등록 ({$request->category} {$todaySameCategory+1}번째)", 'spend');
+            $user->addPoints(-$spamCost, "장터 추가 등록 ({$request->category} {$postNum}번째)", 'spend');
         }
 
         // 동일 제목 중복 등록 방지
@@ -116,19 +117,17 @@ class MarketController extends Controller
         $extraCount = max(0, count($images) - $freePhotos);
         $extraCost = $extraCount * $extraPhotoPoints;
         if ($extraCost > 0) {
-            $user = auth()->user();
+            $user = $user->fresh();
             if ($user->points < $extraCost) {
                 return response()->json([
                     'success' => false,
                     'message' => "추가 사진 {$extraCount}장에 {$extraCost}P 필요. 보유: {$user->points}P"
                 ], 422);
             }
-            $user = auth()->user();
             $user->addPoints(-$extraCost, "추가 사진 {$extraCount}장", 'photo');
         }
 
         // 위치 정보 없으면 유저 프로필에서 가져오기
-        $user = auth()->user();
         $lat = $request->lat ?: $user->latitude;
         $lng = $request->lng ?: $user->longitude;
         $city = $request->city ?: $user->city;
