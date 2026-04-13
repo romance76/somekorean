@@ -87,7 +87,8 @@ class MarketController extends Controller
                     'message' => "추가 사진 {$extraCount}장에 {$extraCost}P 필요. 보유: {$user->points}P"
                 ], 422);
             }
-            $user->decrement('points', $extraCost);
+            $user = auth()->user();
+            $user->addPoints(-$extraCost, "추가 사진 {$extraCount}장", 'photo');
         }
 
         // 위치 정보 없으면 유저 프로필에서 가져오기
@@ -170,10 +171,9 @@ class MarketController extends Controller
             ], 422);
         }
 
-        // 포인트 차감/지급
-        $buyer->decrement('points', $totalCost);
-        User::find($item->user_id)?->increment('points', $sellerReceived);
-        // 수수료는 시스템 (운영자 계정 ID=1 등에 적립하거나 별도 관리)
+        // 포인트 차감/지급 (point_logs 에 기록)
+        $buyer->addPoints(-$totalCost, "홀드: {$item->title} ({$hours}시간)", 'hold');
+        User::find($item->user_id)?->addPoints($sellerReceived, "홀드 수입: {$item->title}", 'hold_income');
 
         // 예약 생성
         $reservation = MarketReservation::create([
@@ -255,8 +255,8 @@ class MarketController extends Controller
             ], 422);
         }
 
-        // 포인트 차감
-        $user->decrement('points', $totalCost);
+        // 포인트 차감 (point_logs 에 기록)
+        $user->addPoints(-$totalCost, "상위노출: {$item->title} ({$days}일)", 'boost');
 
         // 기존 부스트가 있으면 연장, 없으면 지금부터
         $currentBoostEnd = $item->boosted_until && $item->boosted_until->isFuture()
