@@ -24,20 +24,23 @@
         </div>
       </div>
 
-      <!-- 메인: 채팅 창 (모바일: 채팅방 선택 후에만 표시) -->
-      <div class="col-span-12 lg:col-span-6" :class="{ 'hidden': !activeRoom && isMobile }">
-        <div v-if="!activeRoom" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+      <!-- 메인: 채팅 창 -->
+      <!-- 모바일: fixed 전체화면 / PC: 그리드 내 -->
+      <div v-if="!activeRoom && !isMobile" class="col-span-12 lg:col-span-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <div class="text-4xl mb-3">💬</div>
           <div class="text-gray-500 font-semibold">채팅방을 선택해주세요</div>
           <div class="text-xs text-gray-400 mt-1">왼쪽에서 지역 채팅방을 클릭하세요</div>
         </div>
+      </div>
 
-        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style="height: calc(100vh - 140px); height: calc(100dvh - 140px);">
+      <div v-if="activeRoom" :class="isMobile ? 'fixed inset-0 z-50 bg-white flex flex-col' : 'col-span-12 lg:col-span-6'">
+        <div :class="isMobile ? 'flex flex-col flex-1 overflow-hidden' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'" :style="isMobile ? '' : 'height: 70vh'">
           <!-- 채팅방 헤더 -->
           <div class="px-4 py-3 border-b bg-amber-50 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-2">
               <!-- 모바일 뒤로가기 -->
-              <button @click="activeRoom = null; activeMessages = []" class="lg:hidden text-amber-700 text-sm font-bold mr-1">← 목록</button>
+              <button @click="activeRoom = null; activeMessages = []" class="lg:hidden text-amber-700 text-sm font-bold mr-1">←</button>
               <div class="font-bold text-sm text-amber-900">{{ activeRoom.name }}</div>
             </div>
             <span class="text-[10px] text-green-600 bg-green-100 px-2 py-0.5 rounded-full">🟢 공개 채팅방</span>
