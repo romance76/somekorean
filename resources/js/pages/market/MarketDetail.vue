@@ -43,17 +43,17 @@
 
         <div class="flex gap-2 flex-wrap">
           <!-- 홀드 버튼 (구매자용) -->
-          <button v-if="item.hold_enabled && item.status==='active' && auth.isLoggedIn && item.user_id !== auth.user?.id && !item.active_hold"
+          <button v-if="item.hold_enabled && item.status==='active' && auth.isLoggedIn && String(item.user_id) !== String(auth.user?.id) && !item.active_hold"
             @click="showHoldModal = true"
             class="bg-blue-500 text-white font-bold px-5 py-2 rounded-lg text-sm hover:bg-blue-600">🔒 홀드 ({{ item.hold_price_per_6h }}P/6h)</button>
 
           <!-- 홀드 취소 (구매자/판매자) -->
-          <button v-if="item.active_hold && (item.active_hold.buyer_id === auth.user?.id || item.user_id === auth.user?.id)"
+          <button v-if="item.active_hold && (item.active_hold.buyer_id === auth.user?.id || String(item.user_id) === String(auth.user?.id))"
             @click="cancelHold"
             class="bg-red-100 text-red-700 font-bold px-5 py-2 rounded-lg text-sm hover:bg-red-200">홀드 취소</button>
 
           <!-- 부스트 버튼 (판매자용) -->
-          <button v-if="item.user_id === auth.user?.id && item.status === 'active'"
+          <button v-if="String(item.user_id) === String(auth.user?.id) && item.status === 'active'"
             @click="showBoostModal = true"
             class="bg-purple-500 text-white font-bold px-5 py-2 rounded-lg text-sm hover:bg-purple-600">🚀 상위노출</button>
 

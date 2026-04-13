@@ -194,7 +194,12 @@ async function submit() {
       const { data } = await axios.post('/api/market', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       router.push(`/market/${data.data.id}`)
     }
-  } catch (e) { error.value = e.response?.data?.message || '등록 실패' }
+  } catch (e) {
+    const msg = e.response?.data?.message || ''
+    const errs = e.response?.data?.errors ? Object.values(e.response.data.errors).flat().join(', ') : ''
+    error.value = msg || errs || '등록 실패: ' + e.message
+    console.error('market submit error:', e.response?.data || e.message)
+  }
   submitting.value = false
 }
 
