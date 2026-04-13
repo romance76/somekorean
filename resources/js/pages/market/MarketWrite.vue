@@ -20,6 +20,30 @@
         </div>
       </div>
       <div class="flex items-center gap-2"><input v-model="form.is_negotiable" type="checkbox" class="rounded" /><span class="text-sm text-gray-600">가격 협의 가능</span></div>
+
+      <!-- 홀드 설정 -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <input v-model="form.hold_enabled" type="checkbox" class="rounded" />
+          <span class="text-sm font-semibold text-blue-800">🔒 홀드 허용 (구매자가 포인트로 물건 예약)</span>
+        </div>
+        <div v-if="form.hold_enabled" class="space-y-2 ml-6">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-600 w-28">6시간당 가격</label>
+            <input v-model.number="form.hold_price_per_6h" type="number" min="10" class="border rounded px-2 py-1 text-sm w-24" />
+            <span class="text-xs text-gray-400">P (포인트)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-600 w-28">최대 홀드 기간</label>
+            <select v-model.number="form.hold_max_hours" class="border rounded px-2 py-1 text-sm">
+              <option :value="6">6시간</option><option :value="12">12시간</option>
+              <option :value="24">1일</option><option :value="48">2일</option>
+              <option :value="72">3일</option><option :value="168">7일</option>
+            </select>
+          </div>
+          <div class="text-[10px] text-gray-400">예: 100P/6시간 설정 시 → 구매자가 하루 홀드하면 400P 차감 (90% 판매자, 10% 수수료)</div>
+        </div>
+      </div>
       <div><label class="text-sm font-semibold text-gray-700">상세 설명</label><textarea v-model="form.content" rows="6" placeholder="상품 상태, 거래 방법 등을 자세히 작성해주세요" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea></div>
       <div><label class="text-sm font-semibold text-gray-700">사진 (선택)</label><input type="file" multiple accept="image/*" @change="e => files = Array.from(e.target.files)" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm" /></div>
       <div v-if="error" class="text-red-500 text-sm">{{ error }}</div>
@@ -37,7 +61,7 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 const router = useRouter()
 const route = useRoute()
-const form = reactive({ title:'',price:0,category:'electronics',condition:'good',content:'',is_negotiable:false })
+const form = reactive({ title:'',price:0,category:'electronics',condition:'good',content:'',is_negotiable:false, hold_enabled:false, hold_price_per_6h:100, hold_max_hours:24 })
 const files = ref([])
 const error = ref('')
 const submitting = ref(false)

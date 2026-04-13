@@ -83,7 +83,11 @@
         <div class="flex items-center gap-3 mb-3">
           <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">{{ item.category==='electronics'?'📱':item.category==='furniture'?'🪑':item.category==='auto'?'🚗':item.category==='clothing'?'👕':'📦' }}</div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
+            <div class="flex items-center gap-1">
+              <span v-if="item.boosted_until && new Date(item.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold flex-shrink-0">🚀</span>
+              <span v-if="item.hold_enabled" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-bold flex-shrink-0">🔒</span>
+              <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
+            </div>
             <div class="text-[10px] text-gray-400">{{ item.category || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" /></div>
           </div>
           <div class="text-amber-600 font-black text-sm">${{ Number(item.price || 0).toLocaleString() }}</div>

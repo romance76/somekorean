@@ -146,6 +146,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/market/reservations/{id}/complete', [MarketReservationController::class, 'complete']);
     Route::post('/market/reservations/{id}/cancel', [MarketReservationController::class, 'cancel']);
 
+    // 홀드 (구매자가 포인트로 물건 예약)
+    Route::post('/market/{id}/hold', [MarketController::class, 'hold']);
+    Route::post('/market/{id}/hold/cancel', [MarketController::class, 'cancelHold']);
+    // 상위노출 (판매자가 포인트로 부스트)
+    Route::post('/market/{id}/boost', [MarketController::class, 'boost']);
+
     Route::post('/businesses', [BusinessController::class, 'store']);
     Route::post('/businesses/{id}/reviews', [BusinessController::class, 'storeReview']);
     Route::post('/businesses/{id}/claim', [BusinessController::class, 'claim']);

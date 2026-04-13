@@ -25,10 +25,91 @@
         <div class="text-xs text-gray-400 mt-1">{{ item.city }}, {{ item.state }} · {{ item.view_count }}조회</div>
       </div>
       <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ item.content }}</div>
-      <div class="px-5 py-3 border-t flex gap-3">
-        <button v-if="item.status==='active' && auth.isLoggedIn" @click="reserve"
-          class="bg-amber-400 text-amber-900 font-bold px-6 py-2 rounded-lg text-sm hover:bg-amber-500">🛒 찜하기 (100P)</button>
-        <RouterLink v-if="auth.isLoggedIn" to="/chat" class="bg-gray-100 text-gray-700 font-semibold px-6 py-2 rounded-lg text-sm hover:bg-gray-200">💬 채팅하기</RouterLink>
+      <div class="px-5 py-3 border-t space-y-3">
+        <!-- 홀드 상태 표시 -->
+        <div v-if="item.active_hold" class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-600 font-bold text-sm">🔒 홀드 중</span>
+            <span class="text-xs text-gray-500">{{ item.active_hold.buyer?.nickname || item.active_hold.buyer?.name }}님이 예약</span>
+          </div>
+          <div class="text-xs text-amber-700 mt-1">만료: {{ formatHoldTime(item.active_hold.hold_until) }}</div>
+        </div>
+
+        <!-- 부스트 상태 표시 -->
+        <div v-if="item.boosted_until && new Date(item.boosted_until) > new Date()" class="flex items-center gap-2">
+          <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">🚀 상위노출 중</span>
+          <span class="text-xs text-gray-400">{{ formatHoldTime(item.boosted_until) }}까지</span>
+        </div>
+
+        <div class="flex gap-2 flex-wrap">
+          <!-- 홀드 버튼 (구매자용) -->
+          <button v-if="item.hold_enabled && item.status==='active' && auth.isLoggedIn && item.user_id !== auth.user?.id && !item.active_hold"
+            @click="showHoldModal = true"
+            class="bg-blue-500 text-white font-bold px-5 py-2 rounded-lg text-sm hover:bg-blue-600">🔒 홀드 ({{ item.hold_price_per_6h }}P/6h)</button>
+
+          <!-- 홀드 취소 (구매자/판매자) -->
+          <button v-if="item.active_hold && (item.active_hold.buyer_id === auth.user?.id || item.user_id === auth.user?.id)"
+            @click="cancelHold"
+            class="bg-red-100 text-red-700 font-bold px-5 py-2 rounded-lg text-sm hover:bg-red-200">홀드 취소</button>
+
+          <!-- 부스트 버튼 (판매자용) -->
+          <button v-if="item.user_id === auth.user?.id && item.status === 'active'"
+            @click="showBoostModal = true"
+            class="bg-purple-500 text-white font-bold px-5 py-2 rounded-lg text-sm hover:bg-purple-600">🚀 상위노출</button>
+
+          <RouterLink v-if="auth.isLoggedIn" to="/chat" class="bg-gray-100 text-gray-700 font-semibold px-5 py-2 rounded-lg text-sm hover:bg-gray-200">💬 채팅하기</RouterLink>
+        </div>
+      </div>
+
+      <!-- 홀드 모달 -->
+      <div v-if="showHoldModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showHoldModal=false">
+        <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+          <h3 class="font-bold text-lg mb-3">🔒 홀드 신청</h3>
+          <p class="text-sm text-gray-600 mb-3">{{ item.title }}</p>
+          <div class="text-xs text-gray-400 mb-3">6시간당 <b class="text-amber-600">{{ item.hold_price_per_6h }}P</b> · 최대 {{ item.hold_max_hours }}시간</div>
+
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <button v-for="h in holdOptions" :key="h" @click="holdHours = h"
+              :class="holdHours === h ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'"
+              class="py-2 rounded-lg text-sm font-bold">
+              {{ h >= 24 ? (h/24) + '일' : h + '시간' }}
+            </button>
+          </div>
+
+          <div class="bg-blue-50 rounded-lg p-3 mb-4 text-center">
+            <div class="text-xs text-gray-500">차감 포인트</div>
+            <div class="text-2xl font-black text-blue-600">{{ holdCost }}P</div>
+            <div class="text-[10px] text-gray-400">판매자 {{ Math.floor(holdCost * 0.9) }}P · 수수료 {{ Math.ceil(holdCost * 0.1) }}P</div>
+          </div>
+
+          <div class="flex gap-2">
+            <button @click="showHoldModal=false" class="flex-1 py-2 bg-gray-100 rounded-lg text-sm font-semibold">취소</button>
+            <button @click="submitHold" :disabled="holdingInProgress" class="flex-1 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:bg-blue-600 disabled:opacity-50">홀드 신청</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 부스트 모달 -->
+      <div v-if="showBoostModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showBoostModal=false">
+        <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+          <h3 class="font-bold text-lg mb-3">🚀 상위노출</h3>
+          <p class="text-sm text-gray-600 mb-3">리스트 맨 위에 노출됩니다</p>
+
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <button @click="boostDays=1" :class="boostDays===1?'bg-purple-500 text-white':'bg-gray-100'" class="py-3 rounded-lg text-sm font-bold">1일<br><span class="text-xs">100P</span></button>
+            <button @click="boostDays=3" :class="boostDays===3?'bg-purple-500 text-white':'bg-gray-100'" class="py-3 rounded-lg text-sm font-bold">3일<br><span class="text-xs">300P</span></button>
+            <button @click="boostDays=7" :class="boostDays===7?'bg-purple-500 text-white':'bg-gray-100'" class="py-3 rounded-lg text-sm font-bold">7일<br><span class="text-xs">700P</span></button>
+          </div>
+
+          <div class="bg-purple-50 rounded-lg p-3 mb-4 text-center">
+            <div class="text-2xl font-black text-purple-600">{{ boostDays * 100 }}P</div>
+          </div>
+
+          <div class="flex gap-2">
+            <button @click="showBoostModal=false" class="flex-1 py-2 bg-gray-100 rounded-lg text-sm font-semibold">취소</button>
+            <button @click="submitBoost" :disabled="boostingInProgress" class="flex-1 py-2 bg-purple-500 text-white rounded-lg text-sm font-bold hover:bg-purple-600 disabled:opacity-50">결제하기</button>
+          </div>
+        </div>
       </div>
 
       <!-- 댓글 -->
@@ -56,7 +137,7 @@
 </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useSiteStore } from '../../stores/site'
@@ -69,6 +150,66 @@ const siteStore = useSiteStore()
 const item = ref(null)
 const relatedItems = ref([])
 const loading = ref(true)
+
+// 홀드
+const showHoldModal = ref(false)
+const holdHours = ref(6)
+const holdingInProgress = ref(false)
+const holdOptions = computed(() => {
+  if (!item.value) return [6]
+  const max = item.value.hold_max_hours || 24
+  return [6, 12, 24, 48, 72, 168].filter(h => h <= max)
+})
+const holdCost = computed(() => {
+  if (!item.value) return 0
+  return Math.ceil(holdHours.value / 6) * (item.value.hold_price_per_6h || 0)
+})
+
+async function submitHold() {
+  if (!confirm(`${holdHours.value}시간 홀드에 ${holdCost.value}P가 차감됩니다. 계속하시겠습니까?`)) return
+  holdingInProgress.value = true
+  try {
+    const { data } = await axios.post(`/api/market/${item.value.id}/hold`, { hours: holdHours.value })
+    siteStore.toast(data.message, 'success')
+    showHoldModal.value = false
+    loadItem()
+  } catch (e) { siteStore.toast(e.response?.data?.message || '홀드 실패', 'error') }
+  holdingInProgress.value = false
+}
+
+async function cancelHold() {
+  if (!confirm('홀드를 취소하시겠습니까? 포인트는 환불되지 않습니다.')) return
+  try {
+    const { data } = await axios.post(`/api/market/${item.value.id}/hold/cancel`)
+    siteStore.toast(data.message, 'success')
+    loadItem()
+  } catch (e) { siteStore.toast(e.response?.data?.message || '취소 실패', 'error') }
+}
+
+// 부스트
+const showBoostModal = ref(false)
+const boostDays = ref(1)
+const boostingInProgress = ref(false)
+
+async function submitBoost() {
+  const cost = boostDays.value * 100
+  if (!confirm(`${boostDays.value}일 상위노출에 ${cost}P가 차감됩니다.`)) return
+  boostingInProgress.value = true
+  try {
+    const { data } = await axios.post(`/api/market/${item.value.id}/boost`, { days: boostDays.value })
+    siteStore.toast(data.message, 'success')
+    showBoostModal.value = false
+    loadItem()
+  } catch (e) { siteStore.toast(e.response?.data?.message || '부스트 실패', 'error') }
+  boostingInProgress.value = false
+}
+
+function formatHoldTime(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  return d.toLocaleDateString('ko-KR') + ' ' + d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+}
+
 async function reserve() {
   if (!confirm('100 포인트를 에스크로하여 찜하시겠습니까?')) return
   try {
@@ -77,16 +218,22 @@ async function reserve() {
     item.value.status = 'reserved'
   } catch (e) { siteStore.toast(e.response?.data?.message || '예약 실패', 'error') }
 }
-onMounted(async () => {
+async function loadItem() {
   try {
     const { data } = await axios.get(`/api/market/${route.params.id}`)
     item.value = data.data
-    // 관련 물품
+  } catch {}
+}
+
+onMounted(async () => {
+  await loadItem()
+  // 관련 물품
+  if (item.value) {
     try {
       const { data: rData } = await axios.get(`/api/market?category=${item.value.category}&per_page=5`)
       relatedItems.value = (rData.data?.data || []).filter(r => r.id !== item.value.id).slice(0, 5)
     } catch {}
-  } catch {}
+  }
   loading.value = false
 })
 </script>
