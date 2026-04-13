@@ -88,6 +88,7 @@ const routes = [
   { path: '/games/holdem', component: p('games/HoldemSolo') },
   { path: '/games/poker', component: p('games/PokerLobby'), meta: { auth: true } },
   { path: '/games/poker/play', component: p('games/PokerPlay'), meta: { auth: true } },
+  { path: '/games/poker/multi', component: p('games/PokerMulti'), meta: { auth: true } },
   { path: '/games/poker/tournament/:id', component: p('games/PokerTournamentWait'), meta: { auth: true } },
   { path: '/games/poker/tutorial', component: p('games/PokerTutorial') },
   { path: '/games/blackjack', component: p('games/Blackjack') },

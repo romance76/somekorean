@@ -132,6 +132,14 @@
               <p class="text-xs text-gray-300">AI 상대 연습 모드. 부담 없이 실력을 키워보세요.</p>
             </RouterLink>
 
+            <!-- 멀티플레이어 대전 -->
+            <RouterLink to="/games/poker/multi"
+              class="group bg-gray-900 rounded-xl border border-gray-800 hover:border-amber-400/40 p-5 transition hover:shadow-lg hover:shadow-amber-500/5 block">
+              <div class="text-3xl mb-3">👥</div>
+              <h3 class="text-sm font-bold text-amber-400 group-hover:text-amber-300 mb-1">멀티플레이어 대전</h3>
+              <p class="text-xs text-gray-300">실제 플레이어와 실시간 대전! 일반(15초) / 스피드(10초)</p>
+            </RouterLink>
+
             <!-- 블랙잭 -->
             <RouterLink to="/games/blackjack"
               class="group bg-gray-900 rounded-xl border border-gray-800 hover:border-purple-400/40 p-5 transition hover:shadow-lg hover:shadow-purple-500/5 block">
