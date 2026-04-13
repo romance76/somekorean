@@ -151,9 +151,23 @@
             <input v-model="adForm.title" @input="saveDraft" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="광고 이름" />
           </div>
           <div>
-            <label class="text-xs font-bold text-gray-600 block mb-1">광고 이미지 <span class="text-amber-600 font-normal">({{ selectedSlot.position==='left'?'200×150':'300×250' }}px)</span></label>
-            <input type="file" accept="image/*" @change="onImageChange" class="w-full border rounded-lg px-3 py-2 text-sm" />
-            <div v-if="imagePreview" class="mt-2"><img :src="imagePreview" class="max-h-32 rounded-lg border" /></div>
+            <label class="text-xs font-bold text-gray-600 block mb-1">광고 이미지 <span class="text-amber-600 font-normal">(권장: {{ recommendedSize }})</span></label>
+            <input ref="fileInput" type="file" accept="image/*" @change="onImageChange" class="w-full border rounded-lg px-3 py-2 text-sm" />
+            <!-- 이미지 미리보기 + 사이즈 경고 -->
+            <div v-if="imagePreview" class="mt-2 border rounded-lg p-3 bg-gray-50">
+              <img :src="imagePreview" class="max-h-40 rounded-lg border mx-auto" />
+              <div class="mt-2 text-center">
+                <div class="text-xs text-gray-600">업로드 이미지: <span class="font-bold">{{ imgWidth }}×{{ imgHeight }}px</span></div>
+                <div v-if="imgSizeOk" class="text-xs text-green-600 font-bold mt-1">✅ 권장 사이즈와 일치합니다</div>
+                <div v-else-if="imgRatioOk" class="text-xs text-amber-600 font-bold mt-1">⚠️ 비율은 맞지만 사이즈가 다릅니다 (자동 조정됨)</div>
+                <div v-else class="text-xs text-red-600 font-bold mt-1">❌ 권장 비율({{ recommendedRatio }})과 다릅니다 — 이미지가 잘릴 수 있습니다</div>
+                <div class="flex justify-center gap-2 mt-2">
+                  <button @click="confirmImage" class="bg-green-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">이대로 사용</button>
+                  <button @click="resetImage" class="bg-gray-300 text-gray-700 font-bold px-4 py-1.5 rounded-lg text-xs">다시 업로드</button>
+                </div>
+              </div>
+            </div>
+            <div v-if="imageConfirmed" class="mt-1 text-[10px] text-green-600 font-bold">✅ 이미지 확정됨 ({{ imgWidth }}×{{ imgHeight }}px)</div>
           </div>
           <div>
             <label class="text-xs font-bold text-gray-600 block mb-1">클릭 시 URL (선택)</label>
@@ -324,7 +338,7 @@ function slotMinPrice(position, tier) {
 
 const hasEnough = computed(() => (auth.user?.points || 0) >= (adForm.bid_amount || 0))
 const canSubmit = computed(() => {
-  if (!adForm.title || !adImage.value || !selectedSlot.value) return false
+  if (!adForm.title || !adImage.value || !imageConfirmed.value || !selectedSlot.value) return false
   if (adForm.bid_amount < totalMinBid.value) return false
   if (!hasEnough.value) return false
   if (pageType.value === 'sub' && !selectedSubs.value.length) return false
@@ -349,7 +363,42 @@ watch([() => adForm.geo_scope, pageCount], () => {
   }
 })
 
-function onImageChange(e) { const f = e.target.files[0]; if (f) { adImage.value = f; imagePreview.value = URL.createObjectURL(f) } }
+const fileInput = ref(null)
+const imgWidth = ref(0)
+const imgHeight = ref(0)
+const imageConfirmed = ref(false)
+
+const recommendedSize = computed(() => selectedSlot.value?.position === 'left' ? '200×150px' : '300×250px')
+const recommendedW = computed(() => selectedSlot.value?.position === 'left' ? 200 : 300)
+const recommendedH = computed(() => selectedSlot.value?.position === 'left' ? 150 : 250)
+const recommendedRatio = computed(() => `${recommendedW.value}:${recommendedH.value}`)
+
+const imgSizeOk = computed(() => imgWidth.value === recommendedW.value && imgHeight.value === recommendedH.value)
+const imgRatioOk = computed(() => {
+  if (!imgWidth.value || !imgHeight.value) return false
+  const target = recommendedW.value / recommendedH.value
+  const actual = imgWidth.value / imgHeight.value
+  return Math.abs(target - actual) < 0.05
+})
+
+function onImageChange(e) {
+  const f = e.target.files[0]
+  if (!f) return
+  imageConfirmed.value = false
+  adImage.value = f
+  imagePreview.value = URL.createObjectURL(f)
+  // 이미지 크기 측정
+  const img = new Image()
+  img.onload = () => { imgWidth.value = img.naturalWidth; imgHeight.value = img.naturalHeight }
+  img.src = imagePreview.value
+}
+
+function confirmImage() { imageConfirmed.value = true }
+function resetImage() {
+  adImage.value = null; imagePreview.value = null; imageConfirmed.value = false
+  imgWidth.value = 0; imgHeight.value = 0
+  if (fileInput.value) fileInput.value.value = ''
+}
 
 // URL 정규화 + 미리보기 팝업
 function normalizeUrl(raw) {
