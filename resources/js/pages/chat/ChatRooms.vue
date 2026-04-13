@@ -34,9 +34,9 @@
         </div>
       </div>
 
-      <div v-if="activeRoom" :class="isMobile ? 'fixed inset-x-0 top-0 z-[60] bg-white flex flex-col' : 'col-span-12 lg:col-span-6'"
-        :style="isMobile ? 'bottom: 0; height: 100vh; height: 100dvh;' : ''">
-        <div :class="isMobile ? 'flex flex-col flex-1 overflow-hidden' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'" :style="isMobile ? 'height: 100%;' : 'height: 70vh'">
+      <div v-if="activeRoom" :class="isMobile ? 'fixed left-0 right-0 top-0 bg-white flex flex-col' : 'col-span-12 lg:col-span-6'"
+        :style="isMobile ? 'bottom: 56px; z-index: 40;' : ''">
+        <div :class="isMobile ? 'flex flex-col h-full overflow-hidden' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'" :style="isMobile ? '' : 'height: 70vh'">
           <!-- 채팅방 헤더 -->
           <div class="px-4 py-3 border-b bg-amber-50 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-2">
