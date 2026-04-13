@@ -155,6 +155,7 @@ const routes = [
     children: [
       { path: '', name: 'admin', component: p('admin/Overview') },
       { path: 'members', component: p('admin/Members') },
+      { path: 'friends', component: p('admin/AdminFriends') },
       { path: 'content', component: p('admin/Content') },
       { path: 'boards', component: p('admin/BoardManager') },
       { path: 'news', component: p('admin/AdminNews') },

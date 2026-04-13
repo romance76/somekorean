@@ -62,20 +62,27 @@ class AdminController extends Controller
     public function approveBanner($id) {
         $b = \App\Models\BannerAd::findOrFail($id);
         $b->update(['status' => 'active']);
-        return response()->json(['success'=>true,'message'=>'배너 승인됨']);
+        return response()->json(['success'=>true,'message'=>'광고 승인됨']);
     }
     public function rejectBanner(Request $request, $id) {
         $b = \App\Models\BannerAd::findOrFail($id);
         $b->update(['status' => 'rejected', 'reject_reason' => $request->reason]);
         // 포인트 환불
-        $b->user?->addPoints($b->total_cost, "배너 거절 환불: {$b->title}", 'banner_refund');
+        $b->user?->addPoints($b->total_cost, "광고 거절 환불: {$b->title}", 'banner_refund');
         return response()->json(['success'=>true,'message'=>"거절됨. {$b->total_cost}P 환불"]);
     }
     public function pauseBanner($id) {
         \App\Models\BannerAd::findOrFail($id)->update(['status' => 'paused']);
         return response()->json(['success'=>true]);
     }
-    public function deleteBanner($id) { \App\Models\BannerAd::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
+    public function deleteBanner($id) {
+        $b = \App\Models\BannerAd::findOrFail($id);
+        if (in_array($b->status, ['pending', 'active', 'paused'])) {
+            $b->user?->addPoints($b->total_cost, "광고 삭제 환불: {$b->title}", 'banner_refund');
+        }
+        $b->delete();
+        return response()->json(['success'=>true]);
+    }
 
     public function ipBans() { return response()->json(['success'=>true,'data'=>IpBan::orderByDesc('created_at')->get()]); }
     public function createIpBan(Request $request) { IpBan::create(['ip_address'=>$request->ip_address,'reason'=>$request->reason,'banned_by'=>auth()->id()]); return response()->json(['success'=>true]); }

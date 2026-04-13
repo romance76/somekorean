@@ -360,7 +360,6 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/boards/{id}', [AdminController::class, 'deleteBoard']);
     Route::get('/reports', [AdminController::class, 'reports']);
     Route::put('/reports/{id}', [AdminController::class, 'updateReport']);
-    Route::get('/banners', [AdminController::class, 'banners']);
     Route::get('/banners', [AdminController::class, 'bannerList']);
     Route::post('/banners', [AdminController::class, 'createBanner']);
     Route::post('/banners/{id}/approve', [AdminController::class, 'approveBanner']);
