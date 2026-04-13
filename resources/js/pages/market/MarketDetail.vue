@@ -12,7 +12,7 @@
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
-          <RouterLink v-for="c in categories" :key="c.value" :to="`/market?category=${c.value}`"
+          <RouterLink v-for="c in categories" :key="c.value" :to="c.value ? `/market?category=${c.value}` : '/market'"
             class="block w-full text-left px-3 py-2 text-xs transition"
             :class="item.category === c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
             {{ c.label }}
@@ -20,9 +20,8 @@
         </div>
       </div>
 
-      <!-- 가운데: 상품 상세 -->
+      <!-- 가운데: 이미지 + 설명 -->
       <div class="col-span-12 lg:col-span-7">
-        <!-- 카테고리 타이틀 -->
         <div class="mb-2">
           <span class="font-bold text-amber-700 text-sm">{{ categoryLabel }}</span>
         </div>
@@ -30,11 +29,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <!-- 이미지 갤러리 -->
           <div v-if="item.images?.length" class="bg-gray-50 p-3">
-            <!-- 메인 이미지 -->
             <div class="rounded-lg overflow-hidden bg-white flex items-center justify-center cursor-pointer mb-2" style="height: 360px;" @click="lightboxImg = mainImage">
               <img v-if="mainImage" :src="mainImage" class="max-w-full max-h-full object-contain" />
             </div>
-            <!-- 썸네일 -->
             <div v-if="item.images.length > 1" class="flex gap-2 overflow-x-auto">
               <div v-for="(img, i) in item.images" :key="i" @click="selectedImgIdx = i"
                 class="w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0"
@@ -44,27 +41,6 @@
             </div>
           </div>
           <div v-else class="h-48 bg-gray-100 flex items-center justify-center text-5xl">📦</div>
-
-          <!-- 상품 정보 -->
-          <div class="px-5 py-4">
-            <div class="flex items-center gap-2 flex-wrap mb-2">
-              <span class="text-xs px-2.5 py-1 rounded-full font-bold"
-                :class="{'bg-green-100 text-green-700':item.status==='active','bg-amber-100 text-amber-700':item.status==='reserved','bg-gray-200 text-gray-500':item.status==='sold'}">
-                {{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[item.status] }}
-              </span>
-              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ conditionLabel }}</span>
-              <span v-if="item.is_negotiable" class="text-xs text-amber-600 font-semibold">가격협의</span>
-              <span v-if="item.hold_enabled" class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">🔒 홀드가능</span>
-              <span v-if="item.boosted_until && new Date(item.boosted_until) > new Date()" class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-bold">🚀 상위노출</span>
-            </div>
-            <h1 class="text-xl font-bold text-gray-900">{{ item.title }}</h1>
-            <div class="text-3xl font-black text-amber-600 mt-2">${{ Number(item.price).toLocaleString() }}</div>
-            <div class="flex items-center gap-3 text-sm text-gray-500 mt-2">
-              <span>📍 {{ item.city }}, {{ item.state }}</span>
-              <span>👁 {{ item.view_count }}</span>
-              <span>{{ timeAgo(item.created_at) }}</span>
-            </div>
-          </div>
 
           <!-- 상세 설명 -->
           <div class="px-5 py-4 border-t">
@@ -87,17 +63,43 @@
           <CommentSection v-if="item.id" :type="'market'" :typeId="item.id" />
         </div>
 
-        <!-- 이전/다음 -->
         <div class="flex justify-between mt-3">
           <button @click="$router.back()" class="text-xs text-gray-400 hover:text-gray-600">← 목록</button>
         </div>
       </div>
 
-      <!-- 오른쪽: 액션 + 판매자 + 위젯 -->
+      <!-- 오른쪽: 상품 정보 + 액션 + 판매자 -->
       <div class="col-span-12 lg:col-span-3">
         <div class="space-y-3 lg:sticky lg:top-20">
 
-          <!-- 액션 버튼 -->
+          <!-- 상품 정보 카드 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <!-- 상태 뱃지 -->
+            <div class="flex items-center gap-1.5 flex-wrap mb-2">
+              <span class="text-xs px-2 py-0.5 rounded-full font-bold"
+                :class="{'bg-green-100 text-green-700':item.status==='active','bg-amber-100 text-amber-700':item.status==='reserved','bg-gray-200 text-gray-500':item.status==='sold'}">
+                {{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[item.status] }}
+              </span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ conditionLabel }}</span>
+              <span v-if="item.is_negotiable" class="text-[10px] text-amber-600 font-semibold">가격협의</span>
+              <span v-if="item.hold_enabled" class="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">🔒 홀드가능</span>
+            </div>
+
+            <!-- 제목 -->
+            <h1 class="text-lg font-bold text-gray-900 leading-snug">{{ item.title }}</h1>
+
+            <!-- 가격 -->
+            <div class="text-2xl font-black text-amber-600 mt-2">${{ Number(item.price).toLocaleString() }}</div>
+
+            <!-- 위치 + 조회 -->
+            <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+              <span>📍 {{ item.city }}, {{ item.state }}</span>
+              <span>👁 {{ item.view_count }}</span>
+              <span>{{ timeAgo(item.created_at) }}</span>
+            </div>
+          </div>
+
+          <!-- 액션 버튼 카드 -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-2">
             <!-- 홀드 상태 -->
             <div v-if="item.active_hold" class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
@@ -106,21 +108,14 @@
               <div class="text-xs text-amber-700">만료: {{ formatDateTime(item.active_hold.hold_until) }}</div>
             </div>
 
-            <!-- 홀드 버튼 -->
+            <!-- 홀드 버튼 (취소 없음) -->
             <button v-if="item.hold_enabled && item.status==='active' && auth.isLoggedIn && !isOwner && !item.active_hold"
               @click="showHoldModal = true"
               class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl text-sm hover:bg-blue-600">
               🔒 홀드하기 ({{ item.hold_price_per_6h }}P/6h)
             </button>
 
-            <!-- 홀드 취소 -->
-            <button v-if="item.active_hold && (item.active_hold.buyer_id == auth.user?.id || isOwner)"
-              @click="cancelHold"
-              class="w-full bg-red-50 text-red-600 border border-red-200 font-bold py-2.5 rounded-xl text-sm">
-              홀드 취소
-            </button>
-
-            <!-- 부스트 -->
+            <!-- 부스트 (판매자) -->
             <button v-if="isOwner && item.status === 'active'"
               @click="showBoostModal = true"
               class="w-full bg-purple-500 text-white font-bold py-3 rounded-xl text-sm hover:bg-purple-600">
@@ -139,9 +134,7 @@
                 :class="liked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-gray-200 text-gray-500 hover:text-red-400'">
                 {{ liked ? '❤️ 좋아요' : '🤍 좋아요' }}
               </button>
-              <button @click="showReport = true" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-500 text-sm hover:text-red-500">
-                🚨
-              </button>
+              <button @click="showReport = true" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-500 text-sm hover:text-red-500">🚨</button>
             </div>
 
             <!-- 수정/삭제 -->
@@ -161,10 +154,10 @@
               </div>
               <div class="flex-1">
                 <div class="font-bold text-gray-800 text-sm">{{ item.user?.nickname || item.user?.name }}</div>
-                <div class="text-[10px] text-gray-400 mt-0.5">가입: {{ formatDate(item.user?.created_at) }}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">가입: {{ formatFullDate(item.user?.created_at) }}</div>
+                <div class="text-[10px] text-amber-600 font-semibold mt-0.5">거래 {{ sellerTradeCount }}회</div>
               </div>
             </div>
-            <button v-if="auth.isLoggedIn && !isOwner" class="w-full mt-3 text-xs bg-amber-50 text-amber-700 font-bold py-2 rounded-lg hover:bg-amber-100 border border-amber-200">팔로우</button>
           </div>
 
           <!-- 위젯 -->
@@ -255,6 +248,7 @@ const loading = ref(true)
 const liked = ref(false)
 const selectedImgIdx = ref(0)
 const lightboxImg = ref(null)
+const sellerTradeCount = ref(0)
 
 const categories = [
   { value: '', label: '전체' },
@@ -274,8 +268,7 @@ const mainImage = computed(() => {
 
 function getImageUrl(img) {
   if (!img) return ''
-  if (img.startsWith('http') || img.startsWith('/')) return img
-  return '/storage/' + img
+  return img.startsWith('http') || img.startsWith('/') ? img : '/storage/' + img
 }
 
 // 홀드
@@ -294,11 +287,6 @@ async function submitHold() {
   } catch (e) { siteStore.toast(e.response?.data?.message || '홀드 실패', 'error') }
   holdingInProgress.value = false
 }
-async function cancelHold() {
-  if (!confirm('홀드를 취소하시겠습니까?')) return
-  try { const { data } = await axios.post(`/api/market/${item.value.id}/hold/cancel`); siteStore.toast(data.message, 'success'); loadItem() }
-  catch (e) { siteStore.toast(e.response?.data?.message || '실패', 'error') }
-}
 
 // 부스트
 const showBoostModal = ref(false)
@@ -307,8 +295,10 @@ const boostingInProgress = ref(false)
 async function submitBoost() {
   if (!confirm(`${boostDays.value}일 상위노출에 ${boostDays.value * 100}P 차감`)) return
   boostingInProgress.value = true
-  try { const { data } = await axios.post(`/api/market/${item.value.id}/boost`, { days: boostDays.value }); siteStore.toast(data.message, 'success'); showBoostModal.value = false; loadItem() }
-  catch (e) { siteStore.toast(e.response?.data?.message || '실패', 'error') }
+  try {
+    const { data } = await axios.post(`/api/market/${item.value.id}/boost`, { days: boostDays.value })
+    siteStore.toast(data.message, 'success'); showBoostModal.value = false; loadItem()
+  } catch (e) { siteStore.toast(e.response?.data?.message || '실패', 'error') }
   boostingInProgress.value = false
 }
 
@@ -316,14 +306,17 @@ function toggleLike() { liked.value = !liked.value }
 const showReport = ref(false)
 const reportReason = ref('')
 function submitReport() { siteStore.toast('신고가 접수되었습니다', 'success'); showReport.value = false }
-
 async function deleteItem() {
   if (!confirm('정말 삭제하시겠습니까?')) return
   try { await axios.delete(`/api/market/${item.value.id}`); router.push('/market') } catch {}
 }
 
 function formatDateTime(dt) { if (!dt) return ''; const d = new Date(dt); return d.toLocaleDateString('ko-KR') + ' ' + d.toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'}) }
-function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR') : '' }
+function formatFullDate(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`
+}
 function timeAgo(dt) {
   if (!dt) return ''; const s = (Date.now() - new Date(dt)) / 1000
   if (s < 3600) return Math.floor(s/60) + '분 전'; if (s < 86400) return Math.floor(s/3600) + '시간 전'
@@ -331,7 +324,15 @@ function timeAgo(dt) {
 }
 
 async function loadItem() {
-  try { const { data } = await axios.get(`/api/market/${route.params.id}`); item.value = data.data } catch {}
+  try {
+    const { data } = await axios.get(`/api/market/${route.params.id}`)
+    item.value = data.data
+    // 판매자 거래 횟수
+    try {
+      const { data: trades } = await axios.get(`/api/market?user_id=${item.value.user_id}&per_page=1`)
+      sellerTradeCount.value = trades.data?.total || 0
+    } catch {}
+  } catch {}
 }
 
 onMounted(async () => { await loadItem(); loading.value = false })
