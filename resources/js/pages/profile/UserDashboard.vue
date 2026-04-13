@@ -267,6 +267,41 @@
       </div>
     </div>
 
+    <!-- ═══ 내 장터 탭 ═══ -->
+    <div v-else-if="tab==='market'" class="space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-gray-800">🛒 내 판매 물품</h2>
+          <RouterLink to="/market/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-amber-500">+ 등록</RouterLink>
+        </div>
+        <div v-if="!myMarketItems.length" class="text-sm text-gray-400 py-6 text-center">등록한 물품이 없습니다</div>
+        <div v-else class="space-y-2">
+          <RouterLink v-for="m in myMarketItems" :key="m.id" :to="'/market/'+m.id" class="block border rounded-lg p-3 hover:bg-amber-50/50 transition">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-2 py-0.5 rounded-full font-bold"
+                    :class="{'bg-green-100 text-green-700':m.status==='active','bg-amber-100 text-amber-700':m.status==='reserved','bg-gray-200 text-gray-500':m.status==='sold'}">
+                    {{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[m.status] }}
+                  </span>
+                  <span v-if="m.boosted_until && new Date(m.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">🚀</span>
+                </div>
+                <div class="text-sm font-bold text-gray-800 truncate mt-1">{{ m.title }}</div>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs font-bold text-amber-600">${{ Number(m.price).toLocaleString() }}</span>
+                  <span class="text-[10px] text-gray-400">👁 {{ m.view_count }}</span>
+                  <span class="text-[10px] text-gray-400">{{ m.city }}, {{ m.state }}</span>
+                </div>
+              </div>
+              <div v-if="m.images?.length" class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ml-3">
+                <img :src="m.images[0]?.startsWith?.('http') ? m.images[0] : '/storage/'+m.images[0]" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
+              </div>
+            </div>
+          </RouterLink>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ 북마크 탭 ═══ -->
     <div v-else-if="tab==='bookmarks'" class="space-y-4">
       <div class="bg-white rounded-xl shadow-sm border p-5">
@@ -559,6 +594,7 @@ const tabs = [
   { key: 'points', icon: '💰', label: '포인트' },
   { key: 'messages', icon: '✉️', label: '쪽지' },
   { key: 'posts', icon: '📄', label: '내 글' },
+  { key: 'market', icon: '🛒', label: '내 장터' },
   { key: 'bookmarks', icon: '🔖', label: '북마크' },
   { key: 'elder', icon: '🛡️', label: '안심' },
   { key: 'payments', icon: '💳', label: '결제' },
@@ -822,6 +858,15 @@ async function sendReply() {
 const myPosts = ref([])
 async function loadPosts() { try { const { data } = await axios.get(`/api/users/${auth.user?.id}/posts`); myPosts.value = data.data?.data || data.data || [] } catch {} }
 
+// ─── 내 장터 ───
+const myMarketItems = ref([])
+async function loadMyMarket() {
+  try {
+    const { data } = await axios.get('/api/market', { params: { user_id: auth.user?.id, per_page: 50 } })
+    myMarketItems.value = data.data?.data || []
+  } catch {}
+}
+
 // ─── 북마크 ───
 const bookmarks = ref([])
 async function loadBookmarks() { try { const { data } = await axios.get('/api/bookmarks'); bookmarks.value = data.data?.data || data.data || [] } catch {} }
@@ -931,7 +976,7 @@ async function deleteMenu(menu) {
 
 // ─── 탭 로딩 ───
 function loadTab(key) {
-  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz }
+  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz }
   if (loaders[key]) loaders[key]()
 }
 

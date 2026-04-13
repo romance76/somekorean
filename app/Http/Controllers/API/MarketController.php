@@ -14,7 +14,8 @@ class MarketController extends Controller
     public function index(Request $request)
     {
         $query = MarketItem::with('user:id,name,nickname')
-            ->whereIn('status', ['active', 'reserved'])
+            ->when($request->user_id, fn($q, $v) => $q->where('user_id', $v)->whereIn('status', ['active','reserved','sold']),
+                fn($q) => $q->whereIn('status', ['active', 'reserved']))
             ->when($request->category, fn($q, $v) => $q->where('category', $v))
             ->when($request->condition, fn($q, $v) => $q->where('condition', $v))
             ->when($request->search, fn($q, $v) => $q->where('title', 'like', "%{$v}%"))
