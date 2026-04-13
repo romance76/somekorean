@@ -28,6 +28,10 @@
         <div class="text-2xl font-black text-blue-600 mt-1">{{ overview.total_schedules || 0 }}</div>
       </div>
       <div class="bg-white rounded-xl shadow-sm border p-4">
+        <div class="text-xs text-gray-500">총 안심통화</div>
+        <div class="text-2xl font-black text-blue-600 mt-1">{{ overview.total_elder_calls || 0 }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border p-4">
         <div class="text-xs text-gray-500">오늘 통화</div>
         <div class="text-2xl font-black text-green-600 mt-1">{{ overview.calls_today || 0 }}</div>
       </div>
@@ -127,9 +131,9 @@
             <th class="px-3 py-2 text-left text-xs text-gray-500">시각</th>
             <th class="px-3 py-2 text-left text-xs text-gray-500">보호자</th>
             <th class="px-3 py-2 text-left text-xs text-gray-500">보호대상</th>
-            <th class="px-3 py-2 text-center text-xs text-gray-500">응답</th>
-            <th class="px-3 py-2 text-center text-xs text-gray-500">시도</th>
-            <th class="px-3 py-2 text-left text-xs text-gray-500">노트</th>
+            <th class="px-3 py-2 text-center text-xs text-gray-500">상태</th>
+            <th class="px-3 py-2 text-center text-xs text-gray-500">통화시간</th>
+            <th class="px-3 py-2 text-center text-xs text-gray-500">알림</th>
           </tr>
         </thead>
         <tbody>
@@ -139,12 +143,17 @@
             <td class="px-3 py-2.5 text-xs">{{ c.ward_name || '-' }}</td>
             <td class="px-3 py-2.5 text-center">
               <span class="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                :class="c.answered ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                {{ c.answered ? '응답' : '미응답' }}
+                :class="c.answered ? 'bg-green-100 text-green-700' : c.status==='ringing' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'">
+                {{ c.answered ? '✅ 응답' : c.status==='ringing' ? '🔔 대기' : '❌ 미응답' }}
               </span>
             </td>
-            <td class="px-3 py-2.5 text-center text-xs">{{ c.attempts }}</td>
-            <td class="px-3 py-2.5 text-xs text-gray-500">{{ c.notes || '-' }}</td>
+            <td class="px-3 py-2.5 text-center text-xs font-bold" :class="c.duration > 0 ? 'text-green-700' : 'text-gray-400'">
+              {{ c.duration > 0 ? Math.floor(c.duration/60) + '분 ' + (c.duration%60) + '초' : '-' }}
+            </td>
+            <td class="px-3 py-2.5 text-center">
+              <span v-if="c.guardian_notified" class="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-orange-100 text-orange-700">📢</span>
+              <span v-else class="text-[9px] text-gray-400">-</span>
+            </td>
           </tr>
         </tbody>
       </table>

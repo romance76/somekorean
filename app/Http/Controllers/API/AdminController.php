@@ -189,7 +189,8 @@ class AdminController extends Controller
         return response()->json(['success'=>true,'data'=>[
             'active_guardians' => DB::table('elder_guardians')->where('status', 'active')->count(),
             'pending_guardians' => DB::table('elder_guardians')->where('status', 'pending')->count(),
-            'calls_today' => DB::table('elder_call_logs')->whereDate('called_at', today())->count(),
+            'calls_today' => \App\Models\Call::where('call_type', 'elder')->whereDate('created_at', today())->count(),
+            'total_elder_calls' => \App\Models\Call::where('call_type', 'elder')->count(),
             'checkins_today' => ElderCheckinLog::whereDate('checked_in_at', today())->count(),
             'sos_unresolved' => ElderSosLog::whereNull('resolved_at')->count(),
             'total_schedules' => DB::table('elder_schedules')->where('is_active', true)->count(),
@@ -312,25 +313,33 @@ class AdminController extends Controller
     }
 
     public function elderCallLogs(Request $request) {
-        $page = (int)($request->page ?? 1);
-        $perPage = 20;
+        // calls 테이블에서 elder 타입 통화 가져오기
+        $query = \App\Models\Call::with(['caller:id,name,nickname,email', 'callee:id,name,nickname,email,phone'])
+            ->where('call_type', 'elder')
+            ->orderByDesc('created_at');
 
-        $query = DB::table('elder_call_logs as cl')
-            ->leftJoin('elder_guardians as eg', 'cl.elder_guardian_id', '=', 'eg.id')
-            ->leftJoin('users as guardian', 'eg.guardian_user_id', '=', 'guardian.id')
-            ->leftJoin('users as ward', 'cl.ward_user_id', '=', 'ward.id')
-            ->select(
-                'cl.id', 'cl.called_at', 'cl.answered', 'cl.attempts', 'cl.guardian_notified', 'cl.notes',
-                'guardian.name as guardian_name', 'guardian.email as guardian_email',
-                'ward.name as ward_name', 'ward.email as ward_email'
-            );
+        $paginated = $query->paginate(20);
 
-        $total = $query->count();
-        $items = $query->orderByDesc('cl.called_at')->offset(($page-1)*$perPage)->limit($perPage)->get();
+        $items = $paginated->getCollection()->map(function ($c) {
+            return [
+                'id' => $c->id,
+                'called_at' => $c->created_at->toISOString(),
+                'answered' => in_array($c->status, ['answered', 'ended']) && $c->answered_at,
+                'attempts' => 1,
+                'guardian_notified' => $c->status === 'missed',
+                'notes' => $c->status,
+                'guardian_name' => $c->caller->name ?? '-',
+                'guardian_email' => $c->caller->email ?? '',
+                'ward_name' => $c->callee->name ?? '-',
+                'ward_email' => $c->callee->email ?? '',
+                'duration' => $c->duration ?? 0,
+                'status' => $c->status,
+            ];
+        });
 
         return response()->json(['success'=>true,'data'=>[
-            'data'=>$items,'total'=>$total,'per_page'=>$perPage,'current_page'=>$page,
-            'last_page'=>max(1, ceil($total/$perPage)),
+            'data'=>$items,'total'=>$paginated->total(),'per_page'=>20,'current_page'=>$paginated->currentPage(),
+            'last_page'=>$paginated->lastPage(),
         ]]);
     }
 
