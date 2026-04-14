@@ -1,35 +1,35 @@
 <template>
-  <div v-if="amount && amount > 0" class="flex items-center gap-1.5">
+  <div v-if="amount && amount > 0" class="flex items-center gap-2">
     <!-- 칩 스택 (SVG 리얼 칩) -->
-    <div class="relative" :style="{ width: '32px', height: stackHeight + 'px' }">
+    <div class="relative" :style="{ width: '40px', height: stackHeight + 'px' }">
       <!-- 쌓인 칩 옆면 -->
       <svg v-for="i in chipCount" :key="'s'+i"
-        class="absolute left-0" :style="{ bottom: (i-1)*4 + 'px' }"
-        width="32" height="8" viewBox="0 0 32 8">
-        <ellipse cx="16" cy="4" rx="15" ry="3.5" :fill="getChipColor(i).dark" stroke="#000" stroke-width="0.5" opacity="0.9"/>
-        <ellipse cx="16" cy="3" rx="13" ry="2.5" :fill="getChipColor(i).edge" opacity="0.3"/>
+        class="absolute left-0" :style="{ bottom: (i-1)*5 + 'px' }"
+        width="40" height="10" viewBox="0 0 40 10">
+        <ellipse cx="20" cy="5" rx="19" ry="4.5" :fill="getChipColor(i).dark" stroke="#000" stroke-width="0.5" opacity="0.9"/>
+        <ellipse cx="20" cy="4" rx="16" ry="3" :fill="getChipColor(i).edge" opacity="0.3"/>
       </svg>
       <!-- 맨 위 칩 윗면 -->
-      <svg class="absolute left-0" :style="{ bottom: (chipCount-1)*4 + 'px' }"
-        width="32" height="32" viewBox="0 0 32 32">
+      <svg class="absolute left-0" :style="{ bottom: (chipCount-1)*5 + 'px' }"
+        width="40" height="40" viewBox="0 0 40 40">
         <!-- 외곽 원 -->
-        <circle cx="16" cy="16" r="15" :fill="topColor.main" stroke="#000" stroke-width="0.5"/>
+        <circle cx="20" cy="20" r="19" :fill="topColor.main" stroke="#000" stroke-width="0.5"/>
         <!-- 무늬 (8방향 직선) -->
-        <line v-for="a in 8" :key="'l'+a" x1="16" y1="1" x2="16" y2="6"
-          :transform="`rotate(${a*45} 16 16)`" :stroke="topColor.stripe" stroke-width="2.5" opacity="0.6"/>
+        <line v-for="a in 8" :key="'l'+a" x1="20" y1="1" x2="20" y2="7"
+          :transform="`rotate(${a*45} 20 20)`" :stroke="topColor.stripe" stroke-width="3" opacity="0.6"/>
         <!-- 내부 원 -->
-        <circle cx="16" cy="16" r="9" :fill="topColor.inner" stroke="white" stroke-width="0.5" opacity="0.9"/>
+        <circle cx="20" cy="20" r="11" :fill="topColor.inner" stroke="white" stroke-width="0.5" opacity="0.9"/>
         <!-- 금액 텍스트 -->
-        <text x="16" y="17.5" text-anchor="middle" dominant-baseline="middle"
-          fill="white" font-size="7" font-weight="900" font-family="monospace" style="text-shadow:0 1px 2px rgba(0,0,0,0.5)">
+        <text x="20" y="21.5" text-anchor="middle" dominant-baseline="middle"
+          fill="white" font-size="9" font-weight="900" font-family="monospace" style="text-shadow:0 1px 2px rgba(0,0,0,0.5)">
           {{ chipLabel }}
         </text>
         <!-- 하이라이트 -->
-        <ellipse cx="12" cy="10" rx="6" ry="3" fill="white" opacity="0.15" transform="rotate(-20 12 10)"/>
+        <ellipse cx="15" cy="13" rx="7" ry="3.5" fill="white" opacity="0.15" transform="rotate(-20 15 13)"/>
       </svg>
     </div>
     <!-- 금액 표시 -->
-    <span class="text-white text-[11px] font-black drop-shadow-lg font-mono tracking-tight whitespace-nowrap">
+    <span class="text-white text-sm font-black drop-shadow-lg font-mono tracking-tight whitespace-nowrap">
       {{ label }}
     </span>
   </div>
@@ -50,7 +50,7 @@ const label = computed(() => {
 })
 
 const chipCount = computed(() => Math.min(Math.ceil(props.amount / Math.max(props.bb, 10)), 5))
-const stackHeight = computed(() => chipCount.value * 4 + 32)
+const stackHeight = computed(() => chipCount.value * 5 + 40)
 
 // 칩 색상 테이블 (포커 표준)
 const CHIP_COLORS = [
