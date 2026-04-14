@@ -76,9 +76,9 @@
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none"
         style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><text x=%225%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♠</text><text x=%2230%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♥</text><text x=%225%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♦</text><text x=%2230%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♣</text></svg>'); background-size: 60px 60px;" />
 
-      <!-- 중앙: 테이블 (위로 올림) -->
-      <div class="flex-1 min-h-0 min-w-0 flex items-start justify-center pt-1 px-2">
-        <div class="w-full h-full" style="max-width: 78%; max-height: 92%;">
+      <!-- 중앙: 테이블 (위로 올림 + 높이 축소) -->
+      <div class="flex-1 min-h-0 min-w-0 flex items-start justify-center px-2">
+        <div class="w-full" style="max-width: 78%; max-height: 75%; height: 75%;">
           <PokerTable :seats="displaySeats" :community="gameState?.community||[]" :pot="gameState?.pot||0"
             :stage="gameState?.stage||'preflop'" :dealer-idx="gameState?.dealerIdx||0" :showdown="gameState?.status==='showdown'"
             :hand-results="gameState?.result" :game-over="gameState?.status==='finished'" :bl="{sb:gameState?.sb||10,bb:gameState?.bb||20}"
@@ -86,8 +86,8 @@
         </div>
       </div>
 
-      <!-- 우측: 모니터 + 채팅 (280px) -->
-      <div class="w-[280px] shrink-0 bg-[#080c14]/95 border-l border-gray-800/30 flex flex-col overflow-hidden hidden lg:flex">
+      <!-- 우측: 모니터 + 채팅 (320px, 불투명 배경) -->
+      <div class="w-[320px] shrink-0 bg-[#080c14] border-l border-gray-800/30 flex flex-col overflow-hidden hidden lg:flex z-10">
         <!-- 토너먼트/게임 모니터 -->
         <div class="p-3 border-b border-gray-800/30">
           <div class="text-blue-400 text-sm font-bold tracking-wider mb-2">{{ isTournament ? '🏆 TOURNAMENT' : '🎮 CASH GAME' }}</div>

@@ -1,8 +1,5 @@
 <template>
   <div class="h-full w-full relative">
-    <!-- 배경: 카드 무늬 패턴 -->
-    <div class="absolute inset-0 opacity-[0.07]"
-      style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><text x=%225%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♠</text><text x=%2230%22 y=%2220%22 font-size=%2214%22 fill=%22white%22>♥</text><text x=%225%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♦</text><text x=%2230%22 y=%2245%22 font-size=%2214%22 fill=%22white%22>♣</text></svg>'); background-size: 60px 60px;" />
 
     <!-- 검은 쿠션 — 딜러 허리에 맞춤 -->
     <div class="absolute left-[15%] right-[15%] top-[26%] bottom-[12%] p-[7px]"
@@ -126,15 +123,15 @@ const activePlayerName = computed(() => {
 
 // 좌석 — 딜러가 상단 중앙이므로 9명은 딜러 양옆으로
 const seatPositions = [
-  { x: 50, y: 80 },   // 0: 나 (하단 중앙) — 조금 위로
-  { x: 20, y: 72 },   // 1: 좌하
+  { x: 50, y: 88 },   // 0: 나 (하단 중앙)
+  { x: 20, y: 74 },   // 1: 좌하
   { x: 6,  y: 48 },   // 2: 좌
-  { x: 16, y: 22 },   // 3: 좌상
-  { x: 34, y: 10 },   // 4: 상좌 (딜러 왼쪽)
-  { x: 66, y: 10 },   // 5: 상우 (딜러 오른쪽) ← 중앙은 딜러
-  { x: 84, y: 22 },   // 6: 우상
+  { x: 16, y: 20 },   // 3: 좌상
+  { x: 34, y: 8 },    // 4: 상좌 (딜러 왼쪽)
+  { x: 66, y: 8 },    // 5: 상우 (딜러 오른쪽)
+  { x: 84, y: 20 },   // 6: 우상
   { x: 94, y: 48 },   // 7: 우
-  { x: 80, y: 72 }    // 8: 우하
+  { x: 80, y: 74 }    // 8: 우하
 ]
 
 const stageLabel = computed(() => STAGE_NAMES[props.stage] || props.stage)
