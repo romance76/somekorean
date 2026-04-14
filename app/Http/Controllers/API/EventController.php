@@ -34,7 +34,7 @@ class EventController extends Controller
 
     public function show($id)
     {
-        $event = Event::with('user:id,name,nickname,profile_image')->findOrFail($id);
+        $event = Event::with('user:id,name,nickname,avatar')->findOrFail($id);
         $event->increment('view_count');
 
         $data = $event->toArray();
@@ -153,7 +153,7 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($id);
         $attendees = EventAttendee::where('event_id', $id)
-            ->with('user:id,name,nickname,profile_image')
+            ->with('user:id,name,nickname,avatar')
             ->orderByDesc('created_at')
             ->get()
             ->map(fn($a) => [
