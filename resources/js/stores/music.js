@@ -6,12 +6,20 @@ export const useMusicStore = defineStore('music', () => {
   const isPlaying = ref(false)
   const playlist = ref([])
   const volume = ref(80)
+  const progress = ref(0)
+  const currentTime = ref(0) // 초 단위
+  const duration = ref(0)
 
   const hasTrack = computed(() => !!currentTrack.value)
+  const currentIndex = computed(() => playlist.value.findIndex(t => t.id === currentTrack.value?.id))
 
-  function play(track) { currentTrack.value = track; isPlaying.value = true }
+  function play(track) {
+    if (track) currentTrack.value = track
+    isPlaying.value = true
+  }
   function pause() { isPlaying.value = false }
-  function stop() { currentTrack.value = null; isPlaying.value = false }
+  function toggle() { isPlaying.value = !isPlaying.value }
+  function stop() { currentTrack.value = null; isPlaying.value = false; progress.value = 0; currentTime.value = 0 }
   function next() {
     if (!playlist.value.length) return
     const idx = playlist.value.findIndex(t => t.id === currentTrack.value?.id)
@@ -27,6 +35,11 @@ export const useMusicStore = defineStore('music', () => {
   function addToPlaylist(track) {
     if (!playlist.value.find(t => t.id === track.id)) playlist.value.push(track)
   }
+  function setProgress(pct, time, dur) {
+    progress.value = pct
+    currentTime.value = time
+    duration.value = dur
+  }
 
-  return { currentTrack, isPlaying, playlist, volume, hasTrack, play, pause, stop, next, prev, addToPlaylist }
+  return { currentTrack, isPlaying, playlist, volume, progress, currentTime, duration, hasTrack, currentIndex, play, pause, toggle, stop, next, prev, addToPlaylist, setProgress }
 })

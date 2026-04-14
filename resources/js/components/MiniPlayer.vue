@@ -106,65 +106,112 @@
       </div>
     </template>
 
-    <!-- Hidden YouTube iframe for audio -->
-    <iframe
-      v-if="music.currentTrack?.youtubeId && !isShortsPage"
-      :key="music.currentTrack.youtubeId"
-      :src="ytSrc"
-      class="absolute w-0 h-0 opacity-0 pointer-events-none"
-      allow="autoplay; encrypted-media"
-    ></iframe>
+    <!-- Hidden YouTube iframe for audio — key 없이 유지하여 페이지 이동 시에도 계속 재생 -->
+    <div v-if="music.currentTrack?.youtubeId && !isShortsPage" class="w-0 h-0 overflow-hidden absolute">
+      <div ref="ytPlayerEl" id="yt-mini-player"></div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMusicStore } from '../stores/music'
 
 const music = useMusicStore()
 const route = useRoute()
-const state = ref('collapsed') // collapsed | hover | expanded
+const state = ref('collapsed')
 const volume = ref(80)
+const ytPlayerEl = ref(null)
+let ytPlayer = null
+let progressTimer = null
+let currentVideoId = null
 
 const isShortsPage = computed(() => route.path.startsWith('/shorts'))
-const isMusicPage = computed(() => route.path.startsWith('/music'))
 const hideUI = computed(() => isShortsPage.value)
 
-const ytSrc = computed(() => {
-  if (!music.currentTrack?.youtubeId) return ''
-  const vid = music.currentTrack.youtubeId
-  return `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}&enablejsapi=1`
-})
-
-// Pause on shorts, resume when leaving
-watch(isShortsPage, (isShorts) => {
-  if (isShorts && music.isPlaying) {
-    music.pause()
-  }
-})
-
-// Resume music when leaving shorts (if was playing)
-watch(isShortsPage, (isShorts, wasShorts) => {
-  if (!isShorts && wasShorts) {
-    // Don't auto-resume, let user click play
-  }
-})
-
-watch(() => music.isPlaying, (playing) => {
-  const iframe = document.querySelector('iframe[src*="youtube.com/embed"]')
-  if (iframe?.contentWindow) {
-    const cmd = playing ? 'playVideo' : 'pauseVideo'
-    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd }), '*')
-  }
-})
-
-function setVolume() {
-  const iframe = document.querySelector('iframe[src*="youtube.com/embed"]')
-  if (iframe?.contentWindow) {
-    iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [volume.value] }), '*')
-  }
+// YouTube IFrame API 로드
+function loadYTApi() {
+  if (window.YT?.Player) return Promise.resolve()
+  return new Promise(resolve => {
+    if (document.getElementById('yt-api-script')) {
+      window.onYouTubeIframeAPIReady = resolve; return
+    }
+    const tag = document.createElement('script')
+    tag.id = 'yt-api-script'
+    tag.src = 'https://www.youtube.com/iframe_api'
+    document.head.appendChild(tag)
+    window.onYouTubeIframeAPIReady = resolve
+  })
 }
+
+async function initPlayer(videoId, startAt = 0) {
+  await loadYTApi()
+  if (ytPlayer) {
+    // 같은 비디오면 seek만
+    if (currentVideoId === videoId) { if (startAt > 0) ytPlayer.seekTo(startAt, true); return }
+    ytPlayer.loadVideoById({ videoId, startSeconds: startAt })
+    currentVideoId = videoId
+    return
+  }
+  ytPlayer = new window.YT.Player('yt-mini-player', {
+    height: '1', width: '1',
+    videoId,
+    playerVars: { autoplay: 1, controls: 0, start: Math.floor(startAt) },
+    events: {
+      onReady: (e) => { e.target.setVolume(volume.value); currentVideoId = videoId },
+      onStateChange: (e) => {
+        if (e.data === window.YT.PlayerState.ENDED) music.next()
+      }
+    }
+  })
+}
+
+// 진행률 업데이트
+function startProgressTimer() {
+  if (progressTimer) return
+  progressTimer = setInterval(() => {
+    if (!ytPlayer?.getCurrentTime || !ytPlayer?.getDuration) return
+    const cur = ytPlayer.getCurrentTime()
+    const dur = ytPlayer.getDuration()
+    if (dur > 0) music.setProgress((cur / dur) * 100, cur, dur)
+  }, 1000)
+}
+
+// 트랙 변경 감지
+watch(() => music.currentTrack?.youtubeId, async (vid) => {
+  if (!vid) { if (ytPlayer) ytPlayer.stopVideo(); return }
+  await initPlayer(vid, music.currentTime || 0)
+  startProgressTimer()
+}, { immediate: false })
+
+// 재생/일시정지
+watch(() => music.isPlaying, (playing) => {
+  if (!ytPlayer) return
+  if (playing) { ytPlayer.playVideo(); startProgressTimer() }
+  else { ytPlayer.pauseVideo() }
+})
+
+// 볼륨
+function setVolume() {
+  if (ytPlayer?.setVolume) ytPlayer.setVolume(volume.value)
+}
+
+// Shorts에서 일시정지
+watch(isShortsPage, (isShorts) => {
+  if (isShorts && music.isPlaying) music.pause()
+})
+
+onMounted(() => {
+  if (music.currentTrack?.youtubeId) {
+    initPlayer(music.currentTrack.youtubeId, music.currentTime || 0)
+    startProgressTimer()
+  }
+})
+
+onUnmounted(() => {
+  if (progressTimer) clearInterval(progressTimer)
+})
 </script>
 
 <style scoped>

@@ -23,6 +23,7 @@
     <SiteModal />
 
     <CommHub v-if="auth.isLoggedIn && auth.user" ref="commHub" />
+    <MiniPlayer />
 
     <main>
       <router-view v-slot="{ Component }" :key="route.fullPath">
@@ -80,6 +81,7 @@ import BottomNav from './components/BottomNav.vue'
 import UserPopup from './components/UserPopup.vue'
 import SiteModal from './components/SiteModal.vue'
 import CommHub from './components/comms/CommHub.vue'
+import MiniPlayer from './components/MiniPlayer.vue'
 
 const route = useRoute()
 const siteStore = useSiteStore()
