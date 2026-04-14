@@ -157,7 +157,7 @@
             <div v-if="!userData.posts?.length" class="py-4 text-center text-gray-400 text-sm">게시글 없음</div>
             <div v-for="post in userData.posts" :key="post.id" class="py-2 border-b">
               <div class="text-sm font-medium text-gray-800">{{ post.title }}</div>
-              <div class="text-[10px] text-gray-400">{{ post.created_at?.slice(0,10) }} · 조회 {{ post.view_count }} · ❤️ {{ post.like_count }}</div>
+              <div class="text-[10px] text-gray-400">{{ post.created_at?.slice(0,10) }} · {{ post.view_count }}회 · ❤️ {{ post.like_count }}</div>
             </div>
           </div>
 

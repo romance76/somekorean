@@ -22,7 +22,7 @@
             <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
               <UserName :userId="post.user?.id" :name="post.user?.name" className="text-gray-800" />
               <span>{{ formatDate(post.created_at) }}</span>
-              <span>조회 {{ post.view_count }}</span>
+              <span>{{ post.view_count }}회</span>
               <span>좋아요 {{ post.like_count }}</span>
               <span>댓글 {{ post.comment_count }}</span>
             </div>

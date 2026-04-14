@@ -63,7 +63,7 @@
             <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.bedrooms||'-' }}</strong> 방</div>
             <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.bathrooms||'-' }}</strong> 화장실</div>
             <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.sqft||'-' }}</strong> sqft</div>
-            <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.view_count }}</strong> 조회</div>
+            <div class="bg-gray-50 rounded-lg py-1.5"><strong>{{ activeItem.view_count }}</strong>회</div>
           </div>
         </div>
         <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content }}</div>

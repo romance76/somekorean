@@ -47,7 +47,7 @@
                 <span v-else class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">미해결</span>
               </div>
               <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
-              <div class="text-xs text-gray-400 mt-1"><UserName :userId="activeItem.user?.id" :name="activeItem.user?.name" className="text-xs text-gray-400 inline" /> · {{ activeItem.view_count }}조회 · 답변 {{ activeItem.answer_count }}개</div>
+              <div class="text-xs text-gray-400 mt-1"><UserName :userId="activeItem.user?.id" :name="activeItem.user?.name" className="text-xs text-gray-400 inline" /> · {{ activeItem.view_count }}회 · 답변 {{ activeItem.answer_count }}개</div>
             </div>
             <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content }}</div>
           </div>

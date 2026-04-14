@@ -49,7 +49,7 @@
               <h2 class="text-lg font-bold text-gray-900 leading-snug">{{ activeItem.title }}</h2>
               <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
                 <span>{{ formatDate(activeItem.published_at) }}</span>
-                <span>👁 {{ activeItem.view_count }}조회</span>
+                <span>👁 {{ activeItem.view_count }}회</span>
               </div>
             </div>
             <!-- 대표 이미지 (본문에 이미지가 없을 때만) -->

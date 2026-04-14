@@ -29,7 +29,7 @@
             <h1 class="text-lg font-bold text-gray-900 leading-snug">{{ news.title }}</h1>
             <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
               <span>{{ formatDate(news.published_at) }}</span>
-              <span>👁 {{ news.view_count }}조회</span>
+              <span>👁 {{ news.view_count }}회</span>
             </div>
           </div>
           <div v-if="news.image_url" class="px-5 pb-3">

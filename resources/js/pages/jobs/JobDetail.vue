@@ -20,7 +20,7 @@
             <div class="text-sm text-amber-700 font-semibold mt-1">{{ job.company }}</div>
             <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
               <span>💰 ${{ job.salary_min }}~${{ job.salary_max }}/{{ job.salary_type }}</span>
-              <span>👁 {{ job.view_count }}조회</span>
+              <span>👁 {{ job.view_count }}회</span>
               <span>{{ formatDate(job.created_at) }}</span>
             </div>
           </div>

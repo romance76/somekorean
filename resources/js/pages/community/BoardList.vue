@@ -98,7 +98,7 @@
             </div>
             <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
               <button @click.stop="openPopup(item.user?.id)" class="hover:text-amber-700">{{ item.user?.name }}</button>
-              <span>{{ item.view_count }}조회</span>
+              <span>{{ item.view_count }}회</span>
               <span>❤️{{ item.like_count }}</span>
               <span>{{ formatDate(item.created_at) }}</span>
             </div>

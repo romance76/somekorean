@@ -10,7 +10,7 @@
       <RouterLink v-for="item in items" :key="item.id" :to="'/community/free/' + item.id"
         class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
         <div class="text-sm font-medium text-gray-800">{{ item.title }}</div>
-        <div class="text-xs text-gray-400 mt-1">{{ item.user?.name || item.company || '' }} · {{ item.view_count || 0 }}조회</div>
+        <div class="text-xs text-gray-400 mt-1">{{ item.user?.name || item.company || '' }} · {{ item.view_count || 0 }}회</div>
       </RouterLink>
     </div>
   </div>

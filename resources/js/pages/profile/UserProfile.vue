@@ -33,7 +33,7 @@
         <div v-for="post in posts" :key="post.id">
           <RouterLink :to="`/community/free/${post.id}`" class="block px-5 py-3 border-b hover:bg-amber-50/50 transition">
             <div class="text-sm font-medium text-gray-800">{{ post.title }}</div>
-            <div class="text-xs text-gray-400 mt-0.5">{{ post.view_count }}조회 · {{ post.like_count }}좋아요</div>
+            <div class="text-xs text-gray-400 mt-0.5">{{ post.view_count }}회 · {{ post.like_count }}좋아요</div>
           </RouterLink>
         </div>
         <div v-if="!posts.length" class="px-5 py-6 text-center text-sm text-gray-400">작성한 글이 없습니다</div>

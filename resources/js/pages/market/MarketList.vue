@@ -59,7 +59,7 @@
           </div>
           <h2 class="text-lg font-bold text-gray-900">{{ activeItem.title }}</h2>
           <div class="text-2xl font-black text-amber-600 mt-2">${{ Number(activeItem.price).toLocaleString() }}</div>
-          <div class="text-xs text-gray-400 mt-1">{{ activeItem.city }}, {{ activeItem.state }} · {{ activeItem.view_count }}조회</div>
+          <div class="text-xs text-gray-400 mt-1">{{ activeItem.city }}, {{ activeItem.state }} · {{ activeItem.view_count }}회</div>
         </div>
         <div class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.content }}</div>
       </div>

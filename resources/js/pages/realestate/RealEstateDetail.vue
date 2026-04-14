@@ -18,7 +18,7 @@
           <div class="bg-gray-50 rounded-lg py-2"><div class="text-lg font-bold text-gray-800">{{ listing.bedrooms || '-' }}</div><div class="text-[10px] text-gray-500">방</div></div>
           <div class="bg-gray-50 rounded-lg py-2"><div class="text-lg font-bold text-gray-800">{{ listing.bathrooms || '-' }}</div><div class="text-[10px] text-gray-500">화장실</div></div>
           <div class="bg-gray-50 rounded-lg py-2"><div class="text-lg font-bold text-gray-800">{{ listing.sqft || '-' }}</div><div class="text-[10px] text-gray-500">sqft</div></div>
-          <div class="bg-gray-50 rounded-lg py-2"><div class="text-lg font-bold text-gray-800">{{ listing.view_count }}</div><div class="text-[10px] text-gray-500">조회</div></div>
+          <div class="bg-gray-50 rounded-lg py-2"><div class="text-lg font-bold text-gray-800">{{ listing.view_count }}</div><div class="text-[10px] text-gray-500">회</div></div>
         </div>
       </div>
       <div class="px-5 py-3 border-t text-sm text-gray-600">

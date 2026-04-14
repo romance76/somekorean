@@ -28,7 +28,7 @@
           {{ attending ? '✅ 참가 취소' : '🙋 참가하기' }}
         </button>
       </div>
-      <div class="px-5 py-2 border-t text-xs text-gray-400">👁 {{ event.view_count }}조회</div>
+      <div class="px-5 py-2 border-t text-xs text-gray-400">👁 {{ event.view_count }}회</div>
 
       <!-- 댓글 -->
       <CommentSection v-if="event.id" :type="'event'" :typeId="event.id" class="mt-4" />

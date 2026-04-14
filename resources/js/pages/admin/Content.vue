@@ -85,7 +85,7 @@
             <button @click="openUserModal(activePost.user)" class="text-blue-600 hover:underline font-semibold">{{ activePost.user?.name }}</button>
             <span>{{ activePost.user?.email }}</span>
             <span>{{ activePost.created_at?.slice(0,10) }}</span>
-            <span>조회 {{ activePost.view_count }}</span>
+            <span>{{ activePost.view_count }}회</span>
             <span>❤️ {{ activePost.like_count }}</span>
           </div>
         </div>
@@ -190,7 +190,7 @@
         <div v-show="userTab==='posts'">
           <div v-if="!userData.posts?.length" class="py-6 text-center text-gray-400 text-sm">작성한 글 없음</div>
           <div v-for="post in userData.posts" :key="post.id" class="py-2 border-b flex items-center justify-between">
-            <div><div class="text-sm font-medium text-gray-800">{{ post.title }}</div><div class="text-[10px] text-gray-400">{{ post.created_at?.slice(0,10) }} · 조회 {{ post.view_count }}</div></div>
+            <div><div class="text-sm font-medium text-gray-800">{{ post.title }}</div><div class="text-[10px] text-gray-400">{{ post.created_at?.slice(0,10) }} · {{ post.view_count }}회</div></div>
             <button @click="openPost(post); userModal=null" class="text-xs text-amber-600 hover:underline">보기</button>
           </div>
         </div>
