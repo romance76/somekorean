@@ -64,10 +64,11 @@ class ClubController extends Controller
             'data' => $club,
             'is_member' => !!$grade,
             'my_grade' => $grade,
-            'my_status' => $membership?->status, // approved, pending, rejected, null
+            'my_status' => $membership?->status,
             'boards' => $boards,
             'member_count' => $memberCount,
             'pending_count' => $pendingCount,
+            'chat_room_id' => $club->chat_room_id,
         ]);
     }
 
@@ -530,6 +531,12 @@ class ClubController extends Controller
 
         $club = Club::findOrFail($id);
 
+        // 이미 채팅방이 있으면 반환
+        if ($club->chat_room_id) {
+            $existing = ChatRoom::find($club->chat_room_id);
+            if ($existing) return response()->json(['success' => true, 'data' => $existing]);
+        }
+
         $request->validate(['name' => 'nullable|max:100']);
 
         $room = ChatRoom::create([
@@ -538,9 +545,13 @@ class ClubController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        $memberIds = ClubMember::where('club_id', $id)->pluck('user_id');
+        // club에 chat_room_id 저장
+        $club->update(['chat_room_id' => $room->id]);
+
+        // 승인된 멤버 전원 추가
+        $memberIds = ClubMember::where('club_id', $id)->where('status', 'approved')->pluck('user_id');
         foreach ($memberIds as $uid) {
-            ChatRoomUser::create(['chat_room_id' => $room->id, 'user_id' => $uid]);
+            ChatRoomUser::firstOrCreate(['chat_room_id' => $room->id, 'user_id' => $uid]);
         }
 
         return response()->json(['success' => true, 'data' => $room], 201);

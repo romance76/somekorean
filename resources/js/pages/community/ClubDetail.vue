@@ -525,6 +525,11 @@
       <RouterLink to="/clubs" class="text-amber-600 hover:text-amber-700 font-semibold text-sm">동호회 목록으로</RouterLink>
     </div>
   </div>
+
+  <!-- 동호회 플로팅 채팅 팝업 -->
+  <ClubChatPopup v-if="isMember && chatRoomId"
+    :roomId="chatRoomId"
+    :roomName="(club?.name || '동호회') + ' 채팅'" />
 </div>
 </template>
 
@@ -537,6 +542,7 @@ import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
 import AdSlot from '../../components/AdSlot.vue'
 import Pagination from '../../components/Pagination.vue'
+import ClubChatPopup from '../../components/ClubChatPopup.vue'
 import axios from 'axios'
 
 const route = useRoute()
@@ -551,6 +557,7 @@ const isMember = ref(false)
 const myGrade = ref('member')
 const myStatus = ref(null)
 const myClubs = ref([])
+const chatRoomId = ref(null)
 
 // Description accordion
 const descExpanded = ref(false)
@@ -679,6 +686,7 @@ async function loadClub() {
     isMember.value = !!data.is_member
     myGrade.value = data.my_grade || 'member'
     myStatus.value = data.my_status || null
+    chatRoomId.value = data.chat_room_id || null
 
     // If owner, ensure admin
     if (auth.user?.id === club.value?.user_id) {
