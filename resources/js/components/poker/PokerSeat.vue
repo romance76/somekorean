@@ -9,7 +9,8 @@
     :style="{
       left: position.x + '%',
       top: position.y + '%',
-      transform: 'translate(-50%, -50%)'
+      transform: 'translate(-50%, -50%) scale(' + (seat.isPlayer ? 1.4 : 1.25) + ')',
+      transformOrigin: 'center center'
     }"
   >
     <!-- Cards above avatar -->

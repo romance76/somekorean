@@ -122,10 +122,12 @@ const activePlayerName = computed(() => {
 })
 
 // 좌석 — 딜러가 상단 중앙이므로 9명은 딜러 양옆으로
-// 타원 기반 좌석 배치: 쿠션(top:20%,bottom:18%) → 중심(50%,51%), 반지름(a=38%,b=33%)
+// 타원 기반 좌석 배치: 시계방향 순서 (나→좌하→좌→좌상→상좌→상우→우상→우→우하)
+// 쿠션(top:20%,bottom:18%) → 중심(50%,51%)
 const seatPositions = (() => {
   const cx = 50, cy = 51, a = 40, b = 35
-  const angles = [270, 235, 195, 155, 125, 55, 25, 345, 305]
+  // 0=나(아래), 시계방향으로 1~8
+  const angles = [270, 305, 345, 25, 55, 125, 155, 195, 235]
   return angles.map(deg => {
     const rad = deg * Math.PI / 180
     return { x: Math.round(cx + a * Math.cos(rad)), y: Math.round(cy - b * Math.sin(rad)) }
