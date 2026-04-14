@@ -425,12 +425,15 @@ class PokerGameEngine
         // 액션 가능한 사람 체크
         $canAct = array_filter($notFolded, fn($s) => !$s['allIn']);
         if (count($canAct) <= 1) {
-            // 모두 올인 → 보드 끝까지
-            while (count($state['community']) < 5) {
-                $state['community'][] = array_shift($state['deck']);
+            // 모두 올인 → 한 스테이지씩만 진행 (플랍3장/턴1장/리버1장)
+            if ($state['stage'] === 'river') {
+                return self::resolveHand($state);
             }
-            $state['stage'] = 'river';
-            return self::resolveHand($state);
+            // 다음 폴링에서 다시 advanceStage 호출되도록
+            $state['allInRunout'] = true;
+            $state['actIdx'] = -1; // 아무도 액션 안 함
+            $state['stageChangedAt'] = time();
+            return $state;
         }
 
         // 포스트플랍: 딜러 다음 살아있는 사람부터

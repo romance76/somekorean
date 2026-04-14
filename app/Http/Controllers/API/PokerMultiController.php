@@ -236,6 +236,26 @@ class PokerMultiController extends Controller
             return response()->json(['success' => true, 'timeout' => false, 'state' => $state ? PokerGameEngine::getPlayerView($state, auth()->id()) : null]);
         }
 
+        // 올인 런아웃: 2초 간격으로 다음 스테이지 자동 진행
+        if ($state['allInRunout'] ?? false) {
+            $stageChangedAt = $state['stageChangedAt'] ?? 0;
+            if (time() - $stageChangedAt >= 2) {
+                $state = self::advanceStageForRunout($gameId, $state);
+                return response()->json([
+                    'success' => true,
+                    'timeout' => false,
+                    'state' => PokerGameEngine::getPlayerView($state, auth()->id()),
+                    'remaining' => 0,
+                ]);
+            }
+            return response()->json([
+                'success' => true,
+                'timeout' => false,
+                'state' => PokerGameEngine::getPlayerView($state, auth()->id()),
+                'remaining' => max(0, 2 - (time() - $stageChangedAt)),
+            ]);
+        }
+
         $actIdx = $state['actIdx'];
         $seat = $state['seats'][$actIdx] ?? null;
 
@@ -286,6 +306,56 @@ class PokerMultiController extends Controller
         }
 
         return response()->json(['success' => true, 'timeout' => false, 'remaining' => max(0, $state['turnDeadline'] - time())]);
+    }
+
+    // ── 올인 런아웃: 한 스테이지씩 진행 ──
+    private static function advanceStageForRunout(string $gameId, array $state): array
+    {
+        $deck = $state['deck'];
+        $stages = ['preflop', 'flop', 'turn', 'river'];
+        $si = array_search($state['stage'], $stages);
+
+        if ($si === 0) { // preflop → flop (3장)
+            $state['community'] = [array_shift($deck), array_shift($deck), array_shift($deck)];
+            $state['stage'] = 'flop';
+        } elseif ($si < 3) { // flop→turn, turn→river (1장)
+            $state['community'][] = array_shift($deck);
+            $state['stage'] = $stages[$si + 1];
+        }
+        $state['deck'] = $deck;
+        $state['stageChangedAt'] = time();
+
+        if ($state['stage'] === 'river') {
+            // 리버까지 왔으면 → 쇼다운
+            unset($state['allInRunout']);
+            $notFolded = array_filter($state['seats'], fn($s) => !$s['isOut'] && !$s['folded']);
+            // evalHand for each
+            $evals = [];
+            foreach ($notFolded as $i => $s) {
+                $evals[$i] = PokerGameEngine::evalHand(array_merge($s['cards'], $state['community']));
+            }
+            $maxScore = max(array_column($evals, 'score'));
+            $winners = array_keys(array_filter($evals, fn($e) => $e['score'] === $maxScore));
+            $share = intdiv($state['pot'], count($winners));
+            foreach ($winners as $wi) $state['seats'][$wi]['chips'] += $share;
+            $state['result'] = [
+                'winners' => array_map(fn($wi) => [
+                    'seatIdx' => $wi, 'name' => $state['seats'][$wi]['name'],
+                    'hand' => $evals[$wi]['name'], 'pot' => $share,
+                ], $winners),
+                'showdown' => array_map(fn($i) => [
+                    'seatIdx' => $i, 'name' => $state['seats'][$i]['name'],
+                    'cards' => $state['seats'][$i]['cards'], 'hand' => $evals[$i]['name'],
+                    'score' => $evals[$i]['score'],
+                ], array_keys($notFolded)),
+            ];
+            $state['pot'] = 0;
+            $state['status'] = 'showdown';
+            $state['stage'] = 'result';
+        }
+
+        PokerGameEngine::saveGameState($gameId, $state);
+        return $state;
     }
 
     // ── 토너먼트 쇼다운 처리 → 다음 핸드 or 토너먼트 종료 ──
