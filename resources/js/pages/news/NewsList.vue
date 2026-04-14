@@ -1,7 +1,50 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <!-- 헤더: 모바일 -->
+    <div class="lg:hidden mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h1 class="text-lg font-black text-gray-800">📰 뉴스</h1>
+        <div class="flex items-center gap-2">
+          <button @click="showFilter = true" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">🔍 필터</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto">
+        <span v-if="activeCat" class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ activeCat.name }}
+        </span>
+        <span v-if="searchQ" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          "{{ searchQ }}"
+        </span>
+      </div>
+    </div>
+
+    <!-- 모바일 필터 바텀시트 -->
+    <MobileFilter v-model="showFilter" @apply="loadNews()" @reset="activeCat = null; searchQ = ''; loadNews()">
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">검색어</label>
+        <input v-model="searchQ" type="text" placeholder="뉴스 검색..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-2 block">카테고리</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button @click="activeCat = null"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="!activeCat ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            전체
+          </button>
+          <button v-for="c in categories" :key="c.id" @click="activeCat = c"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="activeCat?.id === c.id ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            {{ c.name }}
+          </button>
+        </div>
+      </div>
+    </MobileFilter>
+
+    <!-- 헤더: 데스크탑 -->
+    <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-2">
       <h1 class="text-xl font-black text-gray-800">📰 뉴스</h1>
       <form @submit.prevent="loadNews()" class="flex gap-1">
         <input v-model="searchQ" type="text" placeholder="뉴스 검색..." class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-amber-400 outline-none w-40" />
@@ -25,13 +68,6 @@
 
       <!-- 메인: 뉴스 목록 -->
       <div class="col-span-12 lg:col-span-7">
-        <!-- 모바일 카테고리 -->
-        <div class="lg:hidden mb-3">
-          <select @change="e => { activeCat = categories.find(c=>c.id==e.target.value)||null; loadNews() }" class="w-full border rounded-lg px-3 py-2 text-sm">
-            <option :value="null">전체</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-          </select>
-        </div>
 
         <div class="mb-2">
           <span class="font-bold text-amber-700 text-sm">{{ activeCat ? activeCat.name : '전체' }}</span>
@@ -162,6 +198,7 @@ import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
 
 const route = useRoute()
+const showFilter = ref(false)
 const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)

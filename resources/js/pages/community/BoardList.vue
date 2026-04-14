@@ -1,7 +1,59 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <div class="flex items-center justify-between mb-4">
+    <!-- 헤더: 모바일 -->
+    <div class="lg:hidden mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h1 class="text-lg font-black text-gray-800">💬 커뮤니티</h1>
+        <div class="flex items-center gap-2">
+          <button @click="showFilter = true" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">🔍 필터</button>
+          <RouterLink v-if="auth.isLoggedIn" to="/community/write" class="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-2 rounded-lg">✏️ 글쓰기</RouterLink>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto">
+        <span v-if="activeBoard" class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ activeBoard.name }}
+        </span>
+        <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ {latest:'최신순',popular:'인기순',views:'조회순',comments:'댓글순'}[sortBy] }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 모바일 필터 바텀시트 -->
+    <MobileFilter v-model="showFilter" @apply="loadPosts()" @reset="activeBoard = null; sortBy = 'latest'; loadPosts()">
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">게시판</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button @click="activeBoard = null"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="!activeBoard ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            전체
+          </button>
+          <button v-for="b in boards" :key="b.id" @click="activeBoard = b"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="activeBoard?.id === b.id ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            {{ b.name }}
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-2 block">정렬</label>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button @click="sortBy = 'latest'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sortBy === 'latest' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">🕐 최신순</button>
+          <button @click="sortBy = 'popular'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sortBy === 'popular' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">🔥 인기순</button>
+          <button @click="sortBy = 'views'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sortBy === 'views' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">👁 조회순</button>
+          <button @click="sortBy = 'comments'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sortBy === 'comments' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">💬 댓글순</button>
+        </div>
+      </div>
+    </MobileFilter>
+
+    <!-- 헤더: 데스크탑 -->
+    <div class="hidden lg:flex items-center justify-between mb-4">
       <h1 class="text-xl font-black text-gray-800">💬 커뮤니티</h1>
       <div class="flex items-center gap-2">
         <select v-model="sortBy" @change="loadPosts()" class="border rounded-lg px-2 py-1.5 text-xs text-gray-600 outline-none">
@@ -32,13 +84,6 @@
 
       <!-- 메인: 게시글 목록 -->
       <div class="col-span-12 lg:col-span-7">
-        <!-- 모바일 게시판 선택 -->
-        <div class="lg:hidden mb-3">
-          <select v-model="mobileBoardId" @change="onMobileBoard" class="w-full border rounded-lg px-3 py-2 text-sm">
-            <option :value="null">전체 게시판</option>
-            <option v-for="b in boards" :key="b.id" :value="b.id">{{ b.name }}</option>
-          </select>
-        </div>
 
         <div class="mb-2">
           <span class="font-bold text-amber-700 text-sm">{{ activeBoard ? activeBoard.name : '전체' }}</span>
@@ -150,6 +195,7 @@ import axios from 'axios'
 const route = useRoute()
 
 const auth = useAuthStore()
+const showFilter = ref(false)
 const items = ref([])
 const boards = ref([])
 const popularPosts = ref([])

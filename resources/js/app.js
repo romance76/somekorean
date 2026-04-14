@@ -9,10 +9,12 @@ import { useSiteStore } from './stores/site'
 const pinia = createPinia()
 import UserName from './components/UserName.vue'
 import Pagination from './components/Pagination.vue'
+import MobileFilter from './components/MobileFilter.vue'
 
 const app = createApp(App)
 app.component('UserName', UserName)
 app.component('Pagination', Pagination)
+app.component('MobileFilter', MobileFilter)
 app.use(pinia)
 app.use(router)
 

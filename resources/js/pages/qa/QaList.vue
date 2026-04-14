@@ -1,7 +1,57 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <div class="flex items-center justify-between mb-4">
+    <!-- 헤더: 모바일 -->
+    <div class="lg:hidden mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h1 class="text-lg font-black text-gray-800">❓ Q&A</h1>
+        <div class="flex items-center gap-2">
+          <button @click="showFilter = true" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">🔍 필터</button>
+          <RouterLink v-if="auth.isLoggedIn" to="/qa/write" class="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-2 rounded-lg">✏️ 질문하기</RouterLink>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto">
+        <span v-if="activeCat" class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ activeCat.name }}
+        </span>
+        <span v-if="statusFilter" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ statusFilter === 'true' ? '✅ 해결됨' : '❌ 미해결' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 모바일 필터 바텀시트 -->
+    <MobileFilter v-model="showFilter" @apply="loadQa()" @reset="activeCat = null; statusFilter = ''; loadQa()">
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">카테고리</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button @click="activeCat = null"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="!activeCat ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            전체
+          </button>
+          <button v-for="c in categories" :key="c.id" @click="activeCat = c"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="activeCat?.id === c.id ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            {{ c.name }}
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-2 block">상태</label>
+        <div class="flex gap-2">
+          <button @click="statusFilter = ''" class="flex-1 py-2.5 rounded-lg font-bold text-sm border-2 transition"
+            :class="statusFilter === '' ? 'bg-amber-400 text-amber-900 border-amber-400' : 'border-gray-200 text-gray-500'">전체</button>
+          <button @click="statusFilter = 'true'" class="flex-1 py-2.5 rounded-lg font-bold text-sm border-2 transition"
+            :class="statusFilter === 'true' ? 'bg-green-500 text-white border-green-500' : 'border-gray-200 text-gray-500'">✅ 해결</button>
+          <button @click="statusFilter = 'false'" class="flex-1 py-2.5 rounded-lg font-bold text-sm border-2 transition"
+            :class="statusFilter === 'false' ? 'bg-red-500 text-white border-red-500' : 'border-gray-200 text-gray-500'">❌ 미해결</button>
+        </div>
+      </div>
+    </MobileFilter>
+
+    <!-- 헤더: 데스크탑 -->
+    <div class="hidden lg:flex items-center justify-between mb-4">
       <h1 class="text-xl font-black text-gray-800">❓ Q&A</h1>
       <RouterLink v-if="auth.isLoggedIn" to="/qa/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">✏️ 질문하기</RouterLink>
     </div>
@@ -92,12 +142,6 @@
 
         <!-- ═══ 목록 모드 ═══ -->
         <div v-else>
-          <div class="lg:hidden flex gap-2 mb-3">
-            <select @change="e => { activeCat = categories.find(c=>c.id==e.target.value)||null; loadQa() }" class="flex-1 border rounded-lg px-2 py-2 text-sm">
-              <option :value="null">전체 카테고리</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-            </select>
-          </div>
 
           <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
           <div v-else-if="!items.length" class="text-center py-12">
@@ -147,6 +191,7 @@ import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
+const showFilter = ref(false)
 const items = ref([])
 const categories = ref([])
 const activeCat = ref(null)

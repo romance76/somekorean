@@ -1,8 +1,67 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <!-- 헤더 -->
-    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <!-- 헤더: 모바일 -->
+    <div class="lg:hidden mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h1 class="text-lg font-black text-gray-800">🍳 레시피</h1>
+        <div class="flex items-center gap-2">
+          <button @click="showFilter = true" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">🔍 필터</button>
+          <RouterLink v-if="auth.isLoggedIn" to="/recipes/write" class="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-2 rounded-lg">✏️ 등록</RouterLink>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto">
+        <span v-if="activeCat" class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ activeCat }}
+        </span>
+        <span v-if="search" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          "{{ search }}"
+        </span>
+        <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ {random:'🎲 랜덤',rating:'⭐ 별점순',popular:'👁 인기순',latest:'🕐 최신순'}[sort] }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 모바일 필터 바텀시트 -->
+    <MobileFilter v-model="showFilter" @apply="loadPage()" @reset="activeCat = ''; search = ''; sort = 'random'; loadPage()">
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">검색어</label>
+        <input v-model="search" type="text" placeholder="검색어 입력..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+      </div>
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">카테고리</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button @click="activeCat = ''"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="activeCat === '' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            전체
+          </button>
+          <button v-for="c in categories" :key="c.category" @click="activeCat = c.category"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="activeCat === c.category ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+            {{ c.category }}
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-2 block">정렬</label>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button @click="sort = 'random'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sort === 'random' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">🎲 랜덤</button>
+          <button @click="sort = 'rating'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sort === 'rating' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">⭐ 별점순</button>
+          <button @click="sort = 'popular'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sort === 'popular' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">👁 인기순</button>
+          <button @click="sort = 'latest'" class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="sort === 'latest' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">🕐 최신순</button>
+        </div>
+      </div>
+    </MobileFilter>
+
+    <!-- 헤더: 데스크탑 -->
+    <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-2">
       <h1 class="text-xl font-black text-gray-800">🍳 레시피</h1>
       <div class="flex items-center gap-2 flex-wrap">
         <form @submit.prevent="onSearch" class="flex gap-1">
@@ -39,18 +98,6 @@
 
       <!-- 중앙: 리스트 -->
       <div class="col-span-12 lg:col-span-7">
-        <!-- 모바일 카테고리 -->
-        <div class="lg:hidden mb-3 flex gap-2">
-          <select :value="activeCat" @change="e => selectCategory(e.target.value, false)" class="flex-1 border rounded-lg px-3 py-2 text-sm">
-            <option value="">전체</option>
-            <option v-for="c in categories" :key="c.category" :value="c.category">{{ c.category }} ({{ c.count }})</option>
-          </select>
-          <button v-if="auth.isLoggedIn" @click="selectFavorites"
-            class="px-3 py-2 rounded-lg text-xs font-bold"
-            :class="showFavorites ? 'bg-red-500 text-white' : 'bg-white border'">
-            💖 찜
-          </button>
-        </div>
         <div class="mb-2 flex items-center justify-between">
           <div>
             <span v-if="showFavorites" class="font-bold text-red-600 text-sm">💖 찜한 레시피</span>
@@ -141,6 +188,7 @@ import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
+const showFilter = ref(false)
 const items = ref([])
 const categories = ref([])
 const activeCat = ref('')
