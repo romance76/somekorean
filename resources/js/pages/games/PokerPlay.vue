@@ -128,14 +128,26 @@
         </div>
       </div>
 
-      <!-- ■ 중앙: 테이블 (가운데 정렬) -->
-      <div class="flex-1 min-h-0 min-w-0 flex items-center justify-center">
+      <!-- ■ 중앙: 테이블 (가운데 정렬) + 액션 버튼 오버레이 -->
+      <div class="flex-1 min-h-0 min-w-0 flex items-center justify-center relative">
         <PokerTable :seats="seats" :community="community" :pot="pot" :stage="stage"
           :dealer-idx="dealerIdx" :showdown="showdown" :hand-results="handResults"
           :game-over="gameOver" :bl="bl" :act-idx="actIdx" :chat-bubbles="chatBubbles"
           :current-bet-level="currentBetLevel" :blind-level="blindLevel" :total-remaining="totalRemaining"
           :paid-slots="paidSlots" :fold-reveals="foldReveals" :is-player-turn="isPlayerTurn"
           :turn-timer="turnTimer" :turn-timer-max="turnTimerMax" />
+
+        <!-- 액션 버튼: 내 자리 오른쪽 -->
+        <div v-if="(isPlayerTurn || gameOver) && !tourneyOver" class="absolute z-30"
+          style="bottom: 2%; left: 55%;">
+          <div v-if="handResults && gameOver" class="mb-1 text-center">
+            <span :class="handResults.winners[0]?.name === '나' ? 'text-emerald-400' : 'text-red-400'" class="text-sm font-bold">{{ handResults.msg }}</span>
+          </div>
+          <PokerActions :is-player-turn="isPlayerTurn" :game-over="gameOver" :tourney-over="tourneyOver"
+            :can-check="canCheck" :call-amt="callAmt" :current-bet-level="currentBetLevel"
+            :player-chips="playerSeat?.chips || 0" :blind-b-b="bl.bb" :raise-amt="raiseAmt"
+            @action="doPlayerAction" @update-raise="raiseAmt = $event" @next-hand="nextHand" />
+        </div>
       </div>
 
       <!-- ▶ 우측: 모니터(항상) + 채팅 (오른쪽 끝 붙임) -->
@@ -184,16 +196,7 @@
       </div>
     </div>
 
-    <!-- Bottom: 고정 높이 — 결과 + 액션 버튼 -->
-    <div class="shrink-0 h-[110px]">
-      <div v-if="handResults && gameOver" class="text-center h-[20px] leading-[20px] overflow-hidden">
-        <span :class="handResults.winners[0]?.name === '\uB098' ? 'text-emerald-400' : 'text-red-400'" class="text-sm font-bold">{{ handResults.msg }}</span>
-      </div>
-      <PokerActions :is-player-turn="isPlayerTurn" :game-over="gameOver" :tourney-over="tourneyOver"
-        :can-check="canCheck" :call-amt="callAmt" :current-bet-level="currentBetLevel"
-        :player-chips="playerSeat?.chips || 0" :blind-b-b="bl.bb" :raise-amt="raiseAmt"
-        @action="doPlayerAction" @update-raise="raiseAmt = $event" @next-hand="nextHand" />
-    </div>
+    <!-- (액션 버튼은 테이블 영역 내 오버레이로 이동됨) -->
   </template>
 
   <!-- Loading -->
