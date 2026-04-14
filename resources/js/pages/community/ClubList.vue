@@ -164,11 +164,13 @@ const myClubs = ref([])
 const catFilter = ref('')
 const clubCategories = [
   { value: '', label: '전체' },
-  { value: 'hiking', label: '🥾 등산' },{ value: 'golf', label: '⛳ 골프' },{ value: 'tennis', label: '🎾 테니스' },
-  { value: 'bowling', label: '🎳 볼링' },{ value: 'books', label: '📚 독서' },{ value: 'cooking', label: '🍳 요리' },
-  { value: 'photo', label: '📷 사진' },{ value: 'music', label: '🎵 음악' },{ value: 'fitness', label: '💪 운동' },
-  { value: 'movie', label: '🎬 영화' },{ value: 'gaming', label: '🎮 게임' },{ value: 'travel', label: '✈️ 여행' },
-  { value: 'fishing', label: '🎣 낚시' },{ value: 'etc', label: '📋 기타' },
+  { value: '등산', label: '🥾 등산' },
+  { value: '스포츠', label: '⚽ 스포츠' },
+  { value: '요리', label: '🍳 요리' },
+  { value: '게임', label: '🎮 게임' },
+  { value: '여행', label: '✈️ 여행' },
+  { value: '온라인', label: '🌐 온라인' },
+  { value: '기타', label: '📋 기타' },
 ]
 const type = ref('')
 const search = ref('')
