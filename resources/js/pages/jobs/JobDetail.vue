@@ -9,29 +9,29 @@
 
     <div v-else-if="job" class="grid grid-cols-12 gap-4">
 
-      <!-- ══════════ LEFT: 같은 카테고리 목록 (lg only) ══════════ -->
+      <!-- ══════════ LEFT: 카테고리 사이드바 (JobList와 동일) ══════════ -->
       <aside class="col-span-2 hidden lg:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900 flex items-center gap-1">
-            <span>{{ categoryLabel(job.category) }}</span>
-            <span class="text-gray-400 font-normal ml-auto">{{ sameCategoryJobs.length }}건</span>
-          </div>
-          <div class="max-h-[70vh] overflow-y-auto divide-y divide-gray-50">
-            <router-link v-for="j in sameCategoryJobs" :key="j.id" :to="`/jobs/${j.id}`"
-              class="block px-3 py-2.5 text-xs transition hover:bg-amber-50/60"
-              :class="j.id === job.id ? 'border-l-3 border-l-amber-400 bg-amber-50' : ''">
-              <div class="font-medium text-gray-800 truncate leading-snug">{{ j.title }}</div>
-              <div class="text-gray-400 mt-0.5 truncate">
-                <span v-if="j.company">{{ j.company }}</span>
-                <span v-if="j.city" class="ml-1">{{ j.city }}</span>
-              </div>
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">📋 카테고리</div>
+          <div class="flex border-b">
+            <router-link to="/jobs?type=hiring"
+              class="flex-1 py-1.5 text-[10px] font-bold text-center transition"
+              :class="job.post_type !== 'seeking' ? 'bg-amber-400 text-amber-900' : 'text-gray-400 hover:bg-gray-50'">
+              💼 구인
             </router-link>
-            <div v-if="!sameCategoryJobs.length" class="px-3 py-4 text-xs text-gray-400 text-center">
-              같은 카테고리 공고가 없습니다
-            </div>
+            <router-link to="/jobs?type=seeking"
+              class="flex-1 py-1.5 text-[10px] font-bold text-center transition"
+              :class="job.post_type === 'seeking' ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-50'">
+              🙋 구직
+            </router-link>
           </div>
+          <router-link v-for="c in jobCategories" :key="c.value" :to="`/jobs${c.value ? '?category=' + c.value : ''}`"
+            class="block w-full text-left px-3 py-2 text-xs transition"
+            :class="c.value === job.category ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-gray-50'">
+            {{ c.label }}
+          </router-link>
+          <AdSlot page="jobs" position="left" :maxSlots="2" />
         </div>
-        <AdSlot page="jobs" position="left" :maxSlots="2" class="mt-4" />
       </aside>
 
       <!-- ══════════ CENTER: Job Detail Card ══════════ -->
@@ -130,25 +130,25 @@
       </main>
 
       <!-- ══════════ RIGHT: Related Jobs (md+) ══════════ -->
+      <!-- ══════════ RIGHT: 같은 카테고리 관련 목록 ══════════ -->
       <aside class="col-span-4 md:col-span-4 lg:col-span-3 hidden md:block">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">
-            관련 채용공고
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900 flex items-center gap-1">
+            <span>{{ categoryLabel(job.category) }}</span>
+            <span class="text-gray-400 font-normal ml-auto">{{ sameCategoryJobs.length }}건</span>
           </div>
-          <div class="divide-y divide-gray-50">
-            <router-link v-for="j in relatedJobs" :key="j.id" :to="`/jobs/${j.id}`"
-              class="block px-3 py-3 hover:bg-amber-50/60 transition">
-              <div class="text-xs font-medium text-gray-800 truncate leading-snug">{{ j.title }}</div>
-              <div v-if="j.company" class="text-xs text-amber-700 mt-0.5 truncate">{{ j.company }}</div>
-              <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
-                <span v-if="j.city">{{ j.city }}, {{ j.state }}</span>
-                <span v-if="j.salary_min" class="text-green-600 font-medium">
-                  ${{ Number(j.salary_min).toLocaleString() }}~
-                </span>
+          <div class="max-h-[70vh] overflow-y-auto divide-y divide-gray-50">
+            <router-link v-for="j in sameCategoryJobs" :key="j.id" :to="`/jobs/${j.id}`"
+              class="block px-3 py-2.5 text-xs transition hover:bg-amber-50/60"
+              :class="j.id === job.id ? 'border-l-3 border-l-amber-400 bg-amber-50 font-bold' : ''">
+              <div class="text-gray-800 truncate leading-snug">{{ j.title }}</div>
+              <div class="text-gray-400 mt-0.5 truncate">
+                <span v-if="j.company">{{ j.company }}</span>
+                <span v-if="j.city" class="ml-1">· {{ j.city }}</span>
               </div>
             </router-link>
-            <div v-if="!relatedJobs.length" class="px-3 py-4 text-xs text-gray-400 text-center">
-              관련 공고가 없습니다
+            <div v-if="!sameCategoryJobs.length" class="px-3 py-4 text-xs text-gray-400 text-center">
+              같은 카테고리 공고가 없습니다
             </div>
           </div>
         </div>
@@ -184,21 +184,19 @@ const sameCategoryJobs = ref([])
 const relatedJobs = ref([])
 
 // ── Category helpers ──
-const jobCategories = {
-  restaurant: '🍳 요식업',
-  it: '💻 IT',
-  beauty: '💅 미용',
-  driving: '🚗 운전',
-  retail: '🛒 판매',
-  office: '🏢 사무직',
-  construction: '🔨 건설',
-  medical: '🏥 의료',
-  education: '📚 교육',
-  etc: '📋 기타',
+const categoryMap = {
+  restaurant: '🍳 요식업', it: '💻 IT', beauty: '💅 미용', driving: '🚗 운전',
+  retail: '🛒 판매', office: '🏢 사무직', construction: '🔨 건설',
+  medical: '🏥 의료', education: '📚 교육', etc: '📋 기타',
 }
 
+const jobCategories = [
+  { value: '', label: '전체' },
+  ...Object.entries(categoryMap).map(([value, label]) => ({ value, label }))
+]
+
 function categoryLabel(cat) {
-  return jobCategories[cat] || cat || '기타'
+  return categoryMap[cat] || cat || '기타'
 }
 
 // ── Type helpers ──
