@@ -293,7 +293,7 @@ class PokerMultiController extends Controller
     {
         $tournamentId = $state['config']['tournamentId'] ?? null;
 
-        // 3초 대기 (쇼다운 결과 보여주기)
+        // 5초 대기 (쇼다운 결과 보여주기)
         $showdownAt = Cache::get("poker_showdown_{$gameId}");
         if (!$showdownAt) {
             Cache::put("poker_showdown_{$gameId}", time(), 30);
@@ -301,16 +301,16 @@ class PokerMultiController extends Controller
                 'success' => true,
                 'timeout' => false,
                 'state' => PokerGameEngine::getPlayerView($state, auth()->id()),
-                'showdown_wait' => 3,
+                'showdown_wait' => 5,
             ]);
         }
 
-        if (time() - $showdownAt < 3) {
+        if (time() - $showdownAt < 5) {
             return response()->json([
                 'success' => true,
                 'timeout' => false,
                 'state' => PokerGameEngine::getPlayerView($state, auth()->id()),
-                'showdown_wait' => max(0, 3 - (time() - $showdownAt)),
+                'showdown_wait' => max(0, 5 - (time() - $showdownAt)),
             ]);
         }
 

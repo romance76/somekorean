@@ -105,6 +105,7 @@ Route::get('/games/leaderboard/{gameType}', [GameScoreController::class, 'leader
 // ─── Public Poker ───
 Route::get('/poker/tournaments', [PokerTournamentController::class, 'index']);
 Route::get('/poker/tournaments/{id}', [PokerTournamentController::class, 'show']);
+Route::get('/poker/tournaments/{id}/results', [PokerTournamentController::class, 'results']);
 Route::get('/poker/leaderboard', [PokerController::class, 'leaderboard']);
 
 // 게임 호환 API (old_site GameLobby용)

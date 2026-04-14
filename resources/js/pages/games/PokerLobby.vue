@@ -155,7 +155,7 @@
                       {{ formatTournamentTime(t.scheduled_at) }} · {{ t.buy_in }}칩 · {{ t.registered_count || 0 }}명
                     </div>
                   </div>
-                  <button v-if="t.status === 'finished'" class="text-[10px] text-amber-600 hover:text-amber-400 font-bold">결과보기</button>
+                  <button v-if="t.status === 'finished'" @click.stop="showResults(t)" class="text-[10px] text-amber-600 hover:text-amber-400 font-bold">결과보기</button>
                 </div>
               </div>
             </div>
@@ -309,6 +309,29 @@
       </div>
     </div>
   </div>
+
+  <!-- 결과 모달 -->
+  <div v-if="resultsModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" @click.self="resultsModal=null">
+    <div class="bg-gray-900 rounded-2xl border border-amber-500/30 p-6 max-w-md w-full mx-4">
+      <div class="text-center mb-4">
+        <div class="text-3xl mb-1">&#127942;</div>
+        <h3 class="text-lg font-black text-amber-400">{{ resultsModal.tournament?.title }}</h3>
+        <p class="text-xs text-gray-500">{{ formatTournamentTime(resultsModal.tournament?.scheduled_at) }} · {{ resultsModal.tournament?.registered_count || resultsModal.results?.length || 0 }}명</p>
+      </div>
+      <div class="space-y-1.5 max-h-[300px] overflow-y-auto">
+        <div v-for="(r, i) in resultsModal.results" :key="i"
+          class="flex items-center justify-between text-sm px-3 py-2 rounded-lg"
+          :class="i === 0 ? 'bg-amber-500/10 border border-amber-500/20' : i === 1 ? 'bg-gray-800/50' : i === 2 ? 'bg-orange-500/5' : 'bg-gray-800/30'">
+          <span class="font-bold w-8" :class="i===0?'text-amber-400':i===1?'text-gray-300':i===2?'text-orange-400':'text-gray-500'">
+            {{ i===0?'&#129351;':i===1?'&#129352;':i===2?'&#129353;':(r.finish_position||i+1) }}
+          </span>
+          <span class="flex-1 text-white truncate">{{ r.name }}</span>
+          <span v-if="r.prize_won > 0" class="text-amber-400 font-bold font-mono text-xs">+{{ r.prize_won.toLocaleString() }}</span>
+        </div>
+      </div>
+      <button @click="resultsModal=null" class="mt-4 w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-2 rounded-lg text-sm">닫기</button>
+    </div>
+  </div>
 </div>
 </template>
 
@@ -398,7 +421,7 @@ async function fetchTournaments() {
     if (data.success) {
       const raw = Array.isArray(data.data)
         ? data.data
-        : [...(data.data.upcoming || []), ...(data.data.running || [])]
+        : [...(data.data.upcoming || []), ...(data.data.running || []), ...(data.data.finished || [])]
       const regIds = myRegisteredIds.value
       tournaments.value = raw.map(t => ({
         ...t,
@@ -421,6 +444,17 @@ function isRegistered(tournament) {
 
 function goToWaitingRoom(t) {
   router.push(`/games/poker/tournament/${t.id}`)
+}
+
+const resultsModal = ref(null)
+
+async function showResults(t) {
+  try {
+    const { data } = await axios.get(`/api/poker/tournaments/${t.id}/results`)
+    if (data.success) resultsModal.value = data.data
+  } catch {
+    alert('결과를 불러올 수 없습니다.')
+  }
 }
 
 async function enterTournamentGame(t) {

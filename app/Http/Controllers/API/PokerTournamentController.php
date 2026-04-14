@@ -52,11 +52,20 @@ class PokerTournamentController extends Controller
                 return $t;
             });
 
+        // 최근 종료된 토너먼트 (최근 20개)
+        $finished = PokerTournament::where('is_template', false)
+            ->whereIn('status', ['finished', 'cancelled'])
+            ->withCount('entries as registered_count')
+            ->orderByDesc('finished_at')
+            ->limit(20)
+            ->get();
+
         return response()->json([
             'success' => true,
             'data' => [
                 'upcoming' => $upcoming,
                 'running' => $running,
+                'finished' => $finished,
             ],
         ]);
     }
@@ -313,6 +322,34 @@ class PokerTournamentController extends Controller
         }
 
         broadcast(new PokerLobbyUpdate())->toOthers();
+    }
+
+    // 토너먼트 결과 (종료된 토너먼트)
+    public function results($id)
+    {
+        $tournament = PokerTournament::findOrFail($id);
+
+        $entries = PokerTournamentEntry::where('tournament_id', $id)
+            ->with('user:id,name,nickname,avatar')
+            ->orderBy('finish_position')
+            ->get()
+            ->map(fn($e) => [
+                'user_id' => $e->user_id,
+                'name' => $e->user->nickname ?? $e->user->name ?? '?',
+                'avatar' => $e->user->avatar,
+                'finish_position' => $e->finish_position,
+                'prize_won' => $e->prize_won ?? 0,
+                'bounties_earned' => $e->bounties_earned ?? 0,
+                'status' => $e->status,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'tournament' => $tournament,
+                'results' => $entries,
+            ],
+        ]);
     }
 
     // Admin: 토너먼트 목록 (템플릿 + 일반 분리)
