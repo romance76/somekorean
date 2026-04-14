@@ -54,24 +54,37 @@ class DownloadNewsImages extends Command
             ]);
             $data = curl_exec($ch);
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             curl_close($ch);
 
             if ($code !== 200 || !$data || strlen($data) < 500) return null;
-            if (!str_contains($type ?? '', 'image')) return null;
 
-            $ext = 'jpg';
-            if (str_contains($type, 'png')) $ext = 'png';
-            elseif (str_contains($type, 'webp')) $ext = 'webp';
+            // GD로 리사이즈 + JPEG 압축
+            $src = @imagecreatefromstring($data);
+            if (!$src) return null;
+
+            $origW = imagesx($src);
+            $origH = imagesy($src);
+            $maxWidth = 600;
+
+            if ($origW > $maxWidth) {
+                $newW = $maxWidth;
+                $newH = (int) round($origH * ($maxWidth / $origW));
+                $dst = imagecreatetruecolor($newW, $newH);
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+                imagedestroy($src);
+                $src = $dst;
+            }
 
             $month = $date ? date('Y-m', strtotime($date)) : now()->format('Y-m');
             $dir = 'news/' . $month;
-            $filename = md5($url) . '.' . $ext;
+            $filename = md5($url) . '.jpg';
 
             $absDir = storage_path('app/public/' . $dir);
             if (!is_dir($absDir)) mkdir($absDir, 0775, true);
 
-            file_put_contents(storage_path('app/public/' . $dir . '/' . $filename), $data);
+            imagejpeg($src, storage_path('app/public/' . $dir . '/' . $filename), 75);
+            imagedestroy($src);
+
             return '/storage/' . $dir . '/' . $filename;
         } catch (\Exception $e) {
             return null;

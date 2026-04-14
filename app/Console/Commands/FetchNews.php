@@ -170,7 +170,7 @@ class FetchNews extends Command
     }
 
     /**
-     * 외부 이미지를 로컬에 다운로드 → /storage/app/public/news/YYYY-MM/hash.jpg
+     * 외부 이미지를 다운로드 → 리사이즈(max 600px) + JPEG 압축(75%) 후 저장
      */
     private function downloadImage(string $url): ?string
     {
@@ -185,25 +185,36 @@ class FetchNews extends Command
             ]);
             $imageData = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             curl_close($ch);
 
-            if ($httpCode !== 200 || !$imageData || strlen($imageData) < 1000) return null;
-            if (!str_contains($contentType ?? '', 'image')) return null;
+            if ($httpCode !== 200 || !$imageData || strlen($imageData) < 500) return null;
 
-            // 파일명: MD5 해시 + 확장자
-            $ext = 'jpg';
-            if (str_contains($contentType, 'png')) $ext = 'png';
-            elseif (str_contains($contentType, 'webp')) $ext = 'webp';
+            // GD로 리사이즈 + JPEG 압축
+            $src = @imagecreatefromstring($imageData);
+            if (!$src) return null;
+
+            $origW = imagesx($src);
+            $origH = imagesy($src);
+            $maxWidth = 600;
+
+            if ($origW > $maxWidth) {
+                $newW = $maxWidth;
+                $newH = (int) round($origH * ($maxWidth / $origW));
+                $dst = imagecreatetruecolor($newW, $newH);
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+                imagedestroy($src);
+                $src = $dst;
+            }
 
             $dir = 'news/' . now()->format('Y-m');
-            $filename = md5($url) . '.' . $ext;
+            $filename = md5($url) . '.jpg';
             $relPath = $dir . '/' . $filename;
 
             $absDir = storage_path('app/public/' . $dir);
             if (!is_dir($absDir)) mkdir($absDir, 0775, true);
 
-            file_put_contents(storage_path('app/public/' . $relPath), $imageData);
+            imagejpeg($src, storage_path('app/public/' . $relPath), 75);
+            imagedestroy($src);
 
             return '/storage/' . $relPath;
         } catch (\Exception $e) {
