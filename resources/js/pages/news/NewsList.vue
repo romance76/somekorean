@@ -139,10 +139,7 @@
           </div>
         </div>
 
-        <div v-if="lastPage > 1 && !activeItem" class="flex justify-center gap-1.5 mt-4">
-          <button v-for="pg in Math.min(lastPage, 10)" :key="pg" @click="loadNews(pg)"
-            class="px-3 py-1 rounded text-sm" :class="pg===page?'bg-amber-400 text-amber-900 font-bold':'bg-white border text-gray-600'">{{ pg }}</button>
-        </div>
+        <Pagination v-if="!activeItem" :page="page" :lastPage="lastPage" @page="loadNews" />
         </div>
       </div>
 
