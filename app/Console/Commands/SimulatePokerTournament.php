@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class SimulatePokerTournament extends Command
 {
-    protected $signature = 'poker:simulate {players=50} {--verbose} {--max-hands=500}';
+    protected $signature = 'poker:simulate {players=50} {--detail} {--max-hands=500}';
     protected $description = 'AI 50명 토너먼트 시뮬레이션 (규칙 검증)';
 
     private int $violations = 0;
@@ -18,7 +18,7 @@ class SimulatePokerTournament extends Command
     {
         $playerCount = (int) $this->argument('players');
         $maxHands = (int) $this->option('max-hands');
-        $this->verbose = $this->option('verbose');
+        $this->verbose = $this->option('detail');
 
         $this->info("=== 포커 토너먼트 시뮬레이션 ({$playerCount}명) ===");
 
