@@ -37,11 +37,12 @@
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
               회원목록
             </button>
-            <button v-if="isAdmin" @click="activeTab = 'settings'"
+            <button v-if="isAdmin" @click="activeTab = 'settings'; loadPendingMembers()"
               class="w-full text-left px-3 py-2 text-xs transition flex items-center gap-2"
               :class="activeTab === 'settings' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               설정
+              <span v-if="pendingMembers.length" class="ml-auto bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{{ pendingMembers.length }}</span>
             </button>
           </div>
           <AdSlot page="clubs" position="left" :maxSlots="1" />
@@ -133,10 +134,11 @@
             :class="activeTab === 'members' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">
             회원목록
           </button>
-          <button v-if="isAdmin" @click="activeTab = 'settings'"
-            class="flex-1 py-3 text-xs font-bold text-center transition"
+          <button v-if="isAdmin" @click="activeTab = 'settings'; loadPendingMembers()"
+            class="flex-1 py-3 text-xs font-bold text-center transition relative"
             :class="activeTab === 'settings' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">
             설정
+            <span v-if="pendingMembers.length" class="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{{ pendingMembers.length }}</span>
           </button>
         </div>
 
@@ -244,6 +246,12 @@
                         <span v-if="post.comment_count" class="text-amber-600 font-semibold">{{ post.comment_count }}</span>
                       </div>
                     </div>
+                    <!-- Delete button for own posts or admin -->
+                    <button v-if="canDeletePost(post)" @click.stop="deletePost(post)"
+                      class="text-gray-300 hover:text-red-500 p-1 rounded hover:bg-red-50 transition flex-shrink-0 mr-1"
+                      title="삭제">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
                     <svg class="w-4 h-4 text-gray-300 flex-shrink-0 transition-transform" :class="{ 'rotate-180': expandedPost === post.id }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
@@ -253,6 +261,14 @@
                 <!-- Expanded post content -->
                 <div v-if="expandedPost === post.id" class="px-5 py-4 bg-gray-50 border-b">
                   <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-4">{{ post.content }}</div>
+                  <!-- Post images -->
+                  <div v-if="post.images && post.images.length" class="flex flex-wrap gap-2 mb-4">
+                    <a v-for="(img, idx) in post.images" :key="idx"
+                      :href="img.url || `/storage/${img.path}`" target="_blank"
+                      class="block w-20 h-20 rounded-lg overflow-hidden border border-gray-200 hover:border-amber-400 transition flex-shrink-0">
+                      <img :src="img.url || `/storage/${img.path}`" class="w-full h-full object-cover" @error="$event.target.parentElement.style.display='none'" />
+                    </a>
+                  </div>
                   <CommentSection :type="'club_post'" :typeId="post.id" />
                 </div>
               </div>
@@ -384,6 +400,44 @@
             </div>
           </div>
 
+          <!-- Pending members -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-5 py-3 border-b bg-amber-50 flex items-center justify-between">
+              <h3 class="text-sm font-bold text-amber-900">가입 승인 대기</h3>
+              <button @click="loadPendingMembers" class="text-xs text-amber-700 hover:text-amber-900 font-bold transition">
+                새로고침
+              </button>
+            </div>
+            <div v-if="pendingMembersLoading" class="py-6 text-center">
+              <div class="inline-block w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div v-else-if="pendingMembers.length" class="divide-y">
+              <div v-for="pm in pendingMembers" :key="pm.id" class="px-5 py-3 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm flex-shrink-0 overflow-hidden">
+                  <img v-if="pm.user?.profile_photo" :src="pm.user.profile_photo" class="w-full h-full object-cover" @error="$event.target.style.display='none'" />
+                  <span v-else>{{ (pm.user?.name || '?').charAt(0) }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <UserName :userId="pm.user?.id" :name="pm.user?.name" class="text-sm font-semibold text-gray-800" />
+                  <div class="text-xs text-gray-400">{{ formatDate(pm.created_at) }}</div>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <button @click="approveMember(pm)"
+                    class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500 transition">
+                    승인
+                  </button>
+                  <button @click="rejectMember(pm)"
+                    class="bg-gray-100 text-gray-600 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-red-50 hover:text-red-600 transition">
+                    거절
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="px-5 py-6 text-center text-sm text-gray-400">
+              대기 중인 가입 신청이 없습니다
+            </div>
+          </div>
+
           <!-- Chat room -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-5 py-3 border-b bg-amber-50">
@@ -487,6 +541,7 @@ const club = ref(null)
 const loading = ref(true)
 const isMember = ref(false)
 const myGrade = ref('member')
+const myStatus = ref(null)
 
 // Tabs
 const activeTab = ref('board')
@@ -512,6 +567,14 @@ const postError = ref('')
 // Members
 const members = ref([])
 const membersLoading = ref(false)
+
+// Pending members
+const pendingMembers = ref([])
+const pendingMembersLoading = ref(false)
+
+// Post images
+const postImages = ref([])
+const postImagePreviews = ref([])
 
 // Board management
 const showAddBoard = ref(false)
@@ -591,6 +654,7 @@ async function loadClub() {
     club.value = data.data
     isMember.value = !!data.is_member
     myGrade.value = data.my_grade || 'member'
+    myStatus.value = data.my_status || null
 
     // If owner, ensure admin
     if (auth.user?.id === club.value?.user_id) {
@@ -658,13 +722,19 @@ async function loadMembers() {
 // Club actions
 async function joinClub() {
   try {
-    await axios.post(`/api/clubs/${club.value.id}/join`)
-    isMember.value = true
-    myGrade.value = 'member'
-    club.value.member_count = (club.value.member_count || 0) + 1
-    siteStore.toast('가입되었습니다!', 'success')
-    // Reload boards and posts
-    await Promise.all([loadBoards(), loadPosts()])
+    const { data } = await axios.post(`/api/clubs/${club.value.id}/join`)
+    if (data.status === 'pending') {
+      myStatus.value = 'pending'
+      siteStore.toast(data.message || '가입 신청이 접수되었습니다. 관리자 승인을 기다려주세요.', 'info')
+    } else {
+      isMember.value = true
+      myGrade.value = 'member'
+      myStatus.value = 'approved'
+      club.value.member_count = (club.value.member_count || 0) + 1
+      siteStore.toast(data.message || '가입되었습니다!', 'success')
+      // Reload boards and posts
+      await Promise.all([loadBoards(), loadPosts()])
+    }
   } catch (e) {
     siteStore.toast(e.response?.data?.message || '가입에 실패했습니다', 'error')
   }
@@ -697,13 +767,19 @@ async function submitPost() {
   postError.value = ''
 
   try {
-    await axios.post(`/api/clubs/${club.value.id}/posts`, {
-      board_id: newPost.value.board_id,
-      title: newPost.value.title,
-      content: newPost.value.content,
+    const formData = new FormData()
+    formData.append('board_id', newPost.value.board_id)
+    formData.append('title', newPost.value.title)
+    formData.append('content', newPost.value.content)
+    postImages.value.forEach(file => formData.append('images[]', file))
+
+    await axios.post(`/api/clubs/${club.value.id}/posts`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
     siteStore.toast('게시글이 등록되었습니다', 'success')
     newPost.value = { board_id: '', title: '', content: '' }
+    postImages.value = []
+    postImagePreviews.value = []
     showWritePost.value = false
     postsPage.value = 1
     await loadPosts()
@@ -779,6 +855,77 @@ async function deleteBoard(board) {
   }
 }
 
+// Post image handling
+function handlePostImages(e) {
+  const files = Array.from(e.target.files)
+  files.forEach(file => {
+    postImages.value.push(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => postImagePreviews.value.push(ev.target.result)
+    reader.readAsDataURL(file)
+  })
+  e.target.value = ''
+}
+
+function removePostImage(idx) {
+  postImages.value.splice(idx, 1)
+  postImagePreviews.value.splice(idx, 1)
+}
+
+// Post deletion
+function canDeletePost(post) {
+  if (!auth.user) return false
+  if (post.user_id === auth.user.id) return true
+  if (post.user?.id === auth.user.id) return true
+  return isAdmin.value
+}
+
+async function deletePost(post) {
+  if (!confirm('이 게시글을 삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/clubs/posts/${post.id}`)
+    posts.value = posts.value.filter(p => p.id !== post.id)
+    if (expandedPost.value === post.id) expandedPost.value = null
+    siteStore.toast('게시글이 삭제되었습니다', 'success')
+  } catch (e) {
+    siteStore.toast(e.response?.data?.message || '삭제에 실패했습니다', 'error')
+  }
+}
+
+// Pending members management
+async function loadPendingMembers() {
+  pendingMembersLoading.value = true
+  try {
+    const { data } = await axios.get(`/api/clubs/${route.params.id}/pending-members`)
+    pendingMembers.value = data.data || data || []
+  } catch {
+    pendingMembers.value = []
+  }
+  pendingMembersLoading.value = false
+}
+
+async function approveMember(pm) {
+  try {
+    await axios.post(`/api/clubs/${club.value.id}/members/${pm.user_id || pm.user?.id}/approve`)
+    pendingMembers.value = pendingMembers.value.filter(p => p.id !== pm.id)
+    club.value.member_count = (club.value.member_count || 0) + 1
+    siteStore.toast(`${pm.user?.name || '회원'}님을 승인했습니다`, 'success')
+  } catch (e) {
+    siteStore.toast(e.response?.data?.message || '승인에 실패했습니다', 'error')
+  }
+}
+
+async function rejectMember(pm) {
+  if (!confirm(`${pm.user?.name || '이 회원'}의 가입 신청을 거절하시겠습니까?`)) return
+  try {
+    await axios.post(`/api/clubs/${club.value.id}/members/${pm.user_id || pm.user?.id}/reject`)
+    pendingMembers.value = pendingMembers.value.filter(p => p.id !== pm.id)
+    siteStore.toast('가입 신청을 거절했습니다', 'info')
+  } catch (e) {
+    siteStore.toast(e.response?.data?.message || '거절에 실패했습니다', 'error')
+  }
+}
+
 // Chat room
 async function createChatRoom() {
   try {
@@ -800,6 +947,10 @@ onMounted(async () => {
       await loadPosts()
     } else {
       await loadPreviewPosts()
+    }
+    // Auto-load pending members for admin
+    if (isAdmin.value) {
+      loadPendingMembers()
     }
   }
 })
