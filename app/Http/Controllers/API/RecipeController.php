@@ -13,7 +13,8 @@ class RecipeController extends Controller
     // GET /api/recipes — 공용 목록
     public function index(Request $request)
     {
-        $query = RecipePost::where('is_active', true);
+        $query = RecipePost::select('id', 'title', 'title_en', 'thumbnail', 'category', 'difficulty', 'cook_time', 'servings', 'rating_avg', 'rating_count', 'view_count', 'user_id', 'created_at')
+            ->where('is_active', true);
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -41,7 +42,7 @@ class RecipeController extends Controller
             $query->orderByRaw('RAND(?)', [$seed]);
         }
 
-        $perPage = (int) ($request->per_page ?? 20);
+        $perPage = (int) ($request->per_page ?? 12);
         $paginated = $query->paginate($perPage);
 
         $favIds = [];

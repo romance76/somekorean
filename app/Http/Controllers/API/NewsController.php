@@ -12,7 +12,8 @@ class NewsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = News::with('category:id,name,slug')
+        $query = News::select('id', 'title', 'source', 'image_url', 'link', 'category_id', 'view_count', 'published_at', 'created_at')
+            ->with('category:id,name,slug')
             ->when($request->category_id, fn($q, $v) => $q->where('category_id', $v))
             ->when($request->search, fn($q, $v) => $q->where('title', 'like', "%{$v}%"));
 
@@ -23,7 +24,7 @@ class NewsController extends Controller
         // 중복 제거
         $query->distinct();
 
-        $paginated = $query->paginate(20);
+        $paginated = $query->paginate(10);
         $paginated->getCollection()->transform(function ($n) {
             // HTML 엔티티 디코딩 (chosun 등 &amp; 섞여 있음)
             if ($n->image_url) {
