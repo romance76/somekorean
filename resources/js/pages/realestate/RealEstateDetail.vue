@@ -39,6 +39,7 @@
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets api-url="/api/realestate" detail-path="/realestate/" :current-id="listing.id"
         label="매물" recommend-label="추천 매물" quick-label="최신 매물"
+        :filter-params="listing.lat && listing.lng ? { lat: listing.lat, lng: listing.lng, radius: 50 } : {}"
         :links="[{to:'/realestate',icon:'📋',label:'전체 부동산'},{to:'/realestate/write',icon:'✏️',label:'매물 등록'}]" />
     </div>
     </div>

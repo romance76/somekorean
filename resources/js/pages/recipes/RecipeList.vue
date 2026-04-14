@@ -225,6 +225,13 @@ watch(() => route.query.category, (newCat) => {
   }
 })
 
+// URL 쿼리 변경 시 카테고리 반영
+watch(() => route.query, (q) => {
+  if (route.path !== '/recipes') return
+  if (q.category !== undefined) activeCat.value = q.category || ''
+  loadPage()
+})
+
 onMounted(() => {
   loadCategories()
   if (route.query.category) activeCat.value = route.query.category

@@ -251,8 +251,20 @@ onMounted(async () => {
     axios.get('/api/news?per_page=20'),
     axios.get('/api/news/categories'),
   ])
-  if (nRes.status === 'fulfilled') { items.value = nRes.value.data?.data?.data || []; lastPage.value = nRes.value.data?.data?.last_page || 1 }
   if (cRes.status === 'fulfilled') categories.value = cRes.value.data?.data || []
+
+  // URL 쿼리 파라미터로 카테고리 반영
+  const catQuery = route.query.category
+  if (catQuery && categories.value.length) {
+    const found = categories.value.find(c => String(c.id) === String(catQuery))
+    if (found) activeCat.value = found
+  }
+
+  if (activeCat.value) {
+    await loadNews()
+  } else if (nRes.status === 'fulfilled') {
+    items.value = nRes.value.data?.data?.data || []; lastPage.value = nRes.value.data?.data?.last_page || 1
+  }
 
   // URL에 id가 있으면 해당 항목 인라인 열기
   const itemId = route.params.id
@@ -260,6 +272,13 @@ onMounted(async () => {
     try { const { data } = await axios.get('/api/news/' + itemId); activeItem.value = data.data } catch {}
   }
   loading.value = false
+})
+
+// URL 쿼리 변경 시 카테고리 반영
+watch(() => route.query.category, (catId) => {
+  if (!catId) { activeCat.value = null; loadNews(); return }
+  const found = categories.value.find(c => String(c.id) === String(catId))
+  if (found) { activeCat.value = found; loadNews() }
 })
 
 watch(() => route.params.id, (newId, oldId) => {

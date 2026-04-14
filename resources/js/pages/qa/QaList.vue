@@ -241,8 +241,21 @@ onMounted(async () => {
     axios.get('/api/qa?per_page=20'),
     axios.get('/api/qa/categories'),
   ])
-  if (qRes.status === 'fulfilled') { items.value = qRes.value.data?.data?.data || []; lastPage.value = qRes.value.data?.data?.last_page || 1 }
   if (cRes.status === 'fulfilled') categories.value = cRes.value.data?.data || []
+
+  // URL 쿼리 파라미터로 카테고리 반영
+  const catQuery = route.query.category
+  if (catQuery && categories.value.length) {
+    const found = categories.value.find(c => String(c.id) === String(catQuery))
+    if (found) activeCat.value = found
+  }
+
+  // 카테고리 선택됐으면 필터 적용해서 다시 로드, 아니면 초기 결과 사용
+  if (activeCat.value) {
+    await loadQa()
+  } else if (qRes.status === 'fulfilled') {
+    items.value = qRes.value.data?.data?.data || []; lastPage.value = qRes.value.data?.data?.last_page || 1
+  }
 
   // URL에 id가 있으면 해당 항목 인라인 열기
   const itemId = route.params.id
@@ -250,6 +263,13 @@ onMounted(async () => {
     try { const { data } = await axios.get('/api/qa/' + itemId); activeItem.value = data.data } catch {}
   }
   loading.value = false
+})
+
+// URL 쿼리 변경 시 카테고리 반영
+watch(() => route.query.category, (catId) => {
+  if (!catId) { activeCat.value = null; loadQa(); return }
+  const found = categories.value.find(c => String(c.id) === String(catId))
+  if (found) { activeCat.value = found; loadQa() }
 })
 
 watch(() => route.params.id, (newId, oldId) => {

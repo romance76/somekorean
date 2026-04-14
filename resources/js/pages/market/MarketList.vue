@@ -143,7 +143,7 @@
 </template>
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
@@ -261,9 +261,19 @@ async function loadPage(p = 1) {
   loading.value = false
 }
 
+// URL 쿼리 변경 시 반영
+watch(() => route.query, (q) => {
+  if (route.path !== '/market') return
+  if (q.category !== undefined) activeCat.value = q.category || ''
+  if (q.search !== undefined) search.value = q.search || ''
+  loadPage()
+})
+
 onMounted(async () => {
   await loadConfig()
   viewMode.value = getDefaultView('market')
+  if (route.query.category) activeCat.value = route.query.category
+  if (route.query.search) search.value = route.query.search
   await initLocation()
   if (city.value) {
     myCity.value = { ...city.value }
