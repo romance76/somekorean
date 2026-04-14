@@ -12,7 +12,7 @@ class NewsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = News::select('id', 'title', 'source', 'image_url', 'local_image', 'link', 'category_id', 'view_count', 'published_at', 'created_at')
+        $query = News::select('id', 'title', 'source', 'image_url', 'local_image', 'source_url', 'category_id', 'view_count', 'published_at', 'created_at')
             ->with('category:id,name,slug')
             ->when($request->category_id, fn($q, $v) => $q->where('category_id', $v))
             ->when($request->search, fn($q, $v) => $q->where('title', 'like', "%{$v}%"));
