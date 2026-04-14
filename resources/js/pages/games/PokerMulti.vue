@@ -84,8 +84,8 @@
         :act-idx="gameState?.actIdx??-1" :turn-timer="turnCountdown" :turn-timer-max="gameState?.turnTime||15" />
     </div>
 
-    <!-- 액션 버튼 (내 턴일 때만) -->
-    <div v-if="isMyTurn" class="bg-gray-900/95 border-t border-gray-800 px-4 py-3 shrink-0">
+    <!-- 액션 버튼 (내 턴일 때 + 게임중이면 항상 표시 영역) -->
+    <div v-if="isMyTurn && !amIOut" class="bg-gray-900/95 border-t border-gray-800 px-4 py-3 shrink-0 z-30">
       <div class="flex items-center justify-center gap-3 max-w-lg mx-auto">
         <button @click="sendAction('fold')" class="bg-red-600 hover:bg-red-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm">폴드</button>
         <button v-if="canCheck" @click="sendAction('check')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm">체크</button>
@@ -150,7 +150,7 @@
     </div>
 
     <!-- 인게임 채팅 -->
-    <div class="absolute bottom-20 left-2 w-64 z-40">
+    <div class="absolute left-2 w-64 z-20" :style="{ bottom: isMyTurn ? '140px' : '16px' }">
       <div class="max-h-32 overflow-y-auto mb-1 space-y-0.5">
         <div v-for="(msg, i) in chatMessages" :key="i" class="text-xs bg-black/50 text-white/80 rounded px-2 py-0.5">
           <span class="text-amber-400 font-bold">{{ msg.userName }}:</span> {{ msg.message }}
@@ -416,10 +416,12 @@ async function sendAction(action, amount = 0) {
 async function sendChat() {
   if (!chatInput.value.trim() || !gameState.value) return
   const gameId = currentGameId.value || gameState.value.gameId
+  const msg = chatInput.value.trim()
+  chatInput.value = ''
   try {
-    await axios.post(`/api/poker/multi/game/${gameId}/chat`, { message: chatInput.value.trim() })
-    chatMessages.value.push({ userName: auth.user?.nickname || auth.user?.name, message: chatInput.value.trim() })
-    chatInput.value = ''
+    await axios.post(`/api/poker/multi/game/${gameId}/chat`, { message: msg })
+    // Echo .toOthers()로 다른 사람에게만 전송됨 → 내 메시지는 직접 추가
+    chatMessages.value.push({ userName: auth.user?.nickname || auth.user?.name, message: msg })
   } catch {}
 }
 

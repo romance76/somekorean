@@ -219,7 +219,7 @@ class PokerMultiController extends Controller
         $request->validate(['message' => 'required|max:200']);
         $user = auth()->user();
 
-        broadcast(new PokerChat($gameId, $user->id, $user->nickname ?? $user->name, $request->message));
+        broadcast(new PokerChat($gameId, $user->id, $user->nickname ?? $user->name, $request->message))->toOthers();
 
         return response()->json(['success' => true]);
     }
