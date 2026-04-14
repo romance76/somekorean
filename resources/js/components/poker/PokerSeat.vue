@@ -109,13 +109,14 @@
       </div>
     </div>
 
-    <!-- Bet chips (카드 오른쪽에 통일) -->
+    <!-- Bet chips (카드 오른쪽에 통일, prevBets도 잠시 표시) -->
     <div
-      v-if="seat.bet > 0 && !showdown"
-      class="absolute z-[6] pointer-events-none"
+      v-if="displayBet > 0"
+      class="absolute z-[6] pointer-events-none transition-opacity duration-500"
+      :class="seat.bet > 0 ? 'opacity-100' : 'opacity-70'"
       style="top: -10px; left: 100%; margin-left: 4px;"
     >
-      <ChipStack :amount="seat.bet" :bb="bb" />
+      <ChipStack :amount="displayBet" :bb="bb" />
     </div>
 
     <!-- Chat bubble -->
@@ -143,7 +144,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import PokerCard from './PokerCard.vue'
 import HandLabel from './HandLabel.vue'
 import ChipStack from './ChipStack.vue'
@@ -162,6 +163,23 @@ const props = defineProps({
 })
 
 const isMe = computed(() => props.seat.isPlayer)
+
+// 베팅 칩 표시: bet이 0이 되어도 이전 값을 1.5초간 유지
+const lastBet = ref(0)
+let betTimer = null
+const displayBet = computed(() => props.seat.bet > 0 ? props.seat.bet : lastBet.value)
+
+watch(() => props.seat.bet, (newBet, oldBet) => {
+  if (oldBet > 0 && newBet === 0) {
+    // 베팅이 0으로 리셋됨 → 이전 값 유지
+    lastBet.value = oldBet
+    clearTimeout(betTimer)
+    betTimer = setTimeout(() => { lastBet.value = 0 }, 1500)
+  } else if (newBet > 0) {
+    lastBet.value = 0
+    clearTimeout(betTimer)
+  }
+})
 const seatColor = computed(() => props.seat.color || '#888')
 
 // (betChipStyle removed — chips now always positioned right of cards)

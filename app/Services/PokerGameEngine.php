@@ -390,7 +390,11 @@ class PokerGameEngine
     // ── 스테이지 진행 ──
     private static function advanceStage(array $state): array
     {
-        // 베팅 리셋 (totalBet은 유지!)
+        // 이전 베팅 저장 (프론트 표시용) → 그 후 리셋
+        $prevBets = [];
+        foreach ($state['seats'] as $i => $s) { $prevBets[$i] = $s['bet'] ?? 0; }
+        $state['prevBets'] = $prevBets;
+
         foreach ($state['seats'] as &$s) { $s['bet'] = 0; }
         unset($s);
         $state['betLevel'] = 0;
