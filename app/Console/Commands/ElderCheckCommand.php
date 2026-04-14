@@ -25,9 +25,8 @@ class ElderCheckCommand extends Command
         $secondAlert = $this->getGlobalSetting('second_alert_minutes', 60);
 
         // Get all active elder users
-        $elders = ElderSetting::where('elder_mode', true)
-            ->where('checkin_enabled', true)
-            ->whereNotNull('guardian_phone')
+        $elders = ElderSetting::whereNotNull('guardian_id')
+            ->where('checkin_interval', '>', 0)
             ->get();
 
         $created  = 0;

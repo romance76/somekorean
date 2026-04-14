@@ -18,7 +18,7 @@ class SearchController extends Controller
         $results['businesses'] = Business::where('name', 'like', "%{$q}%")->select('id','name','category','city')->limit(5)->get();
         $results['events'] = Event::where('title', 'like', "%{$q}%")->select('id','title','start_date','venue')->limit(5)->get();
         $results['qa'] = QaPost::where('title', 'like', "%{$q}%")->select('id','title','bounty_points','is_resolved')->limit(5)->get();
-        $results['recipes'] = RecipePost::where('title', 'like', "%{$q}%")->select('id','title','difficulty')->limit(5)->get();
+        $results['recipes'] = RecipePost::where('title', 'like', "%{$q}%")->select('id','title','category')->limit(5)->get();
 
         return response()->json(['success' => true, 'data' => $results]);
     }

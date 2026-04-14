@@ -16,7 +16,7 @@ class ExpireReservations extends Command
     public function handle(): void
     {
         $expired = MarketReservation::where('status', 'pending')
-            ->where('expires_at', '<', now())
+            ->where('hold_until', '<', now())
             ->get();
 
         $count = 0;
