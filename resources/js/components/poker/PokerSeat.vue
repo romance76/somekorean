@@ -116,7 +116,7 @@
       :class="chipMovingToPot ? 'chip-to-pot' : ''"
       :style="chipMovingToPot ? chipToPotStyle : 'top: -10px; left: 100%; margin-left: 4px;'"
     >
-      <ChipStack :amount="displayBet" :bb="bb" :compact="!isMe" />
+      <ChipStack :amount="displayBet" :bb="bb" />
     </div>
 
     <!-- Chat bubble (이름 아래에 표시) -->
