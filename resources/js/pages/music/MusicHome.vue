@@ -175,9 +175,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
+import { useMusicStore } from '../../stores/music'
 import axios from 'axios'
 
 const auth = useAuthStore()
+const musicStore = useMusicStore()
 const categories = ref([])
 const tracks = ref([])
 const playlists = ref([])
@@ -228,8 +230,10 @@ function isInPlaylist(id) { return plTrackIds.value.has(id) }
 
 function playTrack(track) {
   playing.value = track
-  // 현재 표시 목록을 재생 큐로 설정
   playQueue.value = [...displayTracks.value]
+  // 글로벌 music store 업데이트 → MiniPlayer에서 다른 페이지에서도 재생 유지
+  musicStore.play({ ...track, youtubeId: track.youtube_id, thumbnail: track.thumbnail_url || track.thumbnail })
+  musicStore.playlist = playQueue.value.map(t => ({ ...t, youtubeId: t.youtube_id, thumbnail: t.thumbnail_url || t.thumbnail }))
 }
 
 function nextTrack() {
