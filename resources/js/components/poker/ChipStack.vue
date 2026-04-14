@@ -1,35 +1,31 @@
 <template>
-  <div v-if="amount && amount > 0" class="flex items-center gap-2">
+  <div v-if="amount && amount > 0" class="flex items-center" :class="compact ? 'gap-1' : 'gap-2'">
     <!-- 칩 스택 (SVG 리얼 칩) -->
-    <div class="relative" :style="{ width: '40px', height: stackHeight + 'px' }">
+    <div class="relative" :style="{ width: chipSize + 'px', height: stackHeight + 'px' }">
       <!-- 쌓인 칩 옆면 -->
       <svg v-for="i in chipCount" :key="'s'+i"
-        class="absolute left-0" :style="{ bottom: (i-1)*5 + 'px' }"
-        width="40" height="10" viewBox="0 0 40 10">
-        <ellipse cx="20" cy="5" rx="19" ry="4.5" :fill="getChipColor(i).dark" stroke="#000" stroke-width="0.5" opacity="0.9"/>
-        <ellipse cx="20" cy="4" rx="16" ry="3" :fill="getChipColor(i).edge" opacity="0.3"/>
+        class="absolute left-0" :style="{ bottom: (i-1)*chipGap + 'px' }"
+        :width="chipSize" :height="chipSize * 0.25" :viewBox="`0 0 ${chipSize} ${chipSize * 0.25}`">
+        <ellipse :cx="chipSize/2" :cy="chipSize*0.125" :rx="chipSize/2-1" :ry="chipSize*0.11" :fill="getChipColor(i).dark" stroke="#000" stroke-width="0.5" opacity="0.9"/>
+        <ellipse :cx="chipSize/2" :cy="chipSize*0.1" :rx="chipSize*0.4" :ry="chipSize*0.075" :fill="getChipColor(i).edge" opacity="0.3"/>
       </svg>
       <!-- 맨 위 칩 윗면 -->
-      <svg class="absolute left-0" :style="{ bottom: (chipCount-1)*5 + 'px' }"
-        width="40" height="40" viewBox="0 0 40 40">
-        <!-- 외곽 원 -->
-        <circle cx="20" cy="20" r="19" :fill="topColor.main" stroke="#000" stroke-width="0.5"/>
-        <!-- 무늬 (8방향 직선) -->
-        <line v-for="a in 8" :key="'l'+a" x1="20" y1="1" x2="20" y2="7"
-          :transform="`rotate(${a*45} 20 20)`" :stroke="topColor.stripe" stroke-width="3" opacity="0.6"/>
-        <!-- 내부 원 -->
-        <circle cx="20" cy="20" r="11" :fill="topColor.inner" stroke="white" stroke-width="0.5" opacity="0.9"/>
-        <!-- 금액 텍스트 -->
-        <text x="20" y="21.5" text-anchor="middle" dominant-baseline="middle"
-          fill="white" font-size="9" font-weight="900" font-family="monospace" style="text-shadow:0 1px 2px rgba(0,0,0,0.5)">
+      <svg class="absolute left-0" :style="{ bottom: (chipCount-1)*chipGap + 'px' }"
+        :width="chipSize" :height="chipSize" :viewBox="`0 0 ${chipSize} ${chipSize}`">
+        <circle :cx="chipSize/2" :cy="chipSize/2" :r="chipSize/2-1" :fill="topColor.main" stroke="#000" stroke-width="0.5"/>
+        <line v-for="a in 8" :key="'l'+a" :x1="chipSize/2" y1="1" :x2="chipSize/2" :y2="chipSize*0.175"
+          :transform="`rotate(${a*45} ${chipSize/2} ${chipSize/2})`" :stroke="topColor.stripe" :stroke-width="compact ? 2 : 3" opacity="0.6"/>
+        <circle :cx="chipSize/2" :cy="chipSize/2" :r="innerR" :fill="topColor.inner" stroke="white" stroke-width="0.5" opacity="0.9"/>
+        <text :x="chipSize/2" :y="chipSize/2 + 1.5" text-anchor="middle" dominant-baseline="middle"
+          fill="white" :font-size="fontSize" font-weight="900" font-family="monospace" style="text-shadow:0 1px 2px rgba(0,0,0,0.5)">
           {{ chipLabel }}
         </text>
-        <!-- 하이라이트 -->
-        <ellipse cx="15" cy="13" rx="7" ry="3.5" fill="white" opacity="0.15" transform="rotate(-20 15 13)"/>
+        <ellipse :cx="chipSize*0.38" :cy="chipSize*0.33" :rx="chipSize*0.175" :ry="chipSize*0.088" fill="white" opacity="0.15" transform="rotate(-20)"/>
       </svg>
     </div>
     <!-- 금액 표시 -->
-    <span class="text-white text-sm font-black drop-shadow-lg font-mono tracking-tight whitespace-nowrap">
+    <span class="text-white font-black drop-shadow-lg font-mono tracking-tight whitespace-nowrap"
+      :class="compact ? 'text-xs' : 'text-sm'">
       {{ label }}
     </span>
   </div>
@@ -40,8 +36,14 @@ import { computed } from 'vue'
 
 const props = defineProps({
   amount: { type: Number, default: 0 },
-  bb: { type: Number, default: 20 }
+  bb: { type: Number, default: 20 },
+  compact: { type: Boolean, default: false }
 })
+
+const chipSize = computed(() => props.compact ? 28 : 40)
+const chipGap = computed(() => props.compact ? 3 : 5)
+const fontSize = computed(() => props.compact ? 6 : 9)
+const innerR = computed(() => props.compact ? 8 : 11)
 
 const label = computed(() => {
   if (props.amount >= 10000) return (props.amount / 1000).toFixed(0) + 'K'
@@ -50,7 +52,7 @@ const label = computed(() => {
 })
 
 const chipCount = computed(() => Math.min(Math.ceil(props.amount / Math.max(props.bb, 10)), 5))
-const stackHeight = computed(() => chipCount.value * 5 + 40)
+const stackHeight = computed(() => chipCount.value * chipGap.value + chipSize.value)
 
 // 칩 색상 테이블 (포커 표준)
 const CHIP_COLORS = [

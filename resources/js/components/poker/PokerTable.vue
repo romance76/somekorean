@@ -29,13 +29,15 @@
             <div class="text-emerald-200 text-sm font-medium tracking-widest uppercase">{{ stageLabel }} {{ stageDesc }}</div>
           </div>
 
-          <!-- Pot (ChipStack 사용 + 승리 시 우승자에게 이동) -->
-          <div v-if="pot > 0" class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1.5"
+          <!-- Pot (칩은 POT 글씨 옆에 배치) -->
+          <div v-if="pot > 0" class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4]"
             :style="potAnimStyle">
-            <ChipStack :amount="pot" :bb="bl?.bb || 20" />
-            <div v-if="!isChipFlying" class="bg-black/60 rounded-full px-4 py-1 flex items-center gap-1.5 backdrop-blur border border-white/10">
-              <span class="text-white/50 text-xs font-bold">POT</span>
-              <span class="text-amber-400 text-xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
+            <div class="flex items-center gap-3">
+              <div v-if="!isChipFlying" class="bg-black/60 rounded-full px-4 py-1 flex items-center gap-1.5 backdrop-blur border border-white/10">
+                <span class="text-white/50 text-xs font-bold">POT</span>
+                <span class="text-amber-400 text-xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
+              </div>
+              <ChipStack :amount="pot" :bb="bl?.bb || 20" />
             </div>
           </div>
 
