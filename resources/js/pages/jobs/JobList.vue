@@ -1,14 +1,12 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <!-- 헤더 -->
-    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <!-- 헤더: 데스크탑 -->
+    <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-2">
       <h1 class="text-xl font-black text-gray-800">💼 구인구직</h1>
       <div class="flex items-center gap-2 flex-wrap">
-        <span class="text-sm" :class="postType === 'hiring' ? 'text-amber-600' : 'text-blue-600'">📍</span>
         <select v-model="selectedCityIdx" @change="onCityChange"
-          class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-700 outline-none focus:ring-2 bg-amber-50"
-          :class="postType === 'hiring' ? 'focus:ring-amber-400' : 'focus:ring-blue-400'">
+          class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-amber-400 bg-amber-50">
           <option value="-2" v-if="myCity">📌 내 위치 ({{ myCity.label || myCity.name }})</option>
           <option value="-1">🇺🇸 전국</option>
           <optgroup label="한인 밀집 도시">
@@ -17,38 +15,121 @@
         </select>
         <select v-if="selectedCityIdx !== '-1' && selectedCityIdx !== -1" v-model="radius" @change="loadPage()"
           class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-600 outline-none">
-          <option value="10">10mi 이내</option>
-          <option value="30">30mi 이내</option>
-          <option value="50">50mi 이내</option>
-          <option value="100">100mi 이내</option>
+          <option value="10">10mi</option><option value="30">30mi</option><option value="50">50mi</option><option value="100">100mi</option>
         </select>
         <form @submit.prevent="loadPage()" class="flex gap-1">
-          <input v-model="search" type="text" placeholder="검색..." class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 outline-none w-40"
-            :class="postType === 'hiring' ? 'focus:ring-amber-400' : 'focus:ring-blue-400'" />
-          <button type="submit" class="font-bold px-3 py-1.5 rounded-lg text-xs"
-            :class="postType === 'hiring' ? 'bg-amber-400 text-amber-900 hover:bg-amber-500' : 'bg-blue-500 text-white hover:bg-blue-600'">검색</button>
+          <input v-model="search" type="text" placeholder="검색..." class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-amber-400 outline-none w-40" />
+          <button type="submit" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500">검색</button>
         </form>
-        <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="font-bold px-3 py-1.5 rounded-lg text-xs"
-          :class="postType === 'hiring' ? 'bg-amber-400 text-amber-900 hover:bg-amber-500' : 'bg-blue-500 text-white hover:bg-blue-600'">✏️ 등록</RouterLink>
+        <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500">✏️ 등록</RouterLink>
       </div>
     </div>
 
-    <!-- 모바일: 구인/구직 토글 + 카테고리 드롭다운 (lg 미만) -->
-    <div class="flex items-center gap-2 mb-3 lg:hidden">
-      <div class="flex rounded-lg border border-gray-200 overflow-hidden">
-        <button @click="postType = 'hiring'; loadPage()"
-          class="px-3 py-1.5 text-xs font-bold transition"
-          :class="postType === 'hiring' ? 'bg-amber-400 text-amber-900' : 'bg-white text-gray-400'">구인</button>
-        <button @click="postType = 'seeking'; loadPage()"
-          class="px-3 py-1.5 text-xs font-bold transition"
-          :class="postType === 'seeking' ? 'bg-blue-500 text-white' : 'bg-white text-gray-400'">구직</button>
+    <!-- 헤더: 모바일 (필터 바텀시트) -->
+    <div class="lg:hidden mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h1 class="text-lg font-black text-gray-800">💼 구인구직</h1>
+        <div class="flex items-center gap-2">
+          <button @click="showFilter = true" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1">
+            🔍 필터
+          </button>
+          <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-2 rounded-lg">✏️ 등록</RouterLink>
+        </div>
       </div>
-      <select v-model="activeCat" @change="loadPage()"
-        class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white outline-none"
-        :class="postType === 'hiring' ? 'focus:ring-amber-400 focus:ring-2' : 'focus:ring-blue-400 focus:ring-2'">
-        <option v-for="c in jobCategories" :key="c.value" :value="c.value">{{ c.label }}</option>
-      </select>
+      <!-- 선택된 필터 태그 -->
+      <div class="flex items-center gap-1.5 overflow-x-auto">
+        <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
+          :class="postType === 'hiring' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'">
+          {{ postType === 'hiring' ? '💼 구인' : '🙋 구직' }}
+        </span>
+        <span v-if="activeCat" class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ jobCategories.find(c => c.value === activeCat)?.label || activeCat }}
+        </span>
+        <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          📍{{ selectedCityIdx == -1 ? '전국' : (koreanCities[selectedCityIdx]?.label || '내 위치') }}
+        </span>
+        <span v-if="search" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          "{{ search }}"
+        </span>
+      </div>
     </div>
+
+    <!-- 모바일 필터 바텀시트 -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showFilter" class="fixed inset-0 bg-black/40 z-[100]" @click="showFilter = false"></div>
+      </Transition>
+      <Transition name="slide-up">
+        <div v-if="showFilter" class="fixed bottom-0 left-0 right-0 z-[101] bg-white rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-gray-300 rounded-full"></div></div>
+          <div class="px-5 pb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-bold text-gray-800">🔍 필터 설정</h2>
+              <button @click="showFilter = false" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
+            </div>
+
+            <!-- 1. 지역 -->
+            <div class="mb-4">
+              <label class="text-xs font-bold text-gray-600 mb-2 block">지역</label>
+              <select v-model="selectedCityIdx" @change="onCityChange"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-amber-400">
+                <option value="-2" v-if="myCity">📌 내 위치 ({{ myCity.label || myCity.name }})</option>
+                <option value="-1">🇺🇸 전국</option>
+                <optgroup label="한인 밀집 도시">
+                  <option v-for="(c, i) in koreanCities" :key="i" :value="i">{{ c.label }}</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- 2. 검색 -->
+            <div class="mb-4">
+              <label class="text-xs font-bold text-gray-600 mb-2 block">검색어</label>
+              <input v-model="search" type="text" placeholder="직종, 회사명, 키워드..."
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+            </div>
+
+            <!-- 3. 유형 -->
+            <div class="mb-4">
+              <label class="text-xs font-bold text-gray-600 mb-2 block">공고 유형</label>
+              <div class="flex gap-2">
+                <button @click="postType = 'hiring'"
+                  class="flex-1 py-2.5 rounded-lg font-bold text-sm border-2 transition"
+                  :class="postType === 'hiring' ? 'bg-amber-400 text-amber-900 border-amber-400' : 'border-gray-200 text-gray-500'">
+                  💼 구인
+                </button>
+                <button @click="postType = 'seeking'"
+                  class="flex-1 py-2.5 rounded-lg font-bold text-sm border-2 transition"
+                  :class="postType === 'seeking' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 text-gray-500'">
+                  🙋 구직
+                </button>
+              </div>
+            </div>
+
+            <!-- 4. 카테고리 -->
+            <div class="mb-5">
+              <label class="text-xs font-bold text-gray-600 mb-2 block">카테고리</label>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button v-for="c in jobCategories" :key="c.value" @click="activeCat = c.value"
+                  class="text-xs py-2 rounded-lg font-semibold border transition"
+                  :class="activeCat === c.value ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+                  {{ c.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 적용 -->
+            <button @click="showFilter = false; loadPage()"
+              class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-amber-200">
+              적용하기
+            </button>
+            <button @click="postType = 'hiring'; activeCat = ''; search = ''; selectedCityIdx = -1; onCityChange()"
+              class="w-full text-gray-400 hover:text-gray-600 text-xs font-semibold py-2 mt-1">
+              필터 초기화
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 카테고리 사이드바 + 구인/구직 토글 (lg 이상) -->
@@ -171,6 +252,7 @@ const router = useRouter()
 
 const postType = ref('hiring')
 const activeCat = ref('')
+const showFilter = ref(false)
 const jobCategories = [
   { value: '', label: '전체' },
   { value: 'restaurant', label: '🍳 요식업' },
@@ -294,4 +376,8 @@ onMounted(async () => {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease; }
+.slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
 </style>
