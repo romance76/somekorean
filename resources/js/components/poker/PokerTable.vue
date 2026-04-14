@@ -29,8 +29,10 @@
             <div class="text-emerald-200 text-sm font-medium tracking-widest uppercase">{{ stageLabel }} {{ stageDesc }}</div>
           </div>
 
-          <!-- Pot -->
-          <div class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1">
+          <!-- Pot (승리 시 애니메이션) -->
+          <div class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1 transition-all duration-1000"
+            :class="winnerAnimClass"
+            :style="winnerAnimStyle">
             <div class="flex gap-1 justify-center">
               <div v-for="ci in potChipColumns" :key="ci" class="flex flex-col items-center">
                 <div v-for="si in Math.min(Math.ceil((ci + 1) * 0.8), 4)" :key="si"
@@ -38,7 +40,7 @@
                   :style="{ background: chipColor(ci) }" />
               </div>
             </div>
-            <div class="bg-black/60 rounded-full px-5 py-1.5 flex items-center gap-2 backdrop-blur border border-white/10">
+            <div v-if="!isChipFlying" class="bg-black/60 rounded-full px-5 py-1.5 flex items-center gap-2 backdrop-blur border border-white/10">
               <span class="text-white/60 text-sm font-bold">POT</span>
               <span class="text-amber-400 text-2xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
             </div>
@@ -92,7 +94,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import PokerCard from './PokerCard.vue'
 import PokerSeat from './PokerSeat.vue'
 
@@ -177,4 +179,37 @@ function getPosLabel(seat) {
   const myOff = liveIdxs.indexOf(idx)
   return POSITION_NAMES[(myOff - dlrOff + liveIdxs.length) % liveIdxs.length] || ''
 }
+
+// ── 승리 시 팟 칩 → 우승자에게 날아가는 애니메이션 ──
+const isChipFlying = ref(false)
+const chipFlyTarget = ref({ x: 50, y: 50 })
+
+const winnerAnimClass = computed(() => isChipFlying.value ? 'opacity-0 scale-50' : '')
+const winnerAnimStyle = computed(() => {
+  if (!isChipFlying.value) return {}
+  return {
+    transform: `translate(${chipFlyTarget.value.x - 50}%, ${chipFlyTarget.value.y - 58}%) scale(0.3)`,
+    opacity: 0,
+  }
+})
+
+watch(() => props.showdown, (val) => {
+  if (val && props.handResults?.winners?.length) {
+    // 1초 후 칩 날리기 시작
+    setTimeout(() => {
+      const winnerIdx = props.handResults.winners[0].seatIdx
+      const winnerSeat = props.seats[winnerIdx]
+      if (winnerSeat) {
+        const dIdx = displayOrder.value.indexOf(winnerSeat)
+        if (dIdx >= 0 && seatPositions[dIdx]) {
+          chipFlyTarget.value = seatPositions[dIdx]
+        }
+      }
+      isChipFlying.value = true
+
+      // 2초 후 리셋
+      setTimeout(() => { isChipFlying.value = false }, 2000)
+    }, 1000)
+  }
+})
 </script>

@@ -429,7 +429,7 @@ class PokerGameEngine
             return self::resolveHand($state);
         }
 
-        // 포스트플랍: SB부터 (또는 딜러 다음 살아있는 사람부터)
+        // 포스트플랍: 딜러 다음 살아있는 사람부터
         $dealerIdx = $state['dealerIdx'];
         $firstAct = null;
         $total = count($state['seats']);
@@ -443,8 +443,9 @@ class PokerGameEngine
         }
 
         $state['actIdx'] = $firstAct ?? 0;
-        $state['lastRaiserIdx'] = -1; // 라운드 시작 시 레이저 없음
-        $state['turnDeadline'] = time() + $state['turnTime'];
+        $state['lastRaiserIdx'] = -1;
+        $state['stageChangedAt'] = time(); // 스테이지 전환 시각 (딜레이용)
+        $state['turnDeadline'] = time() + $state['turnTime'] + 2; // +2초 여유
 
         return $state;
     }
@@ -563,6 +564,12 @@ class PokerGameEngine
     {
         $state = self::getGameState($gameId);
         if (!$state || $state['status'] !== 'playing') return null;
+
+        // 스테이지 전환 후 2초 대기 (플랍/턴/리버 카드 보여주기)
+        $stageChangedAt = $state['stageChangedAt'] ?? 0;
+        if ($stageChangedAt > 0 && time() - $stageChangedAt < 2) {
+            return null; // 아직 대기 중
+        }
 
         $actIdx = $state['actIdx'];
         $seat = $state['seats'][$actIdx] ?? null;
