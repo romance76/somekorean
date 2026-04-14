@@ -66,7 +66,7 @@ class JobController extends Controller
     public function update(Request $request, $id)
     {
         $job = JobPost::where('user_id', auth()->id())->findOrFail($id);
-        $job->update($request->only('post_type', 'title', 'company', 'content', 'category', 'type', 'salary_min', 'salary_max', 'salary_type', 'contact_email', 'contact_phone', 'is_active'));
+        $job->update($request->only('post_type', 'title', 'company', 'content', 'category', 'type', 'salary_min', 'salary_max', 'salary_type', 'city', 'state', 'zipcode', 'contact_email', 'contact_phone', 'expires_at', 'is_active'));
         return response()->json(['success' => true, 'data' => $job]);
     }
 

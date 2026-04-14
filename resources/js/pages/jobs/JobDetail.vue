@@ -1,9 +1,9 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <button @click="router.push('/jobs')" class="text-sm text-gray-500 hover:text-amber-600 mb-3 inline-flex items-center gap-1">
-      <span>&larr;</span> 구인구직 목록
-    </button>
+    <router-link to="/jobs" class="text-xl font-black text-gray-800 mb-3 inline-block hover:text-amber-600 transition">
+      💼 구인구직
+    </router-link>
 
     <div v-if="loading" class="text-center py-20 text-gray-400">로딩중...</div>
 
@@ -39,7 +39,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
           <!-- Header: badges + title + company + location -->
-          <div class="px-5 py-4 border-b border-gray-100">
+          <div class="px-3 lg:px-5 py-3 lg:py-4 border-b border-gray-100">
             <div class="flex items-center gap-2 flex-wrap mb-2">
               <span class="text-xs px-2 py-0.5 rounded-full font-bold"
                 :class="typeClass(job.type)">
@@ -50,9 +50,9 @@
                 {{ job.post_type === 'hiring' ? '구인' : '구직' }}
               </span>
             </div>
-            <h1 class="text-xl font-bold text-gray-900 leading-snug">{{ job.title }}</h1>
-            <div v-if="job.company" class="text-sm text-amber-700 font-semibold mt-1">{{ job.company }}</div>
-            <div class="text-sm text-gray-500 mt-1 flex items-center gap-1">
+            <h1 class="text-xl lg:text-2xl font-bold text-gray-900 leading-snug">{{ job.title }}</h1>
+            <div v-if="job.company" class="text-sm lg:text-base text-amber-700 font-semibold mt-1">{{ job.company }}</div>
+            <div class="text-xs lg:text-sm text-gray-500 mt-1 flex items-center gap-1">
               <span v-if="job.city || job.state || job.zipcode">
                 {{ [job.city, job.state, job.zipcode].filter(Boolean).join(', ') }}
               </span>
@@ -60,14 +60,14 @@
           </div>
 
           <!-- Salary box -->
-          <div v-if="job.salary_min || job.salary_max" class="mx-5 my-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+          <div v-if="job.salary_min || job.salary_max" class="mx-3 lg:mx-5 my-3 bg-green-50 border border-green-200 rounded-lg px-3 lg:px-4 py-3">
             <div class="text-green-800 font-bold text-base flex items-center gap-2">
               <span>{{ formatSalary(job) }}</span>
             </div>
           </div>
 
           <!-- Tags: category + type -->
-          <div class="px-5 py-2 flex items-center gap-2 flex-wrap">
+          <div class="px-3 lg:px-5 py-2 flex items-center gap-2 flex-wrap">
             <span class="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
               {{ categoryLabel(job.category) }}
             </span>
@@ -81,7 +81,7 @@
           </div>
 
           <!-- Apply / Contact bar -->
-          <div class="px-5 py-3 border-t border-b border-gray-100 bg-gray-50/50">
+          <div class="px-3 lg:px-5 py-3 border-t border-b border-gray-100 bg-gray-50/50">
             <div class="flex items-center gap-3 flex-wrap">
               <a v-if="job.contact_phone" :href="'tel:' + job.contact_phone"
                 class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-5 py-2 rounded-lg transition">
@@ -103,10 +103,10 @@
           </div>
 
           <!-- Content body -->
-          <div class="px-5 py-5 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ job.content }}</div>
+          <div class="px-3 lg:px-5 py-3 lg:py-5 text-xs lg:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ job.content }}</div>
 
           <!-- Footer: author + date + actions -->
-          <div class="px-5 py-3 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between flex-wrap gap-2">
+          <div class="px-3 lg:px-5 py-3 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between flex-wrap gap-2">
             <div class="text-xs text-gray-500 flex items-center gap-2">
               <span>작성자:</span>
               <UserName v-if="job.user?.id" :userId="job.user.id" :name="job.user.nickname || job.user.name" className="text-gray-700 font-semibold" />
@@ -127,6 +127,15 @@
 
         <!-- Comments -->
         <CommentSection v-if="job.id" type="job" :typeId="job.id" class="mt-4" />
+
+        <!-- Prev / List / Next -->
+        <div class="flex justify-between items-center mt-4 bg-white rounded-xl p-3 border">
+          <button v-if="prevJob" @click="$router.push('/jobs/'+prevJob.id)" class="text-xs text-gray-600 hover:text-amber-600">&larr; 이전글</button>
+          <span v-else></span>
+          <router-link to="/jobs" class="text-xs font-bold text-amber-700 hover:text-amber-500">📋 목록</router-link>
+          <button v-if="nextJob" @click="$router.push('/jobs/'+nextJob.id)" class="text-xs text-gray-600 hover:text-amber-600">다음글 &rarr;</button>
+          <span v-else></span>
+        </div>
       </main>
 
       <!-- ══════════ RIGHT: Related Jobs (md+) ══════════ -->
@@ -167,7 +176,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import CommentSection from '../../components/CommentSection.vue'
@@ -182,6 +191,20 @@ const job = ref(null)
 const loading = ref(true)
 const sameCategoryJobs = ref([])
 const relatedJobs = ref([])
+
+// ── Prev / Next navigation ──
+const currentJobIdx = computed(() => {
+  if (!job.value) return -1
+  return sameCategoryJobs.value.findIndex(j => j.id === job.value.id)
+})
+const prevJob = computed(() => {
+  const idx = currentJobIdx.value
+  return idx > 0 ? sameCategoryJobs.value[idx - 1] : null
+})
+const nextJob = computed(() => {
+  const idx = currentJobIdx.value
+  return idx >= 0 && idx < sameCategoryJobs.value.length - 1 ? sameCategoryJobs.value[idx + 1] : null
+})
 
 // ── Category helpers ──
 const categoryMap = {
