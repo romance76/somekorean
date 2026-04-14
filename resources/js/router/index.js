@@ -47,7 +47,9 @@ const routes = [
 
   // Clubs
   { path: '/clubs', name: 'clubs', component: p('community/ClubList') },
-  { path: '/clubs/:id', name: 'club-detail', component: p('community/ClubList') },
+  { path: '/clubs/create', name: 'club-create', component: p('community/ClubWrite'), meta: { auth: true } },
+  { path: '/clubs/:id', name: 'club-detail', component: p('community/ClubDetail') },
+  { path: '/clubs/:id/edit', name: 'club-edit', component: p('community/ClubWrite'), meta: { auth: true } },
 
   // News
   { path: '/news', name: 'news', component: p('news/NewsList') },
@@ -61,12 +63,14 @@ const routes = [
 
   // GroupBuy
   { path: '/groupbuy', name: 'groupbuy', component: p('groupbuy/GroupBuyHome') },
-  { path: '/groupbuy/:id', name: 'groupbuy-detail', component: p('groupbuy/GroupBuyHome') },
+  { path: '/groupbuy/create', name: 'groupbuy-create', component: p('groupbuy/GroupBuyCreate'), meta: { auth: true } },
+  { path: '/groupbuy/:id', name: 'groupbuy-detail', component: p('groupbuy/GroupBuyDetail') },
 
   // Events
   { path: '/events', name: 'events', component: p('events/EventList') },
   { path: '/events/create', name: 'event-create', component: p('events/EventCreate'), meta: { auth: true } },
-  { path: '/events/:id', name: 'event-detail', component: p('events/EventList') },
+  { path: '/events/:id', name: 'event-detail', component: p('events/EventDetail') },
+  { path: '/events/:id/edit', name: 'event-edit', component: p('events/EventCreate'), meta: { auth: true } },
 
   // Directory
   { path: '/directory', name: 'directory', component: p('directory/BusinessList') },

@@ -70,6 +70,9 @@ Route::get('/realestate', [RealEstateController::class, 'index']);
 Route::get('/realestate/{id}', [RealEstateController::class, 'show']);
 Route::get('/clubs', [ClubController::class, 'index']);
 Route::get('/clubs/{id}', [ClubController::class, 'show']);
+Route::get('/clubs/{id}/members', [ClubController::class, 'members']);
+Route::get('/clubs/{id}/boards', [ClubController::class, 'boards']);
+Route::get('/clubs/{id}/boards/{boardId}/posts', [ClubController::class, 'boardPosts']);
 Route::get('/clubs/{id}/posts', [ClubController::class, 'posts']);
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'categories']);
@@ -86,8 +89,11 @@ Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 Route::get('/recipes/{id}/comments', [RecipeController::class, 'comments']);
 Route::get('/groupbuys', [GroupBuyController::class, 'index']);
 Route::get('/groupbuys/{id}', [GroupBuyController::class, 'show']);
+Route::get('/groupbuys/{id}/participants', [GroupBuyController::class, 'participants']);
+Route::get('/groupbuys/{id}/participants', [GroupBuyController::class, 'participants']);
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{id}', [EventController::class, 'show']);
+Route::get('/events/{id}/attendees', [EventController::class, 'attendees']);
 Route::get('/qa', [QaController::class, 'index']);
 Route::get('/qa/categories', [QaController::class, 'categories']);
 Route::get('/qa/{id}', [QaController::class, 'show']);
@@ -187,8 +193,19 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/realestate/{id}', [RealEstateController::class, 'destroy']);
 
     Route::post('/clubs', [ClubController::class, 'store']);
+    Route::put('/clubs/{id}', [ClubController::class, 'update']);
+    Route::delete('/clubs/{id}', [ClubController::class, 'destroy']);
     Route::post('/clubs/{id}/join', [ClubController::class, 'join']);
     Route::post('/clubs/{id}/leave', [ClubController::class, 'leave']);
+    Route::put('/clubs/{id}/members/{userId}', [ClubController::class, 'updateMember']);
+    Route::delete('/clubs/{id}/members/{userId}', [ClubController::class, 'removeMember']);
+    Route::post('/clubs/{id}/boards', [ClubController::class, 'createBoard']);
+    Route::put('/clubs/{id}/boards/{boardId}', [ClubController::class, 'updateBoard']);
+    Route::delete('/clubs/{id}/boards/{boardId}', [ClubController::class, 'deleteBoard']);
+    Route::post('/clubs/{id}/posts', [ClubController::class, 'createPost']);
+    Route::put('/clubs/posts/{postId}', [ClubController::class, 'updatePost']);
+    Route::delete('/clubs/posts/{postId}', [ClubController::class, 'deletePost']);
+    Route::post('/clubs/{id}/chatroom', [ClubController::class, 'createChatRoom']);
 
     // Recipes (유저 작성/평점/찜)
     Route::get('/recipes/my/favorites', [RecipeController::class, 'myFavorites']);
@@ -200,9 +217,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/recipes/{id}/favorite', [RecipeController::class, 'toggleFavorite']);
 
     Route::post('/groupbuys', [GroupBuyController::class, 'store']);
+    Route::put('/groupbuys/{id}', [GroupBuyController::class, 'update']);
+    Route::delete('/groupbuys/{id}', [GroupBuyController::class, 'destroy']);
     Route::post('/groupbuys/{id}/join', [GroupBuyController::class, 'join']);
+    Route::post('/groupbuys/{id}/cancel', [GroupBuyController::class, 'cancelParticipation']);
 
     Route::post('/events', [EventController::class, 'store']);
+    Route::put('/events/{id}', [EventController::class, 'update']);
+    Route::delete('/events/{id}', [EventController::class, 'destroy']);
     Route::post('/events/{id}/attend', [EventController::class, 'toggleAttend']);
 
     Route::post('/qa', [QaController::class, 'store']);
@@ -545,6 +567,11 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/chat/users/{userId}/permaban', [AdminController::class, 'chatPermaBan']);
     Route::get('/chat/permaban-list', [AdminController::class, 'chatPermaBanList']);
 
+    // Admin 공동구매
+    Route::post('/groupbuys/{id}/approve', [GroupBuyController::class, 'adminApprove']);
+    Route::post('/groupbuys/{id}/reject', [GroupBuyController::class, 'adminReject']);
+    Route::post('/groupbuys/{id}/complete', [GroupBuyController::class, 'adminComplete']);
+
     // Admin Shorts
     Route::get('/shorts', [AdminController::class, 'shortsList']);
     Route::delete('/shorts/{id}', [AdminController::class, 'shortsDelete']);
@@ -561,4 +588,9 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::put('/recipes/{id}', [AdminRecipeController::class, 'update']);
     Route::patch('/recipes/{id}/toggle', [AdminRecipeController::class, 'toggle']);
     Route::delete('/recipes/{id}', [AdminRecipeController::class, 'destroy']);
+
+    // 공동구매 관리자 승인
+    Route::post('/groupbuys/{id}/approve', [GroupBuyController::class, 'adminApprove']);
+    Route::post('/groupbuys/{id}/reject', [GroupBuyController::class, 'adminReject']);
+    Route::post('/groupbuys/{id}/complete', [GroupBuyController::class, 'adminComplete']);
 });

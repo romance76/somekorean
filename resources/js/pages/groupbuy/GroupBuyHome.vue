@@ -1,8 +1,55 @@
 <template>
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
-    <!-- 헤더 -->
-    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <!-- 헤더: 모바일 -->
+    <div class="lg:hidden mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h1 class="text-lg font-black text-gray-800">🤝 공동구매</h1>
+        <div class="flex items-center gap-2">
+          <button @click="showFilter = true" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">🔍 필터</button>
+          <RouterLink v-if="auth.isLoggedIn" to="/groupbuy/create" class="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-2 rounded-lg">✏️ 등록</RouterLink>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto">
+        <span v-if="statusFilter" class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          {{ statusFilters.find(s => s.value === statusFilter)?.label || statusFilter }}
+        </span>
+        <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+          📍{{ selectedCityIdx == -1 ? '전국' : (myCity?.label || '내 위치') }}
+        </span>
+      </div>
+    </div>
+    <MobileFilter v-model="showFilter" @apply="loadPage()" @reset="statusFilter = ''; search = ''; selectedCityIdx = '-1'; onCityChange()">
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">지역</label>
+        <select v-model="selectedCityIdx" @change="onCityChange"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-amber-400">
+          <option value="-2" v-if="myCity">📌 내 위치 ({{ myCity.label || myCity.name }})</option>
+          <option value="-1">🇺🇸 전국</option>
+          <optgroup label="한인 밀집 도시">
+            <option v-for="(c, i) in koreanCities" :key="i" :value="i">{{ c.label }}</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-600 mb-2 block">검색어</label>
+        <input v-model="search" type="text" placeholder="상품명, 키워드..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-2 block">상태</label>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button v-for="s in statusFilters" :key="s.value" @click="statusFilter = s.value"
+            class="text-xs py-2 rounded-lg font-semibold border transition"
+            :class="statusFilter === s.value ? 'bg-amber-50 text-amber-700 border-amber-300' : 'border-gray-200 text-gray-600'">
+            {{ s.label }}
+          </button>
+        </div>
+      </div>
+    </MobileFilter>
+
+    <!-- 헤더: 데스크탑 -->
+    <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-2">
       <h1 class="text-xl font-black text-gray-800">🤝 공동구매</h1>
       <div class="flex items-center gap-2 flex-wrap">
         <span class="text-amber-600 text-sm">📍</span>
@@ -47,21 +94,35 @@
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <RouterLink v-for="item in items" :key="item.id" :to="'/groupbuy/' + item.id"
         class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
-        <div class="flex items-center justify-between">
+        <div class="flex items-start justify-between gap-3">
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
-            <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-              <span v-if="item.user?.name"><UserName :userId="item.user?.id" :name="item.user?.name" /></span>
-              <span v-else-if="item.company || item.organizer">{{ item.company || item.organizer }}</span>
-              <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
-              <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
-              <span v-if="item.view_count">👁{{ item.view_count }}</span>
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                :class="{'bg-green-100 text-green-700':item.status==='recruiting','bg-blue-100 text-blue-700':item.status==='confirmed','bg-gray-100 text-gray-500':item.status==='completed','bg-red-100 text-red-600':item.status==='cancelled'}">
+                {{ {recruiting:'모집중',confirmed:'확정',completed:'완료',cancelled:'취소'}[item.status] || item.status }}
+              </span>
+              <span v-if="item.category" class="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded">{{ item.category }}</span>
+            </div>
+            <div class="text-sm font-medium text-gray-800 truncate">{{ item.title }}</div>
+            <div class="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
+              <UserName v-if="item.user?.id" :userId="item.user.id" :name="item.user.name" className="text-gray-500" />
+              <span v-if="item.city">📍{{ item.city }}</span>
+              <span v-if="item.deadline">⏰ {{ daysLeft(item.deadline) }}</span>
+            </div>
+            <!-- 프로그레스바 -->
+            <div class="mt-2 flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full transition-all"
+                  :class="item.status==='recruiting' ? 'bg-amber-400' : 'bg-green-400'"
+                  :style="{width: Math.min(100, (item.current_participants/(item.max_participants||item.min_participants||1))*100)+'%'}"></div>
+              </div>
+              <span class="text-[10px] text-gray-500 whitespace-nowrap">{{ item.current_participants }}명/{{ item.max_participants || item.min_participants }}명</span>
             </div>
           </div>
-          <div class="ml-3 flex-shrink-0 text-right">
-            <div v-if="item.price !== undefined && item.price !== null" class="text-amber-600 font-bold text-sm">${{ Number(item.price).toLocaleString() }}</div>
-            <div v-if="item.salary_min" class="text-amber-600 font-bold text-xs">${{ item.salary_min }}~${{ item.salary_max }}/{{ item.salary_type }}</div>
-            <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
+          <div class="flex-shrink-0 text-right">
+            <div v-if="item.original_price" class="text-xs text-gray-400 line-through">${{ Number(item.original_price).toLocaleString() }}</div>
+            <div class="text-amber-600 font-bold text-sm">${{ Number(item.group_price || item.original_price).toLocaleString() }}</div>
+            <div v-if="currentDiscount(item)" class="text-[10px] text-red-500 font-bold">{{ currentDiscount(item) }}% OFF</div>
           </div>
         </div>
       </RouterLink>
@@ -140,6 +201,26 @@ function onCityChange() {
     radius.value = '30'
   }
   loadPage()
+}
+
+const showFilter = ref(false)
+
+function daysLeft(deadline) {
+  if (!deadline) return ''
+  const diff = new Date(deadline) - new Date()
+  if (diff <= 0) return '마감'
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  return days > 0 ? `${days}일 남음` : `${hours}시간 남음`
+}
+
+function currentDiscount(item) {
+  if (!item.discount_tiers || !Array.isArray(item.discount_tiers)) return 0
+  let best = 0
+  for (const t of item.discount_tiers) {
+    if (item.current_participants >= t.min_people && t.discount_pct > best) best = t.discount_pct
+  }
+  return best
 }
 
 async function loadPage(p = 1) {
