@@ -374,41 +374,37 @@ const pastTournaments = computed(() =>
     .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
     .slice(0, 10)
 )
-function isPast(t) { return new Date(t.scheduled_at) < new Date(now.value) && !['running'].includes(t.status) }
+function isPast(t) { return ['finished', 'cancelled'].includes(t.status) }
 
 const myRegisteredIds = ref([])
 
 async function fetchMyRegistrations() {
-  if (!auth.isLoggedIn) return
   try {
     const { data } = await axios.get('/api/poker/my-registrations')
     if (data.success) {
       myRegisteredIds.value = data.data || []
-      console.log('[Poker] myRegisteredIds:', JSON.stringify(myRegisteredIds.value))
     }
-  } catch (e) {
-    console.error('[Poker] fetchMyRegistrations error:', e)
+  } catch {
+    // 비로그인 시 401 — 무시
   }
 }
 
 async function fetchTournaments() {
   tournamentsLoading.value = true
   try {
-    // 토너먼트 목록 + 내 참가 목록 병렬 호출
-    const [tourRes] = await Promise.all([
-      axios.get('/api/poker/tournaments'),
-      fetchMyRegistrations(),
-    ])
-    const data = tourRes.data
+    // 먼저 내 참가 목록, 그 다음 토너먼트 목록
+    await fetchMyRegistrations()
+    const { data } = await axios.get('/api/poker/tournaments')
     if (data.success) {
       const raw = Array.isArray(data.data)
         ? data.data
         : [...(data.data.upcoming || []), ...(data.data.running || [])]
-      tournaments.value = raw.map(t => {
-        const reg = myRegisteredIds.value.includes(t.id)
-        if (reg) console.log('[Poker] Tournament', t.id, t.title, 'is_registered=true')
-        return { ...t, _actionLoading: false, is_registered: reg }
-      })
+      const regIds = myRegisteredIds.value
+      tournaments.value = raw.map(t => ({
+        ...t,
+        _actionLoading: false,
+        is_registered: regIds.includes(t.id),
+      }))
     } else {
       tournaments.value = []
     }
