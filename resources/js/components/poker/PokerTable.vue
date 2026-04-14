@@ -29,19 +29,13 @@
             <div class="text-emerald-200 text-sm font-medium tracking-widest uppercase">{{ stageLabel }} {{ stageDesc }}</div>
           </div>
 
-          <!-- Pot (승리 시 우승자에게 이동) -->
-          <div class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1"
+          <!-- Pot (ChipStack 사용 + 승리 시 우승자에게 이동) -->
+          <div v-if="pot > 0" class="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[4] flex flex-col items-center gap-1.5"
             :style="potAnimStyle">
-            <div class="flex gap-1 justify-center">
-              <div v-for="ci in potChipColumns" :key="ci" class="flex flex-col items-center">
-                <div v-for="si in Math.min(Math.ceil((ci + 1) * 0.8), 4)" :key="si"
-                  class="w-5 h-[6px] rounded-full border border-white/30 shadow-sm -mt-0.5"
-                  :style="{ background: chipColor(ci) }" />
-              </div>
-            </div>
-            <div v-if="!isChipFlying" class="bg-black/60 rounded-full px-5 py-1.5 flex items-center gap-2 backdrop-blur border border-white/10">
-              <span class="text-white/60 text-sm font-bold">POT</span>
-              <span class="text-amber-400 text-2xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
+            <ChipStack :amount="pot" :bb="bl?.bb || 20" />
+            <div v-if="!isChipFlying" class="bg-black/60 rounded-full px-4 py-1 flex items-center gap-1.5 backdrop-blur border border-white/10">
+              <span class="text-white/50 text-xs font-bold">POT</span>
+              <span class="text-amber-400 text-xl font-black font-mono" style="text-shadow: 0 0 10px rgba(255,215,0,0.4)">{{ pot.toLocaleString() }}</span>
             </div>
           </div>
 
@@ -96,6 +90,7 @@
 import { computed, ref, watch } from 'vue'
 import PokerCard from './PokerCard.vue'
 import PokerSeat from './PokerSeat.vue'
+import ChipStack from './ChipStack.vue'
 
 const POSITION_NAMES = { 0:'BTN', 1:'SB', 2:'BB', 3:'UTG', 4:'UTG+1', 5:'MP', 6:'MP+1', 7:'HJ', 8:'CO' }
 const STAGE_NAMES = { preflop:'프리플랍', flop:'플랍', turn:'턴', river:'리버' }
@@ -155,15 +150,6 @@ const dealerChipPos = computed(() => {
   const dp = seatPositions[dDispIdx]
   return { x: dp.x + (50 - dp.x) * 0.18, y: dp.y + (50 - dp.y) * 0.18 }
 })
-
-const potChipColumns = computed(() => {
-  if (props.pot <= 0) return []
-  return Array.from({ length: Math.min(Math.ceil(props.pot / ((props.bl?.bb || 20) * 4)), 6) }, (_, i) => i)
-})
-
-function chipColor(ci) {
-  return ['linear-gradient(180deg,#e74c3c,#c0392b)', 'linear-gradient(180deg,#2ecc71,#27ae60)', 'linear-gradient(180deg,#3498db,#2980b9)', 'linear-gradient(180deg,#1a1a2e,#333)'][ci % 4]
-}
 
 function getSeatGlobalIdx(seat) { return props.seats.indexOf(seat) }
 
