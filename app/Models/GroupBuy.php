@@ -21,6 +21,6 @@ class GroupBuy extends Model
     }
     public function getCurrentPriceAttribute() {
         $discount = $this->current_discount;
-        return $discount > 0 ? round($this->original_price * (100 - $discount) / 100, 2) : $this->group_price ?: $this->original_price;
+        return $discount > 0 ? round($this->original_price * (100 - $discount) / 100, 2) : ($this->group_price ?: $this->original_price);
     }
 }
