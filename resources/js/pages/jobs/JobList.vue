@@ -271,6 +271,16 @@ const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation
 const items = ref([])
 const loading = ref(true)
 
+// URL 쿼리 변경 시 반영 (상세→목록 이동, 카테고리 클릭 등)
+watch(() => route.query, (q) => {
+  if (route.path !== '/jobs') return
+  if (q.category !== undefined) activeCat.value = q.category || ''
+  if (q.type === 'seeking') postType.value = 'seeking'
+  else if (q.type === 'hiring') postType.value = 'hiring'
+  if (q.search !== undefined) search.value = q.search || ''
+  loadPage()
+})
+
 function goDetail(item) {
   router.push('/jobs/' + item.id)
 }
@@ -357,6 +367,12 @@ async function loadPage(p = 1) {
 }
 
 onMounted(async () => {
+  // URL 쿼리 파라미터 반영
+  if (route.query.category) activeCat.value = route.query.category
+  if (route.query.type === 'seeking') postType.value = 'seeking'
+  if (route.query.type === 'hiring') postType.value = 'hiring'
+  if (route.query.search) search.value = route.query.search
+
   await initLocation()
   if (city.value) {
     myCity.value = { ...city.value }
