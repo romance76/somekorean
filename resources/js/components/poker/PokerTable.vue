@@ -122,17 +122,17 @@ const activePlayerName = computed(() => {
 })
 
 // 좌석 — 딜러가 상단 중앙이므로 9명은 딜러 양옆으로
-const seatPositions = [
-  { x: 50, y: 90 },   // 0: 나 (하단 중앙)
-  { x: 18, y: 78 },   // 1: 좌하
-  { x: 4,  y: 50 },   // 2: 좌중
-  { x: 12, y: 18 },   // 3: 좌상
-  { x: 35, y: 4 },    // 4: 상좌 (딜러 왼쪽)
-  { x: 65, y: 4 },    // 5: 상우 (딜러 오른쪽)
-  { x: 88, y: 18 },   // 6: 우상
-  { x: 96, y: 50 },   // 7: 우중
-  { x: 82, y: 78 }    // 8: 우하
-]
+// 타원 기반 좌석 배치: 중심(50%,57%), 반지름(a=38%,b=34%)
+// 9자리를 타원 위에 균등 배치 (하단 중앙=나, 시계방향)
+const seatPositions = (() => {
+  const cx = 50, cy = 55, a = 38, b = 36
+  // 각도: 나(아래)부터 시계반대 방향
+  const angles = [270, 235, 195, 155, 125, 55, 25, 345, 305]
+  return angles.map(deg => {
+    const rad = deg * Math.PI / 180
+    return { x: Math.round(cx + a * Math.cos(rad)), y: Math.round(cy - b * Math.sin(rad)) }
+  })
+})()
 
 const stageLabel = computed(() => STAGE_NAMES[props.stage] || props.stage)
 const stageDesc = computed(() => STAGE_DESCS[props.stage] || '')
