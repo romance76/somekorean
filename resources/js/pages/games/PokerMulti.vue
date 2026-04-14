@@ -101,8 +101,8 @@
         </div>
       </div>
 
-      <!-- 우측: 모니터 + 채팅 (솔로와 동일 220px) -->
-      <div class="w-[220px] shrink-0 bg-[#080c14] border-l border-gray-800/30 flex flex-col overflow-hidden hidden xl:flex z-10">
+      <!-- 우측: 모니터 + 채팅 -->
+      <div class="w-[300px] shrink-0 bg-[#080c14] border-l border-gray-800/30 flex flex-col overflow-hidden hidden xl:flex z-10">
         <!-- 토너먼트/게임 모니터 -->
         <div class="p-3 border-b border-gray-800/30">
           <div class="text-blue-400 text-sm font-bold tracking-wider mb-2">{{ isTournament ? '🏆 TOURNAMENT' : '🎮 CASH GAME' }}</div>
