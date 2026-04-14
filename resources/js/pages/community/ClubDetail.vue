@@ -141,6 +141,10 @@
             설정
             <span v-if="pendingMembers.length" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{{ pendingMembers.length }}</span>
           </button>
+          <button v-if="chatRoomId" @click="chatStore.openRoom({ id: chatRoomId, name: club.name + ' 채팅', type: 'club' })"
+            class="px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap ml-auto bg-amber-100 text-amber-700 hover:bg-amber-200">
+            💬 채팅
+          </button>
         </div>
 
         <!-- ====== NON-MEMBER VIEW: Recent posts preview ====== -->
@@ -450,12 +454,20 @@
             <div class="px-5 py-3 border-b bg-amber-50">
               <h3 class="text-sm font-bold text-amber-900">채팅방</h3>
             </div>
-            <div class="p-5">
-              <button @click="createChatRoom"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:border-amber-400 hover:bg-amber-50/50 transition">
-                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <div class="p-5 space-y-2">
+              <button v-if="chatRoomId" @click="chatStore.openRoom({ id: chatRoomId, name: club.name + ' 채팅', type: 'club' })"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 transition">
+                <span class="text-xl">💬</span>
                 <div>
-                  <div class="text-sm font-semibold text-gray-800">동호회 채팅방 만들기</div>
+                  <div class="text-sm font-semibold text-amber-800">채팅방 열기</div>
+                  <div class="text-xs text-amber-600">동호회 채팅방이 있습니다</div>
+                </div>
+              </button>
+              <button v-else @click="createChatRoom"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:border-amber-400 hover:bg-amber-50/50 transition">
+                <span class="text-xl">➕</span>
+                <div>
+                  <div class="text-sm font-semibold text-gray-800">채팅방 만들기</div>
                   <div class="text-xs text-gray-400">회원들이 실시간으로 대화할 수 있는 채팅방</div>
                 </div>
               </button>
@@ -526,11 +538,7 @@
     </div>
   </div>
 
-  <!-- 동호회 플로팅 채팅 팝업 -->
-  <ClubChatPopup v-if="isMember && chatRoomId"
-    :roomId="chatRoomId"
-    :roomName="(club?.name || '동호회') + ' 채팅'"
-    :autoOpen="showChatOnCreate" />
+  <!-- 동호회 채팅 자동 열기 (글로벌 팝업 사용) -->
 </div>
 </template>
 
@@ -543,12 +551,13 @@ import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
 import AdSlot from '../../components/AdSlot.vue'
 import Pagination from '../../components/Pagination.vue'
-import ClubChatPopup from '../../components/ClubChatPopup.vue'
+import { useChatStore } from '../../stores/chat'
 import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const chatStore = useChatStore()
 const siteStore = useSiteStore()
 
 // Club data
@@ -977,8 +986,7 @@ async function createChatRoom() {
     const roomId = data.data?.id || data.id
     if (roomId) {
       chatRoomId.value = roomId
-      // 팝업 자동 열기 — ClubChatPopup이 렌더되면 바로 open
-      showChatOnCreate.value = true
+      chatStore.openRoom({ id: roomId, name: club.value.name + ' 채팅', type: 'club' })
     }
   } catch (e) {
     alert(e.response?.data?.message || '채팅방 생성 실패')

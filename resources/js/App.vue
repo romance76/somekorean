@@ -24,6 +24,7 @@
 
     <CommHub v-if="auth.isLoggedIn && auth.user" ref="commHub" />
     <MiniPlayer />
+    <GlobalChatPopup v-if="auth.isLoggedIn" />
 
     <main>
       <router-view v-slot="{ Component }" :key="route.fullPath">
@@ -82,6 +83,7 @@ import UserPopup from './components/UserPopup.vue'
 import SiteModal from './components/SiteModal.vue'
 import CommHub from './components/comms/CommHub.vue'
 import MiniPlayer from './components/MiniPlayer.vue'
+import GlobalChatPopup from './components/GlobalChatPopup.vue'
 
 const route = useRoute()
 const siteStore = useSiteStore()
