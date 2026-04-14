@@ -214,7 +214,7 @@ class SeedJobs extends Seeder
             'category' => $cat,
             'type' => $type,
             'title' => $title,
-            'company' => null,
+            'company' => '',
             'content' => $content,
             'salary_min' => $salMin,
             'salary_max' => $salMax,
