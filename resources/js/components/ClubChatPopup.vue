@@ -10,20 +10,21 @@
     </span>
   </button>
 
-  <!-- 채팅 팝업 (펼친 상태) -->
+  <!-- 채팅 팝업 (데스크탑: 우측 하단 팝업, 모바일: 전체화면) -->
   <div v-if="open"
-    class="fixed bottom-20 right-4 z-[91] w-[340px] h-[480px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
-    style="max-height: calc(100vh - 120px);">
+    class="fixed z-[91] bg-white flex flex-col overflow-hidden
+           inset-0 sm:inset-auto sm:bottom-20 sm:right-4 sm:w-[340px] sm:h-[480px] sm:rounded-2xl sm:shadow-2xl sm:border sm:border-gray-200"
+    style="max-height: 100vh;">
 
     <!-- 헤더 -->
-    <div class="bg-amber-500 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
+    <div class="bg-amber-500 text-white px-4 py-3 flex items-center justify-between flex-shrink-0 safe-top">
       <div class="flex items-center gap-2 min-w-0">
         <span class="text-lg">💬</span>
         <span class="font-bold text-sm truncate">{{ roomName }}</span>
       </div>
       <div class="flex items-center gap-1">
-        <button @click="open = false" class="w-7 h-7 rounded-full hover:bg-amber-600 flex items-center justify-center transition text-lg">−</button>
-        <button @click="$emit('close')" class="w-7 h-7 rounded-full hover:bg-amber-600 flex items-center justify-center transition text-sm">✕</button>
+        <button @click="open = false" class="w-7 h-7 rounded-full hover:bg-amber-600 flex items-center justify-center transition text-lg" title="최소화">−</button>
+        <button @click="open = false" class="w-7 h-7 rounded-full hover:bg-amber-600 flex items-center justify-center transition text-sm" title="닫기">✕</button>
       </div>
     </div>
 
@@ -87,6 +88,7 @@ import axios from 'axios'
 const props = defineProps({
   roomId: { type: [Number, String], required: true },
   roomName: { type: String, default: '동호회 채팅' },
+  autoOpen: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close'])
@@ -221,6 +223,7 @@ watch(open, (v) => {
 onMounted(() => {
   setupEcho()
   startPolling()
+  if (props.autoOpen) openChat()
 })
 
 onUnmounted(() => {

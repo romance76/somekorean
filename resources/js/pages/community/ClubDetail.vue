@@ -529,7 +529,8 @@
   <!-- 동호회 플로팅 채팅 팝업 -->
   <ClubChatPopup v-if="isMember && chatRoomId"
     :roomId="chatRoomId"
-    :roomName="(club?.name || '동호회') + ' 채팅'" />
+    :roomName="(club?.name || '동호회') + ' 채팅'"
+    :autoOpen="showChatOnCreate" />
 </div>
 </template>
 
@@ -558,6 +559,7 @@ const myGrade = ref('member')
 const myStatus = ref(null)
 const myClubs = ref([])
 const chatRoomId = ref(null)
+const showChatOnCreate = ref(false)
 
 // Description accordion
 const descExpanded = ref(false)
@@ -972,11 +974,14 @@ async function rejectMember(pm) {
 async function createChatRoom() {
   try {
     const { data } = await axios.post(`/api/clubs/${club.value.id}/chatroom`)
-    siteStore.toast('채팅방이 생성되었습니다', 'success')
     const roomId = data.data?.id || data.id
-    if (roomId) router.push(`/chat?room=${roomId}`)
+    if (roomId) {
+      chatRoomId.value = roomId
+      // 팝업 자동 열기 — ClubChatPopup이 렌더되면 바로 open
+      showChatOnCreate.value = true
+    }
   } catch (e) {
-    siteStore.toast(e.response?.data?.message || '채팅방 생성 실패', 'error')
+    alert(e.response?.data?.message || '채팅방 생성 실패')
   }
 }
 
