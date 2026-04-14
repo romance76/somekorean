@@ -15,35 +15,48 @@ class BusinessController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Business::query()
+        // 목록용 필드만 선택 (images/description 제외 → 전송량 감소)
+        $columns = ['id','name','category','subcategory','phone','address','city','state','zipcode','lat','lng','rating','review_count','view_count','logo','images','is_claimed','created_at'];
+
+        $query = Business::query()->select($columns)
             ->when($request->category, fn($q, $v) => $q->where('category', $v))
             ->when($request->search, fn($q, $v) => $q->where('name', 'like', "%{$v}%"))
             ->when($request->state, fn($q, $v) => $q->where('state', $v))
             ->when($request->city, fn($q, $v) => $q->where('city', $v));
 
+        // 위치 필터 — bounding box 사전 필터 + Haversine
         if ($request->lat && $request->lng) {
-            $query->nearby($request->lat, $request->lng, $request->radius ?? 50);
+            $lat = (float) $request->lat;
+            $lng = (float) $request->lng;
+            $radius = (int) ($request->radius ?? 50);
+            // bounding box 사전 필터 (인덱스 활용)
+            $latDelta = $radius / 69.0;
+            $lngDelta = $radius / (69.0 * cos(deg2rad($lat)));
+            $query->whereBetween('lat', [$lat - $latDelta, $lat + $latDelta])
+                  ->whereBetween('lng', [$lng - $lngDelta, $lng + $lngDelta]);
+            $query->nearby($lat, $lng, $radius);
         }
 
-        $sort = $request->sort ?? 'random';
-        if ($sort === 'random') $query->inRandomOrder();
-        elseif ($sort === 'distance' && $request->lat) $query->orderBy('distance');
+        $sort = $request->sort ?? 'popular';
+        if ($sort === 'distance' && $request->lat) $query->orderBy('distance');
         elseif ($sort === 'popular') $query->orderByDesc('view_count');
         elseif ($sort === 'rating') $query->orderByDesc('rating');
         elseif ($sort === 'newest') $query->orderByDesc('created_at');
         elseif ($sort === 'reviews') $query->orderByDesc('review_count');
-        elseif ($sort === 'views') $query->orderByDesc('view_count');
+        elseif ($sort === 'random') $query->inRandomOrder();
+        else $query->orderByDesc('view_count');
 
-        $paginated = $query->paginate(10);
+        $perPage = min((int) ($request->per_page ?? 20), 50);
+        $paginated = $query->paginate($perPage);
+
+        // 이미지 정리 — file_exists 없이 해시 경로만 계산
         $paginated->getCollection()->transform(function ($b) {
             $imgs = is_array($b->images) ? $b->images : (is_string($b->images) ? json_decode($b->images, true) : []);
-            // Google Places photoreference 는 만료되어 403 → 로컬 이미지만 사용
             $valid = [];
             if (is_array($imgs)) {
                 foreach ($imgs as $img) {
                     if (!is_string($img)) continue;
                     if (str_contains($img, 'maps.googleapis.com')) continue;
-                    // businesses/xxx.jpg 처럼 상대 경로로 저장된 경우 /storage/ 접두사
                     if (!str_starts_with($img, 'http') && !str_starts_with($img, '/')) {
                         $img = '/storage/' . $img;
                     }
@@ -51,7 +64,13 @@ class BusinessController extends Controller
                 }
             }
             $first = !empty($valid) ? $valid[0] : null;
-            $b->thumbnail_url = $first ? ThumbHelper::url($first, 240) : null;
+            // file_exists 생략 — 항상 정적 경로 반환, 없으면 프론트에서 /api/thumb fallback
+            if ($first) {
+                $hash = md5(html_entity_decode($first, ENT_QUOTES | ENT_HTML5));
+                $b->thumbnail_url = '/storage/thumbs/' . substr($hash, 0, 2) . '/' . substr($hash, 2) . '_240.jpg';
+            } else {
+                $b->thumbnail_url = null;
+            }
             $b->images = $valid;
             return $b;
         });
