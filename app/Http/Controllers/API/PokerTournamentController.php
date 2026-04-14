@@ -14,18 +14,19 @@ use Illuminate\Http\Request;
 class PokerTournamentController extends Controller
 {
     // 토너먼트 목록 (예정 + 진행중)
-    private function resolveUserId(Request $request): ?int
+    // 내가 참가 중인 토너먼트 ID 목록 (auth 필요)
+    public function myRegistrations(Request $request)
     {
-        try {
-            return $request->user()?->id ?? auth('api')->id();
-        } catch (\Exception $e) {
-            return null;
-        }
+        $ids = PokerTournamentEntry::where('user_id', $request->user()->id)
+            ->whereIn('status', ['registered', 'playing', 'seated'])
+            ->pluck('tournament_id');
+
+        return response()->json(['success' => true, 'data' => $ids]);
     }
 
     public function index(Request $request)
     {
-        $userId = $this->resolveUserId($request);
+        $userId = null; // public route — 인증 불가
 
         $upcoming = PokerTournament::upcoming()
             ->where('is_template', false)

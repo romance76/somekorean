@@ -376,16 +376,34 @@ const pastTournaments = computed(() =>
 )
 function isPast(t) { return new Date(t.scheduled_at) < new Date(now.value) && !['running'].includes(t.status) }
 
+const myRegisteredIds = ref([])
+
+async function fetchMyRegistrations() {
+  if (!auth.isLoggedIn) return
+  try {
+    const { data } = await axios.get('/api/poker/my-registrations')
+    if (data.success) myRegisteredIds.value = data.data || []
+  } catch {}
+}
+
 async function fetchTournaments() {
   tournamentsLoading.value = true
   try {
-    const { data } = await axios.get('/api/poker/tournaments')
+    // 토너먼트 목록 + 내 참가 목록 병렬 호출
+    const [tourRes] = await Promise.all([
+      axios.get('/api/poker/tournaments'),
+      fetchMyRegistrations(),
+    ])
+    const data = tourRes.data
     if (data.success) {
-      // API may return { upcoming: [], running: [] } or flat array
       const raw = Array.isArray(data.data)
         ? data.data
         : [...(data.data.upcoming || []), ...(data.data.running || [])]
-      tournaments.value = raw.map(t => ({ ...t, _actionLoading: false }))
+      tournaments.value = raw.map(t => ({
+        ...t,
+        _actionLoading: false,
+        is_registered: myRegisteredIds.value.includes(t.id),
+      }))
     } else {
       tournaments.value = []
     }
