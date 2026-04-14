@@ -119,16 +119,17 @@
       <ChipStack :amount="displayBet" :bb="bb" />
     </div>
 
-    <!-- Chat bubble -->
+    <!-- Chat bubble (이름 아래에 표시) -->
     <div
       v-if="chatBubble && isChatVisible"
-      class="absolute z-20 bg-white/95 rounded-lg px-2 py-[3px] max-w-[120px] shadow-lg pointer-events-none"
-      :class="isMe ? '-top-2.5 left-[110%]' : '-top-1.5 left-[105%]'"
+      class="relative z-20 flex justify-center pointer-events-none mt-1"
     >
-      <div class="text-gray-800 text-[9px] font-semibold leading-tight">
-        {{ chatBubble.text }}
+      <div class="bg-white/95 rounded-lg px-2 py-[3px] max-w-[120px] shadow-lg">
+        <div class="text-gray-800 text-[9px] font-semibold leading-tight text-center">
+          {{ chatBubble.text }}
+        </div>
+        <div class="absolute left-1/2 -translate-x-1/2 -top-1 rotate-45 w-2 h-2 bg-white/95" />
       </div>
-      <div class="absolute left-[-4px] top-1/2 -translate-y-1/2 rotate-45 w-2 h-2 bg-white/95" />
     </div>
 
     <!-- From table label (new arrivals) -->
