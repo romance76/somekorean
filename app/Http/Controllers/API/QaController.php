@@ -91,6 +91,48 @@ class QaController extends Controller
         return response()->json(['success' => true, 'message' => '채택되었습니다']);
     }
 
+    // 답변 삭제 (본인만)
+    public function deleteAnswer($id, $answerId)
+    {
+        $answer = QaAnswer::where('qa_post_id', $id)
+            ->where('id', $answerId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $answer->delete();
+        QaPost::find($id)?->decrement('answer_count');
+
+        return response()->json(['success' => true, 'message' => '답변이 삭제되었습니다.']);
+    }
+
+    // 답변 하트 (좋아요 토글)
+    public function likeAnswer($id, $answerId)
+    {
+        $answer = QaAnswer::where('qa_post_id', $id)->findOrFail($answerId);
+        $userId = auth()->id();
+
+        $existing = \DB::table('qa_answer_likes')
+            ->where('qa_answer_id', $answerId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($existing) {
+            \DB::table('qa_answer_likes')->where('id', $existing->id)->delete();
+            $answer->decrement('like_count');
+            $liked = false;
+        } else {
+            \DB::table('qa_answer_likes')->insert([
+                'qa_answer_id' => $answerId,
+                'user_id' => $userId,
+                'created_at' => now(),
+            ]);
+            $answer->increment('like_count');
+            $liked = true;
+        }
+
+        return response()->json(['success' => true, 'liked' => $liked, 'like_count' => $answer->fresh()->like_count]);
+    }
+
     public function categories()
     {
         return response()->json(['success' => true, 'data' => QaCategory::orderBy('sort_order')->get()]);

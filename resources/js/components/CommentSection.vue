@@ -19,7 +19,7 @@
   <!-- 댓글 목록 -->
   <div class="divide-y">
     <div v-for="c in comments" :key="c.id" class="px-5 py-3">
-      <CommentItem :comment="c" :type="type" :typeId="typeId" @reply="openReply" @refresh="loadComments" />
+      <CommentItem :comment="c" :type="type" :typeId="typeId" @reply="openReply" @refresh="loadComments" @deleted="loadComments" />
 
       <!-- 대댓글 -->
       <div v-if="c.replies?.length" class="ml-11 mt-1">
@@ -31,7 +31,7 @@
             ▲ 답글 숨기기
           </button>
           <div v-for="r in c.replies" :key="r.id" class="py-2">
-            <CommentItem :comment="r" :type="type" :typeId="typeId" :isReply="true" @reply="openReply" @refresh="loadComments" />
+            <CommentItem :comment="r" :type="type" :typeId="typeId" :isReply="true" @reply="openReply" @refresh="loadComments" @deleted="loadComments" />
           </div>
         </template>
       </div>

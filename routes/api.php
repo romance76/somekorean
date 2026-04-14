@@ -197,6 +197,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/qa', [QaController::class, 'store']);
     Route::post('/qa/{id}/answer', [QaController::class, 'answer']);
     Route::post('/qa/{id}/accept/{answerId}', [QaController::class, 'acceptAnswer']);
+    Route::delete('/qa/{id}/answer/{answerId}', [QaController::class, 'deleteAnswer']);
+    Route::post('/qa/{id}/answer/{answerId}/like', [QaController::class, 'likeAnswer']);
 
     Route::post('/shorts', [ShortController::class, 'store']);
     Route::post('/shorts/{id}/like', [ShortController::class, 'toggleLike']);

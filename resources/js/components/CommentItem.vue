@@ -10,7 +10,8 @@
       <UserName :userId="comment.user?.id" :name="comment.user?.name" :className="isReply ? 'text-xs font-bold text-gray-800' : 'text-sm font-bold text-gray-800'" />
       <span class="text-[10px] text-gray-400">{{ relativeDate }}</span>
       <span class="text-[10px] text-gray-300">{{ fullDate }}</span>
-      <button @click="showReportModal=true" class="ml-auto text-gray-300 hover:text-gray-500 text-xs" title="신고">⚑</button>
+      <button v-if="auth.user?.id === comment.user_id" @click="deleteComment" class="ml-auto text-gray-300 hover:text-red-500 text-xs" title="삭제">🗑</button>
+      <button @click="showReportModal=true" class="text-gray-300 hover:text-gray-500 text-xs" :class="auth.user?.id === comment.user_id ? '' : 'ml-auto'" title="신고">⚑</button>
     </div>
     <!-- 내용 -->
     <div class="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap leading-relaxed">{{ comment.content }}</div>
@@ -69,7 +70,7 @@ import { useModal } from '../composables/useModal'
 import axios from 'axios'
 
 const props = defineProps({ comment: Object, type: String, typeId: [Number, String], isReply: Boolean })
-const emit = defineEmits(['reply', 'refresh'])
+const emit = defineEmits(['reply', 'refresh', 'deleted'])
 const auth = useAuthStore()
 const { showAlert, showConfirm } = useModal()
 
@@ -95,6 +96,14 @@ const fullDate = computed(() => {
   const d = new Date(props.comment.created_at)
   return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 })
+
+async function deleteComment() {
+  if (!confirm('댓글을 삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/comments/${props.comment.id}`)
+    emit('deleted', props.comment.id)
+  } catch { alert('삭제에 실패했습니다.') }
+}
 
 async function vote(type) {
   if (!auth.isLoggedIn) { await showAlert('로그인이 필요합니다.', '알림'); return }
