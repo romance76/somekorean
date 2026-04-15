@@ -129,7 +129,8 @@
     <div v-else-if="!items.length" class="text-center py-12 text-gray-400">검색 결과 없음</div>
     <!-- 카드형 -->
     <div v-else-if="viewMode==='card'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+      <template v-for="(item, i) in items" :key="item.id">
+      <div @click="openItem(item)"
         class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">🎉</div>
@@ -146,10 +147,13 @@
           <span>📅 {{ item.start_date?.slice(0,10) }}</span>
         </div>
       </div>
+      <MobileAdInline v-if="i === 4" page="events" />
+      </template>
     </div>
     <!-- 리스트형 -->
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+      <template v-for="(item, i) in items" :key="item.id">
+      <div @click="openItem(item)"
         class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
@@ -169,6 +173,8 @@
           </div>
         </div>
       </div>
+      <MobileAdInline v-if="i === 4" page="events" />
+      </template>
     </div>
 
     <!-- 페이지네이션 -->

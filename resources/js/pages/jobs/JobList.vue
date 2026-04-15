@@ -139,7 +139,8 @@
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
     </div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div v-for="item in items" :key="item.id" @click="goDetail(item)"
+      <template v-for="(item, i) in items" :key="item.id">
+      <div @click="goDetail(item)"
         class="px-4 py-3 border-b border-gray-50 transition cursor-pointer"
         :class="postType === 'hiring'
           ? 'hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400'
@@ -178,6 +179,8 @@
           </div>
         </div>
       </div>
+      <MobileAdInline v-if="i === 4" page="jobs" />
+      </template>
     </div>
 
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />

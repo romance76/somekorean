@@ -127,7 +127,8 @@
 
         <!-- 카드 그리드 -->
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <RouterLink v-for="item in items" :key="item.id" :to="'/recipes/' + item.id"
+          <template v-for="(item, i) in items" :key="item.id">
+          <RouterLink :to="'/recipes/' + item.id"
             class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex h-32 relative">
             <!-- 왼쪽: 사진 (썸네일 프록시) -->
             <div class="w-28 flex-shrink-0 bg-gray-100 relative">
@@ -160,6 +161,8 @@
             <!-- 찜 표시 (로그인 + 이미 찜한 경우) -->
             <span v-if="item.is_favorited" class="absolute top-1.5 right-1.5 text-red-500 text-base">❤️</span>
           </RouterLink>
+          <MobileAdInline v-if="i === 4" page="recipes" />
+          </template>
         </div>
 
         <!-- 페이지네이션 -->

@@ -215,7 +215,8 @@
     </div>
     <!-- 카드형 (Yelp 스타일) -->
     <div v-else-if="viewMode==='card'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+      <template v-for="(item, i) in items" :key="item.id">
+      <div @click="openItem(item)"
         class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex h-32">
         <!-- 왼쪽: 사진 -->
         <div class="w-28 flex-shrink-0 bg-gray-100">
@@ -241,10 +242,13 @@
           <div v-if="item.phone" class="text-[10px] text-gray-400 mt-0.5">📱 {{ item.phone }}</div>
         </div>
       </div>
+      <MobileAdInline v-if="i === 4" page="directory" />
+      </template>
     </div>
     <!-- 리스트형 -->
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div v-for="item in items" :key="item.id" @click="openItem(item)"
+      <template v-for="(item, i) in items" :key="item.id">
+      <div @click="openItem(item)"
         class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0">
@@ -263,6 +267,8 @@
           </div>
         </div>
       </div>
+      <MobileAdInline v-if="i === 4" page="directory" />
+      </template>
     </div>
 
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />

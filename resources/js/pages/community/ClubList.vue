@@ -111,7 +111,8 @@
     <div class="col-span-12 lg:col-span-7">
     <div v-if="!clubs.length && !loading" class="text-center py-12 text-gray-400">동호회가 없습니다</div>
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <RouterLink v-for="club in clubs" :key="club.id" :to="`/clubs/${club.id}`"
+      <template v-for="(club, i) in clubs" :key="club.id">
+      <RouterLink :to="`/clubs/${club.id}`"
         class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">👥</div>
@@ -131,6 +132,8 @@
           </div>
         </div>
       </RouterLink>
+      <MobileAdInline v-if="i === 4" page="clubs" />
+      </template>
     </div>
     </div>
     <!-- 오른쪽 위젯 -->

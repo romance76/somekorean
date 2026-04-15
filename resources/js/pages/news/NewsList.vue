@@ -150,7 +150,8 @@
         <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
         <div v-else-if="!items.length" class="text-center py-12 text-gray-400">뉴스가 없습니다</div>
         <div v-else class="space-y-2">
-          <div v-for="item in items" :key="item.id" @click="openItem(item)"
+          <template v-for="(item, i) in items" :key="item.id">
+          <div @click="openItem(item)"
             class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-amber-300 transition cursor-pointer">
             <div class="flex gap-3 p-3">
               <!-- 썸네일 (항상 표시: 이미지 있으면 이미지, 없으면 이모지) -->
@@ -173,6 +174,8 @@
               </div>
             </div>
           </div>
+          <MobileAdInline v-if="i === 4" page="news" />
+          </template>
         </div>
 
         <Pagination v-if="!activeItem" :page="page" :lastPage="lastPage" @page="loadNews" />

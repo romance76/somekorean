@@ -92,7 +92,8 @@
       <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <RouterLink v-for="item in items" :key="item.id" :to="'/groupbuy/' + item.id"
+      <template v-for="(item, i) in items" :key="item.id">
+      <RouterLink :to="'/groupbuy/' + item.id"
         class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
         <div class="flex items-start justify-between gap-3">
           <div class="flex-1 min-w-0">
@@ -126,6 +127,8 @@
           </div>
         </div>
       </RouterLink>
+      <MobileAdInline v-if="i === 4" page="groupbuy" />
+      </template>
     </div>
 
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />

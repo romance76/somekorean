@@ -149,7 +149,8 @@
             <div class="text-gray-500 font-semibold">질문이 없습니다</div>
           </div>
           <div v-else class="space-y-2">
-            <div v-for="item in items" :key="item.id" @click="openItem(item)"
+            <template v-for="(item, i) in items" :key="item.id">
+            <div @click="openItem(item)"
               class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 hover:shadow-md hover:border-amber-300 transition cursor-pointer">
               <div class="flex items-center gap-2 mb-1">
                 <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">{{ item.category?.name || 'Q&A' }}</span>
@@ -165,6 +166,8 @@
                 <span>{{ formatDate(item.created_at) }}</span>
               </div>
             </div>
+            <MobileAdInline v-if="i === 4" page="qa" />
+            </template>
           </div>
 
           <Pagination :page="page" :lastPage="lastPage" @page="loadQa" />
