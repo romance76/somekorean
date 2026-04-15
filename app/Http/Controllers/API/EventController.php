@@ -5,10 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventAttendee;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
+    use CompressesUploads;
+
     public function index(Request $request)
     {
         $query = Event::query()
@@ -67,7 +70,7 @@ class EventController extends Controller
         $fields['is_active'] = true;
 
         if ($request->hasFile('image')) {
-            $fields['image_url'] = '/storage/' . $request->file('image')->store('events', 'public');
+            $fields['image_url'] = $this->storeCompressedImage($request->file('image'), 'events', 1400, 82);
         }
 
         $event = Event::create($fields);
@@ -103,7 +106,7 @@ class EventController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $fields['image_url'] = '/storage/' . $request->file('image')->store('events', 'public');
+            $fields['image_url'] = $this->storeCompressedImage($request->file('image'), 'events', 1400, 82);
         }
 
         $event->update($fields);

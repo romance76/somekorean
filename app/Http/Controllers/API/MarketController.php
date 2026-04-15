@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\MarketItem;
 use App\Models\MarketReservation;
 use App\Models\User;
+use App\Traits\AdminAuthorizes;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class MarketController extends Controller
 {
+    use AdminAuthorizes, CompressesUploads;
+
     public function index(Request $request)
     {
         $query = MarketItem::with('user:id,name,nickname')
@@ -99,17 +103,8 @@ class MarketController extends Controller
         $images = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
-                $filename = 'market/' . uniqid() . '.jpg';
-                try {
-                    $image = \Intervention\Image\Facades\Image::make($img);
-                    // 최대 800px로 리사이즈 (원본 비율 유지), 품질 75%
-                    $image->resize(800, 800, function ($c) { $c->aspectRatio(); $c->upSize(); });
-                    $image->save(storage_path('app/public/' . $filename), 75);
-                    $images[] = $filename;
-                } catch (\Exception $e) {
-                    // Intervention 실패 시 원본 저장
-                    $images[] = $img->store('market', 'public');
-                }
+                // 중고장터 사진은 800px + 품질 75 로 충분 (서버 용량 절약 핵심 포인트)
+                $images[] = $this->storeCompressedImageRaw($img, 'market', 800, 75);
             }
         }
 
@@ -143,7 +138,7 @@ class MarketController extends Controller
 
     public function update(Request $request, $id)
     {
-        $item = MarketItem::where('user_id', auth()->id())->findOrFail($id);
+        $item = $this->findOwnedOrAdmin(MarketItem::class, $id);
         $item->update($request->only('title', 'content', 'price', 'category', 'condition', 'status', 'is_negotiable', 'hold_enabled', 'hold_price_per_6h', 'hold_max_hours'));
         return response()->json(['success' => true, 'data' => $item]);
     }
@@ -198,7 +193,7 @@ class MarketController extends Controller
 
     public function destroy($id)
     {
-        MarketItem::where('user_id', auth()->id())->findOrFail($id)->delete();
+        $this->findOwnedOrAdmin(MarketItem::class, $id)->delete();
         return response()->json(['success' => true, 'message' => '삭제되었습니다']);
     }
 

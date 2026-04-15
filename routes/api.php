@@ -150,6 +150,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/jobs/{id}', [JobController::class, 'update']);
     Route::delete('/jobs/{id}', [JobController::class, 'destroy']);
     Route::post('/jobs/{id}/apply', [JobController::class, 'apply']);
+    Route::get('/my-jobs', [JobController::class, 'myPosts']);
     Route::get('/my-applications', [JobController::class, 'myApplications']);
     Route::get('/jobs/{id}/applicants', [JobController::class, 'applicants']);
     Route::post('/jobs/{id}/promote', [JobController::class, 'promote']);
@@ -582,6 +583,18 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/shorts', [AdminController::class, 'shortsList']);
     Route::delete('/shorts/{id}', [AdminController::class, 'shortsDelete']);
     Route::get('/shorts/stats', [AdminController::class, 'shortsStats']);
+
+    // Admin 콘텐츠 관리 (AdminListView 에서 호출) — /api/admin/{resource}/{id}
+    Route::delete('/qa/{id}', [AdminController::class, 'deleteQa']);
+    Route::patch('/qa/{id}/toggle', [AdminController::class, 'toggleQa']);
+    Route::delete('/news/{id}', [AdminController::class, 'deleteNews']);
+    Route::patch('/news/{id}/toggle', [AdminController::class, 'toggleNews']);
+    Route::delete('/jobs/{id}', [AdminController::class, 'deleteJob']);
+    Route::delete('/realestate/{id}', [AdminController::class, 'deleteRealEstate']);
+    Route::delete('/events/{id}', [AdminController::class, 'deleteEvent']);
+    Route::delete('/market/{id}', [AdminController::class, 'deleteMarket']);
+    Route::delete('/groupbuys/{id}', [AdminController::class, 'deleteGroupBuy']);
+    Route::delete('/clubs/{id}', [AdminController::class, 'deleteClub']);
 
     // ─── Admin Recipes (식품안전나라 API) ───
     Route::get('/recipes/stats', [AdminRecipeController::class, 'stats']);

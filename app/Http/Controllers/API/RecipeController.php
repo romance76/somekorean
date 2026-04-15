@@ -6,10 +6,13 @@ use App\Models\RecipePost;
 use App\Models\RecipeFavorite;
 use App\Models\RecipeRating;
 use App\Support\ThumbHelper;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class RecipeController extends Controller
 {
+    use CompressesUploads;
+
     // GET /api/recipes — 공용 목록
     public function index(Request $request)
     {
@@ -113,8 +116,7 @@ class RecipeController extends Controller
 
         $thumbnailUrl = null;
         if ($request->hasFile('thumbnail_file')) {
-            $path = $request->file('thumbnail_file')->store('recipes', 'public');
-            $thumbnailUrl = '/storage/' . $path;
+            $thumbnailUrl = $this->storeCompressedImage($request->file('thumbnail_file'), 'recipes', 1200, 82);
         }
 
         // steps 가 JSON 문자열로 올 수도 있음
@@ -174,8 +176,7 @@ class RecipeController extends Controller
         ]);
 
         if ($request->hasFile('thumbnail_file')) {
-            $path = $request->file('thumbnail_file')->store('recipes', 'public');
-            $data['thumbnail'] = '/storage/' . $path;
+            $data['thumbnail'] = $this->storeCompressedImage($request->file('thumbnail_file'), 'recipes', 1200, 82);
         }
 
         $steps = $request->steps;

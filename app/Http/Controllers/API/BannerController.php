@@ -4,10 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\BannerAd;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
+    use CompressesUploads;
+
     // 공개: 페이지/위치별 등급제 광고 가져오기 (로테이션 + 지역 타겟팅)
     public function show(Request $request)
     {
@@ -148,7 +151,8 @@ class BannerController extends Controller
             ], 422);
         }
 
-        $imagePath = $request->file('image')->store('banners', 'public');
+        // 배너 이미지는 광고용이라 원본 비율 유지하되 가로 1200px 로 압축
+        $imagePath = $this->storeCompressedImageRaw($request->file('image'), 'banners', 1200, 85);
 
         // 다음 달 1일~말일로 설정
         $nextMonth = now()->addMonth();

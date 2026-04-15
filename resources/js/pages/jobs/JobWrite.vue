@@ -705,7 +705,14 @@ async function submit() {
 
     router.push(`/jobs/${createdId}`)
   } catch (e) {
-    error.value = e.response?.data?.message || '등록에 실패했습니다. 다시 시도해주세요.'
+    const resp = e.response?.data
+    // Laravel validation 422 형식 { errors: { field: [msg] } } 처리
+    if (resp?.errors && typeof resp.errors === 'object') {
+      const firstMsg = Object.values(resp.errors).flat()[0]
+      error.value = firstMsg || resp.message || '입력값을 확인해주세요.'
+    } else {
+      error.value = resp?.message || '등록에 실패했습니다. 다시 시도해주세요.'
+    }
   }
   submitting.value = false
 }

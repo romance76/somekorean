@@ -9,10 +9,13 @@ use App\Models\BusinessMenu;
 use App\Models\BusinessMenuOption;
 use App\Models\BusinessReview;
 use App\Support\ThumbHelper;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class BusinessController extends Controller
 {
+    use CompressesUploads;
+
     public function index(Request $request)
     {
         $query = Business::query()
@@ -86,10 +89,14 @@ class BusinessController extends Controller
 
         $images = [];
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $img) $images[] = $img->store('businesses', 'public');
+            foreach ($request->file('images') as $img) {
+                $images[] = $this->storeCompressedImageRaw($img, 'businesses', 1400, 80);
+            }
         }
 
-        $logo = $request->hasFile('logo') ? $request->file('logo')->store('businesses/logos', 'public') : null;
+        $logo = $request->hasFile('logo')
+            ? $this->storeCompressedImageRaw($request->file('logo'), 'businesses/logos', 500, 82)
+            : null;
 
         $biz = Business::create(array_merge(
             $request->only('name', 'description', 'category', 'subcategory', 'phone', 'email', 'website', 'address', 'city', 'state', 'zipcode', 'lat', 'lng', 'hours'),
@@ -150,7 +157,7 @@ class BusinessController extends Controller
 
         $documentUrl = null;
         if ($request->hasFile('document')) {
-            $documentUrl = '/storage/' . $request->file('document')->store('claims', 'public');
+            $documentUrl = $this->storeDocument($request->file('document'), 'claims');
         }
 
         $claim = BusinessClaim::create([
@@ -190,8 +197,7 @@ class BusinessController extends Controller
 
         $images = $biz->images ?: [];
         foreach ($request->file('photos') as $photo) {
-            $path = $photo->store('businesses', 'public');
-            $images[] = '/storage/' . $path;
+            $images[] = $this->storeCompressedImage($photo, 'businesses', 1400, 80);
         }
         $biz->update(['images' => $images]);
 

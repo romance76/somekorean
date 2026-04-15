@@ -111,6 +111,9 @@ const props = defineProps({
   icon: { type: String, default: '📋' },
   title: { type: String, required: true },
   apiUrl: { type: String, required: true },
+  // 삭제 요청용 별도 URL (미지정 시 apiUrl 사용).
+  // 예: apiUrl="/api/qa", deleteUrl="/api/admin/qa" — 목록은 공개 엔드포인트, 삭제는 관리자 전용
+  deleteUrl: { type: String, default: null },
   titleCol: { type: String, default: '제목' },
   extraCols: { type: Array, default: () => [] },
 })
@@ -145,7 +148,14 @@ async function load(p=1) {
 
 async function deleteItem(item) {
   if (!confirm('정말 삭제하시겠습니까?')) return
-  try { await axios.delete(`${props.apiUrl}/${item.id}`); items.value = items.value.filter(x => x.id !== item.id); total.value-- } catch {}
+  const url = props.deleteUrl || props.apiUrl
+  try {
+    await axios.delete(`${url}/${item.id}`)
+    items.value = items.value.filter(x => x.id !== item.id)
+    total.value--
+  } catch (e) {
+    alert(e.response?.data?.message || '삭제 실패')
+  }
 }
 
 onMounted(() => load())

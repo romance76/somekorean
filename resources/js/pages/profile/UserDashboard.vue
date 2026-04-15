@@ -303,6 +303,73 @@
       </div>
     </div>
 
+    <!-- ═══ 내 구인구직 탭 ═══ -->
+    <div v-else-if="tab==='jobs'" class="space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-gray-800">💼 내 구인/구직 공고</h2>
+          <RouterLink to="/jobs/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-amber-500">+ 등록</RouterLink>
+        </div>
+        <div v-if="!myJobs.length" class="text-sm text-gray-400 py-6 text-center">등록한 공고가 없습니다</div>
+        <div v-else class="space-y-2">
+          <div v-for="j in myJobs" :key="j.id" class="border rounded-lg p-3 hover:bg-amber-50/30 transition">
+            <div class="flex items-start gap-3">
+              <div v-if="j.logo" class="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                <img :src="j.logo" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
+              </div>
+              <div v-else class="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-2xl flex-shrink-0">
+                {{ j.post_type === 'hiring' ? '💼' : '🔍' }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                    :class="j.post_type === 'hiring' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'">
+                    {{ j.post_type === 'hiring' ? '구인' : '구직' }}
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                    :class="j.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">
+                    {{ j.is_active ? '게시중' : '종료' }}
+                  </span>
+                  <span v-if="j.promotion_tier && j.promotion_tier !== 'none' && j.promotion_expires_at && new Date(j.promotion_expires_at) > new Date()"
+                    class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-700">
+                    ⭐ {{ {national:'전국',state_plus:'주',sponsored:'스폰'}[j.promotion_tier] }}
+                  </span>
+                </div>
+                <RouterLink :to="'/jobs/'+j.id" class="block">
+                  <div class="text-sm font-bold text-gray-800 truncate mt-1 hover:text-amber-600">{{ j.title }}</div>
+                </RouterLink>
+                <div class="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
+                  <span v-if="j.company">{{ j.company }}</span>
+                  <span v-if="j.city">· {{ j.city }}{{ j.state ? ', '+j.state : '' }}</span>
+                  <span>· 👁 {{ j.view_count || 0 }}</span>
+                  <span>· {{ fmtDate(j.created_at) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+              <RouterLink :to="'/jobs/write?edit='+j.id"
+                class="flex-1 text-center text-xs font-bold py-1.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 transition">
+                ✏️ 수정
+              </RouterLink>
+              <button @click="toggleJobActive(j)"
+                class="flex-1 text-xs font-bold py-1.5 rounded transition"
+                :class="j.is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-50 text-green-700 hover:bg-green-100'">
+                {{ j.is_active ? '⏸ 비활성화' : '▶ 재게시' }}
+              </button>
+              <RouterLink :to="'/jobs/'+j.id"
+                class="flex-1 text-center text-xs font-bold py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                👁 미리보기
+              </RouterLink>
+              <button @click="deleteJob(j)"
+                class="text-xs font-bold py-1.5 px-3 rounded bg-red-50 text-red-600 hover:bg-red-100 transition">
+                🗑
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ 광고 신청 탭 ═══ -->
     <div v-else-if="tab==='ads'" class="space-y-4">
       <!-- 내 광고 목록 -->
@@ -735,6 +802,7 @@ const tabs = [
   { key: 'messages', icon: '✉️', label: '쪽지' },
   { key: 'posts', icon: '📄', label: '내 글' },
   { key: 'market', icon: '🛒', label: '내 장터' },
+  { key: 'jobs', icon: '💼', label: '내 구인' },
   { key: 'ads', icon: '📢', label: '광고 신청' },
   { key: 'calls', icon: '📞', label: '통화내역' },
   { key: 'bookmarks', icon: '🔖', label: '북마크' },
@@ -1046,6 +1114,36 @@ async function loadMyMarket() {
   } catch {}
 }
 
+// ─── 내 구인구직 ───
+const myJobs = ref([])
+async function loadMyJobs() {
+  try {
+    const { data } = await axios.get('/api/my-jobs')
+    myJobs.value = data.data || []
+  } catch {}
+}
+async function toggleJobActive(j) {
+  try {
+    const fd = new FormData()
+    fd.append('_method', 'PUT')
+    fd.append('is_active', j.is_active ? '0' : '1')
+    await axios.post(`/api/jobs/${j.id}`, fd)
+    j.is_active = !j.is_active
+  } catch (e) {
+    showAlert(e.response?.data?.message || '상태 변경 실패', '오류')
+  }
+}
+async function deleteJob(j) {
+  const ok = await showConfirm(`"${j.title}" 공고를 삭제하시겠습니까?`, '삭제')
+  if (!ok) return
+  try {
+    await axios.delete(`/api/jobs/${j.id}`)
+    myJobs.value = myJobs.value.filter(x => x.id !== j.id)
+  } catch (e) {
+    showAlert(e.response?.data?.message || '삭제 실패', '오류')
+  }
+}
+
 // ─── 북마크 ───
 const bookmarks = ref([])
 async function loadBookmarks() { try { const { data } = await axios.get('/api/bookmarks'); bookmarks.value = data.data?.data || data.data || [] } catch {} }
@@ -1187,7 +1285,7 @@ async function saveResume() {
 
 // ─── 탭 로딩 ───
 function loadTab(key) {
-  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, ads: loadMyAds, calls: loadCallHistory, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz, resume: loadResume }
+  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, jobs: loadMyJobs, ads: loadMyAds, calls: loadCallHistory, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz, resume: loadResume }
   if (loaders[key]) loaders[key]()
 }
 

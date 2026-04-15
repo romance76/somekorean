@@ -2,11 +2,14 @@
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\{ChatRoom, ChatRoomUser, ChatMessage};
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ChatController extends Controller
 {
+    use CompressesUploads;
+
     public function rooms() {
         $userId = auth()->id();
 
@@ -108,13 +111,13 @@ class ChatController extends Controller
 
         // 2) 단일 image 필드 (기존 호환)
         if ($hasImage) {
-            $path = $request->file('image')->store('chat-images', 'public');
+            $fileUrl = $this->storeCompressedImage($request->file('image'), 'chat-images', 1200, 78);
             $msg = ChatMessage::create([
                 'chat_room_id' => $id,
                 'user_id' => auth()->id(),
                 'content' => $request->content ?: '',
                 'type' => 'image',
-                'file_url' => '/storage/' . $path,
+                'file_url' => $fileUrl,
             ]);
             $created[] = $msg;
         }
@@ -142,7 +145,8 @@ class ChatController extends Controller
                 }
 
                 if ($isImage) {
-                    $path = $file->store('chat-images', 'public');
+                    $fileUrlForMsg = $this->storeCompressedImage($file, 'chat-images', 1200, 78);
+                    $path = preg_replace('#^/storage/#', '', $fileUrlForMsg);
                     $type = 'image';
                 } else {
                     $path = $file->store('chat-files', 'public');

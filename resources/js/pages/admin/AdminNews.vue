@@ -6,7 +6,7 @@
       {{ fetching ? '수집 중...' : '🔄 뉴스 수집' }}
     </button>
   </div>
-  <AdminListView icon="📰" title="" api-url="/api/news"
+  <AdminListView icon="📰" title="" api-url="/api/news" delete-url="/api/admin/news"
     :extra-cols='[{"key":"source","label":"출처"},{"key":"category.name","label":"카테고리"}]'
     @open-user="u => { selectedUserId = u?.id; showUser = true }" />
   <AdminUserModal :show="showUser" :user-id="selectedUserId" @close="showUser=false" />

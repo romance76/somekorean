@@ -1,6 +1,6 @@
 <template>
 <div>
-  <AdminListView icon="🛒" title="장터 관리" api-url="/api/market"
+  <AdminListView icon="🛒" title="장터 관리" api-url="/api/market" delete-url="/api/admin/market"
     :extra-cols='[{"key": "category", "label": "카테고리"}, {"key": "city", "label": "도시"}]'
     @open-user="u => { selectedUserId = u?.id; showUser = true }" />
   <AdminUserModal :show="showUser" :user-id="selectedUserId" @close="showUser=false" />

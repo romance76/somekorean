@@ -138,7 +138,7 @@ async function complete(id) {
 
 async function del(id) {
   if (!confirm('삭제하시겠습니까?')) return
-  try { await axios.delete(`/api/groupbuys/${id}`); items.value = items.value.filter(x => x.id !== id) } catch {}
+  try { await axios.delete(`/api/admin/groupbuys/${id}`); items.value = items.value.filter(x => x.id !== id) } catch (e) { alert(e.response?.data?.message || '삭제 실패') }
 }
 
 onMounted(() => load())

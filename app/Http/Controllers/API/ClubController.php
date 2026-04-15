@@ -7,10 +7,13 @@ use App\Models\ClubBoard;
 use App\Models\ClubPost;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomUser;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class ClubController extends Controller
 {
+    use CompressesUploads;
+
     private function getMemberGrade($clubId, $userId)
     {
         return ClubMember::where('club_id', $clubId)->where('user_id', $userId)->where('status', 'approved')->value('grade');
@@ -101,10 +104,10 @@ class ClubController extends Controller
         $data['is_public'] = filter_var($request->input('is_public', true), FILTER_VALIDATE_BOOLEAN);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('clubs', 'public');
+            $data['image'] = $this->storeCompressedImageRaw($request->file('image'), 'clubs', 800, 80);
         }
         if ($request->hasFile('cover_image')) {
-            $data['cover_image'] = $request->file('cover_image')->store('clubs', 'public');
+            $data['cover_image'] = $this->storeCompressedImageRaw($request->file('cover_image'), 'clubs', 1600, 80);
         }
 
         $club = Club::create($data);
@@ -156,10 +159,10 @@ class ClubController extends Controller
             $data['is_public'] = filter_var($request->input('is_public'), FILTER_VALIDATE_BOOLEAN);
         }
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('clubs', 'public');
+            $data['image'] = $this->storeCompressedImageRaw($request->file('image'), 'clubs', 800, 80);
         }
         if ($request->hasFile('cover_image')) {
-            $data['cover_image'] = $request->file('cover_image')->store('clubs', 'public');
+            $data['cover_image'] = $this->storeCompressedImageRaw($request->file('cover_image'), 'clubs', 1600, 80);
         }
 
         $club->update($data);
@@ -455,7 +458,7 @@ class ClubController extends Controller
         $imagesPaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
-                $imagesPaths[] = '/storage/' . $img->store('club_posts', 'public');
+                $imagesPaths[] = $this->storeCompressedImage($img, 'club_posts', 1200, 80);
             }
         }
 
@@ -497,7 +500,7 @@ class ClubController extends Controller
         if ($request->hasFile('images')) {
             $imagesPaths = [];
             foreach ($request->file('images') as $img) {
-                $imagesPaths[] = $img->store('club_posts', 'public');
+                $imagesPaths[] = $this->storeCompressedImageRaw($img, 'club_posts', 1200, 80);
             }
             $data['images'] = $imagesPaths;
         }

@@ -5,10 +5,14 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\PostLike;
+use App\Traits\AdminAuthorizes;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
+    use AdminAuthorizes, CompressesUploads;
+
     public function index(Request $request)
     {
         $query = Post::with('user:id,name,nickname,avatar', 'board:id,name,slug')
@@ -66,7 +70,7 @@ class PostController extends Controller
         $images = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
-                $images[] = $img->store('posts', 'public');
+                $images[] = $this->storeCompressedImageRaw($img, 'posts', 1200, 80);
             }
         }
 
@@ -92,14 +96,14 @@ class PostController extends Controller
 
     public function update(Request $request, $id)
     {
-        $post = Post::where('user_id', auth()->id())->findOrFail($id);
+        $post = $this->findOwnedOrAdmin(Post::class, $id);
         $post->update($request->only('title', 'content', 'category'));
         return response()->json(['success' => true, 'data' => $post]);
     }
 
     public function destroy($id)
     {
-        $post = Post::where('user_id', auth()->id())->findOrFail($id);
+        $post = $this->findOwnedOrAdmin(Post::class, $id);
         $post->update(['is_hidden' => true]);
         return response()->json(['success' => true, 'message' => '삭제되었습니다']);
     }

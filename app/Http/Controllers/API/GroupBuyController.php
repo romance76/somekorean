@@ -4,12 +4,16 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\GroupBuy;
 use App\Models\GroupBuyParticipant;
+use App\Traits\AdminAuthorizes;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class GroupBuyController extends Controller
 {
+    use AdminAuthorizes, CompressesUploads;
+
     public function index(Request $request)
     {
         $query = GroupBuy::with('user:id,name,nickname,avatar')
@@ -94,7 +98,7 @@ class GroupBuyController extends Controller
         $images = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $images[] = $file->store('groupbuys', 'public');
+                $images[] = $this->storeCompressedImageRaw($file, 'groupbuys', 1200, 80);
             }
         }
 
@@ -133,7 +137,7 @@ class GroupBuyController extends Controller
 
     public function update(Request $request, $id)
     {
-        $gb = GroupBuy::where('user_id', auth()->id())->findOrFail($id);
+        $gb = $this->findOwnedOrAdmin(GroupBuy::class, $id);
 
         if ($gb->is_approved) {
             return response()->json(['success' => false, 'message' => '승인된 공동구매는 수정할 수 없습니다.'], 403);
@@ -168,7 +172,7 @@ class GroupBuyController extends Controller
             }
             $images = [];
             foreach ($request->file('images') as $file) {
-                $images[] = $file->store('groupbuys', 'public');
+                $images[] = $this->storeCompressedImageRaw($file, 'groupbuys', 1200, 80);
             }
             $data['images'] = $images;
         }
@@ -187,7 +191,7 @@ class GroupBuyController extends Controller
 
     public function destroy($id)
     {
-        $gb = GroupBuy::where('user_id', auth()->id())->findOrFail($id);
+        $gb = $this->findOwnedOrAdmin(GroupBuy::class, $id);
 
         if ($gb->status === 'confirmed') {
             return response()->json(['success' => false, 'message' => '확정된 공동구매는 삭제할 수 없습니다.'], 403);

@@ -3,7 +3,7 @@
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-lg font-bold">👥 동호회 관리</h2>
   </div>
-  <AdminListView icon="👥" title="동호회" api-url="/api/clubs"
+  <AdminListView icon="👥" title="동호회" api-url="/api/clubs" delete-url="/api/admin/clubs"
     :extra-cols='[{"key":"category","label":"카테고리"},{"key":"type","label":"유형"},{"key":"member_count","label":"회원수"}]'
     @open-user="u => { selectedUserId = u?.id; showUser = true }">
     <template #filters>

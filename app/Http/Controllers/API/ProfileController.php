@@ -2,10 +2,13 @@
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
+    use CompressesUploads;
+
     public function show($id)
     {
         $user = User::select('id','name','nickname','avatar','bio','city','state','points','allow_friend_request','last_active_at','created_at')->findOrFail($id);
@@ -39,8 +42,8 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->update(['avatar' => '/storage/' . $path]);
+            // 아바타는 400px 정도면 충분 (큰 이미지 업로드 시 서버 용량 절약)
+            $user->update(['avatar' => $this->storeCompressedImage($request->file('avatar'), 'avatars', 400, 85)]);
         }
 
         // 프로필 완성 보너스 +30P (최초 1회)
@@ -58,8 +61,7 @@ class ProfileController extends Controller
     {
         $request->validate(['avatar' => 'required|image|max:10240']); // 10MB
         $user = auth()->user();
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->update(['avatar' => '/storage/' . $path]);
+        $user->update(['avatar' => $this->storeCompressedImage($request->file('avatar'), 'avatars', 400, 85)]);
         return response()->json(['success' => true, 'data' => $user->fresh(), 'message' => '프로필 사진이 변경되었습니다']);
     }
 

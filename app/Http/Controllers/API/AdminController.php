@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
-use App\Models\{User, Post, JobPost, MarketItem, Business, BusinessClaim, Event, News, Report, Board, Banner, IpBan, Payment, ChatRoom, ChatRoomUser, ChatMessage, ElderCheckinLog, ElderSosLog};
+use App\Models\{User, Post, JobPost, MarketItem, Business, BusinessClaim, Event, News, Report, Board, Banner, IpBan, Payment, ChatRoom, ChatRoomUser, ChatMessage, ElderCheckinLog, ElderSosLog, QaPost, RealEstateListing, GroupBuy, Club};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -58,7 +58,14 @@ class AdminController extends Controller
     public function bannerList() {
         return response()->json(['success'=>true,'data'=>\App\Models\BannerAd::with('user:id,name,email')->orderByDesc('created_at')->get()]);
     }
-    public function createBanner(Request $request) { return response()->json(['success'=>true,'data'=>\App\Models\BannerAd::create($request->all())]); }
+    public function createBanner(Request $request) {
+        $data = $request->only([
+            'user_id','title','image_url','target_url','page','position',
+            'status','start_date','end_date','priority','bid_amount',
+            'auction_month','targeting_type','target_states','target_counties','target_cities'
+        ]);
+        return response()->json(['success'=>true,'data'=>\App\Models\BannerAd::create($data)]);
+    }
     public function approveBanner($id) {
         $b = \App\Models\BannerAd::findOrFail($id);
         $b->update(['status' => 'active']);
@@ -604,6 +611,68 @@ class AdminController extends Controller
         // 모든 채팅방에서 즉시 제거
         ChatRoomUser::where('user_id', $userId)->delete();
         return response()->json(['success'=>true,'message'=>'영구제명되었습니다']);
+    }
+
+    // ─── 콘텐츠 일괄 관리 (AdminListView 보강) ───
+
+    // QA 삭제
+    public function deleteQa($id) {
+        $qa = QaPost::findOrFail($id);
+        $qa->delete();
+        return response()->json(['success'=>true,'message'=>'Q&A가 삭제되었습니다']);
+    }
+    public function toggleQa($id) {
+        $qa = QaPost::findOrFail($id);
+        $qa->update(['is_hidden' => !($qa->is_hidden ?? false)]);
+        return response()->json(['success'=>true,'data'=>$qa]);
+    }
+
+    // News 삭제/숨김
+    public function deleteNews($id) {
+        $n = News::findOrFail($id);
+        $n->delete();
+        return response()->json(['success'=>true,'message'=>'뉴스가 삭제되었습니다']);
+    }
+    public function toggleNews($id) {
+        $n = News::findOrFail($id);
+        $n->update(['is_active' => !$n->is_active]);
+        return response()->json(['success'=>true,'data'=>$n]);
+    }
+
+    // Job 관리자용 삭제 (영구 vs 비활성)
+    public function deleteJob($id) {
+        JobPost::findOrFail($id)->update(['is_active'=>false]);
+        return response()->json(['success'=>true,'message'=>'구인공고가 비활성화되었습니다']);
+    }
+
+    // RealEstate 관리자용 삭제
+    public function deleteRealEstate($id) {
+        RealEstateListing::findOrFail($id)->update(['is_active'=>false]);
+        return response()->json(['success'=>true,'message'=>'부동산 매물이 비활성화되었습니다']);
+    }
+
+    // Event 관리자용 삭제
+    public function deleteEvent($id) {
+        Event::findOrFail($id)->delete();
+        return response()->json(['success'=>true,'message'=>'이벤트가 삭제되었습니다']);
+    }
+
+    // Market 관리자용 삭제
+    public function deleteMarket($id) {
+        MarketItem::findOrFail($id)->delete();
+        return response()->json(['success'=>true,'message'=>'중고장터 물품이 삭제되었습니다']);
+    }
+
+    // GroupBuy 관리자용 삭제
+    public function deleteGroupBuy($id) {
+        GroupBuy::findOrFail($id)->delete();
+        return response()->json(['success'=>true,'message'=>'공동구매가 삭제되었습니다']);
+    }
+
+    // Club 관리자용 삭제
+    public function deleteClub($id) {
+        Club::findOrFail($id)->delete();
+        return response()->json(['success'=>true,'message'=>'동호회가 삭제되었습니다']);
     }
 
     // ─── 영구제명 리스트 ───

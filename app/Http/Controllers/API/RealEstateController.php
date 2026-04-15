@@ -4,10 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\RealEstateListing;
+use App\Traits\AdminAuthorizes;
+use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
 
 class RealEstateController extends Controller
 {
+    use AdminAuthorizes, CompressesUploads;
+
     public function index(Request $request)
     {
         $query = RealEstateListing::with('user:id,name,nickname')
@@ -41,7 +45,7 @@ class RealEstateController extends Controller
 
         $images = [];
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $img) $images[] = $img->store('realestate', 'public');
+            foreach ($request->file('images') as $img) $images[] = $this->storeCompressedImageRaw($img, 'realestate', 1400, 80);
         }
 
         $listing = RealEstateListing::create(array_merge(
@@ -54,14 +58,14 @@ class RealEstateController extends Controller
 
     public function update(Request $request, $id)
     {
-        $listing = RealEstateListing::where('user_id', auth()->id())->findOrFail($id);
+        $listing = $this->findOwnedOrAdmin(RealEstateListing::class, $id);
         $listing->update($request->only('title', 'content', 'price', 'deposit', 'is_active'));
         return response()->json(['success' => true, 'data' => $listing]);
     }
 
     public function destroy($id)
     {
-        RealEstateListing::where('user_id', auth()->id())->findOrFail($id)->update(['is_active' => false]);
+        $this->findOwnedOrAdmin(RealEstateListing::class, $id)->update(['is_active' => false]);
         return response()->json(['success' => true, 'message' => '삭제되었습니다']);
     }
 }
