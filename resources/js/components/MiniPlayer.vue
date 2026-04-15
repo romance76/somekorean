@@ -26,8 +26,10 @@
       </div>
     </div>
 
-    <!-- YouTube 영상 영역 (실제 Player는 별도) -->
-    <div id="yt-slot" class="aspect-video bg-black flex-shrink-0"></div>
+    <!-- YouTube 영상 -->
+    <div class="aspect-video bg-black flex-shrink-0 relative">
+      <div id="yt-visible" class="absolute inset-0"></div>
+    </div>
 
     <!-- 컨트롤 -->
     <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0">
@@ -62,10 +64,8 @@
     </div>
   </div>
 
-  <!-- YouTube Player — 항상 DOM에 존재 (v-if 밖) -->
-  <div v-if="music.hasTrack && music.currentTrack?.youtubeId && !isShutdown"
-    :style="ytContainerStyle" class="fixed z-[9997] overflow-hidden">
-    <div id="yt-mini-player" class="w-full h-full"></div>
+  <!-- YouTube Player 숨김 컨테이너 (패널 닫혔을 때 여기서 오디오만 재생) -->
+  <div id="yt-holder" class="fixed" style="width:1px;height:1px;left:-9999px;top:-9999px;overflow:hidden;">
   </div>
 </Teleport>
 </template>
@@ -83,20 +83,15 @@ const isExpanded = ref(false)
 const isShutdown = ref(false) // 완전 종료 상태
 const window_w = ref(window.innerWidth)
 
-// YouTube container: 펼침이면 영상 슬롯 위에, 아니면 화면 밖 (오디오만)
-const ytContainerStyle = computed(() => {
-  if (isExpanded.value) {
-    // yt-slot 위에 오버레이
-    const el = document.getElementById('yt-slot')
-    if (el) {
-      const r = el.getBoundingClientRect()
-      return { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }
-    }
-    return { width: '280px', height: '158px', right: posRight.value + 'px', top: (posTop.value + 40) + 'px' }
+// YouTube iframe을 보이는 곳/숨겨진 곳으로 이동
+function moveYTPlayer(toVisible) {
+  const ytEl = document.getElementById('yt-mini-player')
+  if (!ytEl) return
+  const target = toVisible ? document.getElementById('yt-visible') : document.getElementById('yt-holder')
+  if (target && ytEl.parentElement !== target) {
+    target.appendChild(ytEl)
   }
-  // 숨김 — 화면 밖 (오디오 계속 재생)
-  return { width: '1px', height: '1px', left: '-9999px', top: '-9999px' }
-})
+}
 let ytPlayer = null
 let progressTimer = null
 let currentVideoId = null
@@ -215,14 +210,21 @@ function loadYTApi() {
 async function createPlayer(videoId, startAt = 0) {
   await loadYTApi()
   await nextTick()
-  const el = document.getElementById('yt-mini-player')
-  if (!el) { setTimeout(() => createPlayer(videoId, startAt), 500); return }
+  let el = document.getElementById('yt-mini-player')
+  if (!el) {
+    // yt-holder에 div 생성
+    const holder = document.getElementById('yt-holder')
+    if (!holder) { setTimeout(() => createPlayer(videoId, startAt), 500); return }
+    el = document.createElement('div')
+    el.id = 'yt-mini-player'
+    holder.appendChild(el)
+  }
   if (ytPlayer) { try { ytPlayer.destroy() } catch {}; ytPlayer = null }
   ytPlayer = new window.YT.Player('yt-mini-player', {
     width: '100%', height: '100%', videoId,
     playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
     events: {
-      onReady: (e) => { e.target.setVolume(volume.value); if (startAt > 0) e.target.seekTo(startAt, true); e.target.playVideo(); currentVideoId = videoId; music.isPlaying = true; startProgressTimer() },
+      onReady: (e) => { e.target.setVolume(volume.value); if (startAt > 0) e.target.seekTo(startAt, true); e.target.playVideo(); currentVideoId = videoId; music.isPlaying = true; startProgressTimer(); moveYTPlayer(isExpanded.value) },
       onStateChange: (e) => {
         if (e.data === window.YT.PlayerState.ENDED) { music.next(); nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) }) }
         if (e.data === window.YT.PlayerState.PLAYING) music.isPlaying = true
@@ -251,6 +253,11 @@ watch(() => music.currentTrack?.youtubeId, (vid) => {
   if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = calcMusicPageTop() }
   else { posRight.value = 16; posTop.value = Math.max(window.innerHeight - 550, 80) }
   nextTick(() => loadVideo(vid, 0))
+})
+
+// 펼침/숨김 시 YouTube iframe 이동
+watch(isExpanded, (expanded) => {
+  nextTick(() => moveYTPlayer(expanded))
 })
 
 // 음악 페이지 진입 → 펼침 (종료 상태 아닐 때)
