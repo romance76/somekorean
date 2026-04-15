@@ -33,10 +33,8 @@
       </div>
     </div>
 
-    <!-- YouTube 영상 -->
-    <div class="aspect-video bg-black flex-shrink-0">
-      <div id="yt-mini-player" class="w-full h-full"></div>
-    </div>
+    <!-- YouTube 영상 영역 (실제 Player는 별도 div에서 오버레이) -->
+    <div class="aspect-video bg-black flex-shrink-0"></div>
 
     <!-- 컨트롤 -->
     <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0">
@@ -58,7 +56,7 @@
         <span>{{ showPL ? '▲' : '▼' }}</span>
       </button>
     </div>
-    <div v-if="showPL && music.playlist.length" class="overflow-y-auto max-h-[200px] px-1 pb-1 music-scroll">
+    <div v-if="showPL && music.playlist.length" class="overflow-y-auto max-h-[400px] px-1 pb-1 music-scroll">
       <div v-for="(track, idx) in music.playlist" :key="track.id || idx" @click="playFromList(track)"
         class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition text-[11px]"
         :class="music.currentIndex === idx ? 'bg-indigo-900/50 text-indigo-300 font-semibold' : 'text-gray-400 hover:bg-white/5'">
@@ -70,6 +68,13 @@
     <div v-else-if="showPL && !music.playlist.length" class="px-3 py-3 text-center text-gray-600 text-[11px]">
       곡을 클릭하면 여기에 재생 목록이 표시됩니다
     </div>
+  </div>
+
+  <!-- YouTube Player — 항상 존재, 최소화해도 재생 유지 -->
+  <div v-if="music.currentTrack?.youtubeId"
+    class="fixed overflow-hidden"
+    :style="isExpanded ? { width: '320px', height: '180px', right: posRight + 'px', top: (posTop + 40) + 'px', zIndex: 9997 } : { width: '1px', height: '1px', top: '-9999px', left: '-9999px' }">
+    <div id="yt-mini-player" class="w-full h-full"></div>
   </div>
 </Teleport>
 </template>

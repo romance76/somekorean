@@ -211,8 +211,15 @@ function prevTrack() {
   if (idx > 0) playing.value = list[idx - 1]
 }
 
-function playAll() {
-  const list = [...displayTracks.value]
+async function playAll() {
+  // 전체 곡을 API에서 가져옴 (최대 200곡)
+  let list = [...displayTracks.value]
+  if (activeCat.value && totalCount.value > list.length) {
+    try {
+      const { data } = await axios.get(`/api/music/tracks/${activeCat.value.id}`, { params: { per_page: 200 } })
+      list = data.data?.data || data.data || list
+    } catch {}
+  }
   if (!list.length) return
   playQueue.value = list
   isShuffled.value = false
@@ -220,8 +227,14 @@ function playAll() {
   syncToMiniPlayer(list, list[0])
 }
 
-function shufflePlay() {
-  const list = [...displayTracks.value]
+async function shufflePlay() {
+  let list = [...displayTracks.value]
+  if (activeCat.value && totalCount.value > list.length) {
+    try {
+      const { data } = await axios.get(`/api/music/tracks/${activeCat.value.id}`, { params: { per_page: 200 } })
+      list = data.data?.data || data.data || list
+    } catch {}
+  }
   if (!list.length) return
   for (let i = list.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
