@@ -353,6 +353,7 @@
             :class="promotion.tier === 'state_plus' ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'">
             <div class="font-bold text-sm text-gray-800">주(State) 상위노출</div>
             <div class="text-xs text-purple-600 font-semibold">하루 50P</div>
+            <div class="text-[10px] text-gray-500 mt-1">내 주 + 인접 주 자동 포함</div>
           </button>
           <button type="button" @click="selectPromotion('national')"
             class="p-3 rounded-lg border-2 text-left transition"
@@ -363,6 +364,27 @@
         </div>
 
         <div v-if="promotion.tier !== 'none'" class="space-y-3 pt-3 border-t border-gray-100">
+          <!-- state_plus: 자동 포함 주 미리보기 -->
+          <div v-if="promotion.tier === 'state_plus'" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div class="text-xs font-bold text-blue-800 mb-1.5">📍 자동 노출 주 (State)</div>
+            <div v-if="!form.state" class="text-xs text-red-600">
+              ⚠️ 위의 <b>근무 위치 → State</b> 를 먼저 입력해주세요. 입력한 주 + 인접 주에 자동 노출됩니다.
+            </div>
+            <div v-else-if="autoStatePlusStates.length">
+              <div class="text-xs text-blue-700 mb-2">
+                공고 주 (<b>{{ form.state.toUpperCase() }}</b>) + 인접 주에 자동 상위노출됩니다:
+              </div>
+              <div class="flex flex-wrap gap-1">
+                <span v-for="s in autoStatePlusStates" :key="s"
+                  class="text-[11px] font-bold px-2 py-0.5 rounded"
+                  :class="s === form.state.toUpperCase() ? 'bg-blue-500 text-white' : 'bg-white border border-blue-300 text-blue-700'">
+                  {{ s }}{{ s === form.state.toUpperCase() ? ' (내 주)' : '' }}
+                </span>
+              </div>
+              <div class="text-[10px] text-gray-500 mt-1.5">총 {{ autoStatePlusStates.length }}개 주 · 해당 주 사용자가 구인 목록을 볼 때 상단에 노출됩니다</div>
+            </div>
+          </div>
+
           <div>
             <label class="text-sm font-semibold text-gray-700 block mb-1">노출 기간 (일)</label>
             <input v-model.number="promotion.days" type="number" min="1" max="30"
@@ -412,6 +434,7 @@
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
+import { neighborsOf } from '../../utils/stateNeighbors'
 
 const router = useRouter()
 const route = useRoute()
@@ -536,6 +559,14 @@ const totalPromotionCost = computed(() => {
   const unit = tierPricing[promotion.tier] || 0
   const days = Math.max(1, Math.min(30, Number(promotion.days) || 0))
   return unit * days
+})
+
+// state_plus 선택 시 자동 계산되는 노출 주 목록 (서버 StateNeighbors 와 동일 규칙)
+const autoStatePlusStates = computed(() => {
+  if (promotion.tier !== 'state_plus') return []
+  const st = (form.state || '').trim().toUpperCase()
+  if (!st) return []
+  return neighborsOf(st)
 })
 
 function toggleJobTag(v) {
@@ -693,13 +724,16 @@ async function submit() {
 
     if (!isEdit.value && promotion.tier !== 'none' && createdId) {
       try {
+        // state_plus 의 주 목록은 서버가 공고의 state 로부터 자동 계산함 (광고주가 직접 선택 X)
         await axios.post(`/api/jobs/${createdId}/promote`, {
           tier: promotion.tier,
           days: promotion.days,
-          states: promotion.states,
         })
       } catch (promoErr) {
         console.warn('Promotion failed', promoErr)
+        if (promoErr.response?.data?.message) {
+          error.value = promoErr.response.data.message
+        }
       }
     }
 

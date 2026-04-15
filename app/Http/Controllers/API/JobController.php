@@ -186,7 +186,6 @@ class JobController extends Controller
         $request->validate([
             'tier' => 'required|in:national,state_plus,sponsored',
             'days' => 'required|integer|min:1|max:90',
-            'states' => 'nullable|array',
         ]);
 
         $tier = $request->tier;
@@ -194,12 +193,24 @@ class JobController extends Controller
         $dailyCost = JobPromotion::pricePerDay($tier);
         $totalCost = $dailyCost * $days;
 
+        // state_plus 선택 시 공고의 주 + 인접 주를 자동 계산 (광고주가 직접 선택 X)
+        $autoStates = null;
+        if ($tier === 'state_plus') {
+            if (!$job->state) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '공고에 주(State) 정보가 없어 state_plus 상위노출을 적용할 수 없습니다. 공고의 근무 위치를 먼저 입력해주세요.'
+                ], 422);
+            }
+            $autoStates = \App\Support\StateNeighbors::neighbors($job->state);
+        }
+
         // 슬롯 체크
         if ($tier !== 'sponsored') {
             $slotQuery = JobPost::where('promotion_tier', $tier)->where('promotion_expires_at', '>', now());
-            if ($tier === 'state_plus' && $request->states) {
-                $slotQuery->where(function ($q) use ($request) {
-                    foreach ($request->states as $st) $q->orWhereJsonContains('promotion_states', $st);
+            if ($tier === 'state_plus' && $autoStates) {
+                $slotQuery->where(function ($q) use ($autoStates) {
+                    foreach ($autoStates as $st) $q->orWhereJsonContains('promotion_states', $st);
                 });
             }
             if ($slotQuery->count() >= JobPromotion::MAX_SLOTS) {
@@ -222,7 +233,7 @@ class JobController extends Controller
             'job_post_id' => $id,
             'user_id' => auth()->id(),
             'tier' => $tier,
-            'states' => $request->states,
+            'states' => $autoStates, // 자동 계산된 주 목록
             'days' => $days,
             'daily_cost' => $dailyCost,
             'total_cost' => $totalCost,
@@ -234,10 +245,22 @@ class JobController extends Controller
         $job->update([
             'promotion_tier' => $tier,
             'promotion_expires_at' => $expiresAt,
-            'promotion_states' => $request->states,
+            'promotion_states' => $autoStates,
         ]);
 
-        return response()->json(['success' => true, 'message' => '상위노출이 적용되었습니다']);
+        $msg = '상위노출이 적용되었습니다';
+        if ($tier === 'state_plus' && $autoStates) {
+            $msg .= ' (노출 주: ' . implode(', ', $autoStates) . ')';
+        }
+        return response()->json([
+            'success' => true,
+            'message' => $msg,
+            'data' => [
+                'tier' => $tier,
+                'states' => $autoStates,
+                'expires_at' => $expiresAt,
+            ],
+        ]);
     }
 
     public function show($id)
