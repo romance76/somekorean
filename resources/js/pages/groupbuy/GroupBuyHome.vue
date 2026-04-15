@@ -74,13 +74,15 @@
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 상태 필터 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
-        <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
-        <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadPage()"
-          class="w-full text-left px-3 py-2 text-xs transition"
-          :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
+      <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
+          <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadPage()"
+            class="w-full text-left px-3 py-2 text-xs transition"
+            :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
+        </div>
+        <AdSlot page="groupbuy" position="left" :maxSlots="2" />
       </div>
-      <AdSlot page="groupbuy" position="left" :maxSlots="2" class="mt-3" />
     </div>
     <div class="col-span-12 lg:col-span-7">
 

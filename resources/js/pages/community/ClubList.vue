@@ -90,22 +90,23 @@
     <div class="grid grid-cols-12 gap-4">
     <!-- 왼쪽: 카테고리 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
-        <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
-        <button v-for="c in clubCategories" :key="c.value" @click="catFilter=c.value; loadClubs()"
-          class="w-full text-left px-3 py-2 text-xs transition"
-          :class="catFilter===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
+      <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
+          <button v-for="c in clubCategories" :key="c.value" @click="catFilter=c.value; loadClubs()"
+            class="w-full text-left px-3 py-2 text-xs transition"
+            :class="catFilter===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
 
-        <!-- 내 동호회 -->
-        <template v-if="auth.isLoggedIn && myClubs.length">
-          <div class="px-3 py-2.5 border-t border-b font-bold text-xs text-amber-900 mt-1">👤 내 동호회</div>
-          <router-link v-for="mc in myClubs" :key="mc.id" :to="`/clubs/${mc.id}`"
-            class="block w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50 transition truncate">
-            {{ mc.name }}
-          </router-link>
-        </template>
+          <template v-if="auth.isLoggedIn && myClubs.length">
+            <div class="px-3 py-2.5 border-t border-b font-bold text-xs text-amber-900 mt-1">👤 내 동호회</div>
+            <router-link v-for="mc in myClubs" :key="mc.id" :to="`/clubs/${mc.id}`"
+              class="block w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50 transition truncate">
+              {{ mc.name }}
+            </router-link>
+          </template>
+        </div>
+        <AdSlot page="clubs" position="left" :maxSlots="2" />
       </div>
-      <AdSlot page="clubs" position="left" :maxSlots="2" class="mt-3" />
     </div>
     <!-- 메인 -->
     <div class="col-span-12 lg:col-span-7">

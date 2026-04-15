@@ -73,28 +73,29 @@
     </div>
 
     <div class="grid grid-cols-12 gap-4">
-      <!-- 왼쪽: 카테고리 -->
+      <!-- 왼쪽: 카테고리 + 광고 (함께 sticky, 뷰포트 초과시 스크롤) -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 분류</div>
-          <button @click="selectCategory('', false)"
-            class="w-full text-left px-3 py-2 text-xs transition"
-            :class="!showFavorites && activeCat === '' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
-            전체
-          </button>
-          <button v-for="c in categories" :key="c.category" @click="selectCategory(c.category, false)"
-            class="w-full text-left px-3 py-2 text-xs transition"
-            :class="!showFavorites && activeCat === c.category ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
-            {{ c.category }} <span class="text-[9px] text-gray-400">({{ c.count }})</span>
-          </button>
-          <!-- 찜한 레시피 (로그인 시) -->
-          <button v-if="auth.isLoggedIn" @click="selectFavorites"
-            class="w-full text-left px-3 py-2 text-xs transition border-t"
-            :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
-            💖 찜한 레시피
-          </button>
+        <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 분류</div>
+            <button @click="selectCategory('', false)"
+              class="w-full text-left px-3 py-2 text-xs transition"
+              :class="!showFavorites && activeCat === '' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
+              전체
+            </button>
+            <button v-for="c in categories" :key="c.category" @click="selectCategory(c.category, false)"
+              class="w-full text-left px-3 py-2 text-xs transition"
+              :class="!showFavorites && activeCat === c.category ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
+              {{ c.category }} <span class="text-[9px] text-gray-400">({{ c.count }})</span>
+            </button>
+            <button v-if="auth.isLoggedIn" @click="selectFavorites"
+              class="w-full text-left px-3 py-2 text-xs transition border-t"
+              :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
+              💖 찜한 레시피
+            </button>
+          </div>
+          <AdSlot page="recipes" position="left" :maxSlots="2" />
         </div>
-        <AdSlot page="recipes" position="left" :maxSlots="2" class="mt-3" />
       </div>
 
       <!-- 중앙: 리스트 -->

@@ -55,15 +55,17 @@
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
-          <button @click="activeCat=null; activeItem=null; loadNews()" class="w-full text-left px-3 py-2 text-xs transition"
-            :class="!activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
-          <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; activeItem=null; loadNews()"
-            class="w-full text-left px-3 py-2 text-xs transition"
-            :class="activeCat?.id===cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ cat.name }}</button>
-      </div>
-      <AdSlot page="news" position="left" :maxSlots="2" class="mt-3" />
+        <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
+            <button @click="activeCat=null; activeItem=null; loadNews()" class="w-full text-left px-3 py-2 text-xs transition"
+              :class="!activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
+            <button v-for="cat in categories" :key="cat.id" @click="activeCat=cat; activeItem=null; loadNews()"
+              class="w-full text-left px-3 py-2 text-xs transition"
+              :class="activeCat?.id===cat.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ cat.name }}</button>
+          </div>
+          <AdSlot page="news" position="left" :maxSlots="2" />
+        </div>
       </div>
 
       <!-- 메인: 뉴스 목록 -->
