@@ -147,25 +147,25 @@
         <!-- 오른쪽: 정보 -->
         <div class="flex-1 p-3 min-w-0 flex flex-col justify-between">
           <div>
-            <!-- 프로모션 뱃지 + 태그 (위) -->
-            <div class="flex items-center gap-1 mb-0.5 flex-wrap">
-              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
-              <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
-              <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
-              <span v-if="item.is_negotiable" class="text-[9px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded">가격협의</span>
-              <span v-if="item.hold_enabled" class="text-[9px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.5 rounded">홀드가능</span>
-            </div>
-            <!-- 제목 + 가격 (가격을 오른쪽 위로) -->
-            <div class="flex items-start gap-2">
-              <div class="text-sm font-bold text-gray-800 truncate flex-1">{{ item.title }}</div>
+            <!-- 태그 줄 (왼쪽: 뱃지들, 오른쪽: 가격) -->
+            <div class="flex items-center justify-between gap-1 mb-0.5">
+              <div class="flex items-center gap-1 flex-wrap min-w-0">
+                <span v-if="item.promotion_tier === 'national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-px rounded">🌍전국</span>
+                <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[8px] bg-blue-500 text-white font-bold px-1 py-px rounded">⭐주+</span>
+                <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[8px] bg-amber-500 text-white font-bold px-1 py-px rounded">📢스폰</span>
+                <span v-if="item.is_negotiable" class="text-[8px] bg-green-100 text-green-700 font-bold px-1 py-px rounded">가격협의</span>
+                <span v-if="item.hold_enabled" class="text-[8px] bg-blue-100 text-blue-700 font-bold px-1 py-px rounded">홀드가능</span>
+              </div>
               <div class="text-amber-600 font-black text-base whitespace-nowrap flex-shrink-0">${{ Number(item.price || 0).toLocaleString() }}</div>
             </div>
+            <!-- 제목 -->
+            <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
             <div class="text-[10px] text-gray-400 mt-0.5">
               {{ item.category || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" />
             </div>
             <div class="text-xs text-gray-500 line-clamp-1 mt-1">{{ (item.content || '').slice(0, 60) }}</div>
           </div>
-          <!-- 하단: 위치 + 날짜만 (가격 제거) -->
+          <!-- 하단: 위치 + 날짜 -->
           <div class="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
             <span v-if="item.city">📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
             <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
@@ -355,23 +355,28 @@ async function loadPage(p = 1) {
   if (activeCat.value) params.category = activeCat.value
 
   if (radius.value !== '0') {
-    let lat, lng
+    let lat, lng, state
     const idx = parseInt(selectedCityIdx.value)
     if (idx >= 0) {
       const kc = koreanCities[idx]
-      lat = kc.lat; lng = kc.lng
+      lat = kc.lat; lng = kc.lng; state = kc.state
     } else if (idx === -2 && myCity.value?.lat) {
-      lat = myCity.value.lat; lng = myCity.value.lng
+      lat = myCity.value.lat; lng = myCity.value.lng; state = myCity.value.state
     } else {
       const loc = locationQuery.value
       lat = loc.lat; lng = loc.lng
+      state = myCity.value?.state
     }
 
     if (lat && lng) {
       params.lat = lat
       params.lng = lng
       params.radius = parseInt(radius.value)
+      if (state) params.user_state = state
     }
+  } else {
+    // 전국 모드라도 user_state 는 프로모션 가중치에 사용
+    if (myCity.value?.state) params.user_state = myCity.value.state
   }
 
   try {

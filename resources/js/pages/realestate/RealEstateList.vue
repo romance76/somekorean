@@ -154,20 +154,22 @@
         </div>
         <div class="flex-1 p-3 min-w-0 flex flex-col justify-between">
           <div>
-            <div class="flex items-center gap-1 mb-0.5 flex-wrap">
-              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
-              <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
-              <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
-            </div>
-            <!-- 제목 + 가격 (가격을 오른쪽 위로) -->
-            <div class="flex items-start gap-2">
-              <div class="text-sm font-bold text-gray-800 truncate flex-1">{{ item.title }}</div>
+            <!-- 태그 줄 (왼쪽: 뱃지, 오른쪽: 가격) -->
+            <div class="flex items-center justify-between gap-1 mb-0.5">
+              <div class="flex items-center gap-1 flex-wrap min-w-0">
+                <span v-if="item.promotion_tier === 'national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-px rounded">🌍전국</span>
+                <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[8px] bg-blue-500 text-white font-bold px-1 py-px rounded">⭐주+</span>
+                <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[8px] bg-amber-500 text-white font-bold px-1 py-px rounded">📢스폰</span>
+                <span class="text-[8px] bg-gray-100 text-gray-600 font-bold px-1 py-px rounded">{{ {rent:'렌트',sale:'매매',roommate:'룸메'}[item.type] || item.type }}</span>
+              </div>
               <div class="text-amber-600 font-black text-base whitespace-nowrap flex-shrink-0">${{ Number(item.price || 0).toLocaleString() }}{{ item.type==='rent'?'/월':'' }}</div>
             </div>
-            <div class="text-[10px] text-gray-400 mt-0.5">{{ {rent:'렌트',sale:'매매',roommate:'룸메이트'}[item.type] || item.type }} · {{ item.property_type }}</div>
+            <!-- 제목 -->
+            <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">{{ item.property_type }}</div>
             <div class="text-xs text-gray-500 line-clamp-1 mt-1">{{ (item.content || '').slice(0, 60) }}</div>
           </div>
-          <!-- 하단: 위치 + 침실 + 날짜 (가격 제거) -->
+          <!-- 하단: 위치 + 침실 + 날짜 -->
           <div class="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
             <span>📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
             <span v-if="item.bedrooms">🛏{{ item.bedrooms }}</span>
@@ -251,9 +253,16 @@ const showFilter = ref(false)
 const activeCat = ref('')
 const { loadConfig, getDefaultView } = useMenuConfig()
 const viewMode = ref('list')
+// 부동산 유형 (property_type) — 사용자 요청 항목
 const reCategories = [
-  { value: '', label: '전체' },{ value: 'rent', label: '🔑 렌트' },
-  { value: 'sale', label: '🏠 매매' },{ value: 'roommate', label: '👥 룸메이트' },
+  { value: '', label: '전체' },
+  { value: 'house', label: '🏠 하우스' },
+  { value: 'apt', label: '🏢 아파트' },
+  { value: 'condo', label: '🏬 콘도' },
+  { value: 'studio', label: '🛏 스튜디오' },
+  { value: 'office', label: '🏛 오피스' },
+  { value: 'commercial', label: '🏪 상가' },
+  { value: 'etc', label: '📋 기타' },
 ]
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
 
@@ -354,26 +363,30 @@ async function loadPage(p = 1) {
 
   const params = { page: p, per_page: 20 }
   if (search.value) params.search = search.value
-  if (activeCat.value) params.type = activeCat.value
+  if (activeCat.value) params.property_type = activeCat.value
 
   if (radius.value !== '0') {
-    let lat, lng
+    let lat, lng, state
     const idx = parseInt(selectedCityIdx.value)
     if (idx >= 0) {
       const kc = koreanCities[idx]
-      lat = kc.lat; lng = kc.lng
+      lat = kc.lat; lng = kc.lng; state = kc.state
     } else if (idx === -2 && myCity.value?.lat) {
-      lat = myCity.value.lat; lng = myCity.value.lng
+      lat = myCity.value.lat; lng = myCity.value.lng; state = myCity.value.state
     } else {
       const loc = locationQuery.value
       lat = loc.lat; lng = loc.lng
+      state = myCity.value?.state
     }
 
     if (lat && lng) {
       params.lat = lat
       params.lng = lng
       params.radius = parseInt(radius.value)
+      if (state) params.user_state = state
     }
+  } else {
+    if (myCity.value?.state) params.user_state = myCity.value.state
   }
 
   try {

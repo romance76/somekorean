@@ -12,7 +12,13 @@
           </select></div>
         <div><label class="text-sm font-semibold text-gray-700">종류</label>
           <select v-model="form.property_type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
-            <option value="apt">아파트</option><option value="house">하우스</option><option value="condo">콘도</option><option value="studio">스튜디오</option><option value="office">오피스</option>
+            <option value="house">🏠 하우스</option>
+            <option value="apt">🏢 아파트</option>
+            <option value="condo">🏬 콘도</option>
+            <option value="studio">🛏 스튜디오</option>
+            <option value="office">🏛 오피스</option>
+            <option value="commercial">🏪 상가</option>
+            <option value="etc">📋 기타</option>
           </select></div>
       </div>
       <div class="grid grid-cols-4 gap-3">
