@@ -187,8 +187,9 @@
             </div>
             <div>
               <label class="text-xs text-gray-500 block mb-1">Zip Code</label>
-              <input v-model="form.zipcode" type="text" placeholder="예: 90001"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm transition outline-none"
+              <input v-model="form.zipcode" type="text" placeholder="예: 90001" maxlength="5"
+                @input="onJobZipChange"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm transition outline-none font-mono"
                 :class="focusRing" />
             </div>
           </div>
@@ -367,6 +368,26 @@ import PromotionSection from '../../components/PromotionSection.vue'
 // 공통 컴포넌트로 프로모션 관리 (jobPromotion 으로 v-model)
 const jobPromotion = reactive({ tier: 'none', days: 7 })
 const jobPromoRef = ref(null)
+
+// zipcode 자동 city/state 감지
+let jobZipTimer = null
+function onJobZipChange() {
+  clearTimeout(jobZipTimer)
+  jobZipTimer = setTimeout(async () => {
+    const z = (form.zipcode || '').trim()
+    if (!/^\d{5}$/.test(z)) return
+    try {
+      const r = await fetch(`https://api.zippopotam.us/us/${z}`)
+      if (!r.ok) return
+      const d = await r.json()
+      const p = d.places?.[0]
+      if (p) {
+        form.city = p['place name'] || ''
+        form.state = p['state abbreviation'] || ''
+      }
+    } catch {}
+  }, 500)
+}
 
 const router = useRouter()
 const route = useRoute()
