@@ -50,15 +50,22 @@ window.Echo = new Echo({
     }),
 });
 
-// 401 처리
+// 401 처리: 토큰 만료 시 조용히 재시도 (broadcasting/auth 같은 public 엔드포인트는 로그아웃시키지 않음)
+const PUBLIC_401_ENDPOINTS = ['/broadcasting/auth', '/api/banners/active', '/api/banners/mobile', '/api/settings/', '/api/user'];
 axios.interceptors.response.use(
     response => response,
     error => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url || '';
+        const isPublicOk = PUBLIC_401_ENDPOINTS.some(p => url.includes(p));
+        if (error.response?.status === 401 && !isPublicOk) {
+            // 토큰 있는데 401이면 만료된 토큰 → 제거만 하고 로그인 페이지는 유저가 명시적 액션 시에만
+            const hadToken = !!localStorage.getItem('sk_token');
             localStorage.removeItem('sk_token');
             localStorage.removeItem('sk_user');
-            if (!window.location.pathname.startsWith('/auth')) {
-                window.location.href = '/auth/login';
+            // 로그인이 필요한 페이지에서 401이 났을 때만 리다이렉트
+            const needsAuth = /\/dashboard|\/write|\/create|\/edit|\/ad-apply|\/my-/.test(window.location.pathname);
+            if (hadToken && needsAuth && !window.location.pathname.startsWith('/login')) {
+                window.location.href = '/login';
             }
         }
         return Promise.reject(error);
