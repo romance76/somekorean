@@ -63,7 +63,7 @@
       </div>
 
       <!-- 트랙 목록 -->
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-9">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             <span>🎶 {{ showFavorites ? '❤️ 즐겨찾기' : (activePL ? activePL.name : (activeCat?.name || '트랙')) }}</span>
@@ -97,50 +97,6 @@
         <Pagination v-if="activeCat && !showFavorites && !activePL" :page="trackPage" :lastPage="trackLastPage" @page="loadCategoryPage" />
       </div>
 
-      <!-- 인라인 플레이어 (음악 페이지 오른쪽 — 항상 표시) -->
-      <div class="col-span-12 lg:col-span-3 hidden lg:block">
-        <div class="bg-[#1a1a2e] rounded-2xl shadow-xl border border-white/10 overflow-hidden sticky top-20">
-          <!-- 영상 -->
-          <div v-if="playing" class="aspect-video bg-black">
-            <iframe :src="`https://www.youtube.com/embed/${playing.youtube_id}?autoplay=1&enablejsapi=1`"
-              class="w-full h-full" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-          </div>
-          <div v-else class="aspect-video bg-gradient-to-b from-indigo-900 to-[#1a1a2e] flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-4xl mb-2">🎵</div>
-              <p class="text-gray-400 text-xs">곡을 선택해주세요</p>
-            </div>
-          </div>
-          <!-- 곡 정보 + 컨트롤 -->
-          <div class="px-3 py-2">
-            <p class="text-white text-sm font-bold truncate">{{ playing?.title || '재생 대기 중...' }}</p>
-            <p class="text-gray-400 text-xs truncate">{{ playing?.artist || '' }}</p>
-            <div class="flex items-center justify-center gap-3 mt-2">
-              <button @click="prevTrack" class="w-8 h-8 rounded-full text-gray-400 hover:text-white flex items-center justify-center">⏮</button>
-              <button @click="toggleRepeat" class="w-8 h-8 rounded-full flex items-center justify-center" :class="repeatMode ? 'text-indigo-400' : 'text-gray-500'">{{ repeatMode === 'one' ? '🔂' : '🔁' }}</button>
-              <button @click="nextTrack" class="w-8 h-8 rounded-full text-gray-400 hover:text-white flex items-center justify-center">⏭</button>
-              <button @click="shufflePlay" class="w-8 h-8 rounded-full flex items-center justify-center" :class="isShuffled ? 'text-indigo-400' : 'text-gray-500'">🔀</button>
-              <button v-if="auth.isLoggedIn && playing" @click="toggleFav(playing)" class="text-sm">{{ isFav(playing.id)?'❤️':'🤍' }}</button>
-            </div>
-          </div>
-          <!-- 재생 큐 -->
-          <div class="border-t border-white/10 px-2 py-1">
-            <p class="text-gray-500 text-[10px] px-1">{{ playQueue.length ? `다음 곡 (${playQueue.length}곡)` : '재생 큐' }}</p>
-          </div>
-          <div v-if="playQueue.length" class="overflow-y-auto max-h-[250px] px-1 pb-1">
-            <div v-for="(t, i) in playQueue" :key="t.id" @click="playTrack(t)"
-              class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition text-[11px]"
-              :class="playing?.id === t.id ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-400 hover:bg-white/5'">
-              <span class="w-4 text-right text-gray-600">{{ i + 1 }}</span>
-              <span class="truncate flex-1">{{ t.title }}</span>
-              <span v-if="playing?.id === t.id" class="text-indigo-400">♪</span>
-            </div>
-          </div>
-          <div v-else class="px-3 py-4 text-center text-gray-600 text-xs">
-            왼쪽에서 곡을 클릭하면<br>여기에 재생 목록이 표시됩니다
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- 플레이리스트 생성 모달 -->
@@ -237,7 +193,6 @@ function isInPlaylist(id) { return plTrackIds.value.has(id) }
 function playTrack(track) {
   playing.value = track
   playQueue.value = [...displayTracks.value]
-  musicStore.inlinePlaying = true // 인라인 플레이어 사용
   musicStore.play({ ...track, youtubeId: track.youtube_id, thumbnail: track.thumbnail_url || track.thumbnail })
   musicStore.playlist = playQueue.value.map(t => ({ ...t, youtubeId: t.youtube_id, thumbnail: t.thumbnail_url || t.thumbnail }))
 }
@@ -424,12 +379,6 @@ onMounted(async () => {
     } catch {}
   }
   loading.value = false
-  // 음악 페이지 진입 시 인라인 모드 활성화
-  if (musicStore.hasTrack) musicStore.inlinePlaying = true
 })
 
-onUnmounted(() => {
-  // 음악 페이지 떠남 → 인라인 모드 해제, MiniPlayer가 이어받음
-  musicStore.inlinePlaying = false
-})
 </script>
