@@ -86,17 +86,31 @@ class JobController extends Controller
     }
 
     // 카테고리별 상위 N개 → 풀에서 랜덤 K개 (Featured 섹션용)
-    // 파라미터: lat,lng,radius,user_state (선택) | per_category=5 | count=5 | post_type=hiring
+    // 파라미터:
+    //   lat,lng,radius,user_state — 내 위치 모드 (없으면 전국 모드)
+    //   per_category=5 | count=2 | post_type=hiring | category=(optional)
+    //   promotion_filter=(auto|state_plus|national|any) — auto 이면 위치에 따라 자동 선택
+    //     · 내 위치 모드 → state_plus 만
+    //     · 전국 모드 → national 만
     public function featured(Request $request)
     {
-        $categories = ['restaurant','it','beauty','driving','retail','office','construction','medical','education','etc'];
+        $allCategories = ['restaurant','it','beauty','driving','retail','office','construction','medical','education','etc'];
         $perCategory = max(1, min(10, (int) ($request->per_category ?? 5)));
-        $count = max(1, min(10, (int) ($request->count ?? 5)));
+        $count = max(1, min(10, (int) ($request->count ?? 2)));
         $postType = $request->post_type ?: 'hiring';
 
         $hasLocation = $request->lat && $request->lng;
         $userState = $request->user_state ? strtoupper(trim($request->user_state)) : null;
         $neighborStates = \App\Support\StateNeighbors::neighbors($userState);
+
+        // 특정 카테고리 지정 시 그 카테고리만, 아니면 전 카테고리 풀
+        $categories = $request->category ? [$request->category] : $allCategories;
+
+        // 프로모션 티어 필터 결정
+        $promotionFilter = $request->promotion_filter ?: 'auto';
+        if ($promotionFilter === 'auto') {
+            $promotionFilter = $hasLocation ? 'state_plus' : 'national';
+        }
 
         $pool = collect();
 
@@ -105,37 +119,35 @@ class JobController extends Controller
                 ->where('post_type', $postType)
                 ->where('category', $cat);
 
+            // 프로모션 필터 적용
+            if ($promotionFilter === 'state_plus') {
+                $q->where('promotion_tier', 'state_plus')
+                  ->where('promotion_expires_at', '>', now());
+                // 사용자 주 또는 인접주가 promotion_states 에 포함된 state_plus 만
+                if ($userState && $neighborStates) {
+                    $q->where(function ($inner) use ($neighborStates) {
+                        foreach ($neighborStates as $st) {
+                            if (preg_match('/^[A-Z]{2}$/', $st)) {
+                                $inner->orWhereJsonContains('promotion_states', $st);
+                            }
+                        }
+                    });
+                }
+            } elseif ($promotionFilter === 'national') {
+                $q->where('promotion_tier', 'national')
+                  ->where('promotion_expires_at', '>', now());
+            }
+            // 'any' 는 필터 안 걸음
+
             if ($hasLocation) {
                 $q->nearby($request->lat, $request->lng, $request->radius ?? 50);
             }
 
-            // 프로모션 우선 + 최신순
-            if ($userState && $neighborStates) {
-                $parts = [];
-                foreach ($neighborStates as $st) {
-                    if (preg_match('/^[A-Z]{2}$/', $st)) {
-                        $parts[] = "JSON_CONTAINS(promotion_states, '\"" . $st . "\"')";
-                    }
-                }
-                $statePlusCond = $parts ? '(' . implode(' OR ', $parts) . ')' : 'FALSE';
-                $stateSql = preg_match('/^[A-Z]{2}$/', $userState) ? "'{$userState}'" : "''";
-                $q->orderByRaw("
-                    CASE
-                        WHEN promotion_tier = 'national' THEN 1
-                        WHEN promotion_tier = 'state_plus' AND {$statePlusCond} THEN 2
-                        WHEN promotion_tier = 'sponsored' AND state = {$stateSql} THEN 3
-                        ELSE 9
-                    END
-                ");
-            } else {
-                $q->orderByRaw("CASE WHEN promotion_tier = 'national' THEN 1 ELSE 9 END");
-            }
             $q->orderByDesc('created_at');
-
             $pool = $pool->merge($q->limit($perCategory)->get());
         }
 
-        // 중복 제거 (같은 공고가 여러 카테고리에 걸쳐 있을 가능성 대비) 후 랜덤 샘플
+        // 중복 제거 후 랜덤 샘플
         $unique = $pool->unique('id')->values();
         $random = $unique->shuffle()->take($count)->values();
 
@@ -143,6 +155,7 @@ class JobController extends Controller
             'success' => true,
             'data' => $random,
             'pool_size' => $unique->count(),
+            'promotion_filter' => $promotionFilter,
         ]);
     }
 

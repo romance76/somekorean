@@ -113,7 +113,7 @@
             🙋 구직
           </button>
         </div>
-        <button v-for="c in jobCategories" :key="c.value" @click="activeCat = c.value; loadPage()"
+        <button v-for="c in jobCategories" :key="c.value" @click="activeCat = c.value; loadPage(); loadFeatured()"
           class="w-full text-left px-3 py-2 text-xs transition"
           :class="activeCat === c.value
             ? (postType === 'hiring' ? 'bg-amber-50 text-amber-700 font-bold' : 'bg-blue-50 text-blue-700 font-bold')
@@ -132,41 +132,39 @@
       </span>
     </div>
 
-    <!-- ═══ Featured: 오늘의 추천 (카테고리별 상위 × 10 풀에서 랜덤 5) ═══ -->
-    <div v-if="featured.length" class="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl shadow-sm border border-amber-200 overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-2 border-b border-amber-100">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-black text-amber-800">🔥 오늘의 추천</span>
-          <span class="text-[10px] text-amber-600">
-            {{ selectedCityIdx == -1 || selectedCityIdx == '-1' ? '전국' : (myCity?.label || '내 지역') }} 기준
+    <!-- ═══ Featured: 오늘의 추천 (심플 텍스트 2개) ═══ -->
+    <!-- 내 위치 모드: state_plus 풀 / 전국 모드: national 풀 -->
+    <div v-if="featured.length" class="mb-4 rounded-xl overflow-hidden border"
+      :class="featuredTier === 'national' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'">
+      <div class="flex items-center justify-between px-3 py-1.5 border-b"
+        :class="featuredTier === 'national' ? 'border-red-100' : 'border-blue-100'">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-black"
+            :class="featuredTier === 'national' ? 'text-red-700' : 'text-blue-700'">
+            {{ featuredTier === 'national' ? '🌍' : '⭐' }} 오늘의 추천
+          </span>
+          <span class="text-[10px]"
+            :class="featuredTier === 'national' ? 'text-red-500' : 'text-blue-500'">
+            {{ featuredTier === 'national' ? '전국 상위노출' : '주(State) 상위노출' }}
           </span>
         </div>
         <button @click="loadFeatured" :disabled="featuredLoading"
-          class="text-[10px] text-amber-600 hover:text-amber-800 font-bold disabled:opacity-50">
-          🔄 {{ featuredLoading ? '섞는 중...' : '다시 섞기' }}
+          class="text-[10px] font-bold disabled:opacity-50"
+          :class="featuredTier === 'national' ? 'text-red-600 hover:text-red-800' : 'text-blue-600 hover:text-blue-800'">
+          🔄 {{ featuredLoading ? '...' : '다시' }}
         </button>
       </div>
-      <!-- 모바일: 가로 스크롤 / 태블릿+: 그리드 -->
-      <div class="flex sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-2 p-2 overflow-x-auto sm:overflow-visible scrollbar-hide">
+      <div class="divide-y" :class="featuredTier === 'national' ? 'divide-red-100' : 'divide-blue-100'">
         <div v-for="f in featured" :key="f.id" @click="goDetail(f)"
-          class="bg-white rounded-lg p-2.5 border border-gray-100 hover:border-amber-300 hover:shadow-md transition cursor-pointer flex-shrink-0 w-[170px] sm:w-auto">
-          <div class="flex items-start gap-2">
-            <img v-if="f.logo" :src="f.logo" class="w-10 h-10 rounded object-cover flex-shrink-0 border"
-              @error="$event.target.style.display='none'" />
-            <div v-else class="w-10 h-10 rounded bg-amber-50 flex items-center justify-center text-lg flex-shrink-0">
-              {{ categoryEmoji(f.category) }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <div v-if="f.promotion_tier && f.promotion_tier !== 'none'" class="flex items-center gap-1 mb-0.5">
-                <span v-if="f.promotion_tier==='national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-0.5 rounded">🌍</span>
-                <span v-else-if="f.promotion_tier==='state_plus'" class="text-[8px] bg-blue-500 text-white font-bold px-1 py-0.5 rounded">⭐</span>
-                <span v-else-if="f.promotion_tier==='sponsored'" class="text-[8px] bg-amber-500 text-white font-bold px-1 py-0.5 rounded">📢</span>
-              </div>
-              <div class="text-xs font-bold text-gray-800 truncate">{{ f.title }}</div>
-              <div class="text-[10px] text-gray-500 truncate">{{ f.company || f.user?.name }}</div>
-              <div v-if="f.city" class="text-[9px] text-gray-400 mt-0.5">📍 {{ f.city }}{{ f.state ? ', ' + f.state : '' }}</div>
-            </div>
-          </div>
+          class="px-3 py-2 hover:bg-white/60 cursor-pointer transition flex items-center gap-2 text-sm">
+          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+            :class="featuredTier === 'national' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'">
+            {{ featuredTier === 'national' ? '전국' : '주+' }}
+          </span>
+          <span class="flex-shrink-0">{{ categoryEmoji(f.category) }}</span>
+          <span class="font-bold text-gray-800 truncate flex-1">{{ f.title }}</span>
+          <span class="text-xs text-gray-500 truncate hidden sm:inline">{{ f.company || f.user?.name }}</span>
+          <span v-if="f.city" class="text-[10px] text-gray-400 whitespace-nowrap">{{ f.city }}{{ f.state ? ', '+f.state : '' }}</span>
         </div>
       </div>
     </div>
@@ -423,12 +421,28 @@ async function loadPage(p = 1) {
   loading.value = false
 }
 
-// ─── Featured: 카테고리별 상위 5개 × 10 카테고리 풀에서 랜덤 5개 ───
+// ─── Featured: 위치 모드에 따라 state_plus(내 위치) 또는 national(전국) 중
+// 카테고리별 상위 5개 풀에서 랜덤 2개 추출 ───
 const featured = ref([])
 const featuredLoading = ref(false)
+const featuredTier = ref('state_plus') // 표시용: 현재 어떤 티어를 보여주는지
 async function loadFeatured() {
   featuredLoading.value = true
-  const params = { per_category: 5, count: 5, post_type: postType.value, ...buildLocationParams() }
+  const locParams = buildLocationParams()
+  const hasLocation = !!locParams.lat
+  // 내 위치 모드 → state_plus / 전국 모드 → national
+  featuredTier.value = hasLocation ? 'state_plus' : 'national'
+
+  const params = {
+    per_category: 5,
+    count: 2,
+    post_type: postType.value,
+    promotion_filter: 'auto',
+    ...locParams,
+  }
+  // 특정 카테고리 선택 시 그 카테고리만
+  if (activeCat.value) params.category = activeCat.value
+
   try {
     const { data } = await axios.get('/api/jobs/featured', { params })
     featured.value = data.data || []
