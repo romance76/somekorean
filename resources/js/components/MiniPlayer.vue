@@ -15,8 +15,8 @@
     </div>
   </div>
 
-  <!-- ═══ 펼친 플레이어 (드래그 가능) ═══ -->
-  <div v-if="(music.hasTrack || isMusicPage) && !hideUI && isExpanded"
+  <!-- ═══ 펼친 플레이어 (v-show로 최소화해도 YouTube 유지) ═══ -->
+  <div v-show="(music.hasTrack || isMusicPage) && !hideUI && isExpanded"
     class="fixed z-[9998] w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden"
     :style="expandedStyle" style="max-height:75vh;">
 
@@ -33,8 +33,10 @@
       </div>
     </div>
 
-    <!-- YouTube 영상 영역 (실제 Player는 별도 div에서 오버레이) -->
-    <div class="aspect-video bg-black flex-shrink-0"></div>
+    <!-- YouTube 영상 -->
+    <div class="aspect-video bg-black flex-shrink-0">
+      <div id="yt-mini-player" class="w-full h-full"></div>
+    </div>
 
     <!-- 컨트롤 -->
     <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0">
@@ -70,12 +72,6 @@
     </div>
   </div>
 
-  <!-- YouTube Player — 항상 존재, 최소화해도 재생 유지 -->
-  <div v-if="music.currentTrack?.youtubeId"
-    class="fixed overflow-hidden"
-    :style="isExpanded ? { width: '320px', height: '180px', right: posRight + 'px', top: (posTop + 40) + 'px', zIndex: 9997 } : { width: '1px', height: '1px', top: '-9999px', left: '-9999px' }">
-    <div id="yt-mini-player" class="w-full h-full"></div>
-  </div>
 </Teleport>
 </template>
 
