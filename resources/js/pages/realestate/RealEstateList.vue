@@ -159,17 +159,20 @@
               <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
               <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
             </div>
-            <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
+            <!-- 제목 + 가격 (가격을 오른쪽 위로) -->
+            <div class="flex items-start gap-2">
+              <div class="text-sm font-bold text-gray-800 truncate flex-1">{{ item.title }}</div>
+              <div class="text-amber-600 font-black text-base whitespace-nowrap flex-shrink-0">${{ Number(item.price || 0).toLocaleString() }}{{ item.type==='rent'?'/월':'' }}</div>
+            </div>
             <div class="text-[10px] text-gray-400 mt-0.5">{{ {rent:'렌트',sale:'매매',roommate:'룸메이트'}[item.type] || item.type }} · {{ item.property_type }}</div>
             <div class="text-xs text-gray-500 line-clamp-1 mt-1">{{ (item.content || '').slice(0, 60) }}</div>
           </div>
-          <div class="flex items-center justify-between">
-            <div class="text-[10px] text-gray-400 flex items-center gap-1.5">
-              <span>📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
-              <span v-if="item.bedrooms">🛏{{ item.bedrooms }}</span>
-              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
-            </div>
-            <div class="text-amber-600 font-black text-base">${{ Number(item.price || 0).toLocaleString() }}{{ item.type==='rent'?'/월':'' }}</div>
+          <!-- 하단: 위치 + 침실 + 날짜 (가격 제거) -->
+          <div class="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
+            <span>📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
+            <span v-if="item.bedrooms">🛏{{ item.bedrooms }}</span>
+            <span v-if="item.sqft">📐 {{ item.sqft }}sqft</span>
+            <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
           </div>
         </div>
       </div>
