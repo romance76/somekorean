@@ -162,8 +162,16 @@
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
-        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
-        <div class="flex items-center justify-between">
+        class="flex border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer overflow-hidden">
+        <!-- 썸네일 (사용자가 선택한 thumbnail_index 의 이미지) -->
+        <div class="w-28 h-24 flex-shrink-0 bg-gray-100">
+          <img v-if="item.images?.length"
+            :src="marketThumb(item)" loading="lazy" decoding="async"
+            class="w-full h-full object-cover"
+            @error="e=>e.target.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center text-3xl bg-amber-50\'>🛒</div>'" />
+          <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-amber-50">🛒</div>
+        </div>
+        <div class="flex items-center justify-between flex-1 min-w-0 px-4 py-3">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
             <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -279,6 +287,18 @@ function onCityChange() {
     radius.value = '30'
   }
   loadPage()
+}
+
+// 사용자가 썸네일로 선택한 이미지. 없으면 첫 번째 이미지.
+function marketThumb(item) {
+  const imgs = item.images || []
+  if (!imgs.length) return ''
+  const idx = Math.max(0, Math.min(imgs.length - 1, Number(item.thumbnail_index ?? 0)))
+  const path = imgs[idx]
+  if (!path) return ''
+  return String(path).startsWith('http') || String(path).startsWith('/storage/')
+    ? path
+    : '/storage/' + path
 }
 
 async function loadPage(p = 1) {

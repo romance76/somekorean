@@ -210,7 +210,7 @@ class JobController extends Controller
         $active = $query->orderBy('promotion_expires_at')
             ->get(['id', 'title', 'promotion_expires_at']);
         $used = $active->count();
-        $max = JobPromotion::MAX_SLOTS; // 5
+        $max = \App\Support\PromotionSettings::maxSlots($tier); // 5
         $available = max($max - $used, 0);
         $nextSlotTime = $used >= $max ? $active->first()?->promotion_expires_at : null;
 
@@ -224,7 +224,7 @@ class JobController extends Controller
                 'used' => $used,
                 'available' => $available,
                 'is_full' => $used >= $max,
-                'daily_cost' => JobPromotion::pricePerDay($tier),
+                'daily_cost' => \App\Support\PromotionSettings::pricePerDay($tier),
                 'next_slot_time' => $nextSlotTime,
             ]
         ]);
@@ -242,7 +242,7 @@ class JobController extends Controller
 
         $tier = $request->tier;
         $days = (int) $request->days;
-        $dailyCost = JobPromotion::pricePerDay($tier);
+        $dailyCost = \App\Support\PromotionSettings::pricePerDay($tier);
         $totalCost = $dailyCost * $days;
 
         // state_plus 선택 시 공고의 주 + 인접 주를 자동 계산 (광고주가 직접 선택 X)
@@ -281,7 +281,7 @@ class JobController extends Controller
             }
 
             $usedCount = $slotQuery->count();
-            if ($usedCount >= JobPromotion::MAX_SLOTS) {
+            if ($usedCount >= \App\Support\PromotionSettings::maxSlots($tier)) {
                 $nextSlot = $slotQuery->orderBy('promotion_expires_at')->first();
                 $when = $nextSlot?->promotion_expires_at?->format('Y-m-d H:i');
                 $tierLabel = $tier === 'national' ? '전국 상위노출' : '주(State) 상위노출';
@@ -295,7 +295,7 @@ class JobController extends Controller
                         'is_full' => true,
                         'next_slot_time' => $nextSlot?->promotion_expires_at,
                         'used' => $usedCount,
-                        'max_slots' => JobPromotion::MAX_SLOTS,
+                        'max_slots' => \App\Support\PromotionSettings::maxSlots($tier),
                     ],
                 ], 422);
             }

@@ -59,6 +59,9 @@ Route::get('/posts/{id}', [PostController::class, 'show']);
 Route::get('/jobs', [JobController::class, 'index']);
 Route::get('/jobs/featured', [JobController::class, 'featured']);
 Route::get('/jobs/promotion-slots', [JobController::class, 'promotionSlots']);
+Route::get('/promotion/settings', function () {
+    return response()->json(['success' => true, 'data' => \App\Support\PromotionSettings::all()]);
+});
 Route::get('/jobs/{id}', [JobController::class, 'show']);
 Route::get('/resumes', [\App\Http\Controllers\API\ResumeController::class, 'index']);
 Route::get('/resumes/{id}', [\App\Http\Controllers\API\ResumeController::class, 'show']);

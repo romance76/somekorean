@@ -178,15 +178,10 @@ async function submit() {
         const v = form[k]
         fd.append(k, typeof v === 'boolean' ? (v ? '1' : '0') : v)
       })
-      // 메인 사진을 첫 번째로, 나머지 순서대로
+      // 사진 업로드 순서는 유지 + 사용자가 고른 메인 사진 인덱스를 별도로 전송
       if (photoList.value.length) {
-        const ordered = [...photoList.value]
-        // 메인을 첫 번째로 이동
-        if (mainPhotoIdx.value > 0) {
-          const [main] = ordered.splice(mainPhotoIdx.value, 1)
-          ordered.unshift(main)
-        }
-        ordered.forEach(p => fd.append('images[]', p.file))
+        photoList.value.forEach(p => fd.append('images[]', p.file))
+        fd.append('thumbnail_index', String(mainPhotoIdx.value || 0))
       }
       // 추가 사진 포인트 비용
       fd.append('extra_photo_cost', extraPhotoCost.value)

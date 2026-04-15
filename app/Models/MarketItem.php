@@ -3,7 +3,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class MarketItem extends Model
 {
-    protected $fillable = ['user_id','title','content','price','images','category','condition','lat','lng','city','state','status','view_count','is_negotiable','hold_enabled','hold_price_per_6h','hold_max_hours','boosted_until','bump_count','last_bumped_at','bumped_at'];
+    protected $fillable = ['user_id','title','content','price','images','thumbnail_index','category','condition','lat','lng','city','state','status','view_count','is_negotiable','hold_enabled','hold_price_per_6h','hold_max_hours','boosted_until','bump_count','last_bumped_at','bumped_at'];
     protected $casts = ['images'=>'array','price'=>'decimal:2','is_negotiable'=>'boolean','hold_enabled'=>'boolean','lat'=>'decimal:7','lng'=>'decimal:7','boosted_until'=>'datetime','last_bumped_at'=>'datetime','bumped_at'=>'datetime'];
     public function user() { return $this->belongsTo(User::class); }
     public function reservations() { return $this->hasMany(MarketReservation::class); }

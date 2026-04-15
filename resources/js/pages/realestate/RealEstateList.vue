@@ -167,8 +167,18 @@
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
-        class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
-        <div class="flex items-center justify-between">
+        class="flex border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer overflow-hidden">
+        <!-- 썸네일 -->
+        <div class="w-28 h-24 flex-shrink-0 bg-gray-100">
+          <img v-if="item.images?.length"
+            :src="realEstateThumb(item)" loading="lazy" decoding="async"
+            class="w-full h-full object-cover"
+            @error="e=>e.target.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center text-3xl bg-amber-50\'>🏠</div>'" />
+          <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-amber-50">
+            {{ item.type==='sale'?'🏠':item.type==='rent'?'🔑':'👥' }}
+          </div>
+        </div>
+        <div class="flex items-center justify-between flex-1 min-w-0 px-4 py-3">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
             <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -176,13 +186,12 @@
               <span v-else-if="item.company || item.organizer">{{ item.company || item.organizer }}</span>
               <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
               <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
-              <span v-if="item.view_count">👁{{ item.view_count }}</span>
+              <span v-if="item.bedrooms">🛏 {{ item.bedrooms }}방</span>
+              <span v-if="item.view_count">👁 {{ item.view_count }}</span>
             </div>
           </div>
           <div class="ml-3 flex-shrink-0 text-right">
-            <div v-if="item.price !== undefined && item.price !== null" class="text-amber-600 font-bold text-sm">${{ Number(item.price).toLocaleString() }}</div>
-            <div v-if="item.salary_min" class="text-amber-600 font-bold text-xs">${{ item.salary_min }}~${{ item.salary_max }}/{{ item.salary_type }}</div>
-            <div v-if="item.rating" class="text-amber-400 text-xs">{{'★'.repeat(Math.round(item.rating))}} {{ item.rating }}</div>
+            <div v-if="item.price !== undefined && item.price !== null" class="text-amber-600 font-bold text-sm">${{ Number(item.price).toLocaleString() }}{{ item.type==='rent'?'/월':'' }}</div>
           </div>
         </div>
       </div>
@@ -286,6 +295,16 @@ function onCityChange() {
     radius.value = '30'
   }
   loadPage()
+}
+
+function realEstateThumb(item) {
+  const imgs = item.images || []
+  if (!imgs.length) return ''
+  const path = imgs[0]
+  if (!path) return ''
+  return String(path).startsWith('http') || String(path).startsWith('/storage/')
+    ? path
+    : '/storage/' + path
 }
 
 async function loadPage(p = 1) {

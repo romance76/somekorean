@@ -128,9 +128,15 @@ class MarketController extends Controller
         $city = $request->city ?: $user->city;
         $state = $request->state ?: $user->state;
 
+        $thumbIdx = max(0, min(count($images) - 1, (int) ($request->thumbnail_index ?? 0)));
+
         $item = MarketItem::create(array_merge(
             $request->only('title', 'content', 'price', 'category', 'condition', 'is_negotiable', 'hold_enabled', 'hold_price_per_6h', 'hold_max_hours'),
-            ['user_id' => $user->id, 'images' => $images ?: null, 'lat' => $lat, 'lng' => $lng, 'city' => $city, 'state' => $state]
+            [
+                'user_id' => $user->id, 'images' => $images ?: null,
+                'thumbnail_index' => $thumbIdx,
+                'lat' => $lat, 'lng' => $lng, 'city' => $city, 'state' => $state,
+            ]
         ));
 
         return response()->json(['success' => true, 'data' => $item], 201);
@@ -139,7 +145,12 @@ class MarketController extends Controller
     public function update(Request $request, $id)
     {
         $item = $this->findOwnedOrAdmin(MarketItem::class, $id);
-        $item->update($request->only('title', 'content', 'price', 'category', 'condition', 'status', 'is_negotiable', 'hold_enabled', 'hold_price_per_6h', 'hold_max_hours'));
+        $data = $request->only('title', 'content', 'price', 'category', 'condition', 'status', 'is_negotiable', 'hold_enabled', 'hold_price_per_6h', 'hold_max_hours');
+        if ($request->has('thumbnail_index')) {
+            $max = is_array($item->images) ? count($item->images) - 1 : 0;
+            $data['thumbnail_index'] = max(0, min($max, (int) $request->thumbnail_index));
+        }
+        $item->update($data);
         return response()->json(['success' => true, 'data' => $item]);
     }
 

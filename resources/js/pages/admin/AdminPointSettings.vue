@@ -48,6 +48,7 @@ const catStyles = {
   spam: { icon: '🛡️', label: '스팸 방지 (중고장터)', bg: 'bg-orange-50 text-orange-800' },
   auction: { icon: '🏪', label: '업소록 옥션', bg: 'bg-purple-50 text-purple-800' },
   package: { icon: '💳', label: '구매 패키지 (가격|포인트|보너스)', bg: 'bg-amber-50 text-amber-800' },
+  promotion: { icon: '🚀', label: '상위노출 슬롯/가격', bg: 'bg-indigo-50 text-indigo-800' },
 }
 
 async function load() {

@@ -369,6 +369,8 @@ class AdminSettingsController extends Controller
                 'updated_at' => now(),
             ]);
         }
+        // 상위노출 설정 캐시 즉시 무효화
+        \App\Support\PromotionSettings::flush();
         return response()->json(['success' => true, 'message' => '포인트 설정이 저장되었습니다.']);
     }
 }
