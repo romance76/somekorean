@@ -94,6 +94,7 @@
             💖 찜한 레시피
           </button>
         </div>
+        <AdSlot page="recipes" position="left" :maxSlots="2" class="mt-3" />
       </div>
 
       <!-- 중앙: 리스트 -->

@@ -79,8 +79,8 @@
         <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; loadPage()"
           class="w-full text-left px-3 py-2 text-xs transition"
           :class="statusFilter===s.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ s.label }}</button>
-              <AdSlot page="groupbuy" position="left" :maxSlots="2" />
       </div>
+      <AdSlot page="groupbuy" position="left" :maxSlots="2" class="mt-3" />
     </div>
     <div class="col-span-12 lg:col-span-7">
 
