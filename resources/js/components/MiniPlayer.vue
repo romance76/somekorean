@@ -1,82 +1,61 @@
 <template>
-<div v-if="music.hasTrack && !hideUI" ref="playerContainer"
-  class="fixed z-[9998]"
-  :style="{ right: posRight + 'px', top: posTop + 'px' }">
+<!-- 음악 페이지: 오른쪽 사이드바 영역에 인라인 표시 -->
+<!-- 다른 페이지: fixed 플로팅 -->
+<Teleport to="body">
+  <div v-if="music.hasTrack && !hideUI">
 
-  <!-- ═══ 최소화 상태 ═══ -->
-  <div v-if="state === 'mini'" @click="state = 'normal'"
-    class="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 transition-all animate-pulse-slow relative">
-    <span class="text-white text-xl">{{ music.isPlaying ? '🎵' : '⏸' }}</span>
-    <svg class="absolute inset-0 w-14 h-14 -rotate-90 pointer-events-none" viewBox="0 0 56 56">
-      <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
-      <circle cx="28" cy="28" r="26" fill="none" stroke="#a78bfa" stroke-width="2.5"
-        :stroke-dasharray="163" :stroke-dashoffset="163 - (163 * music.progress / 100)" stroke-linecap="round" />
-    </svg>
-  </div>
+    <!-- ═══ 최소화 (다른 페이지에서) ═══ -->
+    <div v-if="viewState === 'mini'"
+      class="fixed bottom-20 right-4 z-[9998] w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 transition-all animate-pulse-slow"
+      @click="viewState = 'float'">
+      <span class="text-white text-xl">{{ music.isPlaying ? '🎵' : '⏸' }}</span>
+      <svg class="absolute inset-0 w-14 h-14 -rotate-90 pointer-events-none" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+        <circle cx="28" cy="28" r="26" fill="none" stroke="#a78bfa" stroke-width="2.5"
+          :stroke-dasharray="163" :stroke-dashoffset="163 - (163 * music.progress / 100)" stroke-linecap="round" />
+      </svg>
+    </div>
 
-  <!-- ═══ 일반 상태 ═══ -->
-  <div v-else class="w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl overflow-hidden border border-white/10 flex flex-col" style="max-height:75vh;">
-
-    <!-- 드래그 헤더 -->
-    <div @mousedown="startDrag" @touchstart.passive="startDrag"
-      class="px-3 py-2 flex items-center justify-between cursor-move bg-gradient-to-r from-indigo-700 to-purple-700 select-none flex-shrink-0">
-      <div class="flex items-center gap-2 flex-1 min-w-0">
-        <span class="text-sm">🎵</span>
-        <p class="text-white text-xs font-bold truncate">{{ music.currentTrack?.title }}</p>
+    <!-- ═══ 플로팅 플레이어 (다른 페이지에서 펼침) ═══ -->
+    <div v-if="viewState === 'float'"
+      class="fixed bottom-20 right-4 z-[9998] w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden"
+      style="max-height:70vh;">
+      <div class="px-3 py-2 flex items-center justify-between bg-gradient-to-r from-indigo-700 to-purple-700 flex-shrink-0">
+        <p class="text-white text-xs font-bold truncate flex-1 mr-2">🎵 {{ music.currentTrack?.title }}</p>
+        <button @click="viewState = 'mini'" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm">−</button>
+        <button @click="closePlayer" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs ml-0.5">✕</button>
       </div>
-      <div class="flex items-center gap-0.5 flex-shrink-0">
-        <button @click.stop="state = 'mini'" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm" title="최소화">−</button>
-        <button @click.stop="closePlayer" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="닫기">✕</button>
-      </div>
-    </div>
-
-    <!-- YouTube 영상 -->
-    <div class="aspect-video bg-black flex-shrink-0 relative">
-      <div id="yt-mini-player" class="w-full h-full"></div>
-    </div>
-
-    <!-- 컨트롤 -->
-    <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0">
-      <button @click="music.prev(); playPrev()" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏮</button>
-      <button @click="togglePlay" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 text-sm">{{ music.isPlaying ? '⏸' : '▶' }}</button>
-      <button @click="music.next(); playNext()" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏭</button>
-      <div class="flex-1"></div>
-      <span class="text-gray-500 text-[10px]">🔊</span>
-      <input type="range" min="0" max="100" v-model="volume" @input="setVolume" @click.stop
-        class="w-16 h-1 accent-indigo-500" style="appearance:auto;" />
-    </div>
-
-    <!-- 프로그레스 -->
-    <div class="h-0.5 bg-gray-800 flex-shrink-0">
-      <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all" :style="{ width: music.progress + '%' }"></div>
-    </div>
-
-    <!-- 플레이리스트 -->
-    <div v-if="music.playlist.length" class="flex-shrink-0 border-t border-white/10">
-      <button @click="showPL = !showPL" class="w-full px-3 py-1.5 text-[10px] text-gray-400 hover:text-gray-200 flex items-center justify-between">
-        <span>다음 곡 ({{ music.playlist.length }}곡)</span>
-        <span>{{ showPL ? '▲' : '▼' }}</span>
-      </button>
-    </div>
-    <div v-if="showPL && music.playlist.length" class="overflow-y-auto max-h-[180px] px-1 pb-1 music-scroll">
-      <div v-for="(track, idx) in music.playlist" :key="track.id || idx"
-        @click="playFromList(track)"
-        class="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition"
-        :class="music.currentIndex === idx ? 'bg-indigo-900/50' : 'hover:bg-white/5'">
-        <span class="text-gray-500 text-[10px] w-4 text-right">{{ idx + 1 }}</span>
-        <div class="flex-1 min-w-0">
-          <p class="text-[11px] truncate" :class="music.currentIndex === idx ? 'text-indigo-400 font-semibold' : 'text-gray-300'">{{ track.title }}</p>
+      <!-- 컨트롤 -->
+      <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0">
+        <button @click="doPrev" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏮</button>
+        <button @click="togglePlay" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 text-sm">{{ music.isPlaying ? '⏸' : '▶' }}</button>
+        <button @click="doNext" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏭</button>
+        <div class="flex-1 h-1 bg-gray-700 rounded-full mx-1">
+          <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: music.progress + '%' }"></div>
         </div>
-        <span v-if="music.currentIndex === idx && music.isPlaying" class="text-indigo-400 text-xs">♪</span>
+        <span class="text-gray-500 text-[10px]">🔊</span>
+        <input type="range" min="0" max="100" v-model="volume" @input="setVolume"
+          class="w-12 h-1 accent-indigo-500" style="appearance:auto;" />
+      </div>
+      <!-- 미니 플레이리스트 -->
+      <div v-if="music.playlist.length" class="overflow-y-auto max-h-[200px] px-1 pb-1 border-t border-white/10">
+        <div v-for="(track, idx) in music.playlist" :key="track.id || idx" @click="playFromList(track)"
+          class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition text-[11px]"
+          :class="music.currentIndex === idx ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-400 hover:bg-white/5'">
+          <span class="w-4 text-right text-gray-600">{{ idx + 1 }}</span>
+          <span class="truncate flex-1">{{ track.title }}</span>
+          <span v-if="music.currentIndex === idx && music.isPlaying" class="text-indigo-400">♪</span>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- YouTube API용 숨겨진 플레이어 (hideUI 상태에서도 오디오 유지) -->
-<div v-if="music.hasTrack && hideUI && music.currentTrack?.youtubeId" class="fixed -top-[9999px] -left-[9999px] w-1 h-1">
-  <div id="yt-mini-player"></div>
-</div>
+  <!-- 숨겨진 YouTube Player (항상 존재) -->
+  <div v-if="music.hasTrack && music.currentTrack?.youtubeId"
+    class="fixed w-1 h-1 overflow-hidden" style="top:-9999px;left:-9999px;">
+    <div id="yt-mini-player"></div>
+  </div>
+</Teleport>
 </template>
 
 <script setup>
@@ -86,57 +65,31 @@ import { useMusicStore } from '../stores/music'
 
 const music = useMusicStore()
 const route = useRoute()
-const state = ref('mini')
 const volume = ref(80)
-const showPL = ref(true)
 let ytPlayer = null
 let progressTimer = null
 let currentVideoId = null
-let ignoreStateChange = false
 
 const isShortsPage = computed(() => route.path.startsWith('/shorts'))
+const isMusicPage = computed(() => route.path.startsWith('/music'))
 const hideUI = computed(() => isShortsPage.value)
 
-// 위치 — 우측 상단에서 시작 (right/top 기준)
-const posRight = ref(16)
-const posTop = ref(80)
-let dragging = false
-let dragStart = { x: 0, y: 0 }
-let posStart = { right: 0, top: 0 }
+// 음악 페이지 = 숨김 (MusicHome에서 인라인 표시), 다른 페이지 = mini/float
+const viewState = ref('mini')
 
-function startDrag(e) {
-  dragging = true
-  const ev = e.touches ? e.touches[0] : e
-  dragStart = { x: ev.clientX, y: ev.clientY }
-  posStart = { right: posRight.value, top: posTop.value }
-  document.addEventListener('mousemove', onDrag)
-  document.addEventListener('mouseup', stopDrag)
-  document.addEventListener('touchmove', onDrag, { passive: false })
-  document.addEventListener('touchend', stopDrag)
-}
-
-function onDrag(e) {
-  if (!dragging) return
-  const ev = e.touches ? e.touches[0] : e
-  const dx = ev.clientX - dragStart.x
-  const dy = ev.clientY - dragStart.y
-  posRight.value = Math.max(0, Math.min(window.innerWidth - 340, posStart.right - dx))
-  posTop.value = Math.max(0, Math.min(window.innerHeight - 100, posStart.top + dy))
-}
-
-function stopDrag() {
-  dragging = false
-  document.removeEventListener('mousemove', onDrag)
-  document.removeEventListener('mouseup', stopDrag)
-  document.removeEventListener('touchmove', onDrag)
-  document.removeEventListener('touchend', stopDrag)
-}
+// 음악 페이지 나가면 mini, 음악 페이지 들어오면 숨김 처리는 hideUI가 아닌 isMusicPage
+watch(isMusicPage, (isMp) => {
+  if (!isMp && music.hasTrack) viewState.value = 'mini'
+})
 
 // YouTube IFrame API
 function loadYTApi() {
   if (window.YT?.Player) return Promise.resolve()
   return new Promise(resolve => {
-    if (document.getElementById('yt-api-script')) { window.onYouTubeIframeAPIReady = resolve; return }
+    if (document.getElementById('yt-api-script')) {
+      const check = setInterval(() => { if (window.YT?.Player) { clearInterval(check); resolve() } }, 100)
+      return
+    }
     const tag = document.createElement('script')
     tag.id = 'yt-api-script'
     tag.src = 'https://www.youtube.com/iframe_api'
@@ -147,67 +100,77 @@ function loadYTApi() {
 
 async function createPlayer(videoId, startAt = 0) {
   await loadYTApi()
+  await nextTick()
+
   const el = document.getElementById('yt-mini-player')
   if (!el) { setTimeout(() => createPlayer(videoId, startAt), 500); return }
 
-  if (ytPlayer && ytPlayer.destroy) {
-    try { ytPlayer.destroy() } catch {}
-    ytPlayer = null
-  }
+  // 기존 플레이어 파괴
+  if (ytPlayer) { try { ytPlayer.destroy() } catch {}; ytPlayer = null }
 
   ytPlayer = new window.YT.Player('yt-mini-player', {
-    width: '100%', height: '100%',
+    width: '1', height: '1',
     videoId,
-    playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+    playerVars: { autoplay: 1, controls: 0, playsinline: 1, origin: window.location.origin },
     events: {
       onReady: (e) => {
         e.target.setVolume(volume.value)
         if (startAt > 0) e.target.seekTo(startAt, true)
+        e.target.playVideo()
         currentVideoId = videoId
+        music.isPlaying = true
         startProgressTimer()
       },
       onStateChange: (e) => {
-        if (ignoreStateChange) return
         if (e.data === window.YT.PlayerState.ENDED) {
           music.next()
-          nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
+          nextTick(() => { if (music.currentTrack?.youtubeId) loadNewVideo(music.currentTrack.youtubeId) })
         }
+        if (e.data === window.YT.PlayerState.PLAYING) music.isPlaying = true
+        if (e.data === window.YT.PlayerState.PAUSED) music.isPlaying = false
+      },
+      onError: () => {
+        // 에러 시 다음 곡
+        setTimeout(() => { music.next(); nextTick(() => { if (music.currentTrack?.youtubeId) loadNewVideo(music.currentTrack.youtubeId) }) }, 1000)
       }
     }
   })
 }
 
-function loadVideo(videoId, startAt = 0) {
+function loadNewVideo(videoId, startAt = 0) {
   if (!ytPlayer?.loadVideoById) { createPlayer(videoId, startAt); return }
-  if (currentVideoId === videoId && startAt === 0) return
   ytPlayer.loadVideoById({ videoId, startSeconds: startAt })
   currentVideoId = videoId
 }
 
 function togglePlay() {
-  if (!ytPlayer?.getPlayerState) return
-  const st = ytPlayer.getPlayerState()
-  if (st === 1) { ytPlayer.pauseVideo(); music.isPlaying = false }
-  else { ytPlayer.playVideo(); music.isPlaying = true }
+  if (!ytPlayer) return
+  try {
+    const st = ytPlayer.getPlayerState()
+    if (st === 1) ytPlayer.pauseVideo()
+    else ytPlayer.playVideo()
+  } catch {}
+}
+
+function doPrev() {
+  music.prev()
+  nextTick(() => { if (music.currentTrack?.youtubeId) loadNewVideo(music.currentTrack.youtubeId) })
+}
+
+function doNext() {
+  music.next()
+  nextTick(() => { if (music.currentTrack?.youtubeId) loadNewVideo(music.currentTrack.youtubeId) })
 }
 
 function playFromList(track) {
   music.play(track)
-  loadVideo(track.youtubeId, 0)
-}
-
-function playPrev() {
-  nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
-}
-
-function playNext() {
-  nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
+  loadNewVideo(track.youtubeId, 0)
 }
 
 function closePlayer() {
-  if (ytPlayer?.stopVideo) ytPlayer.stopVideo()
+  if (ytPlayer?.stopVideo) try { ytPlayer.stopVideo() } catch {}
   music.stop()
-  state.value = 'mini'
+  viewState.value = 'mini'
 }
 
 function setVolume() {
@@ -217,8 +180,8 @@ function setVolume() {
 function startProgressTimer() {
   if (progressTimer) clearInterval(progressTimer)
   progressTimer = setInterval(() => {
-    if (!ytPlayer?.getCurrentTime || !ytPlayer?.getDuration) return
     try {
+      if (!ytPlayer?.getCurrentTime || !ytPlayer?.getDuration) return
       const cur = ytPlayer.getCurrentTime()
       const dur = ytPlayer.getDuration()
       if (dur > 0) music.setProgress((cur / dur) * 100, cur, dur)
@@ -226,33 +189,28 @@ function startProgressTimer() {
   }, 1000)
 }
 
-// 트랙 변경 시
+// 트랙 변경
 watch(() => music.currentTrack?.youtubeId, (vid) => {
   if (!vid) return
-  if (state.value === 'mini') state.value = 'normal'
+  if (viewState.value === 'mini' && !isMusicPage.value) viewState.value = 'float'
   nextTick(() => {
-    if (ytPlayer?.loadVideoById) loadVideo(vid, 0)
+    if (currentVideoId === vid && ytPlayer?.playVideo) { ytPlayer.playVideo(); return }
+    if (ytPlayer?.loadVideoById) loadNewVideo(vid, 0)
     else createPlayer(vid, 0)
   })
 })
 
 watch(isShortsPage, (isShorts) => {
-  if (isShorts && music.isPlaying) {
-    if (ytPlayer?.pauseVideo) ytPlayer.pauseVideo()
-    music.isPlaying = false
-  }
+  if (isShorts && ytPlayer?.pauseVideo) { ytPlayer.pauseVideo(); music.isPlaying = false }
 })
 
 onMounted(() => {
   if (music.currentTrack?.youtubeId) {
-    state.value = 'normal'
     nextTick(() => createPlayer(music.currentTrack.youtubeId, music.currentTime || 0))
   }
 })
 
-onUnmounted(() => {
-  if (progressTimer) clearInterval(progressTimer)
-})
+onUnmounted(() => { if (progressTimer) clearInterval(progressTimer) })
 </script>
 
 <style scoped>
@@ -262,6 +220,4 @@ onUnmounted(() => {
 }
 .animate-pulse-slow { animation: pulse-slow 2s infinite; }
 input[type="range"] { height: 4px; }
-.music-scroll::-webkit-scrollbar { width: 4px; }
-.music-scroll::-webkit-scrollbar-thumb { background: #4338ca; border-radius: 2px; }
 </style>
