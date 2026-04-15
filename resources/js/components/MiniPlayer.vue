@@ -113,7 +113,7 @@ const expandedStyle = computed(() => ({
 }))
 
 const miniStyle = computed(() => {
-  if (isMusicPage.value) return { right: calcMusicPageRight() + 'px', top: '80px' }
+  if (isMusicPage.value) return { right: calcMusicPageRight() + 'px', top: '170px' }
   return { right: '16px', bottom: '80px' }
 })
 
@@ -122,7 +122,7 @@ watch(isMusicPage, (isMp) => {
   if (isMp) {
     isExpanded.value = true
     posRight.value = calcMusicPageRight()
-    posTop.value = 80
+    posTop.value = 170
   }
 })
 
@@ -137,7 +137,7 @@ watch(isMusicPage, (isMp, wasMp) => {
 watch(() => music.currentTrack?.youtubeId, (vid) => {
   if (!vid) return
   isExpanded.value = true
-  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 80 }
+  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 170 }
   else { posRight.value = 16; posTop.value = Math.max(window.innerHeight - 550, 80) }
 
   nextTick(() => {
@@ -276,7 +276,7 @@ onMounted(() => {
   if (isMusicPage.value) {
     isExpanded.value = true
     posRight.value = calcMusicPageRight()
-    posTop.value = 80
+    posTop.value = 170
   }
   if (music.currentTrack?.youtubeId) {
     isExpanded.value = true
