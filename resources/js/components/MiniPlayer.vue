@@ -29,7 +29,8 @@
       </div>
       <div class="flex items-center gap-0.5 flex-shrink-0">
         <button @click.stop="isExpanded = false" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm" title="최소화">−</button>
-        <button @click.stop="closePlayer" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="닫기">✕</button>
+        <button @click.stop="closePlayer" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="숨기기">✕</button>
+        <button @click.stop="stopCompletely" class="w-6 h-6 rounded hover:bg-red-500/50 text-white/70 hover:text-white flex items-center justify-center text-[10px]" title="완전 종료">⏹</button>
       </div>
     </div>
 
@@ -254,11 +255,20 @@ function seekTo(e) {
   ytPlayer.seekTo(pct * ytPlayer.getDuration(), true)
 }
 function closePlayer() {
-  // 닫기 = 음악 정지 + 플레이어 숨김
+  // ✕ = 일시정지 + 숨김 (🎵 버튼은 유지)
   if (ytPlayer?.pauseVideo) try { ytPlayer.pauseVideo() } catch {}
   music.pause()
   isExpanded.value = false
-  // hasTrack은 유지 → 🎵 버튼 계속 보임
+}
+
+function stopCompletely() {
+  // ⏹ = 완전 종료 (플레이어 완전히 사라짐)
+  if (ytPlayer?.stopVideo) try { ytPlayer.stopVideo() } catch {}
+  if (ytPlayer?.destroy) try { ytPlayer.destroy() } catch {}
+  ytPlayer = null
+  currentVideoId = null
+  music.stop()
+  isExpanded.value = false
 }
 function setVolume() { if (ytPlayer?.setVolume) ytPlayer.setVolume(volume.value) }
 
