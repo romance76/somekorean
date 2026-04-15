@@ -62,8 +62,8 @@
         </div>
       </div>
 
-      <!-- 트랙 목록 -->
-      <div class="col-span-12 lg:col-span-9">
+      <!-- 트랙 목록 (오른쪽에 플로팅 플레이어 공간 확보) -->
+      <div class="col-span-12 lg:col-span-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             <span>🎶 {{ showFavorites ? '❤️ 즐겨찾기' : (activePL ? activePL.name : (activeCat?.name || '트랙')) }}</span>
