@@ -132,13 +132,28 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'slot-info'])
 
+// 부모에서 reactive({}) 로 내려주는 경우 v-model 재할당이 const 에러.
+// 따라서 props.modelValue 객체를 직접 mutate (Vue 프록시 반응성으로 부모도 업데이트됨).
+// emit 도 병행 (ref 로 내려주는 경우 대응).
 const tier = computed({
   get: () => props.modelValue?.tier ?? 'none',
-  set: (v) => emit('update:modelValue', { ...props.modelValue, tier: v }),
+  set: (v) => {
+    if (props.modelValue && typeof props.modelValue === 'object') {
+      props.modelValue.tier = v
+    }
+    // ref 로 넘겨준 경우를 위한 emit (reactive 의 경우는 위 mutate 로 이미 반영됨)
+    // Vue 가 v-model 업데이트 핸들러를 const 에 assign 시도해서 throw 해도 이미 mutate 는 성공함
+    try { emit('update:modelValue', { ...(props.modelValue || {}), tier: v }) } catch {}
+  },
 })
 const daysLocal = computed({
   get: () => props.modelValue?.days ?? 7,
-  set: (v) => emit('update:modelValue', { ...props.modelValue, days: v }),
+  set: (v) => {
+    if (props.modelValue && typeof props.modelValue === 'object') {
+      props.modelValue.days = v
+    }
+    try { emit('update:modelValue', { ...(props.modelValue || {}), days: v }) } catch {}
+  },
 })
 
 const prices = reactive({ national: 100, state_plus: 50, sponsored: 20 })
