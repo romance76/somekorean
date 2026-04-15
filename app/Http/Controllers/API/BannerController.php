@@ -30,14 +30,12 @@ class BannerController extends Controller
                 ->where('position', $position)
                 ->where('slot_number', $slotNum);
 
-            // 페이지 매칭: page 컬럼 또는 target_pages JSON에 해당 페이지가 있어야 함
+            // 페이지 매칭
             $query->where(function ($q) use ($page) {
                 $q->where('page', $page)
                   ->orWhere('page', 'all')
-                  // flat 배열: ["jobs","recipes"]
                   ->orWhereJsonContains('target_pages', $page)
-                  // 객체 배열: [{"page":"jobs","geo":"county"}] — page 필드 매칭
-                  ->orWhereRaw("JSON_SEARCH(target_pages, 'one', ?, '$.*.page') IS NOT NULL", [$page]);
+                  ->orWhere('target_pages', 'LIKE', '%"' . $page . '"%');
             });
 
             // 지역 필터
