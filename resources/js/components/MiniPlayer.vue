@@ -9,7 +9,8 @@
 
   <!-- 플레이어 패널 -->
   <div v-if="showPlayer"
-    class="fixed z-[9998] w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden"
+    class="fixed z-[9998] bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden"
+    :class="isMusicPage && window_w >= 1024 ? 'w-[280px]' : 'w-[300px]'"
     :style="{ right: posRight + 'px', top: posTop + 'px', maxHeight: '75vh' }">
 
     <!-- 헤더 -->
@@ -76,6 +77,7 @@ const volume = ref(80)
 const showPL = ref(true)
 const isExpanded = ref(false)
 const isShutdown = ref(false) // 완전 종료 상태
+const window_w = ref(window.innerWidth)
 let ytPlayer = null
 let progressTimer = null
 let currentVideoId = null
@@ -93,7 +95,16 @@ const posRight = ref(16)
 const posTop = ref(170)
 
 function calcMusicPageRight() {
-  return Math.max((window.innerWidth - 1280) / 2, 16)
+  const viewW = window.innerWidth
+  // 화면이 좁으면 (1024px 미만) 오른쪽 하단에 배치
+  if (viewW < 1024) return 16
+  return Math.max((viewW - 1280) / 2, 16)
+}
+
+function calcMusicPageTop() {
+  // 화면이 좁으면 하단에 배치
+  if (window.innerWidth < 1024) return window.innerHeight - 520
+  return 170
 }
 
 // − 최소화: 🎵 버튼으로, 음악 계속
@@ -218,7 +229,7 @@ watch(() => music.currentTrack?.youtubeId, (vid) => {
   if (!vid) return
   isShutdown.value = false // 새 곡 선택 → 종료 해제
   isExpanded.value = true
-  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 170 }
+  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = calcMusicPageTop() }
   else { posRight.value = 16; posTop.value = Math.max(window.innerHeight - 550, 80) }
   nextTick(() => loadVideo(vid, 0))
 })
@@ -238,17 +249,25 @@ watch(isMusicPage, (isMp, wasMp) => {
 })
 
 onMounted(() => {
+  window.addEventListener('resize', onResize)
   if (isMusicPage.value && !isShutdown.value) {
     isExpanded.value = true
     posRight.value = calcMusicPageRight()
-    posTop.value = 170
+    posTop.value = calcMusicPageTop()
   }
   if (music.currentTrack?.youtubeId) {
     isExpanded.value = true
     nextTick(() => createPlayer(music.currentTrack.youtubeId, music.currentTime || 0))
   }
 })
-onUnmounted(() => { if (progressTimer) clearInterval(progressTimer) })
+function onResize() {
+  window_w.value = window.innerWidth
+  if (isMusicPage.value && isExpanded.value) {
+    posRight.value = calcMusicPageRight()
+    posTop.value = calcMusicPageTop()
+  }
+}
+onUnmounted(() => { if (progressTimer) clearInterval(progressTimer); window.removeEventListener('resize', onResize) })
 </script>
 
 <style scoped>
