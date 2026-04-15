@@ -1,24 +1,16 @@
 <template>
 <Teleport to="body">
-  <!-- ═══ 최소화 🎵 버튼 ═══ -->
-  <div v-if="music.hasTrack && !hideUI && !isExpanded"
-    class="fixed z-[9998] cursor-pointer hover:scale-110 transition-all animate-pulse-slow"
-    :style="miniStyle"
-    @click="expand">
-    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-xl flex items-center justify-center relative">
-      <span class="text-white text-xl">{{ music.isPlaying ? '🎵' : '⏸' }}</span>
-      <svg class="absolute inset-0 w-14 h-14 -rotate-90 pointer-events-none" viewBox="0 0 56 56">
-        <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
-        <circle cx="28" cy="28" r="26" fill="none" stroke="#a78bfa" stroke-width="2.5"
-          :stroke-dasharray="163" :stroke-dashoffset="163 - (163 * music.progress / 100)" stroke-linecap="round" />
-      </svg>
-    </div>
+  <!-- 🎵 최소화 버튼 -->
+  <div v-if="showMiniBtn"
+    class="fixed bottom-20 right-4 z-[9998] w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 transition-all animate-pulse-slow"
+    @click="isExpanded = true">
+    <span class="text-white text-xl">{{ music.isPlaying ? '🎵' : '⏸' }}</span>
   </div>
 
-  <!-- ═══ 플레이어 (항상 DOM에 존재, 위치로 숨김/표시) ═══ -->
-  <div v-if="music.hasTrack || isMusicPage"
-    class="fixed z-[9998] w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transition-all duration-300"
-    :style="playerStyle" style="max-height:75vh;">
+  <!-- 플레이어 패널 -->
+  <div v-if="showPlayer"
+    class="fixed z-[9998] w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden"
+    :style="{ right: posRight + 'px', top: posTop + 'px', maxHeight: '75vh' }">
 
     <!-- 헤더 -->
     <div @mousedown="startDrag" @touchstart.passive="startDrag"
@@ -27,13 +19,13 @@
         <span class="text-sm">🎵</span>
         <p class="text-white text-xs font-bold truncate">{{ music.currentTrack?.title || '재생 대기 중' }}</p>
       </div>
-      <div class="flex items-center gap-0.5 flex-shrink-0">
-        <button @click.stop="isExpanded = false" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm" title="최소화">−</button>
-        <button @click.stop="closePlayer" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="닫기">✕</button>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <button @click.stop="minimize" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm" title="최소화">−</button>
+        <button @click.stop="shutdown" class="w-6 h-6 rounded hover:bg-red-500/40 text-white/70 hover:text-white flex items-center justify-center text-xs" title="종료">✕</button>
       </div>
     </div>
 
-    <!-- YouTube 영상 -->
+    <!-- YouTube -->
     <div class="aspect-video bg-black flex-shrink-0">
       <div id="yt-mini-player" class="w-full h-full"></div>
     </div>
@@ -47,8 +39,7 @@
         <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: music.progress + '%' }"></div>
       </div>
       <span class="text-gray-500 text-[10px]">🔊</span>
-      <input type="range" min="0" max="100" v-model="volume" @input="setVolume"
-        class="w-12 h-1 accent-indigo-500" style="appearance:auto;" />
+      <input type="range" min="0" max="100" v-model="volume" @input="setVolume" class="w-12 h-1 accent-indigo-500" style="appearance:auto;" />
     </div>
 
     <!-- 플레이리스트 -->
@@ -84,140 +75,41 @@ const route = useRoute()
 const volume = ref(80)
 const showPL = ref(true)
 const isExpanded = ref(false)
+const isShutdown = ref(false) // 완전 종료 상태
 let ytPlayer = null
 let progressTimer = null
 let currentVideoId = null
 
 const isShortsPage = computed(() => route.path.startsWith('/shorts'))
 const isMusicPage = computed(() => route.path.startsWith('/music'))
-const hideUI = computed(() => isShortsPage.value)
+
+// 🎵 버튼: 트랙 있고 + 펼침 아니고 + 종료 아니고 + 숏츠 아닐 때
+const showMiniBtn = computed(() => music.hasTrack && !isExpanded.value && !isShutdown.value && !isShortsPage.value)
+
+// 플레이어 패널: (트랙 있거나 음악페이지) + 펼침 상태 + 종료 아닐 때
+const showPlayer = computed(() => (music.hasTrack || isMusicPage.value) && isExpanded.value && !isShutdown.value)
 
 const posRight = ref(16)
 const posTop = ref(170)
 
 function calcMusicPageRight() {
-  const maxW = 1280
-  const viewW = window.innerWidth
-  return Math.max((viewW - maxW) / 2, 16)
+  return Math.max((window.innerWidth - 1280) / 2, 16)
 }
 
-// 핵심: 펼침/숨김을 위치로 제어 (display:none 안 씀 → YouTube 안 죽음)
-const playerStyle = computed(() => {
-  if (!isExpanded.value) {
-    return { right: '-9999px', top: '-9999px', opacity: 0, pointerEvents: 'none' }
-  }
-  return { right: posRight.value + 'px', top: posTop.value + 'px', opacity: 1, pointerEvents: 'auto' }
-})
-
-const miniStyle = computed(() => {
-  if (isMusicPage.value) return { right: calcMusicPageRight() + 'px', top: '170px' }
-  return { right: '16px', bottom: '80px' }
-})
-
-let dragging = false
-let dragStart = { x: 0, y: 0 }
-let posStart = { right: 0, top: 0 }
-
-function startDrag(e) {
-  dragging = true
-  const ev = e.touches ? e.touches[0] : e
-  dragStart = { x: ev.clientX, y: ev.clientY }
-  posStart = { right: posRight.value, top: posTop.value }
-  document.addEventListener('mousemove', onDrag)
-  document.addEventListener('mouseup', stopDrag)
-  document.addEventListener('touchmove', onDrag, { passive: false })
-  document.addEventListener('touchend', stopDrag)
-}
-function onDrag(e) {
-  if (!dragging) return
-  const ev = e.touches ? e.touches[0] : e
-  posRight.value = Math.max(0, Math.min(window.innerWidth - 340, posStart.right - (ev.clientX - dragStart.x)))
-  posTop.value = Math.max(0, Math.min(window.innerHeight - 100, posStart.top + (ev.clientY - dragStart.y)))
-}
-function stopDrag() {
-  dragging = false
-  document.removeEventListener('mousemove', onDrag)
-  document.removeEventListener('mouseup', stopDrag)
-  document.removeEventListener('touchmove', onDrag)
-  document.removeEventListener('touchend', stopDrag)
-}
-
-// YouTube IFrame API
-function loadYTApi() {
-  if (window.YT?.Player) return Promise.resolve()
-  return new Promise(resolve => {
-    if (document.getElementById('yt-api-script')) {
-      const check = setInterval(() => { if (window.YT?.Player) { clearInterval(check); resolve() } }, 100)
-      return
-    }
-    const tag = document.createElement('script')
-    tag.id = 'yt-api-script'
-    tag.src = 'https://www.youtube.com/iframe_api'
-    document.head.appendChild(tag)
-    window.onYouTubeIframeAPIReady = resolve
-  })
-}
-
-async function createPlayer(videoId, startAt = 0) {
-  await loadYTApi()
-  await nextTick()
-  const el = document.getElementById('yt-mini-player')
-  if (!el) { setTimeout(() => createPlayer(videoId, startAt), 500); return }
-  if (ytPlayer) { try { ytPlayer.destroy() } catch {}; ytPlayer = null }
-
-  ytPlayer = new window.YT.Player('yt-mini-player', {
-    width: '100%', height: '100%',
-    videoId,
-    playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
-    events: {
-      onReady: (e) => {
-        e.target.setVolume(volume.value)
-        if (startAt > 0) e.target.seekTo(startAt, true)
-        e.target.playVideo()
-        currentVideoId = videoId
-        music.isPlaying = true
-        startProgressTimer()
-      },
-      onStateChange: (e) => {
-        if (e.data === window.YT.PlayerState.ENDED) {
-          music.next()
-          nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
-        }
-        if (e.data === window.YT.PlayerState.PLAYING) music.isPlaying = true
-        if (e.data === window.YT.PlayerState.PAUSED) music.isPlaying = false
-      },
-      onError: () => { setTimeout(() => { music.next() }, 1000) }
-    }
-  })
-}
-
-function loadVideo(videoId, startAt = 0) {
-  try {
-    if (ytPlayer?.loadVideoById && ytPlayer?.getPlayerState) {
-      ytPlayer.loadVideoById({ videoId, startSeconds: startAt })
-      currentVideoId = videoId
-      return
-    }
-  } catch {}
-  createPlayer(videoId, startAt)
-}
-
-function expand() {
-  isExpanded.value = true
-  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 170 }
-  // Player 복구
-  if (music.currentTrack?.youtubeId && music.isPlaying) {
-    nextTick(() => {
-      try { ytPlayer?.getPlayerState(); ytPlayer?.playVideo() } catch { createPlayer(music.currentTrack.youtubeId, music.currentTime || 0) }
-    })
-  }
-}
-
-function closePlayer() {
-  // ✕ = 일시정지 + 숨김 (hasTrack 유지 → 🎵 버튼 남음)
-  try { ytPlayer?.pauseVideo() } catch {}
-  music.pause()
+// − 최소화: 🎵 버튼으로, 음악 계속
+function minimize() {
   isExpanded.value = false
+}
+
+// ✕ 완전 종료: 음악 멈춤 + 플레이어 완전히 사라짐
+function shutdown() {
+  try { ytPlayer?.stopVideo() } catch {}
+  try { ytPlayer?.destroy() } catch {}
+  ytPlayer = null
+  currentVideoId = null
+  music.stop()
+  isExpanded.value = false
+  isShutdown.value = true
 }
 
 function togglePlay() {
@@ -244,26 +136,96 @@ function playFromList(track) {
 function seekTo(e) {
   if (!ytPlayer?.getDuration) return
   const rect = e.currentTarget.getBoundingClientRect()
-  const pct = (e.clientX - rect.left) / rect.width
-  ytPlayer.seekTo(pct * ytPlayer.getDuration(), true)
+  ytPlayer.seekTo((e.clientX - rect.left) / rect.width * ytPlayer.getDuration(), true)
 }
 function setVolume() { try { ytPlayer?.setVolume(volume.value) } catch {} }
 
-function startProgressTimer() {
-  if (progressTimer) clearInterval(progressTimer)
-  progressTimer = setInterval(() => {
-    try {
-      if (!ytPlayer?.getCurrentTime || !ytPlayer?.getDuration) return
-      const cur = ytPlayer.getCurrentTime()
-      const dur = ytPlayer.getDuration()
-      if (dur > 0) music.setProgress((cur / dur) * 100, cur, dur)
-    } catch {}
-  }, 1000)
+// 드래그
+let dragging = false, dragStart = { x: 0, y: 0 }, posStart = { right: 0, top: 0 }
+function startDrag(e) {
+  dragging = true
+  const ev = e.touches ? e.touches[0] : e
+  dragStart = { x: ev.clientX, y: ev.clientY }
+  posStart = { right: posRight.value, top: posTop.value }
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
+  document.addEventListener('touchmove', onDrag, { passive: false })
+  document.addEventListener('touchend', stopDrag)
+}
+function onDrag(e) {
+  if (!dragging) return
+  const ev = e.touches ? e.touches[0] : e
+  posRight.value = Math.max(0, Math.min(window.innerWidth - 340, posStart.right - (ev.clientX - dragStart.x)))
+  posTop.value = Math.max(0, Math.min(window.innerHeight - 100, posStart.top + (ev.clientY - dragStart.y)))
+}
+function stopDrag() {
+  dragging = false
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('touchmove', onDrag)
+  document.removeEventListener('touchend', stopDrag)
 }
 
-// 음악 페이지 진입 → 펼침
+// YouTube
+function loadYTApi() {
+  if (window.YT?.Player) return Promise.resolve()
+  return new Promise(resolve => {
+    if (document.getElementById('yt-api-script')) {
+      const c = setInterval(() => { if (window.YT?.Player) { clearInterval(c); resolve() } }, 100)
+      return
+    }
+    const t = document.createElement('script')
+    t.id = 'yt-api-script'
+    t.src = 'https://www.youtube.com/iframe_api'
+    document.head.appendChild(t)
+    window.onYouTubeIframeAPIReady = resolve
+  })
+}
+
+async function createPlayer(videoId, startAt = 0) {
+  await loadYTApi()
+  await nextTick()
+  const el = document.getElementById('yt-mini-player')
+  if (!el) { setTimeout(() => createPlayer(videoId, startAt), 500); return }
+  if (ytPlayer) { try { ytPlayer.destroy() } catch {}; ytPlayer = null }
+  ytPlayer = new window.YT.Player('yt-mini-player', {
+    width: '100%', height: '100%', videoId,
+    playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+    events: {
+      onReady: (e) => { e.target.setVolume(volume.value); if (startAt > 0) e.target.seekTo(startAt, true); e.target.playVideo(); currentVideoId = videoId; music.isPlaying = true; startProgressTimer() },
+      onStateChange: (e) => {
+        if (e.data === window.YT.PlayerState.ENDED) { music.next(); nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) }) }
+        if (e.data === window.YT.PlayerState.PLAYING) music.isPlaying = true
+        if (e.data === window.YT.PlayerState.PAUSED) music.isPlaying = false
+      },
+      onError: () => setTimeout(() => music.next(), 1000)
+    }
+  })
+}
+
+function loadVideo(videoId, startAt = 0) {
+  try { if (ytPlayer?.loadVideoById && ytPlayer?.getPlayerState) { ytPlayer.loadVideoById({ videoId, startSeconds: startAt }); currentVideoId = videoId; return } } catch {}
+  createPlayer(videoId, startAt)
+}
+
+function startProgressTimer() {
+  if (progressTimer) clearInterval(progressTimer)
+  progressTimer = setInterval(() => { try { const c = ytPlayer?.getCurrentTime(), d = ytPlayer?.getDuration(); if (d > 0) music.setProgress((c / d) * 100, c, d) } catch {} }, 1000)
+}
+
+// 곡 변경 → 자동 펼침 + 종료 상태 해제
+watch(() => music.currentTrack?.youtubeId, (vid) => {
+  if (!vid) return
+  isShutdown.value = false // 새 곡 선택 → 종료 해제
+  isExpanded.value = true
+  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 170 }
+  else { posRight.value = 16; posTop.value = Math.max(window.innerHeight - 550, 80) }
+  nextTick(() => loadVideo(vid, 0))
+})
+
+// 음악 페이지 진입 → 펼침 (종료 상태 아닐 때)
 watch(isMusicPage, (isMp) => {
-  if (isMp) {
+  if (isMp && !isShutdown.value) {
     isExpanded.value = true
     posRight.value = calcMusicPageRight()
     posTop.value = 170
@@ -275,21 +237,8 @@ watch(isMusicPage, (isMp, wasMp) => {
   if (!isMp && wasMp) isExpanded.value = false
 })
 
-// 곡 변경
-watch(() => music.currentTrack?.youtubeId, (vid) => {
-  if (!vid) return
-  isExpanded.value = true
-  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 170 }
-  else { posRight.value = 16; posTop.value = Math.max(window.innerHeight - 550, 80) }
-  nextTick(() => loadVideo(vid, 0))
-})
-
-watch(isShortsPage, (isShorts) => {
-  if (isShorts) { try { ytPlayer?.pauseVideo() } catch {}; music.isPlaying = false }
-})
-
 onMounted(() => {
-  if (isMusicPage.value) {
+  if (isMusicPage.value && !isShutdown.value) {
     isExpanded.value = true
     posRight.value = calcMusicPageRight()
     posTop.value = 170
