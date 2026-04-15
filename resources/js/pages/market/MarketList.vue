@@ -147,26 +147,29 @@
         <!-- 오른쪽: 정보 -->
         <div class="flex-1 p-3 min-w-0 flex flex-col justify-between">
           <div>
+            <!-- 프로모션 뱃지 + 태그 (위) -->
             <div class="flex items-center gap-1 mb-0.5 flex-wrap">
               <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
               <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
               <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
-              <span v-if="item.boosted_until && new Date(item.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold">🚀</span>
-              <span v-if="item.hold_enabled" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-bold">🔒</span>
+              <span v-if="item.is_negotiable" class="text-[9px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded">가격협의</span>
+              <span v-if="item.hold_enabled" class="text-[9px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.5 rounded">홀드가능</span>
             </div>
-            <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
+            <!-- 제목 + 가격 (가격을 오른쪽 위로) -->
+            <div class="flex items-start gap-2">
+              <div class="text-sm font-bold text-gray-800 truncate flex-1">{{ item.title }}</div>
+              <div class="text-amber-600 font-black text-base whitespace-nowrap flex-shrink-0">${{ Number(item.price || 0).toLocaleString() }}</div>
+            </div>
             <div class="text-[10px] text-gray-400 mt-0.5">
               {{ item.category || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" />
             </div>
             <div class="text-xs text-gray-500 line-clamp-1 mt-1">{{ (item.content || '').slice(0, 60) }}</div>
           </div>
-          <div class="flex items-center justify-between">
-            <div class="text-[10px] text-gray-400 flex items-center gap-1.5">
-              <span v-if="item.city">📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
-              <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
-              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
-            </div>
-            <div class="text-amber-600 font-black text-base">${{ Number(item.price || 0).toLocaleString() }}</div>
+          <!-- 하단: 위치 + 날짜만 (가격 제거) -->
+          <div class="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
+            <span v-if="item.city">📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
+            <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
+            <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
           </div>
         </div>
       </div>
