@@ -24,7 +24,8 @@ class BusinessController extends Controller
 
     public function promote(Request $request, $id)
     {
-        $item = $this->findOwnedOrAdmin(Business::class, $id);
+        // 업소는 소유권 컬럼이 owner_id (claim 승인시 설정됨)
+        $item = $this->findOwnedOrAdmin(Business::class, $id, 'owner_id');
         return $this->handlePromote($item, $request);
     }
 

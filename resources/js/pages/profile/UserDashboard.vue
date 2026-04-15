@@ -661,16 +661,54 @@
 
         <!-- 업소 목록 -->
         <div v-else class="space-y-2">
-          <div v-for="biz in myBizList" :key="biz.id" @click="editBiz=biz" class="border rounded-lg p-3 cursor-pointer hover:border-amber-400 transition">
-            <div class="flex items-center gap-3">
+          <div v-for="biz in myBizList" :key="biz.id" class="border rounded-lg p-3 hover:border-amber-400 transition">
+            <div class="flex items-center gap-3" @click="editBiz=biz" style="cursor:pointer">
               <img v-if="biz.images?.length" :src="biz.images[0]" class="w-12 h-12 rounded-lg object-cover" />
               <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-xl" v-else>🏪</div>
-              <div>
-                <div class="text-sm font-bold text-gray-800">{{ biz.name }}</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-1.5">
+                  <div class="text-sm font-bold text-gray-800">{{ biz.name }}</div>
+                  <span v-if="biz.promotion_tier === 'national' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
+                  <span v-else-if="biz.promotion_tier === 'state_plus' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
+                  <span v-else-if="biz.promotion_tier === 'sponsored' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
+                </div>
                 <div class="text-xs text-gray-400">{{ biz.category }} · {{ biz.city }}, {{ biz.state }}</div>
               </div>
             </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
+              <div v-if="biz.promotion_tier && biz.promotion_tier !== 'none' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()"
+                class="text-[10px] text-gray-500">
+                상위노출 만료: {{ fmtDateFull(biz.promotion_expires_at) }}
+              </div>
+              <div v-else class="text-[10px] text-gray-400">상위노출 미적용</div>
+              <button @click="openBizPromote(biz)"
+                class="text-[10px] font-bold px-3 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200">
+                🚀 상위노출 {{ biz.promotion_tier === 'none' || !biz.promotion_expires_at || new Date(biz.promotion_expires_at) <= new Date() ? '신청' : '연장/변경' }}
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 업소 상위노출 신청 모달 -->
+    <div v-if="bizPromoTarget" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="bizPromoTarget=null">
+      <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-gray-800">🚀 {{ bizPromoTarget.name }} 상위노출</h3>
+          <button @click="bizPromoTarget=null" class="text-gray-400 text-xl">&times;</button>
+        </div>
+        <PromotionSection resource="business" :is-edit="false"
+          :category="bizPromoTarget.category" :state="bizPromoTarget.state"
+          v-model="bizPromotion" ref="bizPromoRef"
+          category-label="업소 카테고리" />
+        <div v-if="bizPromoError" class="bg-red-50 border border-red-200 text-red-600 rounded-lg px-3 py-2 text-xs">{{ bizPromoError }}</div>
+        <div class="flex gap-2 justify-end">
+          <button @click="bizPromoTarget=null" class="text-gray-500 text-xs px-4 py-2">취소</button>
+          <button @click="submitBizPromote" :disabled="bizPromoSubmitting || bizPromotion.tier === 'none'"
+            class="bg-purple-500 text-white font-bold px-4 py-2 rounded-lg text-xs disabled:opacity-50">
+            {{ bizPromoSubmitting ? '처리중...' : '상위노출 적용' }}
+          </button>
         </div>
       </div>
     </div>
@@ -788,6 +826,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useModal } from '../../composables/useModal'
 import axios from 'axios'
 import AdApplyEmbed from '../ads/AdApply.vue'
+import PromotionSection from '../../components/PromotionSection.vue'
 
 const { showAlert, showConfirm, showPrompt } = useModal()
 
@@ -1211,6 +1250,40 @@ const myBizList = ref([])
 const editBiz = ref(null)
 const showMenuForm = ref(false)
 const menuForm = ref({ name: '', description: '', price: 0, category: 'main', options: [] })
+
+// 업소 상위노출 모달
+const bizPromoTarget = ref(null)
+const bizPromotion = reactive({ tier: 'none', days: 7 })
+const bizPromoRef = ref(null)
+const bizPromoSubmitting = ref(false)
+const bizPromoError = ref('')
+function openBizPromote(biz) {
+  bizPromoTarget.value = biz
+  bizPromotion.tier = 'none'
+  bizPromotion.days = 7
+  bizPromoError.value = ''
+}
+async function submitBizPromote() {
+  if (!bizPromoTarget.value || bizPromotion.tier === 'none') return
+  if (['state_plus','national'].includes(bizPromotion.tier) && bizPromoRef.value?.isSlotFull) {
+    const t = bizPromoRef.value?.nextSlotTimeFmt
+    bizPromoError.value = t ? `슬롯 만석. ${t} 이후 가능합니다.` : '슬롯 만석입니다.'
+    return
+  }
+  bizPromoSubmitting.value = true
+  bizPromoError.value = ''
+  try {
+    await axios.post(`/api/businesses/${bizPromoTarget.value.id}/promote`, {
+      tier: bizPromotion.tier, days: bizPromotion.days,
+    })
+    await loadMyBiz()
+    bizPromoTarget.value = null
+    showAlert('상위노출이 적용되었습니다', '완료')
+  } catch (e) {
+    bizPromoError.value = e.response?.data?.message || '상위노출 적용 실패'
+  }
+  bizPromoSubmitting.value = false
+}
 
 async function loadMyBiz() {
   try { const { data } = await axios.get('/api/my-businesses'); myBizList.value = data.data || [] } catch {}
