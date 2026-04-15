@@ -2,7 +2,7 @@
 <!-- 음악 페이지: 오른쪽 사이드바 영역에 인라인 표시 -->
 <!-- 다른 페이지: fixed 플로팅 -->
 <Teleport to="body">
-  <div v-if="music.hasTrack && !hideUI">
+  <div v-if="music.hasTrack && !hideUI && !music.inlinePlaying">
 
     <!-- ═══ 최소화 (다른 페이지에서) ═══ -->
     <div v-if="viewState === 'mini'"
@@ -50,8 +50,8 @@
     </div>
   </div>
 
-  <!-- 숨겨진 YouTube Player (항상 존재) -->
-  <div v-if="music.hasTrack && music.currentTrack?.youtubeId"
+  <!-- 숨겨진 YouTube Player (인라인 모드가 아닐 때만) -->
+  <div v-if="music.hasTrack && music.currentTrack?.youtubeId && !music.inlinePlaying"
     class="fixed w-1 h-1 overflow-hidden" style="top:-9999px;left:-9999px;">
     <div id="yt-mini-player"></div>
   </div>
@@ -189,15 +189,25 @@ function startProgressTimer() {
   }, 1000)
 }
 
-// 트랙 변경
+// 트랙 변경 (인라인 모드에서는 MusicHome이 관리)
 watch(() => music.currentTrack?.youtubeId, (vid) => {
-  if (!vid) return
-  if (viewState.value === 'mini' && !isMusicPage.value) viewState.value = 'float'
+  if (!vid || music.inlinePlaying) return
+  if (viewState.value === 'mini') viewState.value = 'float'
   nextTick(() => {
     if (currentVideoId === vid && ytPlayer?.playVideo) { ytPlayer.playVideo(); return }
     if (ytPlayer?.loadVideoById) loadNewVideo(vid, 0)
     else createPlayer(vid, 0)
   })
+})
+
+// 인라인 모드 해제 → MiniPlayer가 이어받아 재생
+watch(() => music.inlinePlaying, (inline) => {
+  if (!inline && music.currentTrack?.youtubeId && music.isPlaying) {
+    viewState.value = 'mini'
+    setTimeout(() => {
+      createPlayer(music.currentTrack.youtubeId, music.currentTime || 0)
+    }, 500)
+  }
 })
 
 watch(isShortsPage, (isShorts) => {

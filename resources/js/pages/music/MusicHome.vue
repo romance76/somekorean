@@ -170,7 +170,7 @@
 </style>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useMusicStore } from '../../stores/music'
 import axios from 'axios'
@@ -228,7 +228,7 @@ function isInPlaylist(id) { return plTrackIds.value.has(id) }
 function playTrack(track) {
   playing.value = track
   playQueue.value = [...displayTracks.value]
-  // 글로벌 music store 업데이트 → MiniPlayer에서 다른 페이지에서도 재생 유지
+  musicStore.inlinePlaying = true // 인라인 플레이어 사용
   musicStore.play({ ...track, youtubeId: track.youtube_id, thumbnail: track.thumbnail_url || track.thumbnail })
   musicStore.playlist = playQueue.value.map(t => ({ ...t, youtubeId: t.youtube_id, thumbnail: t.thumbnail_url || t.thumbnail }))
 }
@@ -415,5 +415,12 @@ onMounted(async () => {
     } catch {}
   }
   loading.value = false
+  // 음악 페이지 진입 시 인라인 모드 활성화
+  if (musicStore.hasTrack) musicStore.inlinePlaying = true
+})
+
+onUnmounted(() => {
+  // 음악 페이지 떠남 → 인라인 모드 해제, MiniPlayer가 이어받음
+  musicStore.inlinePlaying = false
 })
 </script>
