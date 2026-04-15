@@ -308,7 +308,7 @@
       <div class="bg-white rounded-xl shadow-sm border p-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-gray-800">📢 내 광고</h2>
-          <button @click="showAdForm=!showAdForm" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs">{{ showAdForm ? '취소' : '+ 광고 신청' }}</button>
+          <router-link to="/ad-apply" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs inline-block">+ 새 광고 신청</router-link>
         </div>
 
         <!-- 신청 폼 -->
@@ -775,7 +775,7 @@ const tabs = [
   { key: 'messages', icon: '✉️', label: '쪽지' },
   { key: 'posts', icon: '📄', label: '내 글' },
   { key: 'market', icon: '🛒', label: '내 장터' },
-  { key: 'ads', icon: '📢', label: '광고 신청', link: '/ad-apply' },
+  { key: 'ads', icon: '📢', label: '광고 신청' },
   { key: 'calls', icon: '📞', label: '통화내역' },
   { key: 'bookmarks', icon: '🔖', label: '북마크' },
   { key: 'elder', icon: '🛡️', label: '안심' },
