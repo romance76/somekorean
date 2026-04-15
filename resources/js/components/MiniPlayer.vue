@@ -1,11 +1,10 @@
 <template>
-<div v-if="music.hasTrack" ref="playerContainer"
-  class="fixed z-[9998] transition-shadow"
-  :style="{ left: pos.x + 'px', top: pos.y + 'px' }"
-  :class="hideUI ? 'w-0 h-0 overflow-hidden' : ''">
+<div v-if="music.hasTrack && !hideUI" ref="playerContainer"
+  class="fixed z-[9998]"
+  :style="{ right: posRight + 'px', top: posTop + 'px' }">
 
-  <!-- ═══ 최소화 상태: 플로팅 버튼 ═══ -->
-  <div v-if="state === 'mini' && !hideUI" @click="state = 'normal'"
+  <!-- ═══ 최소화 상태 ═══ -->
+  <div v-if="state === 'mini'" @click="state = 'normal'"
     class="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 transition-all animate-pulse-slow relative">
     <span class="text-white text-xl">{{ music.isPlaying ? '🎵' : '⏸' }}</span>
     <svg class="absolute inset-0 w-14 h-14 -rotate-90 pointer-events-none" viewBox="0 0 56 56">
@@ -15,74 +14,73 @@
     </svg>
   </div>
 
-  <!-- ═══ 일반 상태: 영상 + 컨트롤 + 플레이리스트 ═══ -->
-  <div v-else-if="state === 'normal' && !hideUI"
-    class="w-[340px] bg-[#1a1a2e] rounded-2xl shadow-2xl overflow-hidden border border-white/10 flex flex-col"
-    style="max-height: 80vh;">
+  <!-- ═══ 일반 상태 ═══ -->
+  <div v-else class="w-[320px] bg-[#1a1a2e] rounded-2xl shadow-2xl overflow-hidden border border-white/10 flex flex-col" style="max-height:75vh;">
 
-    <!-- 드래그 핸들 + 헤더 -->
+    <!-- 드래그 헤더 -->
     <div @mousedown="startDrag" @touchstart.passive="startDrag"
       class="px-3 py-2 flex items-center justify-between cursor-move bg-gradient-to-r from-indigo-700 to-purple-700 select-none flex-shrink-0">
       <div class="flex items-center gap-2 flex-1 min-w-0">
-        <span class="text-white text-sm">🎵</span>
+        <span class="text-sm">🎵</span>
         <p class="text-white text-xs font-bold truncate">{{ music.currentTrack?.title }}</p>
       </div>
       <div class="flex items-center gap-0.5 flex-shrink-0">
-        <button @click.stop="state = 'mini'" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="최소화">−</button>
-        <button @click.stop="music.stop(); state = 'mini'" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="닫기">✕</button>
+        <button @click.stop="state = 'mini'" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm" title="최소화">−</button>
+        <button @click.stop="closePlayer" class="w-6 h-6 rounded hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs" title="닫기">✕</button>
       </div>
     </div>
 
     <!-- YouTube 영상 -->
-    <div class="aspect-video bg-black flex-shrink-0">
-      <div ref="ytPlayerEl" id="yt-mini-player" class="w-full h-full"></div>
-    </div>
-
-    <!-- 진행 바 -->
-    <div class="h-1 bg-gray-800 flex-shrink-0">
-      <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all" :style="{ width: music.progress + '%' }"></div>
+    <div class="aspect-video bg-black flex-shrink-0 relative">
+      <div id="yt-mini-player" class="w-full h-full"></div>
     </div>
 
     <!-- 컨트롤 -->
-    <div class="px-3 py-2 flex items-center justify-between flex-shrink-0">
-      <p class="text-gray-400 text-[10px]">{{ music.currentTrack?.artist }}</p>
-      <div class="flex items-center gap-1">
-        <button @click="music.prev()" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏮</button>
-        <button @click="music.toggle()" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500">{{ music.isPlaying ? '⏸' : '▶' }}</button>
-        <button @click="music.next()" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏭</button>
-      </div>
-      <div class="flex items-center gap-1">
-        <span class="text-gray-500 text-[10px]">🔊</span>
-        <input type="range" min="0" max="100" v-model="volume" @input="setVolume" @click.stop
-          class="w-16 h-1 accent-indigo-500" style="appearance:auto;" />
-      </div>
+    <div class="px-3 py-2 flex items-center gap-2 flex-shrink-0">
+      <button @click="music.prev(); playPrev()" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏮</button>
+      <button @click="togglePlay" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 text-sm">{{ music.isPlaying ? '⏸' : '▶' }}</button>
+      <button @click="music.next(); playNext()" class="w-7 h-7 rounded-full text-gray-400 hover:text-white flex items-center justify-center text-xs">⏭</button>
+      <div class="flex-1"></div>
+      <span class="text-gray-500 text-[10px]">🔊</span>
+      <input type="range" min="0" max="100" v-model="volume" @input="setVolume" @click.stop
+        class="w-16 h-1 accent-indigo-500" style="appearance:auto;" />
+    </div>
+
+    <!-- 프로그레스 -->
+    <div class="h-0.5 bg-gray-800 flex-shrink-0">
+      <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all" :style="{ width: music.progress + '%' }"></div>
     </div>
 
     <!-- 플레이리스트 -->
-    <div v-if="music.playlist.length" class="border-t border-white/10 flex-shrink-0">
-      <button @click="showPlaylist = !showPlaylist" class="w-full px-3 py-1.5 text-[10px] text-gray-500 hover:text-gray-300 flex items-center justify-between">
+    <div v-if="music.playlist.length" class="flex-shrink-0 border-t border-white/10">
+      <button @click="showPL = !showPL" class="w-full px-3 py-1.5 text-[10px] text-gray-400 hover:text-gray-200 flex items-center justify-between">
         <span>다음 곡 ({{ music.playlist.length }}곡)</span>
-        <span>{{ showPlaylist ? '▲' : '▼' }}</span>
+        <span>{{ showPL ? '▲' : '▼' }}</span>
       </button>
     </div>
-    <div v-if="showPlaylist && music.playlist.length" class="overflow-y-auto max-h-[200px] px-1 pb-1">
+    <div v-if="showPL && music.playlist.length" class="overflow-y-auto max-h-[180px] px-1 pb-1 music-scroll">
       <div v-for="(track, idx) in music.playlist" :key="track.id || idx"
-        @click="music.play(track); initPlayer(track.youtubeId, 0)"
-        class="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition"
+        @click="playFromList(track)"
+        class="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition"
         :class="music.currentIndex === idx ? 'bg-indigo-900/50' : 'hover:bg-white/5'">
         <span class="text-gray-500 text-[10px] w-4 text-right">{{ idx + 1 }}</span>
         <div class="flex-1 min-w-0">
-          <p class="text-xs truncate" :class="music.currentIndex === idx ? 'text-indigo-400 font-semibold' : 'text-gray-300'">{{ track.title }}</p>
+          <p class="text-[11px] truncate" :class="music.currentIndex === idx ? 'text-indigo-400 font-semibold' : 'text-gray-300'">{{ track.title }}</p>
         </div>
         <span v-if="music.currentIndex === idx && music.isPlaying" class="text-indigo-400 text-xs">♪</span>
       </div>
     </div>
   </div>
 </div>
+
+<!-- YouTube API용 숨겨진 플레이어 (hideUI 상태에서도 오디오 유지) -->
+<div v-if="music.hasTrack && hideUI && music.currentTrack?.youtubeId" class="fixed -top-[9999px] -left-[9999px] w-1 h-1">
+  <div id="yt-mini-player"></div>
+</div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMusicStore } from '../stores/music'
 
@@ -90,27 +88,27 @@ const music = useMusicStore()
 const route = useRoute()
 const state = ref('mini')
 const volume = ref(80)
-const showPlaylist = ref(false)
-const ytPlayerEl = ref(null)
-const playerContainer = ref(null)
+const showPL = ref(true)
 let ytPlayer = null
 let progressTimer = null
 let currentVideoId = null
-
-// 드래그 위치
-const pos = ref({ x: window.innerWidth - 360, y: window.innerHeight - 100 })
-let dragging = false
-let dragStart = { x: 0, y: 0 }
-let posStart = { x: 0, y: 0 }
+let ignoreStateChange = false
 
 const isShortsPage = computed(() => route.path.startsWith('/shorts'))
 const hideUI = computed(() => isShortsPage.value)
+
+// 위치 — 우측 상단에서 시작 (right/top 기준)
+const posRight = ref(16)
+const posTop = ref(80)
+let dragging = false
+let dragStart = { x: 0, y: 0 }
+let posStart = { right: 0, top: 0 }
 
 function startDrag(e) {
   dragging = true
   const ev = e.touches ? e.touches[0] : e
   dragStart = { x: ev.clientX, y: ev.clientY }
-  posStart = { ...pos.value }
+  posStart = { right: posRight.value, top: posTop.value }
   document.addEventListener('mousemove', onDrag)
   document.addEventListener('mouseup', stopDrag)
   document.addEventListener('touchmove', onDrag, { passive: false })
@@ -120,10 +118,10 @@ function startDrag(e) {
 function onDrag(e) {
   if (!dragging) return
   const ev = e.touches ? e.touches[0] : e
-  pos.value = {
-    x: Math.max(0, Math.min(window.innerWidth - 100, posStart.x + ev.clientX - dragStart.x)),
-    y: Math.max(0, Math.min(window.innerHeight - 100, posStart.y + ev.clientY - dragStart.y)),
-  }
+  const dx = ev.clientX - dragStart.x
+  const dy = ev.clientY - dragStart.y
+  posRight.value = Math.max(0, Math.min(window.innerWidth - 340, posStart.right - dx))
+  posTop.value = Math.max(0, Math.min(window.innerHeight - 100, posStart.top + dy))
 }
 
 function stopDrag() {
@@ -147,87 +145,113 @@ function loadYTApi() {
   })
 }
 
-async function initPlayer(videoId, startAt = 0) {
-  if (!videoId) return
+async function createPlayer(videoId, startAt = 0) {
   await loadYTApi()
-  if (ytPlayer && ytPlayer.loadVideoById) {
-    if (currentVideoId === videoId) { if (startAt > 0) ytPlayer.seekTo(startAt, true); return }
-    ytPlayer.loadVideoById({ videoId, startSeconds: startAt })
-    currentVideoId = videoId
-    return
-  }
-  // 엘리먼트 확인
   const el = document.getElementById('yt-mini-player')
-  if (!el) { setTimeout(() => initPlayer(videoId, startAt), 300); return }
+  if (!el) { setTimeout(() => createPlayer(videoId, startAt), 500); return }
+
+  if (ytPlayer && ytPlayer.destroy) {
+    try { ytPlayer.destroy() } catch {}
+    ytPlayer = null
+  }
+
   ytPlayer = new window.YT.Player('yt-mini-player', {
     width: '100%', height: '100%',
     videoId,
-    playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, start: Math.floor(startAt) },
+    playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
     events: {
-      onReady: (e) => { e.target.setVolume(volume.value); currentVideoId = videoId },
+      onReady: (e) => {
+        e.target.setVolume(volume.value)
+        if (startAt > 0) e.target.seekTo(startAt, true)
+        currentVideoId = videoId
+        startProgressTimer()
+      },
       onStateChange: (e) => {
-        if (e.data === window.YT.PlayerState.ENDED) music.next()
-        if (e.data === window.YT.PlayerState.PLAYING) music.isPlaying = true
-        if (e.data === window.YT.PlayerState.PAUSED) music.isPlaying = false
+        if (ignoreStateChange) return
+        if (e.data === window.YT.PlayerState.ENDED) {
+          music.next()
+          nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
+        }
       }
     }
   })
 }
 
-function startProgressTimer() {
-  if (progressTimer) return
-  progressTimer = setInterval(() => {
-    if (!ytPlayer?.getCurrentTime || !ytPlayer?.getDuration) return
-    const cur = ytPlayer.getCurrentTime()
-    const dur = ytPlayer.getDuration()
-    if (dur > 0) music.setProgress((cur / dur) * 100, cur, dur)
-  }, 1000)
+function loadVideo(videoId, startAt = 0) {
+  if (!ytPlayer?.loadVideoById) { createPlayer(videoId, startAt); return }
+  if (currentVideoId === videoId && startAt === 0) return
+  ytPlayer.loadVideoById({ videoId, startSeconds: startAt })
+  currentVideoId = videoId
 }
 
-watch(() => music.currentTrack?.youtubeId, async (vid) => {
-  if (!vid) { if (ytPlayer?.stopVideo) ytPlayer.stopVideo(); return }
-  if (state.value === 'mini') state.value = 'normal'
-  await initPlayer(vid, 0)
-  startProgressTimer()
-}, { immediate: false })
+function togglePlay() {
+  if (!ytPlayer?.getPlayerState) return
+  const st = ytPlayer.getPlayerState()
+  if (st === 1) { ytPlayer.pauseVideo(); music.isPlaying = false }
+  else { ytPlayer.playVideo(); music.isPlaying = true }
+}
 
-watch(() => music.isPlaying, (playing) => {
-  if (!ytPlayer?.playVideo) return
-  if (playing) ytPlayer.playVideo()
-  else ytPlayer.pauseVideo()
-})
+function playFromList(track) {
+  music.play(track)
+  loadVideo(track.youtubeId, 0)
+}
+
+function playPrev() {
+  nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
+}
+
+function playNext() {
+  nextTick(() => { if (music.currentTrack?.youtubeId) loadVideo(music.currentTrack.youtubeId) })
+}
+
+function closePlayer() {
+  if (ytPlayer?.stopVideo) ytPlayer.stopVideo()
+  music.stop()
+  state.value = 'mini'
+}
 
 function setVolume() {
   if (ytPlayer?.setVolume) ytPlayer.setVolume(volume.value)
 }
 
-watch(isShortsPage, (isShorts) => {
-  if (isShorts && music.isPlaying) music.pause()
-})
-
-// 윈도우 리사이즈 시 위치 보정
-function onResize() {
-  pos.value = {
-    x: Math.min(pos.value.x, window.innerWidth - 60),
-    y: Math.min(pos.value.y, window.innerHeight - 60),
-  }
+function startProgressTimer() {
+  if (progressTimer) clearInterval(progressTimer)
+  progressTimer = setInterval(() => {
+    if (!ytPlayer?.getCurrentTime || !ytPlayer?.getDuration) return
+    try {
+      const cur = ytPlayer.getCurrentTime()
+      const dur = ytPlayer.getDuration()
+      if (dur > 0) music.setProgress((cur / dur) * 100, cur, dur)
+    } catch {}
+  }, 1000)
 }
 
+// 트랙 변경 시
+watch(() => music.currentTrack?.youtubeId, (vid) => {
+  if (!vid) return
+  if (state.value === 'mini') state.value = 'normal'
+  nextTick(() => {
+    if (ytPlayer?.loadVideoById) loadVideo(vid, 0)
+    else createPlayer(vid, 0)
+  })
+})
+
+watch(isShortsPage, (isShorts) => {
+  if (isShorts && music.isPlaying) {
+    if (ytPlayer?.pauseVideo) ytPlayer.pauseVideo()
+    music.isPlaying = false
+  }
+})
+
 onMounted(() => {
-  window.addEventListener('resize', onResize)
-  pos.value = { x: window.innerWidth - 360, y: window.innerHeight - 100 }
   if (music.currentTrack?.youtubeId) {
     state.value = 'normal'
-    setTimeout(() => {
-      initPlayer(music.currentTrack.youtubeId, music.currentTime || 0)
-      startProgressTimer()
-    }, 300)
+    nextTick(() => createPlayer(music.currentTrack.youtubeId, music.currentTime || 0))
   }
 })
 
 onUnmounted(() => {
   if (progressTimer) clearInterval(progressTimer)
-  window.removeEventListener('resize', onResize)
 })
 </script>
 
@@ -238,4 +262,6 @@ onUnmounted(() => {
 }
 .animate-pulse-slow { animation: pulse-slow 2s infinite; }
 input[type="range"] { height: 4px; }
+.music-scroll::-webkit-scrollbar { width: 4px; }
+.music-scroll::-webkit-scrollbar-thumb { background: #4338ca; border-radius: 2px; }
 </style>
