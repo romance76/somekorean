@@ -455,7 +455,9 @@ async function loadPage(p = 1) {
   loading.value = true
   page.value = p
 
-  const params = { page: p, per_page: 20 }
+  // 항상 랜덤 정렬: 업소록은 카테고리 클릭/재방문마다 다른 순서로 노출되도록
+  // seed 는 매 요청마다 갱신 (MySQL RAND(seed) 로 동일 페이지 내 일관성 + 재로드시 변경)
+  const params = { page: p, per_page: 20, sort: 'random', rand_seed: Math.floor(Math.random() * 100000) }
   if (search.value) params.search = search.value
   if (activeCat.value) params.category = activeCat.value
 

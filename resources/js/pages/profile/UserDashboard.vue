@@ -663,10 +663,44 @@
           <div><label class="text-xs font-bold text-gray-600 block mb-1">주소</label><input v-model="editBiz.address" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div class="grid grid-cols-3 gap-3">
             <div><label class="text-xs font-bold text-gray-600 block mb-1">도시</label><input v-model="editBiz.city" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-            <div><label class="text-xs font-bold text-gray-600 block mb-1">주</label><input v-model="editBiz.state" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-            <div><label class="text-xs font-bold text-gray-600 block mb-1">우편번호</label><input v-model="editBiz.zipcode" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">주</label><input v-model="editBiz.state" maxlength="2" class="w-full border rounded-lg px-3 py-2 text-sm uppercase" /></div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">우편번호</label>
+              <input v-model="editBiz.zipcode" maxlength="5" @input="onBizZipChange" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" />
+            </div>
           </div>
-          <div><label class="text-xs font-bold text-gray-600 block mb-1">웹사이트</label><input v-model="editBiz.website" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-gray-600 block mb-1">카테고리 <span class="text-red-400">*</span></label>
+              <select v-model="editBiz.category" class="w-full border rounded-lg px-3 py-2 text-sm">
+                <option value="">선택</option>
+                <option value="restaurant">🍽️ 음식점</option>
+                <option value="beauty">💅 미용</option>
+                <option value="medical">🏥 의료</option>
+                <option value="retail">🛒 판매/리테일</option>
+                <option value="service">🔧 서비스</option>
+                <option value="education">📚 교육</option>
+                <option value="auto">🚗 자동차</option>
+                <option value="real_estate">🏠 부동산</option>
+                <option value="professional">💼 전문직</option>
+                <option value="etc">📋 기타</option>
+              </select>
+            </div>
+            <div><label class="text-xs font-bold text-gray-600 block mb-1">웹사이트</label><input v-model="editBiz.website" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          </div>
+
+          <!-- 주소 기반 인라인 상위노출 -->
+          <PromotionSection resource="business" :is-edit="false"
+            :category="editBiz.category" :state="editBiz.state"
+            v-model="editBizPromotion" ref="editBizPromoRef"
+            category-label="카테고리" />
+          <div class="flex items-center justify-end gap-2">
+            <button @click="submitEditBizPromote" :disabled="editBizPromotion.tier === 'none' || editBizPromoSubmitting"
+              class="bg-purple-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs disabled:opacity-50">
+              {{ editBizPromoSubmitting ? '처리중...' : '🚀 상위노출 적용' }}
+            </button>
+          </div>
+          <div v-if="editBizPromoMsg" class="text-xs" :class="editBizPromoMsg.ok ? 'text-green-600' : 'text-red-500'">{{ editBizPromoMsg.text }}</div>
+
           <div><label class="text-xs font-bold text-gray-600 block mb-1">업소 소개</label><textarea v-model="editBiz.description" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm resize-none"></textarea></div>
 
           <!-- 사진 관리 -->
@@ -1399,6 +1433,56 @@ const myBizList = ref([])
 const editBiz = ref(null)
 const showMenuForm = ref(false)
 const menuForm = ref({ name: '', description: '', price: 0, category: 'main', options: [] })
+
+// 편집 모드 인라인 상위노출
+const editBizPromotion = reactive({ tier: 'none', days: 7 })
+const editBizPromoRef = ref(null)
+const editBizPromoSubmitting = ref(false)
+const editBizPromoMsg = ref(null)
+
+// 편집 중 zipcode 변경시 city/state 자동
+let editBizZipTimer = null
+function onBizZipChange() {
+  clearTimeout(editBizZipTimer)
+  editBizZipTimer = setTimeout(async () => {
+    const z = (editBiz.value?.zipcode || '').trim()
+    if (!/^\d{5}$/.test(z)) return
+    try {
+      const r = await fetch(`https://api.zippopotam.us/us/${z}`)
+      if (!r.ok) return
+      const d = await r.json()
+      const p = d.places?.[0]
+      if (p && editBiz.value) {
+        if (!editBiz.value.city) editBiz.value.city = p['place name'] || ''
+        if (!editBiz.value.state) editBiz.value.state = p['state abbreviation'] || ''
+      }
+    } catch {}
+  }, 400)
+}
+
+async function submitEditBizPromote() {
+  if (!editBiz.value || editBizPromotion.tier === 'none') return
+  if (['state_plus','national'].includes(editBizPromotion.tier) && editBizPromoRef.value?.isSlotFull) {
+    editBizPromoMsg.value = { ok: false, text: '슬롯 만석 — 다른 티어를 선택하세요' }
+    return
+  }
+  editBizPromoSubmitting.value = true
+  editBizPromoMsg.value = null
+  try {
+    await axios.post(`/api/businesses/${editBiz.value.id}/promote`, {
+      tier: editBizPromotion.tier, days: editBizPromotion.days,
+    })
+    editBizPromoMsg.value = { ok: true, text: '✅ 상위노출이 적용되었습니다' }
+    await loadMyBiz()
+    // 갱신된 editBiz 다시 로드
+    const fresh = myBizList.value.find(b => b.id === editBiz.value.id)
+    if (fresh) editBiz.value = { ...fresh }
+    editBizPromotion.tier = 'none'
+  } catch (e) {
+    editBizPromoMsg.value = { ok: false, text: e.response?.data?.message || '상위노출 적용 실패' }
+  }
+  editBizPromoSubmitting.value = false
+}
 
 // 업소 상위노출 모달
 const bizPromoTarget = ref(null)

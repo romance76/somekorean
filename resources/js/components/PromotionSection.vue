@@ -199,7 +199,8 @@ async function loadSettings() {
   } catch {}
 }
 
-// 2개 티어 슬롯 동시 조회 (category 입력되면 national, +state 입력되면 state_plus 까지)
+// 2개 티어 슬롯 병렬 조회 — 속도 개선
+let slotReqSeq = 0
 async function refreshSlotInfo() {
   const endpoint = {
     jobs: '/api/jobs/promotion-slots',
@@ -208,29 +209,25 @@ async function refreshSlotInfo() {
     business: '/api/businesses/promotion-slots',
   }[props.resource] || '/api/jobs/promotion-slots'
 
-  // national: category 만 필요
-  if (props.category) {
-    try {
-      const { data } = await axios.get(endpoint, { params: { tier: 'national', category: props.category } })
-      slotInfoByTier.national = data?.data ?? null
-    } catch { slotInfoByTier.national = null }
-  } else {
-    slotInfoByTier.national = null
-  }
+  // 경쟁 조건 방지: 가장 마지막 요청만 결과 반영
+  const mySeq = ++slotReqSeq
 
-  // state_plus: category + state 둘 다 필요
-  if (props.category && props.state) {
-    try {
-      const { data } = await axios.get(endpoint, {
-        params: { tier: 'state_plus', category: props.category, state: props.state.toUpperCase() },
-      })
-      slotInfoByTier.state_plus = data?.data ?? null
-    } catch { slotInfoByTier.state_plus = null }
-  } else {
-    slotInfoByTier.state_plus = null
-  }
+  const nationalPromise = props.category
+    ? axios.get(endpoint, { params: { tier: 'national', category: props.category } }).then(r => r?.data?.data).catch(() => null)
+    : Promise.resolve(null)
 
-  emit('slot-info', { state_plus: slotInfoByTier.state_plus, national: slotInfoByTier.national })
+  const statePlusPromise = (props.category && props.state)
+    ? axios.get(endpoint, { params: { tier: 'state_plus', category: props.category, state: props.state.toUpperCase() } }).then(r => r?.data?.data).catch(() => null)
+    : Promise.resolve(null)
+
+  const [national, statePlus] = await Promise.all([nationalPromise, statePlusPromise])
+
+  // 늦게 도착한 예전 응답은 무시
+  if (mySeq !== slotReqSeq) return
+
+  slotInfoByTier.national = national
+  slotInfoByTier.state_plus = statePlus
+  emit('slot-info', { state_plus: statePlus, national })
 }
 
 function selectTier(t) {

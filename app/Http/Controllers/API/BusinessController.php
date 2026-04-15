@@ -62,13 +62,21 @@ class BusinessController extends Controller
         $this->excludeCrossTierPromotion($query, $hasLocation);
         $this->applyPromotionOrdering($query, $request->user_state, $hasLocation);
 
-        $sort = $request->sort ?? 'popular';
+        $sort = $request->sort ?? 'random';
         if ($sort === 'distance' && $request->lat) $query->orderBy('distance');
         elseif ($sort === 'popular') $query->orderByDesc('view_count');
         elseif ($sort === 'rating') $query->orderByDesc('rating');
         elseif ($sort === 'newest') $query->orderByDesc('created_at');
         elseif ($sort === 'reviews') $query->orderByDesc('review_count');
-        elseif ($sort === 'random') $query->inRandomOrder();
+        elseif ($sort === 'random') {
+            // seed 가 있으면 RAND(seed) 로 페이지 내 일관성 보장
+            $seed = (int) ($request->rand_seed ?? 0);
+            if ($seed > 0) {
+                $query->orderByRaw('RAND(?)', [$seed]);
+            } else {
+                $query->inRandomOrder();
+            }
+        }
         else $query->orderByDesc('view_count');
 
         $perPage = min((int) ($request->per_page ?? 20), 50);
