@@ -93,6 +93,13 @@ const isMusicPage = computed(() => route.path.startsWith('/music'))
 const hideUI = computed(() => isShortsPage.value)
 
 // 위치 — right/top 기반 (드래그로 변경 가능)
+// 음악 페이지: 콘텐츠 영역 오른쪽에 맞춤
+function calcMusicPageRight() {
+  const maxW = 1280 // max-w-7xl
+  const viewW = window.innerWidth
+  const margin = Math.max((viewW - maxW) / 2, 16) // 중앙 정렬 마진
+  return margin // 콘텐츠 영역의 오른쪽 끝
+}
 const posRight = ref(16)
 const posTop = ref(80)
 let dragging = false
@@ -106,7 +113,7 @@ const expandedStyle = computed(() => ({
 }))
 
 const miniStyle = computed(() => {
-  if (isMusicPage.value) return { right: '16px', top: '80px' }
+  if (isMusicPage.value) return { right: calcMusicPageRight() + 'px', top: '80px' }
   return { right: '16px', bottom: '80px' }
 })
 
@@ -114,7 +121,7 @@ const miniStyle = computed(() => {
 watch(isMusicPage, (isMp) => {
   if (isMp) {
     isExpanded.value = true
-    posRight.value = 16
+    posRight.value = calcMusicPageRight()
     posTop.value = 80
   }
 })
@@ -130,7 +137,7 @@ watch(isMusicPage, (isMp, wasMp) => {
 watch(() => music.currentTrack?.youtubeId, (vid) => {
   if (!vid) return
   isExpanded.value = true
-  if (isMusicPage.value) { posRight.value = 16; posTop.value = 80 }
+  if (isMusicPage.value) { posRight.value = calcMusicPageRight(); posTop.value = 80 }
   else { posRight.value = 16; posTop.value = Math.max(window.innerHeight - 550, 80) }
 
   nextTick(() => {
@@ -268,7 +275,8 @@ onMounted(() => {
   // 음악 페이지면 항상 펼침 (곡 선택 전에도)
   if (isMusicPage.value) {
     isExpanded.value = true
-    posRight.value = 16; posTop.value = 80
+    posRight.value = calcMusicPageRight()
+    posTop.value = 80
   }
   if (music.currentTrack?.youtubeId) {
     isExpanded.value = true
