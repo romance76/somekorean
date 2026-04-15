@@ -30,33 +30,23 @@ class BannerController extends Controller
                 ->where('position', $position)
                 ->where('slot_number', $slotNum);
 
-            // 페이지 매칭 + 지역 필터 (새 구조: target_pages JSON에 per-page geo 포함)
-            $nationalPages = ['home','community','qa','news','recipes','shorts','games','music','poker'];
-            $isNational = in_array($page, $nationalPages);
-
-            $query->where(function ($q) use ($page, $user, $userState, $userCounty, $isNational) {
-                // 전체 페이지 광고
-                $q->where('page', 'all')
-                  ->orWhere('page', $page);
-
-                // target_pages 매칭 (flat 배열: ["jobs","market"] 호환)
-                $q->orWhereJsonContains('target_pages', $page);
-
-                // 새 구조: target_pages에 {"page":"jobs","geo":"county","geo_value":"..."} 형태
-                // JSON 배열 내 객체의 page 필드 매칭
-                $q->orWhereRaw("JSON_SEARCH(target_pages, 'one', ?, '$.*.page') IS NOT NULL", [$page]);
+            // 페이지 매칭: page 컬럼 또는 target_pages JSON에 해당 페이지가 있어야 함
+            $query->where(function ($q) use ($page) {
+                $q->where('page', $page)
+                  ->orWhere('page', 'all')
+                  // flat 배열: ["jobs","recipes"]
+                  ->orWhereJsonContains('target_pages', $page)
+                  // 객체 배열: [{"page":"jobs","geo":"county"}] — page 필드 매칭
+                  ->orWhereRaw("JSON_SEARCH(target_pages, 'one', ?, '$.*.page') IS NOT NULL", [$page]);
             });
 
-            // 지역 필터: 전국 페이지/비로그인은 스킵
-            if (!$isNational && $user && $userState) {
-                $query->where(function ($q) use ($userState, $userCounty, $page) {
-                    // 기존 단일 geo_scope 방식
+            // 지역 필터
+            $nationalPages = ['home','community','qa','news','recipes','shorts','games','music','poker'];
+            if (!in_array($page, $nationalPages) && $user && $userState) {
+                $query->where(function ($q) use ($userState, $userCounty) {
                     $q->where('geo_scope', 'all')
                       ->orWhere(function ($q2) use ($userState) { $q2->where('geo_scope', 'state')->where('geo_value', $userState); })
-                      ->orWhere(function ($q2) use ($userCounty) { $q2->where('geo_scope', 'county')->where('geo_value', $userCounty); })
-                      // 새 per-page geo 방식: target_pages JSON 내 해당 페이지의 geo 매칭
-                      ->orWhereRaw("JSON_SEARCH(target_pages, 'one', 'all', '$.*.geo') IS NOT NULL")
-                      ->orWhereRaw("EXISTS (SELECT 1 FROM JSON_TABLE(target_pages, '$[*]' COLUMNS(pg VARCHAR(50) PATH '$.page', geo VARCHAR(20) PATH '$.geo', gv VARCHAR(100) PATH '$.geo_value')) AS jt WHERE jt.pg = ? AND (jt.geo = 'all' OR (jt.geo = 'state' AND jt.gv = ?) OR (jt.geo = 'county' AND jt.gv = ?)))", [$page, $userState, $userCounty]);
+                      ->orWhere(function ($q2) use ($userCounty) { $q2->where('geo_scope', 'county')->where('geo_value', $userCounty); });
                 });
             }
 

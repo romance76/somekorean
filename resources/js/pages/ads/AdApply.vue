@@ -5,29 +5,24 @@
     <p class="text-sm text-gray-500 mb-1">매달 말일 24시간 입찰 접수 → 최고 입찰자 순으로 배정</p>
     <p class="text-xs text-amber-600 font-bold mb-5">다음 경매: {{ nextAuctionDate }}</p>
 
-    <!-- ═══ Step 1: 페이지 선택 ═══ -->
+    <!-- ═══ Step 1: 페이지 선택 (단일 선택) ═══ -->
     <div class="bg-white rounded-2xl shadow-sm border p-5 mb-5">
       <h2 class="font-bold text-gray-800 text-sm mb-3">1️⃣ 광고 노출 페이지 선택</h2>
-      <div class="flex gap-3 mb-4">
-        <button @click="pageType='home'; selectedSubs=[]" class="flex-1 py-3 rounded-xl font-bold text-sm border-2 transition"
-          :class="pageType==='home' ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-gray-200 text-gray-500 hover:border-amber-300'">
-          🏠 메인 (홈) — 1개 페이지
-        </button>
-        <button @click="pageType='sub'" class="flex-1 py-3 rounded-xl font-bold text-sm border-2 transition"
-          :class="pageType==='sub' ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-gray-200 text-gray-500 hover:border-amber-300'">
-          📄 서브 페이지 (복수 선택 가능)
-        </button>
-      </div>
-      <div v-if="pageType==='sub'" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+
+      <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        <!-- 홈 -->
+        <label class="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition text-xs font-bold"
+          :class="selectedSub === 'home' ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+          <input type="radio" name="page_select" value="home" v-model="selectedSub" class="accent-amber-500" />
+          🏠 홈
+        </label>
+        <!-- 서브 페이지들 -->
         <label v-for="sp in subPages" :key="sp.key"
           class="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition text-xs font-bold"
-          :class="selectedSubs.includes(sp.key) ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
-          <input type="checkbox" :value="sp.key" v-model="selectedSubs" class="accent-amber-500" />
+          :class="selectedSub === sp.key ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+          <input type="radio" name="page_select" :value="sp.key" v-model="selectedSub" class="accent-amber-500" />
           {{ sp.icon }} {{ sp.label }}
         </label>
-      </div>
-      <div v-if="pageCount > 1" class="mt-2 text-xs text-amber-600 font-bold">
-        {{ pageCount }}개 페이지 선택 → 가격 × {{ pageCount }}
       </div>
     </div>
 
@@ -36,58 +31,51 @@
       <h2 class="font-bold text-gray-800 text-sm mb-3">2️⃣ 타겟 지역 선택</h2>
       <p class="text-xs text-gray-400 mb-3">페이지 종류에 따라 지역 설정이 다릅니다</p>
 
+      <!-- 페이지 미선택 -->
+      <div v-if="!selectedSub" class="text-center py-4 text-xs text-gray-400">
+        먼저 Step 1에서 페이지를 선택해 주세요
+      </div>
+
       <!-- 전국 페이지 안내 -->
-      <div v-if="selectedNationalPages.length" class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
-        <div class="text-xs font-bold text-blue-700 mb-1">🌐 전국 페이지 (자동 전국 노출)</div>
+      <div v-else-if="isNationalPage" class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+        <div class="text-xs font-bold text-blue-700 mb-1">🌐 전국 자동 노출</div>
         <div class="text-[10px] text-blue-600">
-          {{ selectedNationalPages.map(k => subPages.find(s => s.key === k)?.label || (k === 'home' ? '홈' : k)).join(', ') }}
-          — 별도 지역 설정 불필요
+          {{ selectedPageLabel }} — 전국 페이지이므로 별도 지역 설정이 불필요합니다
         </div>
       </div>
 
-      <!-- 지역별 페이지 개별 설정 -->
-      <div v-if="selectedRegionalPages.length">
-        <div class="text-xs font-bold text-gray-700 mb-2">📍 지역별 페이지 (개별 지역 선택)</div>
-        <div class="space-y-2 mb-3">
-          <div v-for="pk in selectedRegionalPages" :key="pk" class="border rounded-xl p-3 bg-gray-50">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-xs font-bold text-gray-700">{{ subPages.find(s => s.key === pk)?.icon }} {{ subPages.find(s => s.key === pk)?.label }}</span>
-              <span v-if="pageGeoSettings[pk]?.value" class="text-[10px] text-green-600 font-bold ml-auto">✅ {{ pageGeoSettings[pk].value }}</span>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <label class="flex items-center gap-1 cursor-pointer text-xs">
-                <input type="radio" :name="'geo_'+pk" value="county" :checked="pageGeoSettings[pk]?.geo==='county'" @change="setPageGeo(pk,'county')" class="accent-green-500" />
-                <span :class="pageGeoSettings[pk]?.geo==='county' ? 'text-green-700 font-bold' : 'text-gray-500'">카운티</span>
-                <span class="text-[10px] text-gray-400">기본</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer text-xs">
-                <input type="radio" :name="'geo_'+pk" value="state" :checked="pageGeoSettings[pk]?.geo==='state'" @change="setPageGeo(pk,'state')" class="accent-blue-500" />
-                <span :class="pageGeoSettings[pk]?.geo==='state' ? 'text-blue-700 font-bold' : 'text-gray-500'">주</span>
-                <span class="text-[10px] text-gray-400">+{{ geoMarkup.state.toLocaleString() }}P</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer text-xs">
-                <input type="radio" :name="'geo_'+pk" value="all" :checked="pageGeoSettings[pk]?.geo==='all'" @change="setPageGeo(pk,'all')" class="accent-amber-500" />
-                <span :class="pageGeoSettings[pk]?.geo==='all' ? 'text-amber-700 font-bold' : 'text-gray-500'">전국</span>
-                <span class="text-[10px] text-gray-400">+{{ (geoMarkup.state + geoMarkup.national).toLocaleString() }}P</span>
-              </label>
-            </div>
+      <!-- 지역별 페이지 설정 -->
+      <div v-else>
+        <div class="text-xs font-bold text-gray-700 mb-2">📍 지역 선택</div>
+        <div class="border rounded-xl p-3 bg-gray-50 mb-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="flex items-center gap-1 cursor-pointer text-xs">
+              <input type="radio" name="geo_scope" value="county" v-model="adForm.geo_scope" class="accent-green-500" />
+              <span :class="adForm.geo_scope==='county' ? 'text-green-700 font-bold' : 'text-gray-500'">카운티</span>
+              <span class="text-[10px] text-gray-400">기본</span>
+            </label>
+            <label class="flex items-center gap-1 cursor-pointer text-xs">
+              <input type="radio" name="geo_scope" value="state" v-model="adForm.geo_scope" class="accent-blue-500" />
+              <span :class="adForm.geo_scope==='state' ? 'text-blue-700 font-bold' : 'text-gray-500'">주</span>
+              <span class="text-[10px] text-gray-400">+{{ geoMarkup.state.toLocaleString() }}P</span>
+            </label>
+            <label class="flex items-center gap-1 cursor-pointer text-xs">
+              <input type="radio" name="geo_scope" value="all" v-model="adForm.geo_scope" class="accent-amber-500" />
+              <span :class="adForm.geo_scope==='all' ? 'text-amber-700 font-bold' : 'text-gray-500'">전국</span>
+              <span class="text-[10px] text-gray-400">+{{ (geoMarkup.state + geoMarkup.national).toLocaleString() }}P</span>
+            </label>
           </div>
         </div>
 
-        <!-- Zip Code 공유 조회 (카운티/주 선택된 페이지가 있을 때만) -->
-        <div v-if="hasRegionalNeedingZip" class="border-t pt-3">
-          <div class="text-xs font-bold text-gray-600 mb-2">📮 Zip Code 조회 (카운티/주 페이지에 일괄 적용)</div>
+        <!-- Zip Code 조회 (카운티/주 선택 시) -->
+        <div v-if="adForm.geo_scope !== 'all'" class="border-t pt-3">
+          <div class="text-xs font-bold text-gray-600 mb-2">📮 Zip Code 조회</div>
           <div class="flex gap-2">
             <input v-model="zipInput" @input="onZipInput" placeholder="Zip Code (5자리)" maxlength="5" class="flex-1 border rounded-lg px-3 py-2 text-sm" />
             <button @click="lookupZip" :disabled="zipLoading" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-xs">{{ zipLoading ? '...' : '조회' }}</button>
           </div>
-          <div v-if="zipResult" class="mt-2 text-[10px] text-green-600 font-bold">✅ {{ zipResult.city }}, {{ zipResult.state }} — 해당 페이지에 적용됨</div>
+          <div v-if="zipResult" class="mt-2 text-[10px] text-green-600 font-bold">✅ {{ zipResult.city }}, {{ zipResult.state }} — 적용됨</div>
         </div>
-      </div>
-
-      <!-- 선택된 페이지 없을 때 -->
-      <div v-if="!selectedNationalPages.length && !selectedRegionalPages.length" class="text-center py-4 text-xs text-gray-400">
-        먼저 Step 1에서 페이지를 선택해 주세요
       </div>
     </div>
 
@@ -95,82 +83,86 @@
     <div class="bg-white rounded-2xl shadow-sm border p-5 mb-5">
       <h2 class="font-bold text-gray-800 text-sm mb-3">3️⃣ 광고 등급 · 슬롯 선택</h2>
 
-      <div class="border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-        <div class="bg-gradient-to-r from-amber-400 to-orange-400 h-8 flex items-center px-4">
-          <span class="text-[10px] font-black text-amber-900">SomeKorean — {{ pageType === 'home' ? '홈' : '서브 페이지' }}</span>
+      <div v-if="!selectedSub" class="text-center py-8 text-xs text-gray-400">먼저 Step 1에서 페이지를 선택해 주세요</div>
+
+      <template v-else>
+        <div class="border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+          <div class="bg-gradient-to-r from-amber-400 to-orange-400 h-8 flex items-center px-4">
+            <span class="text-[10px] font-black text-amber-900">SomeKorean — {{ selectedPageLabel }}</span>
+          </div>
+          <div class="grid grid-cols-12 gap-2 p-3 min-h-[320px]">
+            <!-- 왼쪽 사이드바 -->
+            <div v-if="pageSlotConfig.left_slots > 0" class="col-span-3 space-y-2">
+              <div class="bg-white rounded-lg border p-2"><div class="text-[9px] font-bold text-gray-400">📋 카테고리</div></div>
+
+              <div v-if="pageSlotConfig.left_slots >= 1" @click="selectSlot('left', 1, 'premium')"
+                class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
+                :class="isSelected('left',1) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-yellow-400 bg-yellow-50/50 hover:border-amber-400'">
+                <div class="text-xs mb-0.5">{{ isSelected('left',1) ? '✅' : '🥇' }}</div>
+                <div class="text-[9px] font-black text-yellow-700">프리미엄</div>
+                <div class="text-[8px] text-gray-500">고정 독점 · 200×150</div>
+                <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('left','premium').toLocaleString() }}P/월</div>
+              </div>
+
+              <div v-if="pageSlotConfig.left_slots >= 2" @click="selectSlot('left', 2, 'standard')"
+                class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
+                :class="isSelected('left',2) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-blue-300 bg-blue-50/50 hover:border-amber-400'">
+                <div class="text-xs mb-0.5">{{ isSelected('left',2) ? '✅' : '🥈' }}</div>
+                <div class="text-[9px] font-black text-blue-700">스탠다드</div>
+                <div class="text-[8px] text-gray-500">2개 랜덤 · 200×150</div>
+                <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('left','standard').toLocaleString() }}P/월</div>
+              </div>
+
+              <div v-if="pageSlotConfig.left_slots >= 3" @click="selectSlot('left', 3, 'economy')"
+                class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
+                :class="isSelected('left',3) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-green-300 bg-green-50/50 hover:border-amber-400'">
+                <div class="text-xs mb-0.5">{{ isSelected('left',3) ? '✅' : '🥉' }}</div>
+                <div class="text-[9px] font-black text-green-700">이코노미</div>
+                <div class="text-[8px] text-gray-500">5개 랜덤 · 200×150</div>
+                <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('left','economy').toLocaleString() }}P/월</div>
+              </div>
+            </div>
+
+            <!-- 메인 -->
+            <div :class="mainColSpan">
+              <div class="bg-white rounded-lg border p-4 h-full flex flex-col justify-center items-center">
+                <div class="text-[10px] text-gray-300 font-bold mb-3">메인 콘텐츠 영역</div>
+                <div class="space-y-1.5 w-full"><div v-for="i in 5" :key="i" class="h-2 bg-gray-100 rounded w-full"></div></div>
+              </div>
+            </div>
+
+            <!-- 오른쪽 사이드바 -->
+            <div v-if="pageSlotConfig.right_slots > 0" class="col-span-3 space-y-2">
+              <div class="bg-white rounded-lg border p-2"><div class="text-[9px] font-bold text-gray-400">🔥 인기글</div></div>
+
+              <div v-if="pageSlotConfig.right_slots >= 1" @click="selectSlot('right', 1, 'premium')"
+                class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
+                :class="isSelected('right',1) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-yellow-400 bg-yellow-50/50 hover:border-amber-400'">
+                <div class="text-xs mb-0.5">{{ isSelected('right',1) ? '✅' : '🥇' }}</div>
+                <div class="text-[9px] font-black text-yellow-700">프리미엄</div>
+                <div class="text-[8px] text-gray-500">고정 독점 · 300×250</div>
+                <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('right','premium').toLocaleString() }}P/월</div>
+              </div>
+
+              <div v-if="pageSlotConfig.right_slots >= 2" @click="selectSlot('right', 2, 'economy')"
+                class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
+                :class="isSelected('right',2) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-green-300 bg-green-50/50 hover:border-amber-400'">
+                <div class="text-xs mb-0.5">{{ isSelected('right',2) ? '✅' : '🥉' }}</div>
+                <div class="text-[9px] font-black text-green-700">이코노미</div>
+                <div class="text-[8px] text-gray-500">3개 랜덤 · 300×250</div>
+                <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('right','economy').toLocaleString() }}P/월</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="grid grid-cols-12 gap-2 p-3 min-h-[320px]">
-          <!-- 왼쪽 사이드바 -->
-          <div class="col-span-3 space-y-2">
-            <div class="bg-white rounded-lg border p-2"><div class="text-[9px] font-bold text-gray-400">📋 카테고리</div></div>
 
-            <div @click="selectSlot('left', 1, 'premium')"
-              class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
-              :class="isSelected('left',1) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-yellow-400 bg-yellow-50/50 hover:border-amber-400'">
-              <div class="text-xs mb-0.5">{{ isSelected('left',1) ? '✅' : '🥇' }}</div>
-              <div class="text-[9px] font-black text-yellow-700">프리미엄</div>
-              <div class="text-[8px] text-gray-500">고정 독점 · 200×150</div>
-              <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('left','premium').toLocaleString() }}P/월{{ pageCount>1 ? ' ×'+pageCount : '' }}</div>
-            </div>
-
-            <div @click="selectSlot('left', 2, 'standard')"
-              class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
-              :class="isSelected('left',2) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-blue-300 bg-blue-50/50 hover:border-amber-400'">
-              <div class="text-xs mb-0.5">{{ isSelected('left',2) ? '✅' : '🥈' }}</div>
-              <div class="text-[9px] font-black text-blue-700">스탠다드</div>
-              <div class="text-[8px] text-gray-500">2개 랜덤 · 200×150</div>
-              <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('left','standard').toLocaleString() }}P/월{{ pageCount>1 ? ' ×'+pageCount : '' }}</div>
-            </div>
-
-            <div @click="selectSlot('left', 3, 'economy')"
-              class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
-              :class="isSelected('left',3) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-green-300 bg-green-50/50 hover:border-amber-400'">
-              <div class="text-xs mb-0.5">{{ isSelected('left',3) ? '✅' : '🥉' }}</div>
-              <div class="text-[9px] font-black text-green-700">이코노미</div>
-              <div class="text-[8px] text-gray-500">5개 랜덤 · 200×150</div>
-              <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('left','economy').toLocaleString() }}P/월{{ pageCount>1 ? ' ×'+pageCount : '' }}</div>
-            </div>
-          </div>
-
-          <!-- 메인 -->
-          <div class="col-span-6">
-            <div class="bg-white rounded-lg border p-4 h-full flex flex-col justify-center items-center">
-              <div class="text-[10px] text-gray-300 font-bold mb-3">메인 콘텐츠 영역</div>
-              <div class="space-y-1.5 w-full"><div v-for="i in 5" :key="i" class="h-2 bg-gray-100 rounded w-full"></div></div>
-            </div>
-          </div>
-
-          <!-- 오른쪽 사이드바 -->
-          <div class="col-span-3 space-y-2">
-            <div class="bg-white rounded-lg border p-2"><div class="text-[9px] font-bold text-gray-400">🔥 인기글</div></div>
-
-            <div @click="selectSlot('right', 1, 'premium')"
-              class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
-              :class="isSelected('right',1) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-yellow-400 bg-yellow-50/50 hover:border-amber-400'">
-              <div class="text-xs mb-0.5">{{ isSelected('right',1) ? '✅' : '🥇' }}</div>
-              <div class="text-[9px] font-black text-yellow-700">프리미엄</div>
-              <div class="text-[8px] text-gray-500">고정 독점 · 300×250</div>
-              <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('right','premium').toLocaleString() }}P/월{{ pageCount>1 ? ' ×'+pageCount : '' }}</div>
-            </div>
-
-            <div @click="selectSlot('right', 2, 'economy')"
-              class="border-2 rounded-lg p-2 text-center cursor-pointer transition-all"
-              :class="isSelected('right',2) ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-green-300 bg-green-50/50 hover:border-amber-400'">
-              <div class="text-xs mb-0.5">{{ isSelected('right',2) ? '✅' : '🥉' }}</div>
-              <div class="text-[9px] font-black text-green-700">이코노미</div>
-              <div class="text-[8px] text-gray-500">3개 랜덤 · 300×250</div>
-              <div class="text-[9px] font-bold text-red-600 mt-0.5">{{ slotMinPrice('right','economy').toLocaleString() }}P/월{{ pageCount>1 ? ' ×'+pageCount : '' }}</div>
-            </div>
-          </div>
+        <!-- 등급 설명 -->
+        <div class="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2"><span class="font-bold text-yellow-700">🥇 프리미엄</span><br>한 달 독점. 100% 보장.</div>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-2"><span class="font-bold text-blue-700">🥈 스탠다드</span><br>2명 랜덤 교대. ~50%.</div>
+          <div class="bg-green-50 border border-green-200 rounded-lg p-2"><span class="font-bold text-green-700">🥉 이코노미</span><br>3~5명 랜덤. 부담없는 가격.</div>
         </div>
-      </div>
-
-      <!-- 등급 설명 -->
-      <div class="mt-3 grid grid-cols-3 gap-2 text-[10px]">
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2"><span class="font-bold text-yellow-700">🥇 프리미엄</span><br>한 달 독점. 100% 보장.</div>
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-2"><span class="font-bold text-blue-700">🥈 스탠다드</span><br>2명 랜덤 교대. ~50%.</div>
-        <div class="bg-green-50 border border-green-200 rounded-lg p-2"><span class="font-bold text-green-700">🥉 이코노미</span><br>3~5명 랜덤. 부담없는 가격.</div>
-      </div>
+      </template>
     </div>
 
     <!-- ═══ Step 4: 상세 설정 ═══ -->
@@ -223,12 +215,8 @@
                 <span class="font-bold">{{ basePricePerSlot.toLocaleString() }}P</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500">지역 추가금 합계</span>
+                <span class="text-gray-500">지역 추가금</span>
                 <span class="font-bold">+{{ geoExtra.toLocaleString() }}P</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">페이지: {{ pageCount }}개{{ pageCount>1 ? ' ('+selectedPageNames+')' : '' }}</span>
-                <span class="font-bold">× {{ pageCount }}</span>
               </div>
               <div class="flex justify-between border-t pt-1 mt-1">
                 <span class="font-bold text-amber-800">최소 입찰가</span>
@@ -307,8 +295,7 @@ const zipLoading = ref(false)
 const zipResult = ref(null)
 const urlConfirmed = ref(false)
 const normalizedUrl = ref('')
-const pageType = ref('home')
-const selectedSubs = ref([])
+const selectedSub = ref('')
 const DRAFT_KEY = 'sk_ad_draft'
 
 // 카운티 기본가 (관리자 설정에서 로드)
@@ -319,7 +306,10 @@ const basePrices = ref({
 // 지역별 추가금 (관리자 설정에서 로드)
 const geoMarkup = ref({ state: 2000, national: 3000 })
 
-const adForm = reactive({ title: '', link_url: '', bid_amount: 4000 })
+// 페이지별 슬롯 설정 (관리자 API에서 로드)
+const pageConfigs = ref({})
+
+const adForm = reactive({ title: '', link_url: '', bid_amount: 4000, geo_scope: 'county', geo_value: '' })
 
 const subPages = [
   { key: 'community', icon: '💬', label: '커뮤니티' }, { key: 'qa', icon: '❓', label: 'Q&A' },
@@ -333,15 +323,9 @@ const subPages = [
 
 // 전국 페이지 (자동 geo_scope='all')
 const nationalPages = ['home', 'community', 'qa', 'news', 'recipes', 'shorts', 'games', 'music']
-// 지역별 페이지 (개별 geo 선택 필요)
-const regionalPages = ['jobs', 'market', 'realestate', 'directory', 'clubs', 'events', 'groupbuy']
-
-// 페이지별 지역 설정
-const pageGeoSettings = ref({})
 
 const posLabels = { left: '좌측', right: '우측' }
 const tierLabels = { premium: '🥇 프리미엄', standard: '🥈 스탠다드', economy: '🥉 이코노미' }
-const geoLabels = { all: '전국', state: '주', county: '카운티' }
 const statusLabels = { pending:'입찰대기', active:'게시중', rejected:'거절', expired:'만료', paused:'중지' }
 const statusClasses = { pending:'bg-amber-100 text-amber-700', active:'bg-green-100 text-green-700', rejected:'bg-red-100 text-red-700', expired:'bg-gray-200 text-gray-500', paused:'bg-gray-200 text-gray-500' }
 
@@ -351,89 +335,49 @@ const nextAuctionDate = computed(() => {
   return `${lastDay.getFullYear()}.${lastDay.getMonth()+1}.${lastDay.getDate()}`
 })
 
-const pageCount = computed(() => pageType.value === 'home' ? 1 : Math.max(1, selectedSubs.value.length))
-const selectedPageNames = computed(() => selectedSubs.value.map(k => subPages.find(s => s.key === k)?.label).join(', '))
+// 선택된 페이지가 전국 페이지인지
+const isNationalPage = computed(() => nationalPages.includes(selectedSub.value))
+
+// 선택된 페이지의 라벨
+const selectedPageLabel = computed(() => {
+  if (selectedSub.value === 'home') return '홈'
+  return subPages.find(s => s.key === selectedSub.value)?.label || selectedSub.value
+})
+
+// 선택된 페이지의 슬롯 설정 (관리자 API 데이터 기반, 기본값 fallback)
+const pageSlotConfig = computed(() => {
+  const cfg = pageConfigs.value[selectedSub.value]
+  if (cfg) return cfg
+  // 기본값: 좌 3, 우 2
+  return { left_slots: 3, right_slots: 2 }
+})
+
+// 메인 콘텐츠 컬럼 span (사이드바 유무에 따라 동적)
+const mainColSpan = computed(() => {
+  const hasLeft = pageSlotConfig.value.left_slots > 0
+  const hasRight = pageSlotConfig.value.right_slots > 0
+  if (hasLeft && hasRight) return 'col-span-6'
+  if (hasLeft || hasRight) return 'col-span-9'
+  return 'col-span-12'
+})
 
 // 슬롯별 카운티 기본가
 function getBasePrice(position, tier) {
   return basePrices.value[`${position}_${tier}`] || 4000
 }
 
-// 현재 선택된 전국 페이지 목록
-const selectedNationalPages = computed(() => {
-  if (pageType.value === 'home') return ['home']
-  return selectedSubs.value.filter(k => nationalPages.includes(k))
-})
-
-// 현재 선택된 지역별 페이지 목록
-const selectedRegionalPages = computed(() => {
-  if (pageType.value === 'home') return []
-  return selectedSubs.value.filter(k => regionalPages.includes(k))
-})
-
-// 카운티/주 선택된 지역 페이지가 있는지 (zip 조회 필요 여부)
-const hasRegionalNeedingZip = computed(() => {
-  return selectedRegionalPages.value.some(pk => {
-    const g = pageGeoSettings.value[pk]?.geo
-    return g === 'county' || g === 'state'
-  })
-})
-
-// 페이지별 geo 설정 함수
-function setPageGeo(pageKey, geo) {
-  if (!pageGeoSettings.value[pageKey]) pageGeoSettings.value[pageKey] = { geo: 'county', value: '' }
-  pageGeoSettings.value[pageKey] = { ...pageGeoSettings.value[pageKey], geo, value: geo === 'all' ? '' : pageGeoSettings.value[pageKey].value }
-  saveDraft()
-}
-
-// 선택/해제 시 pageGeoSettings 자동 관리
-watch(selectedSubs, (newVal, oldVal) => {
-  const current = { ...pageGeoSettings.value }
-  // 새로 추가된 페이지
-  for (const key of newVal) {
-    if (!current[key]) {
-      if (nationalPages.includes(key)) {
-        current[key] = { geo: 'all', value: '' }
-      } else {
-        current[key] = { geo: 'county', value: '' }
-      }
-    }
-  }
-  // 제거된 페이지
-  for (const key of Object.keys(current)) {
-    if (!newVal.includes(key) && key !== 'home') {
-      delete current[key]
-    }
-  }
-  pageGeoSettings.value = current
-}, { deep: true })
-
-// 홈 선택 시 자동 설정
-watch(pageType, (val) => {
-  if (val === 'home') {
-    pageGeoSettings.value = { home: { geo: 'all', value: '' } }
-  }
-})
-
-// 페이지별 지역 추가금 계산
-function getPageGeoExtra(pageKey) {
-  const setting = pageGeoSettings.value[pageKey]
-  if (!setting || setting.geo === 'county') return 0
-  if (setting.geo === 'state') return geoMarkup.value.state
-  if (setting.geo === 'all') return geoMarkup.value.state + geoMarkup.value.national
-  return 0
-}
-
-// 전체 지역 추가금 합계
+// 지역 추가금 계산 (단일 페이지)
 const geoExtra = computed(() => {
-  if (pageType.value === 'home') {
-    return geoMarkup.value.state + geoMarkup.value.national // 홈은 전국
+  if (!selectedSub.value) return 0
+  // 전국 페이지는 자동 전국이지만 추가금 포함
+  if (isNationalPage.value) {
+    return geoMarkup.value.state + geoMarkup.value.national
   }
-  let total = 0
-  for (const key of selectedSubs.value) {
-    total += getPageGeoExtra(key)
-  }
-  return total
+  // 지역별 페이지
+  if (adForm.geo_scope === 'county') return 0
+  if (adForm.geo_scope === 'state') return geoMarkup.value.state
+  if (adForm.geo_scope === 'all') return geoMarkup.value.state + geoMarkup.value.national
+  return 0
 })
 
 // 슬롯 1개의 기본가
@@ -442,27 +386,22 @@ const basePricePerSlot = computed(() => {
   return getBasePrice(selectedSlot.value.position, selectedSlot.value.tier)
 })
 
-// 총 최소 입찰가 = 기본가 × 페이지 수 + 각 페이지별 지역 추가금 합계
-const totalMinBid = computed(() => basePricePerSlot.value * pageCount.value + geoExtra.value)
+// 총 최소 입찰가 = 기본가 + 지역 추가금 (단일 페이지이므로 곱셈 없음)
+const totalMinBid = computed(() => basePricePerSlot.value + geoExtra.value)
 
-// 슬롯 선택 UI에 표시할 가격 (페이지당 평균 geo 적용)
+// 슬롯 선택 UI에 표시할 가격
 function slotMinPrice(position, tier) {
-  const base = getBasePrice(position, tier)
-  const avgGeo = pageCount.value > 0 ? Math.round(geoExtra.value / pageCount.value) : 0
-  return base + avgGeo
+  return getBasePrice(position, tier) + geoExtra.value
 }
 
 const hasEnough = computed(() => (auth.user?.points || 0) >= (adForm.bid_amount || 0))
 const canSubmit = computed(() => {
+  if (!selectedSub.value) return false
   if (!adForm.title || !adImage.value || !imageConfirmed.value || !selectedSlot.value) return false
   if (adForm.bid_amount < totalMinBid.value) return false
   if (!hasEnough.value) return false
-  if (pageType.value === 'sub' && !selectedSubs.value.length) return false
-  // 지역별 페이지는 카운티/주 선택 시 geo_value 필수
-  for (const pk of selectedRegionalPages.value) {
-    const s = pageGeoSettings.value[pk]
-    if (s && s.geo !== 'all' && !s.value) return false
-  }
+  // 지역별 페이지에서 카운티/주 선택 시 geo_value 필수
+  if (!isNationalPage.value && adForm.geo_scope !== 'all' && !adForm.geo_value) return false
   return true
 })
 
@@ -470,18 +409,37 @@ function isSelected(pos, slot) { return selectedSlot.value?.position === pos && 
 
 function selectSlot(position, slot, tier) {
   selectedSlot.value = { position, slot, tier }
-  // 항상 해당 슬롯의 최소 입찰가로 리셋
-  const base = getBasePrice(position, tier)
-  adForm.bid_amount = base * pageCount.value + geoExtra.value
+  adForm.bid_amount = getBasePrice(position, tier) + geoExtra.value
   saveDraft()
 }
 
-// 지역/페이지 변경 시 최소 입찰가로 리셋
-watch([pageCount, pageGeoSettings], () => {
+// 페이지 변경 시 geo_scope 리셋 + 슬롯 선택 해제
+watch(selectedSub, (val) => {
+  if (!val) return
+  if (isNationalPage.value) {
+    adForm.geo_scope = 'all'
+    adForm.geo_value = ''
+  } else {
+    adForm.geo_scope = 'county'
+    adForm.geo_value = ''
+  }
+  // 슬롯 선택 해제 (새 페이지의 슬롯 설정이 다를 수 있음)
+  selectedSlot.value = null
+  zipResult.value = null
+  saveDraft()
+})
+
+// 지역 변경 시 최소 입찰가로 리셋
+watch(() => adForm.geo_scope, () => {
   if (selectedSlot.value) {
     adForm.bid_amount = totalMinBid.value
   }
-}, { deep: true })
+  // 전국 선택 시 geo_value 초기화
+  if (adForm.geo_scope === 'all') {
+    adForm.geo_value = ''
+  }
+  saveDraft()
+})
 
 const fileInput = ref(null)
 const imgWidth = ref(0)
@@ -507,7 +465,6 @@ function onImageChange(e) {
   imageConfirmed.value = false
   adImage.value = f
   imagePreview.value = URL.createObjectURL(f)
-  // 이미지 크기 측정
   const img = new Image()
   img.onload = () => { imgWidth.value = img.naturalWidth; imgHeight.value = img.naturalHeight }
   img.src = imagePreview.value
@@ -554,25 +511,40 @@ async function lookupZip() {
     if (!r.ok) throw 0; const d = await r.json(); const p = d.places?.[0]
     if (p) {
       zipResult.value = { state: p['state abbreviation'], city: p['place name'] }
-      // 모든 지역별 페이지(카운티/주)에 일괄 적용
-      const updated = { ...pageGeoSettings.value }
-      for (const pk of selectedRegionalPages.value) {
-        const s = updated[pk]
-        if (s && s.geo !== 'all') {
-          updated[pk] = { ...s, value: s.geo === 'state' ? p['state abbreviation'] : p['place name'] }
-        }
-      }
-      pageGeoSettings.value = updated
+      adForm.geo_value = adForm.geo_scope === 'state' ? p['state abbreviation'] : p['place name']
       saveDraft()
     }
   } catch { showAlert('유효하지 않은 Zip Code', '오류') }
   zipLoading.value = false
 }
 
-function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ pageType: pageType.value, selectedSubs: selectedSubs.value, selectedSlot: selectedSlot.value, adForm: { ...adForm }, pageGeoSettings: pageGeoSettings.value, zipInput: zipInput.value, ts: Date.now() })) } catch {} }
-function loadDraft() { try { const r = localStorage.getItem(DRAFT_KEY); if (!r) return; const d = JSON.parse(r); if (Date.now() - d.ts > 86400000) { localStorage.removeItem(DRAFT_KEY); return }; pageType.value = d.pageType || 'home'; selectedSubs.value = d.selectedSubs || []; selectedSlot.value = d.selectedSlot || null; if (d.adForm) Object.assign(adForm, d.adForm); if (d.pageGeoSettings) pageGeoSettings.value = d.pageGeoSettings; zipInput.value = d.zipInput || '' } catch {} }
+function saveDraft() {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      selectedSub: selectedSub.value,
+      selectedSlot: selectedSlot.value,
+      adForm: { ...adForm },
+      zipInput: zipInput.value,
+      ts: Date.now()
+    }))
+  } catch {}
+}
+
+function loadDraft() {
+  try {
+    const r = localStorage.getItem(DRAFT_KEY)
+    if (!r) return
+    const d = JSON.parse(r)
+    if (Date.now() - d.ts > 86400000) { localStorage.removeItem(DRAFT_KEY); return }
+    selectedSub.value = d.selectedSub || ''
+    selectedSlot.value = d.selectedSlot || null
+    if (d.adForm) Object.assign(adForm, d.adForm)
+    zipInput.value = d.zipInput || ''
+  } catch {}
+}
+
 function clearDraft() { try { localStorage.removeItem(DRAFT_KEY) } catch {} }
-watch([pageType, selectedSubs, selectedSlot, pageGeoSettings], saveDraft, { deep: true })
+watch([selectedSub, selectedSlot], saveDraft, { deep: true })
 
 function goPointShop() { saveDraft(); router.push('/dashboard?tab=points') }
 
@@ -581,31 +553,31 @@ async function submitAd() {
   if (!hasEnough.value) { const ok = await showConfirm(`포인트 부족 (보유: ${(auth.user?.points || 0).toLocaleString()}P)\n충전?`, '부족'); if (ok) goPointShop(); return }
   submitting.value = true
   const fd = new FormData()
-  fd.append('title', adForm.title); fd.append('link_url', adForm.link_url || '')
-  fd.append('page', pageType.value === 'home' ? 'home' : 'sub')
-  // 페이지별 지역 설정 포함한 target_pages
-  const targetPages = []
-  if (pageType.value === 'home') {
-    targetPages.push({ page: 'home', geo: 'all', geo_value: '' })
+  fd.append('title', adForm.title)
+  fd.append('link_url', adForm.link_url || '')
+  fd.append('page', selectedSub.value)
+  fd.append('target_pages', JSON.stringify([selectedSub.value]))
+
+  // geo 설정
+  if (isNationalPage.value) {
+    fd.append('geo_scope', 'all')
+    fd.append('geo_value', '')
   } else {
-    for (const pk of selectedNationalPages.value) {
-      targetPages.push({ page: pk, geo: 'all', geo_value: '' })
-    }
-    for (const pk of selectedRegionalPages.value) {
-      const s = pageGeoSettings.value[pk] || { geo: 'county', value: '' }
-      targetPages.push({ page: pk, geo: s.geo, geo_value: s.value })
-    }
+    fd.append('geo_scope', adForm.geo_scope)
+    fd.append('geo_value', adForm.geo_value)
   }
-  fd.append('target_pages', JSON.stringify(targetPages))
-  fd.append('position', selectedSlot.value.position); fd.append('slot_number', selectedSlot.value.slot)
+
+  fd.append('position', selectedSlot.value.position)
+  fd.append('slot_number', selectedSlot.value.slot)
   fd.append('tier', selectedSlot.value.tier)
   fd.append('bid_amount', adForm.bid_amount)
   if (adImage.value) fd.append('image', adImage.value)
   try {
     const { data } = await axios.post('/api/banners/apply', fd)
-    showAlert(data.message, '입찰 신청'); selectedSlot.value = null
-    Object.assign(adForm, { title: '', link_url: '', bid_amount: 4000 })
-    adImage.value = null; imagePreview.value = null; selectedSubs.value = []; pageGeoSettings.value = {}; clearDraft()
+    showAlert(data.message, '입찰 신청')
+    selectedSlot.value = null
+    Object.assign(adForm, { title: '', link_url: '', bid_amount: 4000, geo_scope: 'county', geo_value: '' })
+    adImage.value = null; imagePreview.value = null; selectedSub.value = ''; clearDraft()
     await loadMyAds()
   } catch (e) {
     const m = e.response?.data?.message || '실패'
@@ -615,11 +587,14 @@ async function submitAd() {
 }
 
 async function loadMyAds() { try { const { data } = await axios.get('/api/banners/my'); myAds.value = data.data || [] } catch {}; loading.value = false }
+
 async function loadPrices() {
   try {
     const { data } = await axios.get('/api/ad-settings/public')
     if (data.data?.slot_min_prices) basePrices.value = { ...basePrices.value, ...data.data.slot_min_prices }
     if (data.data?.geo_markup) geoMarkup.value = { ...geoMarkup.value, ...data.data.geo_markup }
+    // 페이지별 슬롯 설정 로드
+    if (data.data?.page_configs) pageConfigs.value = data.data.page_configs
   } catch {}
 }
 
