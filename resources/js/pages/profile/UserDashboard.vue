@@ -305,55 +305,12 @@
 
     <!-- ═══ 광고 신청 탭 ═══ -->
     <div v-else-if="tab==='ads'" class="space-y-4">
+      <!-- 내 광고 목록 -->
       <div class="bg-white rounded-xl shadow-sm border p-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-gray-800">📢 내 광고</h2>
-          <router-link to="/ad-apply" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs inline-block">+ 새 광고 신청</router-link>
         </div>
-
-        <!-- 신청 폼 -->
-        <div v-if="showAdForm" class="border rounded-lg p-4 mb-4 space-y-3 bg-amber-50/30">
-          <div><label class="text-xs font-bold text-gray-600">광고 제목</label><input v-model="adForm.title" class="w-full border rounded px-3 py-1.5 text-sm mt-1" placeholder="광고 이름" /></div>
-          <div><label class="text-xs font-bold text-gray-600">배너 이미지</label><input type="file" accept="image/*" @change="e=>adImage=e.target.files[0]" class="w-full border rounded px-3 py-1.5 text-sm mt-1" /></div>
-          <div><label class="text-xs font-bold text-gray-600">클릭 시 이동 URL</label><input v-model="adForm.link_url" class="w-full border rounded px-3 py-1.5 text-sm mt-1" placeholder="https://..." /></div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="text-xs font-bold text-gray-600">노출 페이지</label>
-              <select v-model="adForm.page" class="w-full border rounded px-3 py-1.5 text-sm mt-1">
-                <option value="all">전체 페이지</option><option value="home">홈</option><option value="market">중고장터</option>
-                <option value="jobs">구인구직</option><option value="directory">업소록</option><option value="news">뉴스</option>
-                <option value="qa">Q&A</option><option value="recipes">레시피</option><option value="community">커뮤니티</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs font-bold text-gray-600">위치</label>
-              <select v-model="adForm.position" class="w-full border rounded px-3 py-1.5 text-sm mt-1">
-                <option value="top">상단 (500P/일)</option><option value="center">중앙 (300P/일)</option>
-                <option value="left">좌측 (200P/일)</option><option value="right">우측 (200P/일)</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="text-xs font-bold text-gray-600">지역 범위</label>
-              <select v-model="adForm.geo_scope" class="w-full border rounded px-3 py-1.5 text-sm mt-1">
-                <option value="all">전국</option><option value="state">주</option><option value="county">카운티</option><option value="city">시티</option>
-              </select>
-            </div>
-            <div v-if="adForm.geo_scope!=='all'">
-              <label class="text-xs font-bold text-gray-600">{{ {state:'주명',county:'카운티명',city:'시티명'}[adForm.geo_scope] }}</label>
-              <input v-model="adForm.geo_value" class="w-full border rounded px-3 py-1.5 text-sm mt-1" placeholder="예: GA, Gwinnett, Suwanee" />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div><label class="text-xs font-bold text-gray-600">시작일</label><input v-model="adForm.start_date" type="date" class="w-full border rounded px-3 py-1.5 text-sm mt-1" /></div>
-            <div><label class="text-xs font-bold text-gray-600">종료일</label><input v-model="adForm.end_date" type="date" class="w-full border rounded px-3 py-1.5 text-sm mt-1" /></div>
-          </div>
-          <button @click="submitAd" class="w-full bg-amber-400 text-amber-900 font-bold py-2.5 rounded-lg text-sm">신청하기 (포인트 차감)</button>
-        </div>
-
-        <!-- 내 광고 목록 -->
-        <div v-if="!myAds.length && !showAdForm" class="text-sm text-gray-400 py-6 text-center">신청한 광고가 없습니다</div>
+        <div v-if="!myAds.length" class="text-sm text-gray-400 py-6 text-center">신청한 광고가 없습니다</div>
         <div v-for="ad in myAds" :key="ad.id" class="border rounded-lg p-3 flex gap-3 mb-2">
           <div class="w-24 h-14 rounded overflow-hidden bg-gray-100 flex-shrink-0">
             <img :src="ad.image_url" class="w-full h-full object-cover" />
@@ -363,7 +320,7 @@
               <span class="text-xs px-2 py-0.5 rounded-full font-bold" :class="{'bg-amber-100 text-amber-700':ad.status==='pending','bg-green-100 text-green-700':ad.status==='active','bg-red-100 text-red-700':ad.status==='rejected'}">
                 {{ {pending:'승인대기',active:'게시중',rejected:'거절',expired:'만료',paused:'중지'}[ad.status] }}
               </span>
-              <span class="text-xs text-gray-400">{{ ad.total_cost }}P</span>
+              <span class="text-xs text-gray-400">{{ ad.bid_amount || ad.total_cost }}P</span>
             </div>
             <div class="text-sm font-bold text-gray-800 truncate mt-0.5">{{ ad.title }}</div>
             <div class="text-[10px] text-gray-400">{{ ad.start_date?.slice(0,10) }} ~ {{ ad.end_date?.slice(0,10) }} · 노출{{ ad.impressions }} · 클릭{{ ad.clicks }}</div>
@@ -371,6 +328,8 @@
           </div>
         </div>
       </div>
+      <!-- 광고 신청 폼 (AdApply 임베드) -->
+      <AdApplyEmbed :embedded="true" />
     </div>
 
     <!-- ═══ 통화 내역 탭 ═══ -->
@@ -761,6 +720,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useModal } from '../../composables/useModal'
 import axios from 'axios'
+import AdApplyEmbed from '../ads/AdApply.vue'
 
 const { showAlert, showConfirm, showPrompt } = useModal()
 

@@ -1,6 +1,6 @@
 <template>
-<div class="min-h-screen bg-gray-50">
-  <div class="max-w-5xl mx-auto px-4 py-5">
+<div :class="embedded ? '' : 'min-h-screen bg-gray-50'">
+  <div :class="embedded ? '' : 'max-w-5xl mx-auto px-4 py-5'">
     <h1 class="text-xl font-black text-gray-800 mb-2">📢 광고 신청 (월간 경매)</h1>
     <p class="text-sm text-gray-500 mb-1">매달 말일 24시간 입찰 접수 → 최고 입찰자 순으로 배정</p>
     <p class="text-xs text-amber-600 font-bold mb-5">다음 경매: {{ nextAuctionDate }}</p>
@@ -294,6 +294,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useModal } from '../../composables/useModal'
 import axios from 'axios'
 
+const props = defineProps({ embedded: { type: Boolean, default: false } })
 const router = useRouter()
 const auth = useAuthStore()
 const { showAlert, showConfirm } = useModal()
