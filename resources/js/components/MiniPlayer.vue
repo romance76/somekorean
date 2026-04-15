@@ -129,7 +129,7 @@ let currentVideoId = null
 
 const isShortsPage = computed(() => route.path.startsWith('/shorts'))
 const isMusicPage = computed(() => route.path.startsWith('/music'))
-const hideUI = computed(() => isShortsPage.value || isMusicPage.value)
+const hideUI = computed(() => isShortsPage.value)
 
 // YouTube IFrame API 로드
 function loadYTApi() {

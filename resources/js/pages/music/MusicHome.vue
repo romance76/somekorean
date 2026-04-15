@@ -97,24 +97,6 @@
         <Pagination v-if="activeCat && !showFavorites && !activePL" :page="trackPage" :lastPage="trackLastPage" @page="loadCategoryPage" />
       </div>
 
-      <!-- 현재 재생 중 표시 바 (플레이어 대신) -->
-      <div v-if="playing" class="col-span-12 lg:col-span-9 lg:col-start-4 -mt-2 mb-2">
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl px-4 py-2.5 flex items-center gap-3 text-white shadow-lg">
-          <img v-if="playing.thumbnail_url || playing.thumbnail" :src="playing.thumbnail_url || playing.thumbnail" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-          <div v-else class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-lg flex-shrink-0">🎵</div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-bold truncate">🔊 {{ playing.title }}</div>
-            <div class="text-[10px] text-white/70">{{ playing.artist }}</div>
-          </div>
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button @click="prevTrack" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center text-xs">⏮</button>
-            <button @click="nextTrack" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center text-xs">⏭</button>
-            <button @click="shufflePlay" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center text-xs" :class="isShuffled?'bg-white/20':''">🔀</button>
-            <button @click="toggleRepeat" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center text-xs" :class="repeatMode?'bg-white/20':''">{{ repeatMode === 'one' ? '🔂' : '🔁' }}</button>
-            <button v-if="auth.isLoggedIn" @click="toggleFav(playing)" class="w-8 h-8 flex items-center justify-center text-sm">{{ isFav(playing.id)?'❤️':'🤍' }}</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- 플레이리스트 생성 모달 -->
