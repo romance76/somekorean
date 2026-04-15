@@ -167,6 +167,7 @@
             <div class="text-[10px] text-gray-400 flex items-center gap-1.5">
               <span>📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
               <span v-if="item.bedrooms">🛏{{ item.bedrooms }}</span>
+              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
             </div>
             <div class="text-amber-600 font-black text-base">${{ Number(item.price || 0).toLocaleString() }}{{ item.type==='rent'?'/월':'' }}</div>
           </div>
@@ -205,6 +206,7 @@
               <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
               <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
               <span v-if="item.bedrooms">🛏 {{ item.bedrooms }}방</span>
+              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
               <span v-if="item.view_count">👁 {{ item.view_count }}</span>
             </div>
           </div>
@@ -320,6 +322,17 @@ function promoRowClass(item) {
   if (item.promotion_tier === 'state_plus') return 'bg-blue-50/70 border-l-4 border-l-blue-500 hover:bg-blue-100/70'
   if (item.promotion_tier === 'sponsored') return 'bg-amber-50/70 border-l-4 border-l-amber-500 hover:bg-amber-100/70'
   return 'hover:bg-amber-50/50 hover:border-l-amber-400'
+}
+
+function fmtDate(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const diff = (Date.now() - d.getTime()) / 1000
+  if (diff < 60) return '방금'
+  if (diff < 3600) return Math.floor(diff/60) + '분 전'
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전'
+  if (diff < 604800) return Math.floor(diff/86400) + '일 전'
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
 function realEstateThumb(item) {

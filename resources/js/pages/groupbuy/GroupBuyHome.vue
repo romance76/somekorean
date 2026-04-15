@@ -109,6 +109,7 @@
               <UserName v-if="item.user?.id" :userId="item.user.id" :name="item.user.name" className="text-gray-500" />
               <span v-if="item.city">📍{{ item.city }}</span>
               <span v-if="item.deadline">⏰ {{ daysLeft(item.deadline) }}</span>
+              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
             </div>
             <!-- 프로그레스바 -->
             <div class="mt-2 flex items-center gap-2">
@@ -215,6 +216,17 @@ function daysLeft(deadline) {
   const days = Math.floor(diff / 86400000)
   const hours = Math.floor((diff % 86400000) / 3600000)
   return days > 0 ? `${days}일 남음` : `${hours}시간 남음`
+}
+
+function fmtDate(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const diff = (Date.now() - d.getTime()) / 1000
+  if (diff < 60) return '방금'
+  if (diff < 3600) return Math.floor(diff/60) + '분 전'
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전'
+  if (diff < 604800) return Math.floor(diff/86400) + '일 전'
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
 function currentDiscount(item) {

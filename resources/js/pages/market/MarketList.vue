@@ -161,9 +161,10 @@
             <div class="text-xs text-gray-500 line-clamp-1 mt-1">{{ (item.content || '').slice(0, 60) }}</div>
           </div>
           <div class="flex items-center justify-between">
-            <div class="text-[10px] text-gray-400">
+            <div class="text-[10px] text-gray-400 flex items-center gap-1.5">
               <span v-if="item.city">📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
-              <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold ml-1">{{ Number(item.distance).toFixed(1) }}mi</span>
+              <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
+              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
             </div>
             <div class="text-amber-600 font-black text-base">${{ Number(item.price || 0).toLocaleString() }}</div>
           </div>
@@ -198,6 +199,7 @@
               <UserName v-if="item.user?.id" :userId="item.user?.id" :name="item.user?.name || item.company || item.organizer" className="text-gray-600" /><span v-else-if="item.company || item.organizer">{{ item.company || item.organizer }}</span>
               <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
               <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
+              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
               <span v-if="item.view_count">👁{{ item.view_count }}</span>
             </div>
           </div>
@@ -307,6 +309,18 @@ function onCityChange() {
     radius.value = '30'
   }
   loadPage()
+}
+
+// 상대시간 포맷 (방금/N분 전/N시간 전/N일 전/MM-DD)
+function fmtDate(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const diff = (Date.now() - d.getTime()) / 1000
+  if (diff < 60) return '방금'
+  if (diff < 3600) return Math.floor(diff/60) + '분 전'
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전'
+  if (diff < 604800) return Math.floor(diff/86400) + '일 전'
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
 // 프로모션 티어별 행 배경/테두리 클래스

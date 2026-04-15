@@ -144,7 +144,10 @@
         <div class="text-xs text-gray-500 line-clamp-2 mb-2">{{ (item.content || '').slice(0, 80) }}</div>
         <div class="flex items-center justify-between text-[10px] text-gray-400">
           <span>📍 {{ item.city || item.venue }}, {{ item.state }}</span>
-          <span>📅 {{ item.start_date?.slice(0,10) }}</span>
+          <div class="flex items-center gap-1.5">
+            <span>📅 {{ item.start_date?.slice(0,10) }}</span>
+            <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
+          </div>
         </div>
       </div>
       <MobileAdInline v-if="i === 4" page="events" />
@@ -163,6 +166,7 @@
               <span v-else-if="item.company || item.organizer">{{ item.company || item.organizer }}</span>
               <span v-if="item.city" class="flex items-center gap-0.5">📍{{ item.city }}, {{ item.state }}</span>
               <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
+              <span v-if="item.created_at">🕐 {{ fmtDate(item.created_at) }}</span>
               <span v-if="item.view_count">👁{{ item.view_count }}</span>
             </div>
           </div>
@@ -203,6 +207,17 @@ import AdSlot from '../../components/AdSlot.vue'
 const auth = useAuthStore()
 const route = useRoute()
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
+
+function fmtDate(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const diff = (Date.now() - d.getTime()) / 1000
+  if (diff < 60) return '방금'
+  if (diff < 3600) return Math.floor(diff/60) + '분 전'
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전'
+  if (diff < 604800) return Math.floor(diff/86400) + '일 전'
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+}
 
 const showFilter = ref(false)
 const activeCat = ref('')
