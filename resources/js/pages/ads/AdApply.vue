@@ -229,8 +229,8 @@
                 <span class="font-bold">{{ basePricePerSlot.toLocaleString() }}P</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500">지역 추가금</span>
-                <span class="font-bold">+{{ geoExtra.toLocaleString() }}P</span>
+                <span class="text-gray-500">지역 {{ geoExtra >= 0 ? '추가금' : '할인' }}</span>
+                <span class="font-bold" :class="geoExtra < 0 ? 'text-red-500' : ''">{{ geoExtra >= 0 ? '+' : '' }}{{ geoExtra.toLocaleString() }}P</span>
               </div>
               <div class="flex justify-between border-t pt-1 mt-1">
                 <span class="font-bold text-amber-800">최소 입찰가</span>
