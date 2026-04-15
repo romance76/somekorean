@@ -3,12 +3,6 @@
   <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
     <h1 class="text-xl font-black text-gray-800">🏠 매물 등록</h1>
 
-    <!-- 상위노출 (최상단) -->
-    <PromotionSection resource="realestate" :is-edit="false"
-      :category="form.type" :state="userState"
-      v-model="promotion" ref="promoRef"
-      category-label="유형 (렌트/매매/룸메이트)" />
-
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
       <div><label class="text-sm font-semibold text-gray-700">제목</label><input v-model="form.title" type="text" placeholder="예: LA 1BR 아파트 렌트" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       <div class="grid grid-cols-2 gap-3">
@@ -27,6 +21,24 @@
         <div><label class="text-sm font-semibold text-gray-700">화장실</label><input v-model.number="form.bathrooms" type="number" min="0" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
         <div><label class="text-sm font-semibold text-gray-700">면적(sqft)</label><input v-model.number="form.sqft" type="number" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       </div>
+
+      <!-- 매물 주소 -->
+      <div class="bg-amber-50/50 border border-amber-200 rounded-lg p-3 space-y-2">
+        <label class="text-sm font-semibold text-gray-700">📍 매물 주소</label>
+        <input v-model="form.address" type="text" placeholder="예: 123 Main St" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+        <div class="grid grid-cols-3 gap-2">
+          <input v-model="form.city" type="text" placeholder="City" class="border rounded-lg px-3 py-2 text-sm outline-none" />
+          <input v-model="form.state" type="text" maxlength="2" placeholder="State (GA)" class="border rounded-lg px-3 py-2 text-sm outline-none uppercase" />
+          <input v-model="form.zipcode" type="text" maxlength="5" placeholder="Zip" @input="onReZipChange" class="border rounded-lg px-3 py-2 text-sm outline-none font-mono" />
+        </div>
+      </div>
+
+      <!-- 상위노출 (주소 다음, 설명 이전) -->
+      <PromotionSection resource="realestate" :is-edit="false"
+        :category="form.type" :state="form.state || userState"
+        v-model="promotion" ref="promoRef"
+        category-label="유형 (렌트/매매/룸메이트)" />
+
       <div><label class="text-sm font-semibold text-gray-700">상세 설명</label><textarea v-model="form.content" rows="6" placeholder="위치, 시설, 조건 등을 자세히 작성해주세요" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea></div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="text-sm font-semibold text-gray-700">연락 전화</label><input v-model="form.contact_phone" type="text" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
@@ -50,7 +62,26 @@ import { useAuthStore } from '../../stores/auth'
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
-const form = reactive({ title:'',type:'rent',property_type:'apt',price:0,bedrooms:1,bathrooms:1,sqft:0,content:'',contact_phone:'',contact_email:'' })
+const form = reactive({ title:'',type:'rent',property_type:'apt',price:0,bedrooms:1,bathrooms:1,sqft:0,content:'',contact_phone:'',contact_email:'', address:'', city:'', state:'', zipcode:'' })
+
+let reZipTimer = null
+function onReZipChange() {
+  clearTimeout(reZipTimer)
+  reZipTimer = setTimeout(async () => {
+    const z = (form.zipcode || '').trim()
+    if (!/^\d{5}$/.test(z)) return
+    try {
+      const r = await fetch(`https://api.zippopotam.us/us/${z}`)
+      if (!r.ok) return
+      const d = await r.json()
+      const p = d.places?.[0]
+      if (p) {
+        if (!form.city) form.city = p['place name'] || ''
+        if (!form.state) form.state = p['state abbreviation'] || ''
+      }
+    } catch {}
+  }, 500)
+}
 const promotion = reactive({ tier: 'none', days: 7 })
 const promoRef = ref(null)
 const userState = computed(() => auth.user?.state || '')

@@ -150,11 +150,20 @@ class MarketController extends Controller
             $user->addPoints(-$extraCost, "추가 사진 {$extraCount}장 ({$extraPhotoPoints}P/장)", 'photo');
         }
 
-        // 위치 정보 없으면 유저 프로필에서 가져오기
-        $lat = $request->lat ?: $user->latitude;
-        $lng = $request->lng ?: $user->longitude;
-        $city = $request->city ?: $user->city;
-        $state = $request->state ?: $user->state;
+        // 위치 정보: zipcode 우선 지오코딩, 없으면 유저 프로필 fallback
+        $zipcode = $request->zipcode ?: $user->zipcode;
+        $lat = null; $lng = null; $city = null; $state = null;
+        if ($zipcode && preg_match('/^\d{5}$/', $zipcode)) {
+            $geo = $this->geocodeZip($zipcode);
+            if ($geo) {
+                $lat = $geo['lat']; $lng = $geo['lng'];
+                $city = $geo['city']; $state = $geo['state'];
+            }
+        }
+        $lat = $lat ?: ($request->lat ?: $user->latitude);
+        $lng = $lng ?: ($request->lng ?: $user->longitude);
+        $city = $city ?: ($request->city ?: $user->city);
+        $state = $state ?: ($request->state ?: $user->state);
 
         $thumbIdx = max(0, min(count($images) - 1, (int) ($request->thumbnail_index ?? 0)));
 
@@ -163,11 +172,33 @@ class MarketController extends Controller
             [
                 'user_id' => $user->id, 'images' => $images ?: null,
                 'thumbnail_index' => $thumbIdx,
-                'lat' => $lat, 'lng' => $lng, 'city' => $city, 'state' => $state,
+                'lat' => $lat, 'lng' => $lng, 'city' => $city, 'state' => $state, 'zipcode' => $zipcode,
             ]
         ));
 
         return response()->json(['success' => true, 'data' => $item], 201);
+    }
+
+    // 짧은 지오코딩 헬퍼 (JobController 것과 동일한 API, 로컬 구현)
+    private function geocodeZip(?string $zip): ?array
+    {
+        if (!$zip || !preg_match('/^\d{5}$/', $zip)) return null;
+        try {
+            return \Cache::remember("geo_zip_{$zip}", now()->addHours(24), function () use ($zip) {
+                $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+                $resp = @file_get_contents("https://api.zippopotam.us/us/{$zip}", false, $ctx);
+                if (!$resp) return null;
+                $d = json_decode($resp, true);
+                $place = $d['places'][0] ?? null;
+                if (!$place) return null;
+                return [
+                    'lat' => (float) $place['latitude'],
+                    'lng' => (float) $place['longitude'],
+                    'city' => $place['place name'] ?? null,
+                    'state' => $place['state abbreviation'] ?? null,
+                ];
+            });
+        } catch (\Throwable $e) { return null; }
     }
 
     public function update(Request $request, $id)

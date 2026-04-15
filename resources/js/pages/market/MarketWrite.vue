@@ -3,12 +3,6 @@
   <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
     <h1 class="text-xl font-black text-gray-800">🛒 {{ isEdit ? '물품 수정' : '물품 등록' }}</h1>
 
-    <!-- 상위노출 (최상단) -->
-    <PromotionSection resource="market" :is-edit="isEdit"
-      :category="form.category" :state="userState"
-      v-model="promotion" ref="promoRef"
-      category-label="카테고리" />
-
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
 
       <!-- ═══ 1. 사진 (맨 위) ═══ -->
@@ -96,7 +90,30 @@
         </div>
       </div>
 
-      <!-- ═══ 5. 상세 설명 ═══ -->
+      <!-- ═══ 5. 물품 위치 (zipcode 기준, 기본 유저 집코드) ═══ -->
+      <div class="bg-amber-50/50 border border-amber-200 rounded-lg p-3 space-y-2">
+        <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          📍 물품 위치 (Zip Code)
+          <span class="text-[10px] text-gray-500 font-normal">기본값은 본인 집코드. 변경 가능.</span>
+        </label>
+        <div class="flex items-center gap-2">
+          <input v-model="form.zipcode" type="text" maxlength="5" placeholder="90001"
+            @input="onZipChange"
+            class="w-28 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none font-mono" />
+          <span v-if="form.city || form.state" class="text-xs text-gray-600">
+            📌 {{ form.city }}{{ form.state ? ', ' + form.state : '' }}
+          </span>
+          <span v-else-if="form.zipcode?.length === 5" class="text-[10px] text-gray-400">위치 확인 중...</span>
+        </div>
+      </div>
+
+      <!-- ═══ 6. 상위노출 (위치 입력 뒤에 배치) ═══ -->
+      <PromotionSection resource="market" :is-edit="isEdit"
+        :category="form.category" :state="form.state || userState"
+        v-model="promotion" ref="promoRef"
+        category-label="카테고리" />
+
+      <!-- ═══ 7. 상세 설명 ═══ -->
       <div><label class="text-sm font-semibold text-gray-700">상세 설명</label><textarea v-model="form.content" rows="6" placeholder="상품 상태, 거래 방법 등을 자세히 작성해주세요" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea></div>
 
       <div v-if="error" class="text-red-500 text-sm">{{ error }}</div>
@@ -124,11 +141,28 @@ const auth = useAuthStore()
 const form = reactive({
   title: '', price: 0, category: 'electronics', condition: 'good', content: '',
   is_negotiable: false, hold_enabled: false, hold_price_per_6h: 100, hold_max_hours: 24,
+  zipcode: '', city: '', state: '',
 })
 const promotion = reactive({ tier: 'none', days: 7 })
 const promoRef = ref(null)
-// 유저 프로필의 state 를 state_plus 매칭에 사용 (매물 등록자의 주)
 const userState = computed(() => auth.user?.state || '')
+
+// zipcode 입력시 zippopotam 으로 city/state 자동 (디바운스 500ms)
+let zipTimer = null
+function onZipChange() {
+  clearTimeout(zipTimer)
+  zipTimer = setTimeout(async () => {
+    const z = (form.zipcode || '').trim()
+    if (!/^\d{5}$/.test(z)) { form.city = ''; form.state = ''; return }
+    try {
+      const r = await fetch(`https://api.zippopotam.us/us/${z}`)
+      if (!r.ok) return
+      const d = await r.json()
+      const p = d.places?.[0]
+      if (p) { form.city = p['place name'] || ''; form.state = p['state abbreviation'] || '' }
+    } catch {}
+  }, 500)
+}
 
 const categories = [
   { value: 'electronics', label: '📱 전자기기' },
@@ -232,6 +266,13 @@ onMounted(async () => {
       const { data } = await axios.get(`/api/market/${editId.value}`)
       const m = data.data; Object.keys(form).forEach(k => { if (m[k] !== undefined) form[k] = m[k] })
     } catch {}
+  } else {
+    // 신규 등록시 유저 집코드를 기본값으로
+    if (auth.user?.zipcode) {
+      form.zipcode = auth.user.zipcode
+      form.city = auth.user.city || ''
+      form.state = auth.user.state || ''
+    }
   }
 })
 </script>

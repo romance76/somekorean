@@ -1,5 +1,5 @@
 <template>
-  <div v-if="ads.length" class="space-y-2">
+  <div v-if="ads.length" class="space-y-2 w-full overflow-hidden">
     <div v-for="ad in ads" :key="ad.id"
       class="relative rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition"
       @click="handleClick(ad)">
@@ -23,10 +23,10 @@ const props = defineProps({
 
 const ads = ref([])
 
-// 슬롯 사이즈: 왼쪽 200×140, 오른쪽 300×210
+// 슬롯 사이즈: 좌/우 모두 컬럼 폭을 넘지 않도록 width 100% + max-width
 const imgStyle = computed(() => {
-  if (props.position === 'left') return { width: '200px', height: '140px', objectFit: 'cover', display: 'block' }
-  if (props.position === 'right') return { width: '100%', maxWidth: '300px', height: '210px', objectFit: 'cover', display: 'block' }
+  if (props.position === 'left') return { width: '100%', maxWidth: '200px', aspectRatio: '200 / 140', objectFit: 'cover', display: 'block', margin: '0 auto' }
+  if (props.position === 'right') return { width: '100%', maxWidth: '300px', aspectRatio: '300 / 210', objectFit: 'cover', display: 'block', margin: '0 auto' }
   return { width: '100%', height: '80px', objectFit: 'cover', display: 'block', borderRadius: '8px' }
 })
 

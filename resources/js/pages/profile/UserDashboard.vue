@@ -277,28 +277,40 @@
         </div>
         <div v-if="!myMarketItems.length" class="text-sm text-gray-400 py-6 text-center">등록한 물품이 없습니다</div>
         <div v-else class="space-y-2">
-          <RouterLink v-for="m in myMarketItems" :key="m.id" :to="'/market/'+m.id" class="block border rounded-lg p-3 hover:bg-amber-50/50 transition">
-            <div class="flex items-center justify-between">
+          <div v-for="m in myMarketItems" :key="m.id" class="border rounded-lg p-3 hover:bg-amber-50/30 transition">
+            <div class="flex items-start gap-3">
+              <div v-if="m.images?.length" class="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                <img :src="m.images[(m.thumbnail_index || 0)]?.startsWith?.('http') ? m.images[m.thumbnail_index || 0] : '/storage/'+m.images[m.thumbnail_index || 0]" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
+              </div>
+              <div v-else class="w-14 h-14 rounded-lg bg-amber-50 flex items-center justify-center text-2xl flex-shrink-0">🛒</div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs px-2 py-0.5 rounded-full font-bold"
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-bold"
                     :class="{'bg-green-100 text-green-700':m.status==='active','bg-amber-100 text-amber-700':m.status==='reserved','bg-gray-200 text-gray-500':m.status==='sold'}">
                     {{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[m.status] }}
                   </span>
-                  <span v-if="m.boosted_until && new Date(m.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">🚀</span>
+                  <span v-if="m.promotion_tier === 'national' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">🌍 전국</span>
+                  <span v-else-if="m.promotion_tier === 'state_plus' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold">⭐ 주+</span>
+                  <span v-else-if="m.promotion_tier === 'sponsored' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">📢 스폰서</span>
+                  <span v-if="m.boosted_until && new Date(m.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold">🚀</span>
                 </div>
-                <div class="text-sm font-bold text-gray-800 truncate mt-1">{{ m.title }}</div>
-                <div class="flex items-center gap-2 mt-1">
-                  <span class="text-xs font-bold text-amber-600">${{ Number(m.price).toLocaleString() }}</span>
-                  <span class="text-[10px] text-gray-400">👁 {{ m.view_count }}</span>
-                  <span class="text-[10px] text-gray-400">{{ m.city }}, {{ m.state }}</span>
+                <RouterLink :to="'/market/'+m.id" class="block mt-1">
+                  <div class="text-sm font-bold text-gray-800 truncate hover:text-amber-600">{{ m.title }}</div>
+                </RouterLink>
+                <div class="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
+                  <span class="font-bold text-amber-600">${{ Number(m.price).toLocaleString() }}</span>
+                  <span>👁 {{ m.view_count }}</span>
+                  <span>{{ m.city }}{{ m.state ? ', '+m.state : '' }}</span>
                 </div>
-              </div>
-              <div v-if="m.images?.length" class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ml-3">
-                <img :src="m.images[0]?.startsWith?.('http') ? m.images[0] : '/storage/'+m.images[0]" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
               </div>
             </div>
-          </RouterLink>
+            <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+              <RouterLink :to="'/market/write?edit='+m.id" class="flex-1 text-center text-xs font-bold py-1.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100">✏️ 수정</RouterLink>
+              <button @click="openMarketPromote(m)" class="flex-1 text-xs font-bold py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100">🚀 상위노출</button>
+              <RouterLink :to="'/market/'+m.id" class="flex-1 text-center text-xs font-bold py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">👁 미리보기</RouterLink>
+              <button @click="deleteMarketItem(m)" class="text-xs font-bold py-1.5 px-3 rounded bg-red-50 text-red-600 hover:bg-red-100">🗑</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -366,6 +378,74 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 내 부동산 탭 ═══ -->
+    <div v-else-if="tab==='realestate'" class="space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-gray-800">🏠 내 부동산 매물</h2>
+          <RouterLink to="/realestate/write" class="bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-amber-500">+ 등록</RouterLink>
+        </div>
+        <div v-if="!myRealEstate.length" class="text-sm text-gray-400 py-6 text-center">등록한 매물이 없습니다</div>
+        <div v-else class="space-y-2">
+          <div v-for="r in myRealEstate" :key="r.id" class="border rounded-lg p-3 hover:bg-amber-50/30 transition">
+            <div class="flex items-start gap-3">
+              <div v-if="r.images?.length" class="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                <img :src="r.images[0]?.startsWith?.('http') ? r.images[0] : '/storage/'+r.images[0]" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
+              </div>
+              <div v-else class="w-14 h-14 rounded-lg bg-amber-50 flex items-center justify-center text-2xl flex-shrink-0">
+                {{ r.type==='sale'?'🏠':r.type==='rent'?'🔑':'👥' }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" :class="r.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">{{ r.is_active ? '게시중' : '종료' }}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-100 text-amber-700">{{ {rent:'렌트',sale:'매매',roommate:'룸메이트'}[r.type] }}</span>
+                  <span v-if="r.promotion_tier === 'national' && r.promotion_expires_at && new Date(r.promotion_expires_at) > new Date()" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">🌍 전국</span>
+                  <span v-else-if="r.promotion_tier === 'state_plus' && r.promotion_expires_at && new Date(r.promotion_expires_at) > new Date()" class="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold">⭐ 주+</span>
+                </div>
+                <RouterLink :to="'/realestate/'+r.id" class="block mt-1">
+                  <div class="text-sm font-bold text-gray-800 truncate hover:text-amber-600">{{ r.title }}</div>
+                </RouterLink>
+                <div class="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
+                  <span class="font-bold text-amber-600">${{ Number(r.price).toLocaleString() }}{{ r.type==='rent'?'/월':'' }}</span>
+                  <span>{{ r.city }}{{ r.state ? ', '+r.state : '' }}</span>
+                  <span v-if="r.bedrooms">🛏 {{ r.bedrooms }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+              <RouterLink :to="'/realestate/write?edit='+r.id" class="flex-1 text-center text-xs font-bold py-1.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100">✏️ 수정</RouterLink>
+              <button @click="openRePromote(r)" class="flex-1 text-xs font-bold py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100">🚀 상위노출</button>
+              <RouterLink :to="'/realestate/'+r.id" class="flex-1 text-center text-xs font-bold py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">👁 미리보기</RouterLink>
+              <button @click="deleteRealEstateItem(r)" class="text-xs font-bold py-1.5 px-3 rounded bg-red-50 text-red-600 hover:bg-red-100">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공통 상위노출 모달 (중고장터/부동산) -->
+    <div v-if="resourcePromoTarget" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="resourcePromoTarget=null">
+      <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-gray-800">🚀 {{ resourcePromoTarget.title }} - 상위노출</h3>
+          <button @click="resourcePromoTarget=null" class="text-gray-400 text-xl">&times;</button>
+        </div>
+        <PromotionSection :resource="resourcePromoType"
+          :category="resourcePromoTarget.category || resourcePromoTarget.type"
+          :state="resourcePromoTarget.state"
+          v-model="resourcePromotion" ref="resourcePromoRef"
+          :category-label="resourcePromoType === 'realestate' ? '유형' : '카테고리'" />
+        <div v-if="resourcePromoError" class="bg-red-50 border border-red-200 text-red-600 rounded-lg px-3 py-2 text-xs">{{ resourcePromoError }}</div>
+        <div class="flex gap-2 justify-end">
+          <button @click="resourcePromoTarget=null" class="text-gray-500 text-xs px-4 py-2">취소</button>
+          <button @click="submitResourcePromote" :disabled="resourcePromoSubmitting || resourcePromotion.tier === 'none'"
+            class="bg-purple-500 text-white font-bold px-4 py-2 rounded-lg text-xs disabled:opacity-50">
+            {{ resourcePromoSubmitting ? '처리중...' : '상위노출 적용' }}
+          </button>
         </div>
       </div>
     </div>
@@ -842,6 +922,7 @@ const tabs = [
   { key: 'posts', icon: '📄', label: '내 글' },
   { key: 'market', icon: '🛒', label: '내 장터' },
   { key: 'jobs', icon: '💼', label: '내 구인' },
+  { key: 'realestate', icon: '🏠', label: '내 부동산' },
   { key: 'ads', icon: '📢', label: '광고 신청' },
   { key: 'calls', icon: '📞', label: '통화내역' },
   { key: 'bookmarks', icon: '🔖', label: '북마크' },
@@ -1153,6 +1234,74 @@ async function loadMyMarket() {
   } catch {}
 }
 
+// ─── 공통 상위노출 모달 (중고장터/부동산) ───
+const resourcePromoTarget = ref(null)
+const resourcePromoType = ref('market')
+const resourcePromotion = reactive({ tier: 'none', days: 7 })
+const resourcePromoRef = ref(null)
+const resourcePromoSubmitting = ref(false)
+const resourcePromoError = ref('')
+
+function openMarketPromote(m) {
+  resourcePromoTarget.value = m
+  resourcePromoType.value = 'market'
+  resourcePromotion.tier = 'none'
+  resourcePromotion.days = 7
+  resourcePromoError.value = ''
+}
+function openRePromote(r) {
+  resourcePromoTarget.value = r
+  resourcePromoType.value = 'realestate'
+  resourcePromotion.tier = 'none'
+  resourcePromotion.days = 7
+  resourcePromoError.value = ''
+}
+async function submitResourcePromote() {
+  if (!resourcePromoTarget.value || resourcePromotion.tier === 'none') return
+  if (['state_plus','national'].includes(resourcePromotion.tier) && resourcePromoRef.value?.isSlotFull) {
+    const t = resourcePromoRef.value?.nextSlotTimeFmt
+    resourcePromoError.value = t ? `슬롯 만석. ${t} 이후 가능합니다.` : '슬롯 만석입니다.'
+    return
+  }
+  resourcePromoSubmitting.value = true
+  resourcePromoError.value = ''
+  try {
+    const url = resourcePromoType.value === 'realestate'
+      ? `/api/realestate/${resourcePromoTarget.value.id}/promote`
+      : `/api/market/${resourcePromoTarget.value.id}/promote`
+    await axios.post(url, { tier: resourcePromotion.tier, days: resourcePromotion.days })
+    if (resourcePromoType.value === 'market') await loadMyMarket()
+    else await loadMyRealEstate()
+    resourcePromoTarget.value = null
+    showAlert('상위노출이 적용되었습니다', '완료')
+  } catch (e) {
+    resourcePromoError.value = e.response?.data?.message || '상위노출 적용 실패'
+  }
+  resourcePromoSubmitting.value = false
+}
+
+async function deleteMarketItem(m) {
+  const ok = await showConfirm(`"${m.title}" 삭제하시겠습니까?`, '삭제')
+  if (!ok) return
+  try { await axios.delete(`/api/market/${m.id}`); myMarketItems.value = myMarketItems.value.filter(x => x.id !== m.id) }
+  catch (e) { showAlert(e.response?.data?.message || '삭제 실패', '오류') }
+}
+
+// ─── 내 부동산 ───
+const myRealEstate = ref([])
+async function loadMyRealEstate() {
+  try {
+    const { data } = await axios.get('/api/realestate', { params: { user_id: auth.user?.id, per_page: 50 } })
+    myRealEstate.value = data.data?.data || data.data || []
+  } catch {}
+}
+async function deleteRealEstateItem(r) {
+  const ok = await showConfirm(`"${r.title}" 삭제하시겠습니까?`, '삭제')
+  if (!ok) return
+  try { await axios.delete(`/api/realestate/${r.id}`); myRealEstate.value = myRealEstate.value.filter(x => x.id !== r.id) }
+  catch (e) { showAlert(e.response?.data?.message || '삭제 실패', '오류') }
+}
+
 // ─── 내 구인구직 ───
 const myJobs = ref([])
 async function loadMyJobs() {
@@ -1358,7 +1507,7 @@ async function saveResume() {
 
 // ─── 탭 로딩 ───
 function loadTab(key) {
-  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, jobs: loadMyJobs, ads: loadMyAds, calls: loadCallHistory, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz, resume: loadResume }
+  const loaders = { profile: loadProfile, points: loadPoints, messages: loadMessages, posts: loadPosts, market: loadMyMarket, jobs: loadMyJobs, realestate: loadMyRealEstate, ads: loadMyAds, calls: loadCallHistory, bookmarks: loadBookmarks, elder: loadElder, payments: loadPayments, mybiz: loadMyBiz, resume: loadResume }
   if (loaders[key]) loaders[key]()
 }
 

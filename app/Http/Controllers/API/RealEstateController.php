@@ -33,9 +33,14 @@ class RealEstateController extends Controller
     {
         $this->expireStalePromotions();
 
-        $query = RealEstateListing::with('user:id,name,nickname')
-            ->active()
-            ->when($request->type, fn($q, $v) => $q->where('type', $v))
+        $query = RealEstateListing::with('user:id,name,nickname');
+        // user_id 필터: 본인 것은 비활성 포함, 남의 것은 active 만
+        if ($request->user_id) {
+            $query->where('user_id', $request->user_id);
+        } else {
+            $query->active();
+        }
+        $query->when($request->type, fn($q, $v) => $q->where('type', $v))
             ->when($request->property_type, fn($q, $v) => $q->where('property_type', $v))
             ->when($request->min_price, fn($q, $v) => $q->where('price', '>=', $v))
             ->when($request->max_price, fn($q, $v) => $q->where('price', '<=', $v))

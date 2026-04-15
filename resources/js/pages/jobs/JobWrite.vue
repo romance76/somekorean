@@ -9,104 +9,6 @@
       <h1 class="text-xl font-black text-gray-800">{{ isEdit ? '공고 수정' : '공고 등록' }}</h1>
     </div>
 
-    <!-- 상위노출 (최상단 배치) — 카테고리/주 먼저 아래서 입력해야 슬롯 확인 가능 -->
-    <section v-if="!isEdit" class="bg-white rounded-xl shadow-sm border-2 border-purple-300 overflow-hidden">
-      <div class="px-5 py-3 border-b border-purple-100 bg-purple-50 flex items-center gap-2">
-        <h2 class="text-sm font-black text-purple-800">🚀 상위노출 (선택)</h2>
-        <span class="text-[10px] text-purple-600">등록 전 슬롯 여부 먼저 확인하세요</span>
-      </div>
-      <div class="p-5 space-y-4">
-        <p class="text-xs text-gray-500">
-          카테고리당 <b>주(State)</b> / <b>전국(National)</b> 최대 5개까지만 가능합니다.
-          슬롯이 찼으면 등록 시점에 차단됩니다.
-        </p>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button type="button" @click="selectPromotion('none')"
-            class="p-3 rounded-lg border-2 text-left transition"
-            :class="promotion.tier === 'none' ? 'border-gray-400 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'">
-            <div class="font-bold text-sm text-gray-800">사용 안 함</div>
-            <div class="text-xs text-gray-500">일반 등록</div>
-          </button>
-          <button type="button" @click="selectPromotion('sponsored')"
-            class="p-3 rounded-lg border-2 text-left transition"
-            :class="promotion.tier === 'sponsored' ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'">
-            <div class="font-bold text-sm text-gray-800">스폰서 (Sponsored)</div>
-            <div class="text-xs text-purple-600 font-semibold">하루 {{ promoPrices.sponsored }}P</div>
-            <div class="text-[10px] text-gray-500 mt-1">색상 강조만 (위치 부스트 없음)</div>
-          </button>
-          <button type="button" @click="selectPromotion('state_plus')"
-            class="p-3 rounded-lg border-2 text-left transition"
-            :class="promotion.tier === 'state_plus' ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'">
-            <div class="font-bold text-sm text-gray-800">주(State) 상위노출</div>
-            <div class="text-xs text-purple-600 font-semibold">하루 {{ promoPrices.state_plus }}P</div>
-            <div class="text-[10px] text-gray-500 mt-1">내 주 + 인접 주 자동 포함 · 카테고리당 최대 {{ promoMax.state_plus }}개</div>
-          </button>
-          <button type="button" @click="selectPromotion('national')"
-            class="p-3 rounded-lg border-2 text-left transition"
-            :class="promotion.tier === 'national' ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'">
-            <div class="font-bold text-sm text-gray-800">전국(National) 상위노출</div>
-            <div class="text-xs text-purple-600 font-semibold">하루 {{ promoPrices.national }}P</div>
-            <div class="text-[10px] text-gray-500 mt-1">전 지역 노출 · 카테고리당 최대 {{ promoMax.national }}개</div>
-          </button>
-        </div>
-
-        <div v-if="promotion.tier !== 'none'" class="space-y-3 pt-3 border-t border-gray-100">
-          <!-- state_plus: 자동 포함 주 미리보기 -->
-          <div v-if="promotion.tier === 'state_plus'" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div class="text-xs font-bold text-blue-800 mb-1.5">📍 자동 노출 주 (State)</div>
-            <div v-if="!form.state" class="text-xs text-red-600">
-              ⚠️ 아래 <b>근무 위치 → State</b> 를 먼저 입력해주세요. 입력한 주 + 인접 주에 자동 노출됩니다.
-            </div>
-            <div v-else-if="autoStatePlusStates.length">
-              <div class="text-xs text-blue-700 mb-2">
-                공고 주 (<b>{{ form.state.toUpperCase() }}</b>) + 인접 주에 자동 상위노출됩니다:
-              </div>
-              <div class="flex flex-wrap gap-1">
-                <span v-for="s in autoStatePlusStates" :key="s"
-                  class="text-[11px] font-bold px-2 py-0.5 rounded"
-                  :class="s === form.state.toUpperCase() ? 'bg-blue-500 text-white' : 'bg-white border border-blue-300 text-blue-700'">
-                  {{ s }}{{ s === form.state.toUpperCase() ? ' (내 주)' : '' }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="text-sm font-semibold text-gray-700 block mb-1">노출 기간 (일)</label>
-            <input v-model.number="promotion.days" type="number" min="1" max="30"
-              class="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400" />
-          </div>
-
-          <div class="bg-purple-50 rounded-lg p-3 flex items-center justify-between">
-            <span class="text-sm text-purple-800">총 비용</span>
-            <span class="text-lg font-black text-purple-800">{{ totalPromotionCost.toLocaleString() }} P</span>
-          </div>
-
-          <!-- 슬롯 만석 경고 -->
-          <div v-if="isSlotFull" class="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-xs text-red-700">
-            <div class="font-bold mb-1 text-red-800">⚠️ 슬롯 만석 — 현재 선택 불가</div>
-            <div class="mb-1">
-              {{ promotion.tier === 'national' ? '전국' : '주(State)' }} 상위노출은
-              카테고리당 최대 {{ slotInfo?.max_slots ?? 5 }}개까지 가능합니다.
-            </div>
-            <div v-if="nextSlotTimeFmt" class="font-bold text-red-700">
-              📅 {{ nextSlotTimeFmt }} 이후 가능합니다.
-            </div>
-          </div>
-          <!-- 슬롯 여유 안내 -->
-          <div v-else-if="slotInfo && !isSlotFull" class="text-xs text-green-700 bg-green-50 rounded-lg p-2">
-            ✅ 슬롯 사용 가능 ({{ slotInfo.used }}/{{ slotInfo.max_slots }} 사용 중, {{ slotInfo.available }}개 남음)
-          </div>
-          <!-- 선행 입력 필요 안내 -->
-          <div v-else-if="!form.category || (promotion.tier === 'state_plus' && !form.state)"
-            class="text-xs text-amber-700 bg-amber-50 rounded-lg p-2">
-            ⚠️ 슬롯 확인을 위해
-            <b v-if="!form.category">카테고리</b><span v-if="!form.category && promotion.tier === 'state_plus' && !form.state">와 </span><b v-if="promotion.tier === 'state_plus' && !form.state">근무 위치 State</b>를 먼저 입력해주세요.
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- Section 1: 글 유형 -->
     <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -294,6 +196,12 @@
       </div>
     </section>
 
+    <!-- Section 3.5: 상위노출 (급여/위치 입력 뒤에 배치) -->
+    <PromotionSection resource="jobs" :is-edit="isEdit"
+      :category="form.category" :state="form.state"
+      v-model="jobPromotion" ref="jobPromoRef"
+      category-label="카테고리" />
+
     <!-- Section 4: 복리후생 (Benefits) - only for hiring -->
     <section v-if="isHiring" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-5 py-3 border-b border-gray-100 bg-amber-50">
@@ -454,6 +362,11 @@ import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { neighborsOf } from '../../utils/stateNeighbors'
+import PromotionSection from '../../components/PromotionSection.vue'
+
+// 공통 컴포넌트로 프로모션 관리 (jobPromotion 으로 v-model)
+const jobPromotion = reactive({ tier: 'none', days: 7 })
+const jobPromoRef = ref(null)
 
 const router = useRouter()
 const route = useRoute()
@@ -740,10 +653,11 @@ async function submit() {
   if (!form.category) { error.value = '카테고리를 선택해주세요'; return }
   if (!plainText) { error.value = '상세 설명을 입력해주세요'; return }
   // 프로모션 선택했지만 슬롯 만석 → 등록 차단
-  if (['state_plus','national'].includes(promotion.tier) && isSlotFull.value) {
-    error.value = nextSlotTimeFmt.value
-      ? `상위노출 슬롯 만석. ${nextSlotTimeFmt.value} 이후 가능합니다. 상위노출을 "사용 안 함" 으로 바꾸거나 다시 선택해주세요.`
-      : '상위노출 슬롯이 모두 사용 중입니다. 상위노출을 "사용 안 함" 으로 바꾸거나 다시 선택해주세요.'
+  if (['state_plus','national'].includes(jobPromotion.tier) && jobPromoRef.value?.isSlotFull) {
+    const t = jobPromoRef.value?.nextSlotTimeFmt
+    error.value = t
+      ? `상위노출 슬롯 만석. ${t} 이후 가능합니다. 상위노출을 "사용 안 함" 으로 바꾸거나 다시 선택해주세요.`
+      : '상위노출 슬롯이 모두 사용 중입니다.'
     return
   }
 
@@ -787,18 +701,15 @@ async function submit() {
       createdId = data?.data?.id ?? data?.id
     }
 
-    if (!isEdit.value && promotion.tier !== 'none' && createdId) {
+    if (!isEdit.value && jobPromotion.tier !== 'none' && createdId) {
       try {
-        // state_plus 의 주 목록은 서버가 공고의 state 로부터 자동 계산함 (광고주가 직접 선택 X)
         await axios.post(`/api/jobs/${createdId}/promote`, {
-          tier: promotion.tier,
-          days: promotion.days,
+          tier: jobPromotion.tier,
+          days: jobPromotion.days,
         })
       } catch (promoErr) {
         console.warn('Promotion failed', promoErr)
-        if (promoErr.response?.data?.message) {
-          error.value = promoErr.response.data.message
-        }
+        if (promoErr.response?.data?.message) error.value = promoErr.response.data.message
       }
     }
 

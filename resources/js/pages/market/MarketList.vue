@@ -133,25 +133,39 @@
     <div v-else-if="viewMode==='card'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">{{ item.category==='electronics'?'📱':item.category==='furniture'?'🪑':item.category==='auto'?'🚗':item.category==='clothing'?'👕':'📦' }}</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1">
-              <span v-if="item.boosted_until && new Date(item.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold flex-shrink-0">🚀</span>
-              <span v-if="item.hold_enabled" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-bold flex-shrink-0">🔒</span>
-              <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
-            </div>
-            <div class="text-[10px] text-gray-400">{{ item.category || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" /></div>
+        class="rounded-xl shadow-sm border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex"
+        :class="promoRowClass(item)">
+        <!-- 왼쪽: 썸네일 -->
+        <div class="w-32 h-32 flex-shrink-0 bg-gray-100">
+          <img v-if="item.images?.length" :src="marketThumb(item)" loading="lazy" decoding="async"
+            class="w-full h-full object-cover"
+            @error="e=>e.target.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center text-4xl bg-amber-50\'>🛒</div>'" />
+          <div v-else class="w-full h-full flex items-center justify-center text-4xl bg-amber-50">
+            {{ item.category==='electronics'?'📱':item.category==='furniture'?'🪑':item.category==='auto'?'🚗':item.category==='clothing'?'👕':'📦' }}
           </div>
-          <div class="text-amber-600 font-black text-sm">${{ Number(item.price || 0).toLocaleString() }}</div>
         </div>
-        <div class="text-xs text-gray-500 line-clamp-2 mb-2">{{ (item.content || '').slice(0, 80) }}</div>
-        <div class="flex items-center justify-between text-[10px] text-gray-400">
-          <span v-if="item.city">📍 {{ item.city }}, {{ item.state }}</span>
-          <div class="flex items-center gap-2">
-            <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
-            <span>👁 {{ item.view_count || 0 }}</span>
+        <!-- 오른쪽: 정보 -->
+        <div class="flex-1 p-3 min-w-0 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-1 mb-0.5 flex-wrap">
+              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
+              <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
+              <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
+              <span v-if="item.boosted_until && new Date(item.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold">🚀</span>
+              <span v-if="item.hold_enabled" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-bold">🔒</span>
+            </div>
+            <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">
+              {{ item.category || '기타' }} · <UserName :userId="item.user?.id" :name="item.user?.name" className="text-[10px] text-gray-400 inline" />
+            </div>
+            <div class="text-xs text-gray-500 line-clamp-1 mt-1">{{ (item.content || '').slice(0, 60) }}</div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="text-[10px] text-gray-400">
+              <span v-if="item.city">📍 {{ item.city }}{{ item.state ? ', '+item.state : '' }}</span>
+              <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold ml-1">{{ Number(item.distance).toFixed(1) }}mi</span>
+            </div>
+            <div class="text-amber-600 font-black text-base">${{ Number(item.price || 0).toLocaleString() }}</div>
           </div>
         </div>
       </div>
