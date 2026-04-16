@@ -279,14 +279,16 @@ function promotionClass(item) {
   return ''
 }
 
-// 프로모션: 전체 박스 보더 / 일반: 없음
 function jobBorderClass(item) {
-  if (item.promotion_tier === 'national') return 'border-2 border-red-400 rounded-lg hover:bg-gray-50'
-  if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400 rounded-lg hover:bg-gray-50'
-  if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400 rounded-lg hover:bg-gray-50'
+  if (['national','state_plus','sponsored'].includes(item.promotion_tier)) return 'rounded-lg my-1 hover:bg-gray-50'
   return 'hover:bg-gray-50'
 }
-function jobBorderStyle() { return '' }
+function jobBorderStyle(item) {
+  if (item.promotion_tier === 'national') return 'border: 2px solid #f87171; border-radius: 8px;'
+  if (item.promotion_tier === 'state_plus') return 'border: 2px solid #60a5fa; border-radius: 8px;'
+  if (item.promotion_tier === 'sponsored') return 'border: 2px solid #fbbf24; border-radius: 8px;'
+  return ''
+}
 
 // 좋아요 (Bookmark)
 const favorited = ref(new Set())
