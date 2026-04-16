@@ -152,7 +152,7 @@
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="goDetail(item)"
-        class="px-4 py-3 border-b border-gray-50 transition cursor-pointer border-l-4"
+        class="px-4 py-3 border-b border-gray-50 transition cursor-pointer"
         :class="jobBorderClass(item)" :style="jobBorderStyle(item)">
         <div class="flex items-center gap-3">
           <!-- 로고 -->
@@ -279,19 +279,14 @@ function promotionClass(item) {
   return ''
 }
 
-// 프로모션: 굵은 보더 / 일반: 없음
+// 프로모션: 전체 박스 보더 / 일반: 없음
 function jobBorderClass(item) {
-  // border-l-4 는 템플릿에 이미 있으므로 style 로 오버라이드
-  return item.promotion_tier === 'national' ? 'border-l-red-500 hover:bg-gray-50'
-    : item.promotion_tier === 'state_plus' ? 'border-l-blue-500 hover:bg-gray-50'
-    : item.promotion_tier === 'sponsored' ? 'border-l-amber-400 hover:bg-gray-50'
-    : 'border-l-transparent hover:bg-gray-50'
+  if (item.promotion_tier === 'national') return 'border-2 border-red-400 rounded-lg hover:bg-gray-50'
+  if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400 rounded-lg hover:bg-gray-50'
+  if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400 rounded-lg hover:bg-gray-50'
+  return 'hover:bg-gray-50'
 }
-function jobBorderStyle(item) {
-  // 프로모션은 두꺼운 보더
-  if (['national','state_plus','sponsored'].includes(item.promotion_tier)) return 'border-left-width: 6px'
-  return ''
-}
+function jobBorderStyle() { return '' }
 
 // 좋아요 (Bookmark)
 const favorited = ref(new Set())

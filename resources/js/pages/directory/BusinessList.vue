@@ -447,10 +447,10 @@ function onCityChange() {
 }
 
 function bizPromoClass(item) {
-  if (item.promotion_tier === 'national') return 'bg-red-50 border-red-300'
-  if (item.promotion_tier === 'state_plus') return 'bg-blue-50 border-blue-300'
-  if (item.promotion_tier === 'sponsored') return 'bg-amber-50 border-amber-300'
-  return 'bg-white border-gray-100'
+  if (item.promotion_tier === 'national') return 'bg-white border-2 border-red-400'
+  if (item.promotion_tier === 'state_plus') return 'bg-white border-2 border-blue-400'
+  if (item.promotion_tier === 'sponsored') return 'bg-white border-2 border-amber-400'
+  return 'bg-white border border-gray-100'
 }
 
 async function loadPage(p = 1) {

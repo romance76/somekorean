@@ -328,11 +328,11 @@ function fmtDate(dt) {
   return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
-// 프로모션 티어별 보더만 (배경색 없이 깔끔하게)
+// 프로모션: 전체 박스 보더
 function promoRowClass(item) {
-  if (item.promotion_tier === 'national') return 'border-l-4 border-l-red-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'state_plus') return 'border-l-4 border-l-blue-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'sponsored') return 'border-l-4 border-l-amber-400 hover:bg-gray-50'
+  if (item.promotion_tier === 'national') return 'border-2 border-red-400 rounded-lg hover:bg-gray-50'
+  if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400 rounded-lg hover:bg-gray-50'
+  if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400 rounded-lg hover:bg-gray-50'
   return 'hover:bg-amber-50/50'
 }
 

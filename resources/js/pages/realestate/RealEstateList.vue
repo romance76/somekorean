@@ -385,18 +385,18 @@ function onCityChange() {
 }
 
 function promoRowClass(item) {
-  if (item.promotion_tier === 'national') return 'border-l-4 border-l-red-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'state_plus') return 'border-l-4 border-l-blue-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'sponsored') return 'border-l-4 border-l-amber-400 hover:bg-gray-50'
+  if (item.promotion_tier === 'national') return 'border-2 border-red-400 rounded-lg hover:bg-gray-50'
+  if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400 rounded-lg hover:bg-gray-50'
+  if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400 rounded-lg hover:bg-gray-50'
   return 'hover:bg-amber-50/50'
 }
 
-// 카드형: 왼쪽 보더 색만 (깔끔하게)
+// 카드형: 전체 박스 보더
 function promoBorderClass(item) {
-  if (item.promotion_tier === 'national') return 'border-gray-100 border-l-4 border-l-red-500'
-  if (item.promotion_tier === 'state_plus') return 'border-gray-100 border-l-4 border-l-blue-500'
-  if (item.promotion_tier === 'sponsored') return 'border-gray-100 border-l-4 border-l-amber-400'
-  return 'border-gray-100'
+  if (item.promotion_tier === 'national') return 'border-2 border-red-400'
+  if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400'
+  if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400'
+  return 'border border-gray-100'
 }
 
 const propertyTypeLabels = { house:'하우스', apt:'아파트', condo:'콘도', studio:'스튜디오', office:'오피스', commercial:'상가', etc:'기타' }
