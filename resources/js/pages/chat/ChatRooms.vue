@@ -337,6 +337,9 @@ function subscribeToRoom(roomId) {
   currentChannel = roomId
   window.Echo.channel('chat.' + roomId)
     .listen('.message.sent', (payload) => {
+      // 가드: 현재 활성 방의 메시지만 받음 (다른 방 채널 잔존 방지)
+      if (activeRoom.value?.id !== roomId) return
+      if (payload.chat_room_id && payload.chat_room_id !== roomId) return
       // 중복 방지: 이미 같은 id가 있으면 무시
       if (activeMessages.value.some(m => m.id === payload.id)) return
       activeMessages.value.push(payload)
@@ -350,17 +353,32 @@ function subscribeToRoom(roomId) {
     })
 }
 
+let selectRoomSeq = 0
 async function selectRoom(room) {
+  const seq = ++selectRoomSeq
   activeRoom.value = room
+  // 클릭 즉시 이전 메시지 초기화 (이전 방 메시지가 잠깐 보이는 문제 방지)
+  activeMessages.value = []
+  pinnedAnnouncements.value = []
   clearImage()
   subscribeToRoom(room.id)
   try {
-    const { data } = await axios.get(`/api/chat/rooms/${room.id}/messages`)
-    activeMessages.value = (data.data?.data || data.data || []).reverse()
+    const { data } = await axios.get(`/api/chat/rooms/${room.id}/messages`, {
+      params: { _ts: Date.now() }, // 캐시 방지
+    })
+    // 도착 사이 다른 방으로 이동했으면 결과 무시 (race condition)
+    if (seq !== selectRoomSeq || activeRoom.value?.id !== room.id) return
+    const msgs = (data.data?.data || data.data || []).reverse()
+    // 안전: chat_room_id 가 다른 메시지 (혹시 백엔드 버그 대비) 필터
+    activeMessages.value = msgs.filter(m => !m.chat_room_id || m.chat_room_id === room.id)
     pinnedAnnouncements.value = data.pinned || []
     await nextTick()
     if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
-  } catch {}
+  } catch (e) {
+    if (seq === selectRoomSeq) {
+      console.warn('[chat] failed to load messages for room', room.id, e?.message)
+    }
+  }
 }
 
 async function sendMsg() {
