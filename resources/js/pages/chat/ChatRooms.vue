@@ -138,19 +138,93 @@
         </div>
       </div>
 
-      <!-- 오른쪽: 다른 채팅방 눈팅 -->
+      <!-- 오른쪽: 참가자 목록 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">👀 다른 채팅방 엿보기</div>
-          <div v-for="room in peekRooms" :key="room.id" class="px-3 py-2 border-b last:border-0">
-            <button @click="selectRoom(room)" class="text-left w-full">
-              <div class="text-xs font-semibold text-gray-700 truncate">{{ room.name }}</div>
-              <div v-if="room.lastMsg" class="text-[10px] text-gray-400 truncate mt-0.5">
-                {{ room.lastMsg.user?.name }}: {{ room.lastMsg.content }}
-              </div>
-            </button>
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900 flex items-center justify-between">
+            <span>👥 참가자 {{ participants.length ? '(' + participants.length + ')' : '' }}</span>
+            <button v-if="activeRoom" @click="loadParticipants" class="text-[10px] text-amber-600 hover:text-amber-800" title="새로고침">🔄</button>
           </div>
-          <div v-if="!peekRooms.length" class="px-3 py-3 text-xs text-gray-400 text-center">채팅방 없음</div>
+          <div v-if="!activeRoom" class="px-3 py-4 text-xs text-gray-400 text-center">채팅방을 선택하세요</div>
+          <div v-else-if="participantsLoading" class="px-3 py-4 text-xs text-gray-400 text-center">로딩중...</div>
+          <div v-else-if="!participants.length" class="px-3 py-4 text-xs text-gray-400 text-center">참가자가 없습니다</div>
+          <div v-else class="max-h-[600px] overflow-y-auto">
+            <div v-for="u in participants" :key="u.id" class="px-3 py-2 border-b last:border-0 hover:bg-amber-50/40">
+              <div class="flex items-center gap-2">
+                <img v-if="u.avatar" :src="u.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  @error="e=>e.target.style.display='none'" />
+                <div v-else class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700 flex-shrink-0">
+                  {{ (u.nickname || u.name || '?')[0] }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs font-bold text-gray-800 truncate">{{ u.nickname || u.name }}</span>
+                    <span v-if="u.role === 'admin' || u.role === 'super_admin'" class="text-[9px] bg-red-500 text-white px-1 rounded-full">👑</span>
+                    <span v-if="u.id === auth.user?.id" class="text-[9px] bg-amber-100 text-amber-700 px-1 rounded-full">나</span>
+                  </div>
+                  <div class="text-[10px] text-gray-400 truncate">
+                    <span v-if="u.city">📍 {{ u.city }}{{ u.state ? ', '+u.state : '' }}</span>
+                    <span v-if="u.message_count">· 💬 {{ u.message_count }}</span>
+                  </div>
+                </div>
+              </div>
+              <div v-if="u.id !== auth.user?.id" class="flex items-center gap-1 mt-1.5">
+                <button @click="openPartAction('friend', u)"
+                  :disabled="!u.allow_friend_request"
+                  class="flex-1 text-[10px] bg-green-50 text-green-700 font-bold px-1.5 py-1 rounded hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  :title="u.allow_friend_request ? '친구 요청' : '친구 요청 차단됨'">👫 친구</button>
+                <button @click="openPartAction('message', u)"
+                  :disabled="!u.allow_messages"
+                  class="flex-1 text-[10px] bg-blue-50 text-blue-700 font-bold px-1.5 py-1 rounded hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  :title="u.allow_messages ? '쪽지 보내기' : '쪽지 차단됨'">✉️ 쪽지</button>
+                <button @click="openPartAction('report', u)"
+                  class="text-[10px] bg-red-50 text-red-600 font-bold px-1.5 py-1 rounded hover:bg-red-100"
+                  title="신고">🚨</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 간단 참가자 액션 모달 -->
+        <div v-if="partModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="partModal=null">
+          <div class="bg-white rounded-xl w-full max-w-sm shadow-xl p-4 space-y-3">
+            <div class="flex items-center gap-2">
+              <img v-if="partModal.user.avatar" :src="partModal.user.avatar" class="w-10 h-10 rounded-full object-cover" />
+              <div v-else class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-700">{{ (partModal.user.nickname || partModal.user.name || '?')[0] }}</div>
+              <div>
+                <div class="font-bold text-gray-800 text-sm">{{ partModal.user.nickname || partModal.user.name }}</div>
+                <div class="text-[10px] text-gray-400">{{ partModal.user.city }}{{ partModal.user.state ? ', '+partModal.user.state : '' }}</div>
+              </div>
+            </div>
+            <h3 class="font-bold text-sm text-gray-800">
+              <span v-if="partModal.type === 'friend'">👫 친구 요청 보내기</span>
+              <span v-else-if="partModal.type === 'message'">✉️ 쪽지 보내기</span>
+              <span v-else>🚨 신고</span>
+            </h3>
+            <textarea v-if="partModal.type === 'message'" v-model="partInput" rows="4" maxlength="500" placeholder="쪽지 내용..." class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 resize-none"></textarea>
+            <div v-else-if="partModal.type === 'friend'">
+              <input v-model="partInput" maxlength="100" placeholder="인사말 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+            </div>
+            <div v-else>
+              <select v-model="partReportReason" class="w-full border rounded-lg px-3 py-2 text-sm mb-2">
+                <option value="spam">스팸/광고</option>
+                <option value="abuse">욕설/비방</option>
+                <option value="inappropriate">부적절한 내용</option>
+                <option value="harassment">괴롭힘</option>
+                <option value="other">기타</option>
+              </select>
+              <textarea v-model="partInput" rows="3" maxlength="500" placeholder="신고 상세 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+            </div>
+            <div v-if="partMsg" class="text-xs" :class="partMsgOk ? 'text-green-600' : 'text-red-500'">{{ partMsg }}</div>
+            <div class="flex gap-2 justify-end">
+              <button @click="partModal=null" class="text-gray-500 text-xs px-4 py-2">취소</button>
+              <button @click="submitPartAction" :disabled="partSubmitting"
+                class="font-bold px-4 py-2 rounded-lg text-xs text-white disabled:opacity-50"
+                :class="partModal.type === 'report' ? 'bg-red-500 hover:bg-red-600' : partModal.type === 'friend' ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'">
+                {{ partSubmitting ? '...' : (partModal.type === 'report' ? '신고 접수' : partModal.type === 'friend' ? '요청 보내기' : '쪽지 전송') }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
@@ -354,6 +428,67 @@ function subscribeToRoom(roomId) {
 }
 
 let selectRoomSeq = 0
+// ─── 참가자 목록 ───
+const participants = ref([])
+const participantsLoading = ref(false)
+async function loadParticipants() {
+  if (!activeRoom.value) return
+  participantsLoading.value = true
+  try {
+    const { data } = await axios.get(`/api/chat/rooms/${activeRoom.value.id}/participants`)
+    participants.value = data.data || []
+  } catch {
+    participants.value = []
+  }
+  participantsLoading.value = false
+}
+
+// 친구/쪽지/신고 모달
+const partModal = ref(null) // { type: 'friend'|'message'|'report', user }
+const partInput = ref('')
+const partReportReason = ref('spam')
+const partMsg = ref('')
+const partMsgOk = ref(false)
+const partSubmitting = ref(false)
+
+function openPartAction(type, user) {
+  partModal.value = { type, user }
+  partInput.value = ''
+  partReportReason.value = 'spam'
+  partMsg.value = ''
+  partMsgOk.value = false
+}
+
+async function submitPartAction() {
+  if (!partModal.value) return
+  const { type, user } = partModal.value
+  partSubmitting.value = true
+  partMsg.value = ''
+  try {
+    if (type === 'friend') {
+      await axios.post(`/api/friends/request/${user.id}`, { message: partInput.value })
+      partMsg.value = '✅ 친구 요청을 보냈습니다'; partMsgOk.value = true
+    } else if (type === 'message') {
+      if (!partInput.value.trim()) { partMsg.value = '내용을 입력해주세요'; partSubmitting.value = false; return }
+      await axios.post('/api/messages', { receiver_id: user.id, content: partInput.value })
+      partMsg.value = '✅ 쪽지를 보냈습니다'; partMsgOk.value = true
+    } else if (type === 'report') {
+      await axios.post('/api/reports', {
+        reportable_type: 'App\\Models\\User',
+        reportable_id: user.id,
+        reason: partReportReason.value,
+        content: partInput.value,
+      })
+      partMsg.value = '✅ 신고가 접수되었습니다'; partMsgOk.value = true
+    }
+    setTimeout(() => { partModal.value = null }, 1200)
+  } catch (e) {
+    partMsg.value = e.response?.data?.message || '요청 실패'
+    partMsgOk.value = false
+  }
+  partSubmitting.value = false
+}
+
 async function selectRoom(room) {
   const seq = ++selectRoomSeq
   activeRoom.value = room
@@ -373,6 +508,7 @@ async function selectRoom(room) {
     const rid = Number(room.id)
     activeMessages.value = msgs.filter(m => !m.chat_room_id || Number(m.chat_room_id) === rid)
     pinnedAnnouncements.value = data.pinned || []
+    loadParticipants()
     await nextTick()
     if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
   } catch (e) {

@@ -41,6 +41,47 @@ class ChatController extends Controller
         return response()->json(['success'=>true,'data'=>$room],201);
     }
 
+    // 채팅방에 실제로 글을 남긴 유저들 (참가자) + 멤버 등록된 유저 합친 목록
+    public function participants($id) {
+        $room = ChatRoom::findOrFail($id);
+
+        // 1) chat_room_users 테이블 (명시적 멤버)
+        $memberIds = ChatRoomUser::where('chat_room_id', $id)->pluck('user_id');
+
+        // 2) 최근 이 방에 메시지 남긴 유저 (최신 100건 기준 distinct)
+        $activeUserIds = ChatMessage::where('chat_room_id', $id)
+            ->whereNotNull('user_id')
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->pluck('user_id')
+            ->unique();
+
+        $allIds = $memberIds->merge($activeUserIds)->unique()->filter()->values();
+        if ($allIds->isEmpty()) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $users = \App\Models\User::whereIn('id', $allIds)
+            ->where('is_banned', false)
+            ->select('id','name','nickname','avatar','role','city','state','bio','allow_friend_request','allow_messages','last_active_at')
+            ->orderByDesc('last_active_at')
+            ->get();
+
+        // 각 유저의 이 방 메시지 수 (활성도)
+        $msgCounts = ChatMessage::where('chat_room_id', $id)
+            ->whereIn('user_id', $users->pluck('id'))
+            ->selectRaw('user_id, count(*) as c')
+            ->groupBy('user_id')
+            ->pluck('c', 'user_id');
+
+        $users = $users->map(function ($u) use ($msgCounts) {
+            $u->message_count = (int) ($msgCounts[$u->id] ?? 0);
+            return $u;
+        });
+
+        return response()->json(['success' => true, 'data' => $users]);
+    }
+
     public function messages($id) {
         // 차단된 유저는 메시지 조회 불가
         $banned = DB::table('chat_room_bans')->where('chat_room_id', $id)->where('user_id', auth()->id())->exists();

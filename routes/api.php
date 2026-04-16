@@ -269,6 +269,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/chat/rooms', [ChatController::class, 'rooms']);
     Route::post('/chat/rooms', [ChatController::class, 'createRoom']);
     Route::get('/chat/rooms/{id}/messages', [ChatController::class, 'messages']);
+    Route::get('/chat/rooms/{id}/participants', [ChatController::class, 'participants']);
     Route::post('/chat/rooms/{id}/messages', [ChatController::class, 'sendMessage']);
 
     Route::get('/friends', [FriendController::class, 'index']);
