@@ -185,16 +185,20 @@ async function submit() {
   }
   submitting.value = true; error.value = ''
   try {
-    if (isEdit.value) {
-      await axios.put(`/api/realestate/${editId.value}`, form)
-      router.push(`/realestate/${editId.value}`)
-    } else {
-      const fd = new FormData()
-      Object.keys(form).forEach(k => { if (form[k] !== null && form[k] !== undefined) fd.append(k, form[k]) })
-      if (photoList.value.length) {
-        photoList.value.forEach(p => fd.append('images[]', p.file))
-        fd.append('thumbnail_index', String(mainPhotoIdx.value || 0))
-      }
+    const fd = new FormData()
+    Object.keys(form).forEach(k => { if (form[k] !== null && form[k] !== undefined) fd.append(k, form[k]) })
+
+    // 새 사진만 업로드, 기존 사진 경로는 existing_images 로 전달
+    const newPhotos = photoList.value.filter(p => p.file)
+    const existingPaths = photoList.value.filter(p => p.existing).map(p => {
+      // preview URL → 상대 경로
+      return String(p.preview).replace(/^\/storage\//, '')
+    })
+    newPhotos.forEach(p => fd.append('images[]', p.file))
+    if (existingPaths.length) fd.append('existing_images', JSON.stringify(existingPaths))
+    fd.append('thumbnail_index', String(mainPhotoIdx.value || 0))
+
+    if (!isEdit.value) {
       fd.append('extra_photo_cost', String(extraPhotoCost.value))
       const { data } = await axios.post('/api/realestate', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       const createdId = data?.data?.id
@@ -202,6 +206,10 @@ async function submit() {
         try { await axios.post(`/api/realestate/${createdId}/promote`, { tier: promotion.tier, days: promotion.days }) } catch {}
       }
       router.push(`/realestate/${createdId}`)
+    } else {
+      fd.append('_method', 'PUT')
+      await axios.post(`/api/realestate/${editId.value}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      router.push(`/realestate/${editId.value}`)
     }
   } catch (e) { error.value = e.response?.data?.message || '등록 실패' }
   submitting.value = false
@@ -212,7 +220,27 @@ onMounted(async () => {
     editId.value = route.query.edit; isEdit.value = true
     try {
       const { data } = await axios.get(`/api/realestate/${editId.value}`)
-      const r = data.data; Object.keys(form).forEach(k => { if (r[k] !== undefined) form[k] = r[k] })
+      const r = data.data
+      Object.keys(form).forEach(k => { if (r[k] !== undefined && r[k] !== null) form[k] = r[k] })
+
+      // 기존 사진 로드 (preview URL 생성)
+      if (Array.isArray(r.images) && r.images.length) {
+        r.images.forEach(path => {
+          const url = String(path).startsWith('http') || String(path).startsWith('/storage/')
+            ? path : '/storage/' + path
+          photoList.value.push({ file: null, preview: url, existing: true })
+        })
+      }
+
+      // 기존 프로모션 상태 표시
+      if (r.promotion_tier && r.promotion_tier !== 'none') {
+        promotion.tier = r.promotion_tier
+        // 남은 일수 계산
+        if (r.promotion_expires_at) {
+          const remaining = Math.max(1, Math.ceil((new Date(r.promotion_expires_at) - Date.now()) / 86400000))
+          promotion.days = remaining
+        }
+      }
     } catch {}
   }
 })

@@ -136,14 +136,24 @@ class RealEstateController extends Controller
     {
         $listing = $this->findOwnedOrAdmin(RealEstateListing::class, $id);
         $data = $request->only('title', 'content', 'type', 'property_type', 'price', 'deposit', 'address', 'city', 'state', 'zipcode', 'bedrooms', 'bathrooms', 'sqft', 'contact_phone', 'contact_email', 'is_active');
+
         // zipcode 변경시 좌표 재지오코딩
         if (!empty($data['zipcode']) && $data['zipcode'] !== $listing->zipcode) {
             $geo = $this->geocodeZip($data['zipcode']);
-            if ($geo) {
-                $data['lat'] = $geo['lat'];
-                $data['lng'] = $geo['lng'];
+            if ($geo) { $data['lat'] = $geo['lat']; $data['lng'] = $geo['lng']; }
+        }
+
+        // 기존 사진 유지 + 새 사진 추가
+        $existingImages = $request->existing_images ? json_decode($request->existing_images, true) : [];
+        $newImages = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $img) {
+                $newImages[] = $this->storeCompressedImageRaw($img, 'realestate', 1400, 80);
             }
         }
+        $allImages = array_merge(is_array($existingImages) ? $existingImages : [], $newImages);
+        if (!empty($allImages)) $data['images'] = $allImages;
+
         $listing->update($data);
         return response()->json(['success' => true, 'data' => $listing]);
     }
