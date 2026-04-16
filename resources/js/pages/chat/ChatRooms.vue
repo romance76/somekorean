@@ -229,7 +229,7 @@
                   :title="u.allow_messages ? '쪽지' : '쪽지 차단됨'">✉️</button>
                 <button @click="openPartAction('report', u)"
                   class="text-[11px] rounded px-1 py-0.5 hover:bg-red-50"
-                  :class="u.is_reported ? 'text-red-500' : 'text-gray-300'"
+                  :style="u.is_reported ? '' : 'filter: grayscale(100%); opacity: 0.4;'"
                   :title="u.is_reported ? '이미 신고한 유저' : '신고'">🚨</button>
               </div>
             </template>
