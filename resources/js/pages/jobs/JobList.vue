@@ -284,9 +284,10 @@ function jobBorderClass(item) {
   return 'hover:bg-gray-50'
 }
 function jobBorderStyle(item) {
-  if (item.promotion_tier === 'national') return 'border: 2px solid #f87171; border-radius: 8px;'
-  if (item.promotion_tier === 'state_plus') return 'border: 2px solid #60a5fa; border-radius: 8px;'
-  if (item.promotion_tier === 'sponsored') return 'border: 2px solid #fbbf24; border-radius: 8px;'
+  // 부드러운 파스텔 톤 (눈에 거슬리지 않게)
+  if (item.promotion_tier === 'national') return 'border: 2px solid #fed7aa; border-radius: 8px; background: #fffbf5;'
+  if (item.promotion_tier === 'state_plus') return 'border: 2px solid #bfdbfe; border-radius: 8px; background: #f8faff;'
+  if (item.promotion_tier === 'sponsored') return 'border: 2px solid #fde68a; border-radius: 8px; background: #fffef5;'
   return ''
 }
 
