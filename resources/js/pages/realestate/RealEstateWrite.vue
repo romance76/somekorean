@@ -8,7 +8,7 @@
       <div class="grid grid-cols-2 gap-3">
         <div><label class="text-sm font-semibold text-gray-700">유형</label>
           <select v-model="form.type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
-            <option value="rent">렌트</option><option value="sale">매매</option><option value="roommate">룸메이트</option>
+            <option value="rent">렌트</option><option value="sale">매매</option>
           </select></div>
         <div><label class="text-sm font-semibold text-gray-700">종류</label>
           <select v-model="form.property_type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
