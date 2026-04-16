@@ -246,6 +246,12 @@ watch(() => props.preloadedLatest, (v) => {
   }
 })
 
+// ── 모드 변경 watch (리스트↔상세 전환) ──
+watch(() => props.mode, (newMode) => {
+  if (newMode === 'detail') loadDetail(1)
+  else { loadTab('views', 1); loadTab('second', 1) }
+})
+
 // ── 카테고리 변경 watch ──
 watch(() => props.currentCategory, () => {
   // 캐시 무효화 (카테고리 바뀌면 다른 결과)
