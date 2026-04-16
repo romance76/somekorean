@@ -12,26 +12,43 @@
           </select></div>
         <div><label class="text-sm font-semibold text-gray-700">종류</label>
           <select v-model="form.property_type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
-            <optgroup label="주거용">
-              <option value="studio">스튜디오</option>
-              <option value="1br">1BR</option>
-              <option value="2br">2BR</option>
-              <option value="3br_plus">3BR 이상</option>
-              <option value="roommate">룸메이트</option>
-              <option value="minbak">민박</option>
-              <option value="etc_home">기타</option>
-            </optgroup>
-            <optgroup label="상업용">
-              <option v-if="form.type==='rent'" value="office_rent">오피스</option>
-              <option v-if="form.type==='rent'" value="retail_rent">소매</option>
-              <option v-if="form.type==='rent'" value="store_rent">상가</option>
-              <option v-if="form.type==='rent'" value="building_rent">건물</option>
-              <option v-if="form.type==='sale'" value="office_sale">오피스</option>
-              <option v-if="form.type==='sale'" value="retail_sale">소매</option>
-              <option v-if="form.type==='sale'" value="store_sale">상가</option>
-              <option v-if="form.type==='sale'" value="building">건물</option>
-              <option value="etc_commercial">기타</option>
-            </optgroup>
+            <!-- 렌트 -->
+            <template v-if="form.type==='rent'">
+              <optgroup label="주거용">
+                <option value="studio">스튜디오</option>
+                <option value="1br">1BR</option>
+                <option value="2br">2BR</option>
+                <option value="3br_plus">3BR 이상</option>
+                <option value="roommate">룸메이트</option>
+                <option value="minbak">민박</option>
+                <option value="etc_home">기타</option>
+              </optgroup>
+              <optgroup label="상업용">
+                <option value="office_rent">오피스</option>
+                <option value="retail_rent">소매</option>
+                <option value="store_rent">상가</option>
+                <option value="building_rent">건물</option>
+                <option value="etc_commercial">기타</option>
+              </optgroup>
+            </template>
+            <!-- 매매 -->
+            <template v-else>
+              <optgroup label="주거용 매매">
+                <option value="house">하우스</option>
+                <option value="condo">콘도</option>
+                <option value="duplex">듀플렉스</option>
+                <option value="villa">빌라</option>
+                <option value="townhouse">타운하우스</option>
+                <option value="etc_home">기타</option>
+              </optgroup>
+              <optgroup label="상업용 매매">
+                <option value="office_sale">오피스</option>
+                <option value="retail_sale">소매</option>
+                <option value="store_sale">상가</option>
+                <option value="building">건물</option>
+                <option value="etc_commercial">기타</option>
+              </optgroup>
+            </template>
           </select></div>
       </div>
       <div class="grid grid-cols-4 gap-3">

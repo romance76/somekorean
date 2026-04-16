@@ -322,7 +322,7 @@ const activeCat = ref('')
 const reType = ref('rent') // rent | sale
 const showFavorites = ref(false)
 
-// 렌트 카테고리 (간소화)
+// 렌트 카테고리
 const rentSubcats = [
   { label: '주거용', items: [
     { value: 'studio', label: '스튜디오' },
@@ -341,18 +341,17 @@ const rentSubcats = [
     { value: 'etc_commercial', label: '기타' },
   ]},
 ]
-// 매매 카테고리 (간소화)
+// 매매 카테고리
 const saleSubcats = [
-  { label: '주거용', items: [
-    { value: 'studio', label: '스튜디오' },
-    { value: '1br', label: '1BR' },
-    { value: '2br', label: '2BR' },
-    { value: '3br_plus', label: '3BR 이상' },
-    { value: 'roommate', label: '룸메이트' },
-    { value: 'minbak', label: '민박' },
+  { label: '주거용 매매', items: [
+    { value: 'house', label: '하우스' },
+    { value: 'condo', label: '콘도' },
+    { value: 'duplex', label: '듀플렉스' },
+    { value: 'villa', label: '빌라' },
+    { value: 'townhouse', label: '타운하우스' },
     { value: 'etc_home', label: '기타' },
   ]},
-  { label: '상업용', items: [
+  { label: '상업용 매매', items: [
     { value: 'office_sale', label: '오피스' },
     { value: 'retail_sale', label: '소매' },
     { value: 'store_sale', label: '상가' },

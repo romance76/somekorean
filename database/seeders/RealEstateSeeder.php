@@ -50,20 +50,20 @@ class RealEstateSeeder extends Seeder
         ];
 
         $saleItems = [
-            ['type'=>'sale','property_type'=>'studio','title'=>'Atlanta condo 매매','bedrooms'=>0,'bathrooms'=>1,'sqft'=>500,'price'=>185000],
-            ['type'=>'sale','property_type'=>'1br','title'=>'Duluth 1BR 콘도 매매','bedrooms'=>1,'bathrooms'=>1,'sqft'=>750,'price'=>220000],
-            ['type'=>'sale','property_type'=>'2br','title'=>'Suwanee 2BR 타운홈 매매','bedrooms'=>2,'bathrooms'=>2,'sqft'=>1400,'price'=>350000],
-            ['type'=>'sale','property_type'=>'3br_plus','title'=>'Atlanta 4BR 하우스 매매','bedrooms'=>4,'bathrooms'=>3,'sqft'=>2500,'price'=>525000],
-            ['type'=>'sale','property_type'=>'3br_plus','title'=>'LA 3BR 하우스 (한인타운 근처)','bedrooms'=>3,'bathrooms'=>2,'sqft'=>1800,'price'=>890000],
-            ['type'=>'sale','property_type'=>'studio','title'=>'Irvine 스튜디오 콘도 매매','bedrooms'=>0,'bathrooms'=>1,'sqft'=>450,'price'=>420000],
-            ['type'=>'sale','property_type'=>'2br','title'=>'Flushing 2BR 콘도 (신축)','bedrooms'=>2,'bathrooms'=>2,'sqft'=>1000,'price'=>680000],
-            ['type'=>'sale','property_type'=>'1br','title'=>'Fort Lee 1BR 리버뷰 콘도','bedrooms'=>1,'bathrooms'=>1,'sqft'=>700,'price'=>450000],
+            ['type'=>'sale','property_type'=>'house','title'=>'Atlanta 4BR 하우스 매매','bedrooms'=>4,'bathrooms'=>3,'sqft'=>2500,'price'=>525000],
+            ['type'=>'sale','property_type'=>'house','title'=>'Suwanee 학군좋은 5BR 하우스','bedrooms'=>5,'bathrooms'=>4,'sqft'=>3500,'price'=>720000],
+            ['type'=>'sale','property_type'=>'house','title'=>'LA 3BR 하우스 (한인타운 근처)','bedrooms'=>3,'bathrooms'=>2,'sqft'=>1800,'price'=>890000],
+            ['type'=>'sale','property_type'=>'condo','title'=>'Atlanta condo 매매','bedrooms'=>2,'bathrooms'=>1,'sqft'=>900,'price'=>185000],
+            ['type'=>'sale','property_type'=>'condo','title'=>'Flushing 2BR 콘도 (신축)','bedrooms'=>2,'bathrooms'=>2,'sqft'=>1000,'price'=>680000],
+            ['type'=>'sale','property_type'=>'condo','title'=>'Fort Lee 1BR 리버뷰 콘도','bedrooms'=>1,'bathrooms'=>1,'sqft'=>700,'price'=>450000],
+            ['type'=>'sale','property_type'=>'duplex','title'=>'Carrollton 듀플렉스 매매','bedrooms'=>4,'bathrooms'=>3,'sqft'=>2200,'price'=>380000],
+            ['type'=>'sale','property_type'=>'villa','title'=>'Irvine 빌라 매매 (수영장)','bedrooms'=>3,'bathrooms'=>3,'sqft'=>2800,'price'=>1250000],
+            ['type'=>'sale','property_type'=>'townhouse','title'=>'Duluth 타운하우스 매매','bedrooms'=>3,'bathrooms'=>2,'sqft'=>1600,'price'=>320000],
+            ['type'=>'sale','property_type'=>'townhouse','title'=>'Atlanta Midtown 타운하우스','bedrooms'=>2,'bathrooms'=>2,'sqft'=>1400,'price'=>450000],
+            ['type'=>'sale','property_type'=>'etc_home','title'=>'Seattle 유닛 매매','bedrooms'=>1,'bathrooms'=>1,'sqft'=>600,'price'=>280000],
             ['type'=>'sale','property_type'=>'office_sale','title'=>'Atlanta 오피스 빌딩 매매','bedrooms'=>0,'bathrooms'=>4,'sqft'=>5000,'price'=>1200000],
             ['type'=>'sale','property_type'=>'store_sale','title'=>'Koreatown 상가 매매 (1층)','bedrooms'=>0,'bathrooms'=>2,'sqft'=>1500,'price'=>950000],
             ['type'=>'sale','property_type'=>'building','title'=>'Dallas 소규모 빌딩 매매','bedrooms'=>0,'bathrooms'=>6,'sqft'=>8000,'price'=>2500000],
-            ['type'=>'sale','property_type'=>'retail_sale','title'=>'Seattle 소매 공간 매매','bedrooms'=>0,'bathrooms'=>1,'sqft'=>1200,'price'=>680000],
-            ['type'=>'sale','property_type'=>'etc_home','title'=>'Carrollton 듀플렉스 매매','bedrooms'=>4,'bathrooms'=>3,'sqft'=>2200,'price'=>380000],
-            ['type'=>'sale','property_type'=>'3br_plus','title'=>'Suwanee 학군좋은 5BR 하우스','bedrooms'=>5,'bathrooms'=>4,'sqft'=>3500,'price'=>720000],
             ['type'=>'sale','property_type'=>'etc_commercial','title'=>'Atlanta 토지 매매 (0.5에이커)','bedrooms'=>0,'bathrooms'=>0,'sqft'=>21780,'price'=>250000],
         ];
 
