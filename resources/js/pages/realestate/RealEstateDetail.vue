@@ -20,9 +20,16 @@
               <RouterLink to="/realestate?type=sale" class="flex-1 py-1.5 text-[10px] font-bold text-center transition"
                 :class="listing.type==='sale' ? 'bg-red-500 text-white' : 'text-gray-400 hover:bg-gray-50'">🏠 매매</RouterLink>
             </div>
-            <RouterLink to="/realestate" class="block w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50 border-b">← 전체 목록</RouterLink>
-            <div class="px-3 py-1 bg-gray-50 text-[9px] text-gray-500 font-bold">현재 매물</div>
-            <div class="px-3 py-1.5 text-[11px] text-amber-700 font-bold truncate bg-amber-50">{{ listing.title }}</div>
+            <RouterLink to="/realestate" class="block w-full text-left px-3 py-1.5 text-xs transition"
+              :class="'text-gray-600 hover:bg-amber-50/50'">전체</RouterLink>
+            <template v-for="group in sideSubcats" :key="group.label">
+              <div class="px-3 py-1 bg-gray-50 text-[9px] text-gray-500 font-bold border-t">{{ group.label }}</div>
+              <div v-for="c in group.items" :key="c.value"
+                class="px-3 py-1 text-[11px] pl-5 transition"
+                :class="listing.property_type === c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600'">
+                {{ c.label }}
+              </div>
+            </template>
           </div>
           <AdSlot page="realestate" position="left" :maxSlots="2" />
         </div>
@@ -51,34 +58,41 @@
 
         <!-- 가격/정보 + 판매자 (나란히) -->
         <div class="flex gap-3">
-          <!-- 왼쪽: 매물 정보 + ❤️/🚨 + 등록일/조회 -->
-          <div class="flex-1 min-w-0 bg-white rounded-xl shadow-sm border p-4">
-            <div class="flex items-center justify-between mb-1">
+          <!-- 왼쪽: 매물 정보 -->
+          <div class="flex-1 min-w-0 bg-white rounded-xl shadow-sm p-4"
+            :style="promoBorderStyle">
+            <!-- 1행: 태그 + ❤️🚨 -->
+            <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2">
                 <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold" :class="listing.type==='sale'?'bg-red-100 text-red-700':'bg-blue-100 text-blue-700'">
                   {{ listing.type==='sale' ? '매매' : '렌트' }}
                 </span>
                 <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full font-bold">{{ listing.property_type }}</span>
+                <span v-if="listing.promotion_tier==='national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌐 전국구</span>
+                <span v-else-if="listing.promotion_tier==='state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
+                <span v-else-if="listing.promotion_tier==='sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
               </div>
-              <!-- ❤️ 좋아요 + 🚨 신고 -->
-              <div class="flex items-center gap-2">
-                <button v-if="auth.isLoggedIn" @click="toggleFav" class="text-lg hover:scale-110 transition">
+              <div class="flex items-center gap-3">
+                <button @click="toggleFav" class="text-xl hover:scale-125 transition" title="좋아요">
                   {{ isFavorited ? '❤️' : '🤍' }}
                 </button>
-                <button v-if="auth.isLoggedIn && listing.user_id !== auth.user?.id" @click="reportUser"
-                  class="text-sm hover:scale-110 transition" style="filter: grayscale(100%); opacity:0.4;" title="신고">🚨</button>
+                <button v-if="listing.user_id !== auth.user?.id" @click="reportListing"
+                  class="text-lg hover:scale-125 transition" :style="isReported ? '' : 'filter:grayscale(100%);opacity:0.35;'"
+                  :title="isReported ? '신고됨' : '신고'">🚨</button>
               </div>
             </div>
+            <!-- 가격 -->
             <div class="text-2xl font-black text-gray-900">${{ Number(listing.price).toLocaleString() }}<span v-if="listing.type==='rent'" class="text-sm font-bold text-gray-500">/월</span></div>
             <h1 class="text-base font-bold text-gray-800 mt-1">{{ listing.title }}</h1>
             <div class="text-xs text-gray-500 mt-1">📍 {{ listing.address ? listing.address + ', ' : '' }}{{ listing.city }}, {{ listing.state }} {{ listing.zipcode }}</div>
+            <!-- 스펙 + 등록일 -->
             <div class="flex items-center gap-4 mt-3 pt-3 border-t">
               <div v-if="listing.bedrooms" class="text-center"><div class="text-lg font-black text-gray-800">{{ listing.bedrooms }}</div><div class="text-[10px] text-gray-500">beds</div></div>
               <div v-if="listing.bathrooms" class="text-center"><div class="text-lg font-black text-gray-800">{{ listing.bathrooms }}</div><div class="text-[10px] text-gray-500">baths</div></div>
               <div v-if="listing.sqft" class="text-center"><div class="text-lg font-black text-gray-800">{{ Number(listing.sqft).toLocaleString() }}</div><div class="text-[10px] text-gray-500">sqft</div></div>
               <div class="text-center"><div class="text-lg font-black text-gray-800">{{ listing.view_count || 0 }}</div><div class="text-[10px] text-gray-500">조회</div></div>
-              <div class="ml-auto text-[10px] text-gray-400 text-right">
-                <div>등록일: {{ fmtDate(listing.created_at) }}</div>
+              <div class="ml-auto text-xs text-gray-600 text-right font-semibold">
+                등록일: {{ fmtDate(listing.created_at) }}
               </div>
             </div>
           </div>
@@ -98,8 +112,8 @@
                     <div class="text-[9px] text-gray-400">가입: {{ fmtDate(listing.user.created_at) }}</div>
                   </div>
                 </div>
-                <!-- 친구추가/쪽지 (항상 보임) -->
-                <div v-if="auth.isLoggedIn && listing.user_id !== auth.user?.id" class="space-y-1.5 pt-2 border-t">
+                <!-- 친구추가/쪽지 -->
+                <div v-if="listing.user_id !== auth.user?.id" class="space-y-1.5 pt-2 border-t">
                   <button @click="sendFriendRequest" class="w-full text-[11px] bg-green-50 text-green-700 font-bold py-1.5 rounded-lg hover:bg-green-100">👫 친구추가</button>
                   <button @click="sendMessage" class="w-full text-[11px] bg-blue-50 text-blue-700 font-bold py-1.5 rounded-lg hover:bg-blue-100">✉️ 쪽지</button>
                 </div>
@@ -155,7 +169,7 @@
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
         <SidebarWidgets api-url="/api/realestate" detail-path="/realestate/" :current-id="listing.id"
           label="매물"
-          :filter-params="listing.lat && listing.lng ? { lat: listing.lat, lng: listing.lng, radius: 50 } : {}" />
+          :filter-params="{ ...(listing.lat && listing.lng ? { lat: listing.lat, lng: listing.lng, radius: 50 } : {}), property_type: listing.property_type, type: listing.type }" />
         <AdSlot page="realestate" position="right" :maxSlots="2" />
       </div>
     </div>
@@ -209,6 +223,41 @@ const activePhotoIdx = ref(0)
 const msgModal = ref(false)
 const msgText = ref('')
 const isFavorited = ref(false)
+const isReported = ref(false)
+
+// 왼쪽 사이드바 카테고리 데이터
+const rentSubcats = [
+  { label: '주거용', items: [
+    { value: 'studio', label: '스튜디오' },{ value: '1br', label: '1BR' },{ value: '2br', label: '2BR' },
+    { value: '3br_plus', label: '3BR 이상' },{ value: 'roommate', label: '룸메이트' },
+    { value: 'minbak', label: '민박' },{ value: 'etc_home', label: '기타' },
+  ]},
+  { label: '상업용', items: [
+    { value: 'office_rent', label: '오피스' },{ value: 'retail_rent', label: '소매' },
+    { value: 'store_rent', label: '상가' },{ value: 'building_rent', label: '건물' },{ value: 'etc_commercial', label: '기타' },
+  ]},
+]
+const saleSubcats = [
+  { label: '주거용 매매', items: [
+    { value: 'house', label: '하우스' },{ value: 'condo', label: '콘도' },
+    { value: 'duplex', label: '듀플렉스' },{ value: 'villa', label: '빌라' },
+    { value: 'townhouse', label: '타운하우스' },{ value: 'etc_home', label: '기타' },
+  ]},
+  { label: '상업용 매매', items: [
+    { value: 'office_sale', label: '오피스' },{ value: 'retail_sale', label: '소매' },
+    { value: 'store_sale', label: '상가' },{ value: 'building', label: '건물' },{ value: 'etc_commercial', label: '기타' },
+  ]},
+]
+const sideSubcats = computed(() => listing.value?.type === 'sale' ? saleSubcats : rentSubcats)
+
+// 프로모션 보더
+const promoBorderStyle = computed(() => {
+  const t = listing.value?.promotion_tier
+  if (t === 'national') return 'border: 2px solid #fca5a5; border-radius: 12px;'
+  if (t === 'state_plus') return 'border: 2px solid #93c5fd; border-radius: 12px;'
+  if (t === 'sponsored') return 'border: 2px solid #fde68a; border-radius: 12px;'
+  return 'border: 1px solid #e5e7eb; border-radius: 12px;'
+})
 
 async function checkFav() {
   if (!auth.isLoggedIn || !listing.value) return
@@ -269,6 +318,15 @@ async function reportUser() {
   if (!reason) return
   try {
     await axios.post('/api/reports', { reportable_type: 'App\\Models\\User', reportable_id: listing.value.user_id, reason })
+    alert('신고가 접수되었습니다')
+  } catch (e) { alert(e.response?.data?.message || '실패') }
+}
+async function reportListing() {
+  const reason = prompt('이 매물을 신고하는 이유를 입력해주세요:')
+  if (!reason) return
+  try {
+    await axios.post('/api/reports', { reportable_type: 'App\\Models\\RealEstateListing', reportable_id: listing.value.id, reason })
+    isReported.value = true
     alert('신고가 접수되었습니다')
   } catch (e) { alert(e.response?.data?.message || '실패') }
 }
