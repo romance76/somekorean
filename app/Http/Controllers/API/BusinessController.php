@@ -13,6 +13,7 @@ use App\Traits\AdminAuthorizes;
 use App\Traits\CompressesUploads;
 use App\Traits\HasPromotions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BusinessController extends Controller
 {
@@ -36,9 +37,17 @@ class BusinessController extends Controller
 
     public function index(Request $request)
     {
-        $this->expireStalePromotions();
+        // 프로모션 만료: 5분 간격으로만 실행 (매 요청마다 X)
+        Cache::remember('biz_promo_expired', 300, function () {
+            $this->expireStalePromotions();
+            return true;
+        });
 
         $query = Business::query()
+            ->select('id', 'name', 'category', 'subcategory', 'address', 'city', 'state',
+                     'phone', 'lat', 'lng', 'images', 'logo', 'rating', 'review_count',
+                     'view_count', 'is_verified', 'is_claimed', 'promotion_tier',
+                     'promotion_expires_at', 'promotion_states', 'created_at')
             ->when($request->category, fn($q, $v) => $q->where('category', $v))
             ->when($request->search, fn($q, $v) => $q->where('name', 'like', "%{$v}%"))
             ->when($request->state, fn($q, $v) => $q->where('state', $v))
@@ -79,7 +88,7 @@ class BusinessController extends Controller
         }
         else $query->orderByDesc('view_count');
 
-        $perPage = min((int) ($request->per_page ?? 20), 50);
+        $perPage = min((int) ($request->per_page ?? 16), 50);
         $paginated = $query->paginate($perPage);
 
         // 이미지 정리 — file_exists 없이 해시 경로만 계산
@@ -97,7 +106,6 @@ class BusinessController extends Controller
                 }
             }
             $first = !empty($valid) ? $valid[0] : null;
-            // file_exists 생략 — 항상 정적 경로 반환, 없으면 프론트에서 /api/thumb fallback
             if ($first) {
                 $hash = md5(html_entity_decode($first, ENT_QUOTES | ENT_HTML5));
                 $b->thumbnail_url = '/storage/thumbs/' . substr($hash, 0, 2) . '/' . substr($hash, 2) . '_240.jpg';

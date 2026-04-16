@@ -191,20 +191,29 @@ class ImportGooglePlaces extends Command
             $placeId = $place['place_id'] ?? null;
             if (!$placeId) continue;
 
-            // google_place_id 또는 이름으로 중복 체크
-            if (Business::where('google_place_id', $placeId)->exists()) {
-                $this->updated++;
-                continue;
-            }
             $name = $place['name'] ?? '';
-            if ($name && Business::where('name', $name)->exists()) continue;
 
-            $details = $this->getPlaceDetails($placeId);
-            if (!$details) continue;
-
-            $bizData = $this->mapPlaceData($details, $category, $city);
+            // 기존 데이터 확인 (google_place_id 또는 이름)
+            $existing = Business::where('google_place_id', $placeId)->first();
+            if (!$existing && $name) {
+                $existing = Business::where('name', $name)->where('city', $city['name'])->first();
+            }
 
             if ($existing) {
+                // 소유자가 직접 등록/수정한 업소는 건드리지 않음
+                if ($existing->owner_id || $existing->is_claimed) {
+                    $this->updated++;
+                    continue;
+                }
+                // 30일 이내 업데이트된 건 스킵
+                if ($existing->updated_at && $existing->updated_at->diffInDays(now()) < 30) {
+                    $this->updated++;
+                    continue;
+                }
+                // 30일 지난 것만 갱신
+                $details = $this->getPlaceDetails($placeId);
+                if (!$details) continue;
+                $bizData = $this->mapPlaceData($details, $category, $city);
                 $existing->update([
                     'rating' => $bizData['rating'],
                     'review_count' => $bizData['review_count'],
@@ -216,7 +225,11 @@ class ImportGooglePlaces extends Command
                 ]);
                 $this->updated++;
             } else {
-                $biz = Business::create($bizData);
+                // 신규 업소 등록
+                $details = $this->getPlaceDetails($placeId);
+                if (!$details) continue;
+                $bizData = $this->mapPlaceData($details, $category, $city);
+                Business::create($bizData);
                 $this->imported++;
             }
 

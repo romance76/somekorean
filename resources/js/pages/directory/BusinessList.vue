@@ -209,7 +209,21 @@
       </div>
     </div>
     <!-- 목록 모드 -->
-    <div v-else-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
+    <!-- 스켈레톤 로딩 -->
+    <div v-else-if="loading" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div v-for="n in 8" :key="n" class="rounded-xl border overflow-hidden flex h-32 animate-pulse">
+        <div class="w-28 flex-shrink-0 bg-gray-200"></div>
+        <div class="flex-1 p-3 space-y-2">
+          <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+          <div class="h-3 bg-gray-100 rounded w-2/3"></div>
+          <div class="flex gap-1 mt-2">
+            <div class="h-3 w-8 bg-amber-100 rounded"></div>
+            <div class="h-3 w-16 bg-gray-100 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-else-if="!items.length" class="text-center py-12">
       <div class="text-4xl mb-3">🏪</div>
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
@@ -459,7 +473,7 @@ async function loadPage(p = 1) {
 
   // 항상 랜덤 정렬: 업소록은 카테고리 클릭/재방문마다 다른 순서로 노출되도록
   // seed 는 매 요청마다 갱신 (MySQL RAND(seed) 로 동일 페이지 내 일관성 + 재로드시 변경)
-  const params = { page: p, per_page: 20, sort: 'random', rand_seed: Math.floor(Math.random() * 100000) }
+  const params = { page: p, per_page: 16, sort: 'random', rand_seed: Math.floor(Math.random() * 100000) }
   if (search.value) params.search = search.value
   if (activeCat.value) params.category = activeCat.value
 
