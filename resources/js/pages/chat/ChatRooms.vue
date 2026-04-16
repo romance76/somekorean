@@ -314,11 +314,13 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
 import { compressImage, isImage, isArchive } from '../../utils/imageCompress'
 
 const router = useRouter()
 const auth = useAuthStore()
+const siteStore = useSiteStore()
 const windowWidth = ref(window.innerWidth)
 const isMobile = computed(() => windowWidth.value < 1024)
 const rooms = ref([])
@@ -403,7 +405,7 @@ async function onSelectFiles(e) {
   }
 
   if (rejected.length) {
-    alert('다음 파일은 업로드할 수 없습니다:\n\n• ' + rejected.join('\n• '))
+    siteStore.toast('업로드 불가: ' + rejected.join(', '), 'error')
   }
 }
 
@@ -732,7 +734,7 @@ async function sendMsg() {
   } catch (e) {
     const err = e.response?.data
     const msg = err?.message || err?.errors?.['files.0']?.[0] || err?.errors?.files?.[0] || '전송 실패'
-    alert(msg)
+    siteStore.toast(msg, 'error')
   }
   sending.value = false
 }

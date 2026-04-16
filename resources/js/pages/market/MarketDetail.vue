@@ -212,20 +212,12 @@
   </div>
 
   <!-- 신고 모달 -->
-  <div v-if="showReport" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showReport=false">
-    <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
-      <h3 class="font-bold text-lg mb-3">🚨 신고하기</h3>
-      <select v-model="reportReason" class="w-full border rounded-lg px-3 py-2 text-sm mb-3">
-        <option value="">신고 사유 선택</option>
-        <option value="spam">스팸/광고</option><option value="scam">사기 의심</option>
-        <option value="inappropriate">부적절한 내용</option><option value="fake">허위 매물</option>
-      </select>
-      <div class="flex gap-2">
-        <button @click="showReport=false" class="flex-1 py-2 bg-gray-100 rounded-lg text-sm">취소</button>
-        <button @click="submitReport" class="flex-1 py-2 bg-red-500 text-white rounded-lg text-sm font-bold">신고</button>
-      </div>
-    </div>
-  </div>
+  <ReportModal :show="showReport" reportableType="App\Models\MarketItem" :reportableId="item?.id"
+    contentType="trade" @close="showReport=false" @reported="showReport=false" />
+
+  <!-- 쪽지 모달 -->
+  <MessageModal :show="msgModal" :userId="item?.user_id" :userName="item?.user?.nickname || item?.user?.name || ''"
+    @close="msgModal=false" @sent="msgModal=false" />
 </div>
 </template>
 
@@ -236,6 +228,9 @@ import { useAuthStore } from '../../stores/auth'
 import { useSiteStore } from '../../stores/site'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
+import ReportModal from '../../components/ReportModal.vue'
+import MessageModal from '../../components/MessageModal.vue'
+import { useFriendAction, useBookmarkLike } from '../../composables/useSocialActions'
 import axios from 'axios'
 
 const route = useRoute()
@@ -244,7 +239,6 @@ const auth = useAuthStore()
 const siteStore = useSiteStore()
 const item = ref(null)
 const loading = ref(true)
-const liked = ref(false)
 const selectedImgIdx = ref(0)
 const lightboxImg = ref(null)
 const sellerTradeCount = ref(0)
@@ -301,21 +295,20 @@ async function submitBoost() {
   boostingInProgress.value = false
 }
 
-function toggleLike() { liked.value = !liked.value }
+// 좋아요 (Bookmark API)
+const { liked, check: checkLike, toggle: doToggleLike } = useBookmarkLike('App\\Models\\MarketItem')
+async function toggleLike() { await doToggleLike(item.value.id) }
 
-async function addFriend() {
-  try {
-    await axios.post('/api/friends/request', { to_user_id: item.value.user_id })
-    siteStore.toast('친구 요청을 보냈습니다', 'success')
-  } catch (e) { siteStore.toast(e.response?.data?.message || '요청 실패', 'error') }
-}
+// 친구 요청
+const { sendRequest: doSendFriend } = useFriendAction()
+async function addFriend() { await doSendFriend(item.value.user_id) }
 
-function sendMessage() {
-  router.push(`/friends?message=${item.value.user_id}`)
-}
+// 쪽지
+const msgModal = ref(false)
+function sendMessage() { msgModal.value = true }
+
+// 신고
 const showReport = ref(false)
-const reportReason = ref('')
-function submitReport() { siteStore.toast('신고가 접수되었습니다', 'success'); showReport.value = false }
 async function deleteItem() {
   if (!confirm('정말 삭제하시겠습니까?')) return
   try { await axios.delete(`/api/market/${item.value.id}`); router.push('/market') } catch {}
@@ -345,5 +338,9 @@ async function loadItem() {
   } catch {}
 }
 
-onMounted(async () => { await loadItem(); loading.value = false })
+onMounted(async () => {
+  await loadItem()
+  loading.value = false
+  if (item.value?.id) checkLike(item.value.id)
+})
 </script>

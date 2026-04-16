@@ -20,9 +20,9 @@
           </div>
           <!-- 친구추가 / 쪽지 (본인이 아닐 때) -->
           <div v-if="auth.isLoggedIn && auth.user?.id !== user.id" class="flex gap-2 mt-3">
-            <button @click="sendFriendRequest" class="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-500">👫 친구 추가</button>
-            <button @click="openMessage" class="text-xs bg-white border text-gray-600 px-3 py-1.5 rounded-lg hover:bg-amber-50">✉️ 쪽지</button>
-            <button @click="reportUser" class="text-xs text-gray-400 hover:text-red-500 px-2">🚨</button>
+            <button @click="doAddFriend" :disabled="friendLoading" class="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-500 disabled:opacity-50">👫 친구 추가</button>
+            <button @click="msgModal = true" class="text-xs bg-white border text-gray-600 px-3 py-1.5 rounded-lg hover:bg-amber-50">✉️ 쪽지</button>
+            <button @click="reportShow = true" class="text-xs text-gray-400 hover:text-red-500 px-2">🚨</button>
           </div>
         </div>
       </div>
@@ -40,38 +40,35 @@
       </div>
     </div>
   </div>
+
+  <!-- 신고 모달 -->
+  <ReportModal :show="reportShow" reportableType="user" :reportableId="user?.id"
+    contentType="user" @close="reportShow=false" @reported="reportShow=false" />
+
+  <!-- 쪽지 모달 -->
+  <MessageModal :show="msgModal" :userId="user?.id" :userName="user?.nickname || user?.name || ''"
+    @close="msgModal=false" />
 </div>
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import ReportModal from '../../components/ReportModal.vue'
+import MessageModal from '../../components/MessageModal.vue'
+import { useFriendAction } from '../../composables/useSocialActions'
 import axios from 'axios'
 const route = useRoute()
-const router = useRouter()
 const auth = useAuthStore()
 const user = ref(null)
 const posts = ref([])
 const loading = ref(true)
+const reportShow = ref(false)
+const msgModal = ref(false)
 function formatDate(dt) { return dt ? new Date(dt).toLocaleDateString('ko-KR') : '' }
 
-async function sendFriendRequest() {
-  try {
-    await axios.post(`/api/friends/request/${user.value.id}`)
-    alert('친구 요청을 보냈습니다!')
-  } catch (e) { alert(e.response?.data?.message || '요청 실패') }
-}
-
-function openMessage() { router.push('/dashboard?tab=messages') }
-
-async function reportUser() {
-  const reason = prompt('신고 사유를 입력하세요:')
-  if (!reason) return
-  try {
-    await axios.post('/api/reports', { reportable_type: 'user', reportable_id: user.value.id, reason: 'abuse', content: reason })
-    alert('신고가 접수되었습니다')
-  } catch {}
-}
+const { sendRequest, loading: friendLoading } = useFriendAction()
+async function doAddFriend() { await sendRequest(user.value.id) }
 onMounted(async () => {
   try {
     const { data } = await axios.get(`/api/users/${route.params.id}`)

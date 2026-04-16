@@ -52,26 +52,11 @@
             </template>
           </div>
 
-          <!-- 신고 모달 -->
-          <div v-if="showReport" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click.self="showReport=false">
-            <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-xl">
-              <h3 class="font-bold text-gray-800 mb-3">🚨 신고하기</h3>
-              <select v-model="reportReason" class="w-full border rounded-lg px-3 py-2 text-sm mb-3">
-                <option value="">신고 사유 선택</option>
-                <option value="spam">스팸/광고</option>
-                <option value="abuse">욕설/비방</option>
-                <option value="inappropriate">부적절한 내용</option>
-                <option value="fraud">사기/허위정보</option>
-                <option value="other">기타</option>
-              </select>
-              <textarea v-model="reportContent" rows="3" placeholder="상세 사유 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm resize-none mb-3"></textarea>
-              <div class="flex gap-2">
-                <button @click="submitReport" :disabled="!reportReason" class="bg-red-500 text-white font-bold px-4 py-2 rounded-lg text-sm flex-1 hover:bg-red-600 disabled:opacity-50">신고</button>
-                <button @click="showReport=false" class="text-gray-500 px-4 py-2">취소</button>
-              </div>
-            </div>
-          </div>
         </div>
+
+        <!-- 신고 모달 -->
+        <ReportModal :show="showReport" reportableType="post" :reportableId="post?.id"
+          contentType="post" @close="showReport=false" @reported="showReport=false" />
 
         <!-- 댓글 섹션 -->
         <CommentSection :type="'post'" :typeId="post.id" class="mt-4" />
@@ -117,6 +102,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
+import ReportModal from '../../components/ReportModal.vue'
+import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
 
 const route = useRoute()
@@ -128,9 +115,8 @@ const loading = ref(true)
 const liked = ref(false)
 const bookmarked = ref(false)
 const newComment = ref('')
+const siteStore = useSiteStore()
 const showReport = ref(false)
-const reportReason = ref('')
-const reportContent = ref('')
 const editingComment = ref(null)
 const editCommentText = ref('')
 const replyTo = ref(null)
@@ -185,20 +171,8 @@ function sharePost() {
     navigator.share({ title: post.value.title, url })
   } else {
     navigator.clipboard.writeText(url)
-    alert('링크가 복사되었습니다!')
+    siteStore.toast('링크가 복사되었습니다', 'success')
   }
-}
-
-async function submitReport() {
-  if (!reportReason.value) return
-  try {
-    await axios.post('/api/reports', {
-      reportable_type: 'post', reportable_id: post.value.id,
-      reason: reportReason.value, content: reportContent.value
-    })
-    showReport.value = false; reportReason.value = ''; reportContent.value = ''
-    alert('신고가 접수되었습니다')
-  } catch {}
 }
 
 async function deletePost() {

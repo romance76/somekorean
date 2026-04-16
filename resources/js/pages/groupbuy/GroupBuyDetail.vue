@@ -214,8 +214,9 @@
               </div>
             </div>
             <div v-if="auth.isLoggedIn && !isOwner" class="flex gap-2 mt-3">
-              <button @click="addFriend" class="flex-1 bg-blue-50 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs hover:bg-blue-100">👋 친구추가</button>
-              <button @click="sendMessage" class="flex-1 bg-amber-50 text-amber-700 border border-amber-200 font-bold py-2 rounded-lg text-xs hover:bg-amber-100">✉️ 쪽지</button>
+              <button @click="doAddFriend" :disabled="friendLoading" class="flex-1 bg-blue-50 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs hover:bg-blue-100 disabled:opacity-50">👋 친구추가</button>
+              <button @click="msgModal=true" class="flex-1 bg-amber-50 text-amber-700 border border-amber-200 font-bold py-2 rounded-lg text-xs hover:bg-amber-100">✉️ 쪽지</button>
+              <button @click="reportShow=true" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-400 text-xs hover:text-red-500 hover:border-red-200">🚨</button>
             </div>
           </div>
 
@@ -370,6 +371,14 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- 쪽지 모달 -->
+  <MessageModal :show="msgModal" :userId="gb?.user_id" :userName="gb?.user?.nickname || gb?.user?.name || ''"
+    @close="msgModal=false" @sent="msgModal=false" />
+
+  <!-- 신고 모달 -->
+  <ReportModal :show="reportShow" reportableType="App\Models\GroupBuy" :reportableId="gb?.id"
+    contentType="trade" @close="reportShow=false" @reported="reportShow=false" />
 </div>
 </template>
 
@@ -380,6 +389,9 @@ import { useAuthStore } from '../../stores/auth'
 import CommentSection from '../../components/CommentSection.vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import AdSlot from '../../components/AdSlot.vue'
+import ReportModal from '../../components/ReportModal.vue'
+import MessageModal from '../../components/MessageModal.vue'
+import { useFriendAction } from '../../composables/useSocialActions'
 import axios from 'axios'
 
 const route = useRoute()
@@ -597,18 +609,11 @@ async function deleteGb() {
   } catch {}
 }
 
-async function addFriend() {
-  try {
-    await axios.post('/api/friends/request', { to_user_id: gb.value.user_id })
-    alert('친구 요청을 보냈습니다')
-  } catch (e) {
-    alert(e.response?.data?.message || '요청 실패')
-  }
-}
+const { sendRequest: doSendFriendReq, loading: friendLoading } = useFriendAction()
+const msgModal = ref(false)
+const reportShow = ref(false)
 
-function sendMessage() {
-  router.push(`/friends?message=${gb.value.user_id}`)
-}
+async function doAddFriend() { await doSendFriendReq(gb.value.user_id) }
 
 // ── Watch route changes ──
 watch(() => route.params.id, (newId) => {

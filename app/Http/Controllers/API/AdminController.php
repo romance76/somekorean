@@ -51,8 +51,16 @@ class AdminController extends Controller
     public function updateBoard(Request $request, $id) { Board::findOrFail($id)->update($request->only('name','slug','description','sort_order','is_active')); return response()->json(['success'=>true]); }
     public function deleteBoard($id) { Board::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
 
-    public function reports(Request $request) { return response()->json(['success'=>true,'data'=>Report::orderByDesc('created_at')->paginate(20)]); }
-    public function updateReport(Request $request, $id) { Report::findOrFail($id)->update($request->only('status','admin_note')); return response()->json(['success'=>true]); }
+    public function reports(Request $request) {
+        $q = Report::with('reporter:id,name,nickname')->orderByDesc('created_at');
+        if ($request->type) $q->where('reportable_type', 'like', '%' . $request->type . '%');
+        if ($request->status) $q->where('status', $request->status);
+        return response()->json(['success'=>true,'data'=>$q->paginate(20)]);
+    }
+    public function updateReport(Request $request, $id) {
+        Report::findOrFail($id)->update($request->only('status','admin_note'));
+        return response()->json(['success'=>true]);
+    }
 
     public function banners() { return response()->json(['success'=>true,'data'=>Banner::orderBy('sort_order')->get()]); }
     public function bannerList() {

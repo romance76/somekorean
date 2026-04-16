@@ -195,36 +195,12 @@
   </div>
 
   <!-- 쪽지 모달 -->
-  <div v-if="msgModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="msgModal=false">
-    <div class="bg-white rounded-xl max-w-sm w-full p-4 space-y-3">
-      <h3 class="font-bold text-sm text-gray-800">✉️ 쪽지 보내기</h3>
-      <textarea v-model="msgText" rows="4" maxlength="500" placeholder="내용..." class="w-full border rounded-lg px-3 py-2 text-sm outline-none resize-none"></textarea>
-      <div class="flex gap-2 justify-end">
-        <button @click="msgModal=false" class="text-gray-500 text-xs px-3 py-1.5">취소</button>
-        <button @click="doSendMessage" class="bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">전송</button>
-      </div>
-    </div>
-  </div>
+  <MessageModal :show="msgModal" :userId="listing?.user_id" :userName="listing?.user?.nickname || listing?.user?.name || ''"
+    @close="msgModal=false" @sent="msgModal=false" />
 
   <!-- 신고 모달 -->
-  <div v-if="reportModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="reportModal=false">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
-      <h3 class="font-bold text-base text-gray-800">🚨 신고하기</h3>
-      <select v-model="reportReason" class="w-full border rounded-lg px-3 py-2.5 text-sm outline-none">
-        <option value="">신고 사유 선택</option>
-        <option value="spam">스팸/광고</option>
-        <option value="fake">허위 매물</option>
-        <option value="fraud">사기 의심</option>
-        <option value="inappropriate">부적절한 내용</option>
-        <option value="duplicate">중복 게시</option>
-        <option value="other">기타</option>
-      </select>
-      <div class="flex gap-2">
-        <button @click="reportModal=false" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-lg text-sm hover:bg-gray-200">취소</button>
-        <button @click="submitReport" :disabled="!reportReason" class="flex-1 bg-red-500 text-white font-bold py-2.5 rounded-lg text-sm hover:bg-red-600 disabled:opacity-40">신고</button>
-      </div>
-    </div>
-  </div>
+  <ReportModal :show="reportModal" reportableType="App\Models\RealEstateListing" :reportableId="listing?.id"
+    contentType="trade" @close="reportModal=false" @reported="isReported=true; reportModal=false" />
 </div>
 </template>
 
@@ -235,6 +211,10 @@ import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
 import AdSlot from '../../components/AdSlot.vue'
+import ReportModal from '../../components/ReportModal.vue'
+import MessageModal from '../../components/MessageModal.vue'
+import { useFriendAction } from '../../composables/useSocialActions'
+import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
 
 const route = useRoute()
@@ -244,13 +224,12 @@ const listing = ref(null)
 const loading = ref(true)
 const lightboxIdx = ref(null)
 const activePhotoIdx = ref(0)
+const siteStore = useSiteStore()
 const msgModal = ref(false)
-const msgText = ref('')
 const isFavorited = ref(false)
 const isReported = ref(false)
 const favCount = ref(0)
 const reportModal = ref(false)
-const reportReason = ref('')
 
 // 왼쪽 사이드바 카테고리 데이터
 const rentSubcats = [
@@ -338,42 +317,10 @@ async function deleteListing() {
 }
 
 // 판매자 액션
-async function sendFriendRequest() {
-  try { await axios.post(`/api/friends/request/${listing.value.user_id}`); alert('친구 요청을 보냈습니다') } catch (e) { alert(e.response?.data?.message || '실패') }
-}
-function sendMessage() { msgModal.value = true; msgText.value = '' }
-async function doSendMessage() {
-  if (!msgText.value.trim()) return
-  try {
-    await axios.post('/api/messages', { receiver_id: listing.value.user_id, content: msgText.value })
-    alert('쪽지를 보냈습니다'); msgModal.value = false
-  } catch (e) { alert(e.response?.data?.message || '실패') }
-}
-async function reportUser() {
-  const reason = prompt('신고 사유를 입력해주세요:')
-  if (!reason) return
-  try {
-    await axios.post('/api/reports', { reportable_type: 'App\\Models\\User', reportable_id: listing.value.user_id, reason })
-    alert('신고가 접수되었습니다')
-  } catch (e) { alert(e.response?.data?.message || '실패') }
-}
-function reportListing() {
-  reportModal.value = true
-  reportReason.value = ''
-}
-async function submitReport() {
-  if (!reportReason.value) return
-  try {
-    await axios.post('/api/reports', {
-      reportable_type: 'App\\Models\\RealEstateListing',
-      reportable_id: listing.value.id,
-      reason: reportReason.value,
-    })
-    isReported.value = true
-    reportModal.value = false
-    alert('신고가 접수되었습니다')
-  } catch (e) { alert(e.response?.data?.message || '실패') }
-}
+const { sendRequest: doSendFriend, loading: friendLoading } = useFriendAction()
+async function sendFriendRequest() { await doSendFriend(listing.value.user_id) }
+function sendMessage() { msgModal.value = true }
+function reportListing() { reportModal.value = true }
 
 onMounted(async () => {
   try {
