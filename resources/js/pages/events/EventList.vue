@@ -248,8 +248,8 @@
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />
     </div>
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
-      <SidebarWidgets :currentCategory="activeCat" :inline="true" @select="openItem" api-url="/api/events" detail-path="/events/" :current-id="activeItem?.id || 0"
-        label="이벤트" :filter-params="locationParams" />
+      <SidebarWidgets :currentCategory="activeItem ? (activeItem.category || '') : activeCat" :inline="true" @select="openItem" api-url="/api/events" detail-path="/events/" :current-id="activeItem?.id || 0"
+        :mode="activeItem ? 'detail' : 'list'" label="이벤트" :filter-params="locationParams" />
         <AdSlot page="events" position="right" :maxSlots="2" />
     </div>
     </div>

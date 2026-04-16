@@ -223,8 +223,8 @@
     </div>
     <!-- 오른쪽 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
-      <SidebarWidgets :currentCategory="activeCat" :inline="true" @select="openItem" api-url="/api/market" detail-path="/market/" :current-id="0"
-        label="물품" :filter-params="locationParams" />
+      <SidebarWidgets :currentCategory="activeItem ? (activeItem.category || '') : activeCat" :inline="true" @select="openItem" api-url="/api/market" detail-path="/market/" :current-id="activeItem?.id || 0"
+        :mode="activeItem ? 'detail' : 'list'" label="물품" :filter-params="locationParams" />
         <AdSlot page="market" position="right" :maxSlots="2" />
     </div>
     </div>

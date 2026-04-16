@@ -297,9 +297,9 @@
     </div>
     <!-- 오른쪽 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
-      <SidebarWidgets :currentCategory="activeCat" :inline="true" @select="openItem" api-url="/api/businesses" detail-path="/directory/" :current-id="0"
-        label="업소" :filter-params="locationParams"
-        :use-page-data="true" :preloaded-popular="sidebarPopular" :preloaded-latest="sidebarLatest" />
+      <SidebarWidgets :currentCategory="activeItem ? (activeItem.category || '') : activeCat" :inline="true" @select="openItem" api-url="/api/businesses" detail-path="/directory/" :current-id="activeItem?.id || 0"
+        :mode="activeItem ? 'detail' : 'list'" label="업소" :filter-params="locationParams"
+        :use-page-data="!activeItem" :preloaded-popular="activeItem ? null : sidebarPopular" :preloaded-latest="activeItem ? null : sidebarLatest" />
         <AdSlot page="directory" position="right" :maxSlots="2" />
     </div>
     </div>

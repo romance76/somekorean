@@ -162,9 +162,9 @@
 
       <!-- 오른쪽: 사이드바 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
-        <SidebarWidgets :currentCategory="activeBoard?.id || ''" categoryParam="board_id" :inline="true" @select="openItem"
+        <SidebarWidgets :currentCategory="activeItem ? (activeItem.board_id || '') : (activeBoard?.id || '')" categoryParam="board_id" :inline="true" @select="openItem"
           :api-url="'/api/posts'" detail-path="/community/free/" :current-id="activeItem?.id || 0"
-          label="게시글" />
+          :mode="activeItem ? 'detail' : 'list'" label="게시글" />
         <AdSlot page="community" position="right" :maxSlots="2" />
       </div>
     </div>

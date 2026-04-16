@@ -186,8 +186,8 @@
 
       <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
-        <SidebarWidgets :currentCategory="activeCat?.id || ''" categoryParam="category_id" :inline="true" @select="openItem" api-url="/api/news" detail-path="/news/" :current-id="0"
-          label="뉴스" />
+        <SidebarWidgets :currentCategory="activeItem ? (activeItem.category_id || '') : (activeCat?.id || '')" categoryParam="category_id" :inline="true" @select="openItem" api-url="/api/news" detail-path="/news/" :current-id="activeItem?.id || 0"
+          :mode="activeItem ? 'detail' : 'list'" label="뉴스" />
         <AdSlot page="news" position="right" :maxSlots="2" />
       </div>
     </div>
