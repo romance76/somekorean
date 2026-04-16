@@ -12,13 +12,42 @@
           </select></div>
         <div><label class="text-sm font-semibold text-gray-700">종류</label>
           <select v-model="form.property_type" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
-            <option value="house">🏠 하우스</option>
-            <option value="apt">🏢 아파트</option>
-            <option value="condo">🏬 콘도</option>
-            <option value="studio">🛏 스튜디오</option>
-            <option value="office">🏛 오피스</option>
-            <option value="commercial">🏪 상가</option>
-            <option value="etc">📋 기타</option>
+            <optgroup v-if="form.type==='rent'" label="주거용 렌트">
+              <option value="studio">스튜디오</option>
+              <option value="1br">1BR</option>
+              <option value="2br">2BR</option>
+              <option value="3br">3BR</option>
+              <option value="4br_plus">4BR 이상</option>
+            </optgroup>
+            <optgroup v-if="form.type==='rent'" label="공유 및 단기">
+              <option value="roommate">룸메이트</option>
+              <option value="sublet">서블렛</option>
+              <option value="room_share">방쉐어</option>
+              <option value="minbak">민박</option>
+              <option value="homestay">홈스테이</option>
+            </optgroup>
+            <optgroup v-if="form.type==='rent'" label="상업용 렌트">
+              <option value="office_rent">오피스/코워킹</option>
+              <option value="retail_factory">소매/공장</option>
+              <option value="restaurant_store">레스토랑/상가</option>
+              <option value="land_rent">토지/용지</option>
+              <option value="garage_etc">차고/창고/기타</option>
+            </optgroup>
+            <optgroup v-if="form.type==='sale'" label="주거용 매매">
+              <option value="house">하우스</option>
+              <option value="condo">콘도</option>
+              <option value="duplex">듀플렉스</option>
+              <option value="villa">빌라</option>
+              <option value="townhouse">타운하우스</option>
+              <option value="etc_home">기타</option>
+            </optgroup>
+            <optgroup v-if="form.type==='sale'" label="상업용 매매">
+              <option value="office_sale">오피스</option>
+              <option value="retail_sale">소매</option>
+              <option value="store_sale">상가</option>
+              <option value="building">건물</option>
+              <option value="etc_commercial">기타</option>
+            </optgroup>
           </select></div>
       </div>
       <div class="grid grid-cols-4 gap-3">

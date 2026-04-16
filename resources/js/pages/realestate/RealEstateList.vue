@@ -81,12 +81,38 @@
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 유형</div>
-          <button v-for="c in reCategories" :key="c.value" @click="showFavorites=false; activeCat=c.value; activeItem=null; loadPage()"
-            class="w-full text-left px-3 py-2 text-xs transition"
-            :class="!showFavorites && activeCat===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
+          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 부동산</div>
+          <!-- 렌트/매매 토글 -->
+          <div class="flex border-b">
+            <button @click="reType='rent'; activeCat=''; showFavorites=false; activeItem=null; loadPage()"
+              class="flex-1 py-1.5 text-[10px] font-bold transition"
+              :class="reType==='rent' ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-50'">
+              🔑 렌트
+            </button>
+            <button @click="reType='sale'; activeCat=''; showFavorites=false; activeItem=null; loadPage()"
+              class="flex-1 py-1.5 text-[10px] font-bold transition"
+              :class="reType==='sale' ? 'bg-red-500 text-white' : 'text-gray-400 hover:bg-gray-50'">
+              🏠 매매
+            </button>
+          </div>
+          <!-- 전체 -->
+          <button @click="showFavorites=false; activeCat=''; activeItem=null; loadPage()"
+            class="w-full text-left px-3 py-1.5 text-xs transition"
+            :class="!showFavorites && !activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
+            전체
+          </button>
+          <!-- 세부 카테고리 (렌트/매매 따라 다름) -->
+          <template v-for="group in currentSubcats" :key="group.label">
+            <div class="px-3 py-1 bg-gray-50 text-[9px] text-gray-500 font-bold border-t">{{ group.label }}</div>
+            <button v-for="c in group.items" :key="c.value"
+              @click="showFavorites=false; activeCat=c.value; activeItem=null; loadPage()"
+              class="w-full text-left px-3 py-1.5 text-[11px] transition pl-5"
+              :class="!showFavorites && activeCat===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
+              {{ c.label }}
+            </button>
+          </template>
           <button v-if="auth.isLoggedIn" @click="showFavorites=true; activeItem=null; loadFavoritesPage()"
-            class="w-full text-left px-3 py-2 text-xs transition border-t"
+            class="w-full text-left px-3 py-1.5 text-xs transition border-t"
             :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
             ❤️ 내 좋아요
           </button>
@@ -99,8 +125,11 @@
     <div class="mb-2">
       <span v-if="showFavorites" class="font-bold text-red-600 text-sm">❤️ 내 좋아요 부동산</span>
       <template v-else>
-        <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (reCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
-        <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 부동산 매물을 볼 수 있습니다</span>
+        <span class="font-bold text-sm" :class="reType==='rent' ? 'text-blue-700' : 'text-red-700'">
+          {{ reType==='rent' ? '🔑 렌트' : '🏠 매매' }}
+          <span v-if="activeCat" class="text-gray-600"> · {{ currentSubcats.flatMap(g=>g.items).find(c=>c.value===activeCat)?.label || activeCat }}</span>
+        </span>
+        <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">{{ reType==='rent' ? '모든 렌트 매물' : '모든 매매 매물' }}</span>
       </template>
     </div>
 
@@ -290,7 +319,52 @@ const auth = useAuthStore()
 const route = useRoute()
 const showFilter = ref(false)
 const activeCat = ref('')
+const reType = ref('rent') // rent | sale
 const showFavorites = ref(false)
+
+// 렌트 세부 카테고리
+const rentSubcats = [
+  { label: '주거용 렌트', items: [
+    { value: 'studio', label: '스튜디오' },
+    { value: '1br', label: '1BR' },
+    { value: '2br', label: '2BR' },
+    { value: '3br', label: '3BR' },
+    { value: '4br_plus', label: '4BR 이상' },
+  ]},
+  { label: '공유 및 단기 렌트', items: [
+    { value: 'roommate', label: '룸메이트' },
+    { value: 'sublet', label: '서블렛' },
+    { value: 'room_share', label: '방쉐어' },
+    { value: 'minbak', label: '민박' },
+    { value: 'homestay', label: '홈스테이' },
+  ]},
+  { label: '상업용 렌트', items: [
+    { value: 'office_rent', label: '오피스/코워킹' },
+    { value: 'retail_factory', label: '소매/공장' },
+    { value: 'restaurant_store', label: '레스토랑/상가' },
+    { value: 'land_rent', label: '토지/용지' },
+    { value: 'garage_etc', label: '차고/창고/기타' },
+  ]},
+]
+// 매매 세부 카테고리
+const saleSubcats = [
+  { label: '주거용 매매', items: [
+    { value: 'house', label: '하우스' },
+    { value: 'condo', label: '콘도' },
+    { value: 'duplex', label: '듀플렉스' },
+    { value: 'villa', label: '빌라' },
+    { value: 'townhouse', label: '타운하우스' },
+    { value: 'etc_home', label: '기타' },
+  ]},
+  { label: '상업용 매매', items: [
+    { value: 'office_sale', label: '오피스' },
+    { value: 'retail_sale', label: '소매' },
+    { value: 'store_sale', label: '상가' },
+    { value: 'building', label: '건물' },
+    { value: 'etc_commercial', label: '기타' },
+  ]},
+]
+const currentSubcats = computed(() => reType.value === 'rent' ? rentSubcats : saleSubcats)
 
 // 내 좋아요 부동산만 로드
 async function loadFavoritesPage() {
@@ -308,17 +382,11 @@ async function loadFavoritesPage() {
 }
 const { loadConfig, getDefaultView } = useMenuConfig()
 const viewMode = ref('list')
-// 부동산 유형 (property_type) — 사용자 요청 항목
-const reCategories = [
-  { value: '', label: '전체' },
-  { value: 'house', label: '🏠 하우스' },
-  { value: 'apt', label: '🏢 아파트' },
-  { value: 'condo', label: '🏬 콘도' },
-  { value: 'studio', label: '🛏 스튜디오' },
-  { value: 'office', label: '🏛 오피스' },
-  { value: 'commercial', label: '🏪 상가' },
-  { value: 'etc', label: '📋 기타' },
-]
+// (레거시 — 모바일 필터에서 아직 참조 가능)
+const reCategories = computed(() => {
+  const flat = currentSubcats.value.flatMap(g => g.items)
+  return [{ value: '', label: '전체' }, ...flat]
+})
 const { city, radius: locRadius, locationQuery, koreanCities, init: initLocation, selectKoreanCity, setRadius } = useLocation()
 
 const items = ref([])
@@ -455,6 +523,7 @@ async function loadPage(p = 1) {
 
   const params = { page: p, per_page: 20 }
   if (search.value) params.search = search.value
+  params.type = reType.value
   if (activeCat.value) params.property_type = activeCat.value
 
   if (radius.value !== '0') {
