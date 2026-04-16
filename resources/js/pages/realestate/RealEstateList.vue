@@ -553,6 +553,13 @@ async function loadPage(p = 1) {
 
 onMounted(async () => {
   await loadConfig(); viewMode.value = getDefaultView('realestate')
+
+  // URL 쿼리 파라미터 반영 (?type=sale&cat=house&fav=1)
+  if (route.query.type === 'sale') reType.value = 'sale'
+  else if (route.query.type === 'rent') reType.value = 'rent'
+  if (route.query.cat) activeCat.value = route.query.cat
+  if (route.query.fav === '1') { showFavorites.value = true }
+
   await initLocation()
   if (city.value) {
     myCity.value = { ...city.value }
@@ -561,7 +568,9 @@ onMounted(async () => {
     selectedCityIdx.value = '-1'
     radius.value = '0'
   }
-  loadPage()
+
+  if (showFavorites.value) loadFavoritesPage()
+  else loadPage()
 })
 
 watch(() => route.params.id, (newId, oldId) => {
