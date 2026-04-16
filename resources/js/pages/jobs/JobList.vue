@@ -153,7 +153,7 @@
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="goDetail(item)"
         class="px-4 py-3 border-b border-gray-50 transition cursor-pointer border-l-4"
-        :class="jobBorderClass(item)">
+        :class="jobBorderClass(item)" :style="jobBorderStyle(item)">
         <div class="flex items-center gap-3">
           <!-- 로고 -->
           <img v-if="item.logo" :src="item.logo" class="w-12 h-12 rounded object-cover flex-shrink-0 border" @error="$event.target.style.display='none'" />
@@ -279,12 +279,18 @@ function promotionClass(item) {
   return ''
 }
 
-// 프로모션: 굵은 보더 (6px) / 일반: 없음 → 눈에 띄는 구분
+// 프로모션: 굵은 보더 / 일반: 없음
 function jobBorderClass(item) {
-  if (item.promotion_tier === 'national') return '!border-l-[6px] border-l-red-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'state_plus') return '!border-l-[6px] border-l-blue-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'sponsored') return '!border-l-[6px] border-l-amber-400 hover:bg-gray-50'
-  return 'border-l-transparent hover:bg-gray-50'
+  // border-l-4 는 템플릿에 이미 있으므로 style 로 오버라이드
+  return item.promotion_tier === 'national' ? 'border-l-red-500 hover:bg-gray-50'
+    : item.promotion_tier === 'state_plus' ? 'border-l-blue-500 hover:bg-gray-50'
+    : item.promotion_tier === 'sponsored' ? 'border-l-amber-400 hover:bg-gray-50'
+    : 'border-l-transparent hover:bg-gray-50'
+}
+function jobBorderStyle(item) {
+  // 프로모션은 두꺼운 보더
+  if (['national','state_plus','sponsored'].includes(item.promotion_tier)) return 'border-left-width: 6px'
+  return ''
 }
 
 // 좋아요 (Bookmark)
