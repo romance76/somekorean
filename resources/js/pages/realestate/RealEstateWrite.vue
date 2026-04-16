@@ -4,6 +4,34 @@
     <h1 class="text-xl font-black text-gray-800">🏠 매물 등록</h1>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+      <!-- 사진 업로드 (최대 20장, 기본 5장 무료) -->
+      <div>
+        <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          📷 사진
+          <span class="text-xs text-gray-400 font-normal">기본 {{ freePhotos }}장 무료 · 추가 1장당 {{ extraPhotoPoints }}P · 최대 20장</span>
+        </label>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <div v-for="(photo, idx) in photoList" :key="idx"
+            class="relative w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer group"
+            :class="mainPhotoIdx === idx ? 'border-amber-400 ring-2 ring-amber-200' : 'border-gray-200'"
+            @click="mainPhotoIdx = idx">
+            <img :src="photo.preview" class="w-full h-full object-cover" />
+            <div v-if="mainPhotoIdx === idx" class="absolute top-0.5 left-0.5 bg-amber-400 text-amber-900 text-[8px] font-bold px-1 py-px rounded">메인</div>
+            <div v-if="idx >= freePhotos" class="absolute top-0.5 right-0.5 bg-red-500 text-white text-[8px] font-bold px-1 py-px rounded">{{ extraPhotoPoints }}P</div>
+            <button @click.stop="removePhoto(idx)" class="absolute bottom-0.5 right-0.5 bg-black/60 text-white w-4 h-4 rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100">✕</button>
+          </div>
+          <label v-if="photoList.length < 20" class="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition">
+            <span class="text-xl text-gray-400">+</span>
+            <span class="text-[9px] text-gray-400">사진 추가</span>
+            <input type="file" multiple accept="image/*" @change="onSelectPhotos" class="hidden" />
+          </label>
+        </div>
+        <div v-if="extraPhotoCost > 0" class="mt-1.5 text-xs text-red-500 font-semibold">
+          ⚠️ 추가 사진 {{ photoList.length - freePhotos }}장 × {{ extraPhotoPoints }}P = <b>{{ extraPhotoCost }}P</b> 차감
+        </div>
+        <div class="text-[10px] text-gray-400 mt-1">클릭하여 메인 사진 선택. 메인 사진이 리스트 썸네일로 표시됩니다.</div>
+      </div>
+
       <div><label class="text-sm font-semibold text-gray-700">제목</label><input v-model="form.title" type="text" placeholder="예: LA 1BR 아파트 렌트" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="text-sm font-semibold text-gray-700">유형</label>
@@ -98,7 +126,29 @@ import { useAuthStore } from '../../stores/auth'
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
-const form = reactive({ title:'',type:'rent',property_type:'apt',price:0,bedrooms:1,bathrooms:1,sqft:0,content:'',contact_phone:'',contact_email:'', address:'', city:'', state:'', zipcode:'' })
+const form = reactive({ title:'',type:'rent',property_type:'studio',price:0,bedrooms:1,bathrooms:1,sqft:0,content:'',contact_phone:'',contact_email:'', address:'', city:'', state:'', zipcode:'' })
+
+// 사진 관리
+const photoList = ref([])
+const mainPhotoIdx = ref(0)
+const freePhotos = 5
+const extraPhotoPoints = 50
+const extraPhotoCost = computed(() => Math.max(0, photoList.value.length - freePhotos) * extraPhotoPoints)
+
+function onSelectPhotos(e) {
+  const files = Array.from(e.target.files)
+  if (photoList.value.length + files.length > 20) { alert('사진은 최대 20장까지'); return }
+  for (const f of files) {
+    const reader = new FileReader()
+    reader.onload = ev => { photoList.value.push({ file: f, preview: ev.target.result }) }
+    reader.readAsDataURL(f)
+  }
+  e.target.value = ''
+}
+function removePhoto(idx) {
+  photoList.value.splice(idx, 1)
+  if (mainPhotoIdx.value >= photoList.value.length) mainPhotoIdx.value = Math.max(0, photoList.value.length - 1)
+}
 
 let reZipTimer = null
 function onReZipChange() {
@@ -139,7 +189,14 @@ async function submit() {
       await axios.put(`/api/realestate/${editId.value}`, form)
       router.push(`/realestate/${editId.value}`)
     } else {
-      const { data } = await axios.post('/api/realestate', form)
+      const fd = new FormData()
+      Object.keys(form).forEach(k => { if (form[k] !== null && form[k] !== undefined) fd.append(k, form[k]) })
+      if (photoList.value.length) {
+        photoList.value.forEach(p => fd.append('images[]', p.file))
+        fd.append('thumbnail_index', String(mainPhotoIdx.value || 0))
+      }
+      fd.append('extra_photo_cost', String(extraPhotoCost.value))
+      const { data } = await axios.post('/api/realestate', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       const createdId = data?.data?.id
       if (createdId && promotion.tier !== 'none') {
         try { await axios.post(`/api/realestate/${createdId}/promote`, { tier: promotion.tier, days: promotion.days }) } catch {}

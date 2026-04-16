@@ -68,34 +68,65 @@ class RealEstateController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['title' => 'required|max:200', 'content' => 'required', 'type' => 'required', 'property_type' => 'required', 'price' => 'required|numeric']);
+        $request->validate([
+            'title' => 'required|max:200',
+            'content' => 'required',
+            'type' => 'required|in:rent,sale',
+            'property_type' => 'required',
+            'price' => 'required|numeric',
+            'images' => 'nullable|array|max:20',
+            'images.*' => 'nullable|image|max:10240',
+        ]);
+
+        // 관리자 설정 기반 사진 포인트 (기본 5장 무료, 추가 50P/장)
+        $getSetting = fn($key, $default) => (int) (\DB::table('point_settings')->where('key', $key)->value('value') ?? $default);
+        $freePhotos = $getSetting('realestate_free_photos', 5);
+        $extraPhotoPoints = $getSetting('realestate_extra_photo_cost', 50);
 
         $images = [];
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $img) $images[] = $this->storeCompressedImageRaw($img, 'realestate', 1400, 80);
+            foreach ($request->file('images') as $img) {
+                $images[] = $this->storeCompressedImageRaw($img, 'realestate', 1400, 80);
+            }
         }
+
+        // 추가 사진 포인트 차감
+        $extraCount = max(0, count($images) - $freePhotos);
+        $extraCost = $extraCount * $extraPhotoPoints;
+        $user = auth()->user();
+        if ($extraCost > 0) {
+            if ($user->points < $extraCost) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "추가 사진 {$extraCount}장에 {$extraCost}P 필요 (무료 {$freePhotos}장 초과). 보유: {$user->points}P"
+                ], 422);
+            }
+            $user->addPoints(-$extraCost, "부동산 추가 사진 {$extraCount}장 ({$extraPhotoPoints}P/장)", 'photo');
+        }
+
+        $thumbIdx = count($images) > 0 ? max(0, min(count($images) - 1, (int) ($request->thumbnail_index ?? 0))) : 0;
 
         $data = $request->only('title', 'content', 'type', 'property_type', 'price', 'deposit', 'address', 'city', 'state', 'zipcode', 'lat', 'lng', 'bedrooms', 'bathrooms', 'sqft', 'contact_phone', 'contact_email');
 
-        // zipcode 기반 lat/lng 자동 지오코딩 (좌표 없으면 거리 필터에서 빠짐)
+        // zipcode 기반 lat/lng 자동 지오코딩
         if ((empty($data['lat']) || empty($data['lng'])) && !empty($data['zipcode'])) {
             $geo = $this->geocodeZip($data['zipcode']);
             if ($geo) {
-                $data['lat'] = $geo['lat'];
-                $data['lng'] = $geo['lng'];
+                $data['lat'] = $geo['lat']; $data['lng'] = $geo['lng'];
                 if (empty($data['city'])) $data['city'] = $geo['city'];
                 if (empty($data['state'])) $data['state'] = $geo['state'];
             }
         }
-        // 여전히 좌표 없으면 유저 프로필로 fallback
-        $u = auth()->user();
-        if (empty($data['lat'])) $data['lat'] = $u->latitude;
-        if (empty($data['lng'])) $data['lng'] = $u->longitude;
-        if (empty($data['city'])) $data['city'] = $u->city;
-        if (empty($data['state'])) $data['state'] = $u->state;
+        if (empty($data['lat'])) $data['lat'] = $user->latitude;
+        if (empty($data['lng'])) $data['lng'] = $user->longitude;
+        if (empty($data['city'])) $data['city'] = $user->city;
+        if (empty($data['state'])) $data['state'] = $user->state;
 
         $listing = RealEstateListing::create(array_merge(
-            $data, ['user_id' => auth()->id(), 'images' => $images ?: null]
+            $data, [
+                'user_id' => auth()->id(),
+                'images' => $images ?: null,
+            ]
         ));
 
         return response()->json(['success' => true, 'data' => $listing], 201);
