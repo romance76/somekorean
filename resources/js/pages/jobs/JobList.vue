@@ -114,11 +114,16 @@
               🙋 구직
             </button>
           </div>
-          <button v-for="c in jobCategories" :key="c.value" @click="activeCat = c.value; loadPage()"
+          <button v-for="c in jobCategories" :key="c.value" @click="showFavorites=false; activeCat = c.value; loadPage()"
             class="w-full text-left px-3 py-2 text-xs transition"
-            :class="activeCat === c.value
+            :class="!showFavorites && activeCat === c.value
               ? (postType === 'hiring' ? 'bg-amber-50 text-amber-700 font-bold' : 'bg-blue-50 text-blue-700 font-bold')
               : 'text-gray-600 hover:bg-gray-50'">{{ c.label }}</button>
+          <button v-if="auth.isLoggedIn" @click="loadFavoritesPage()"
+            class="w-full text-left px-3 py-2 text-xs transition border-t"
+            :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
+            ❤️ 즐겨찾기
+          </button>
         </div>
         <AdSlot page="jobs" position="left" :maxSlots="2" />
       </div>
@@ -126,12 +131,15 @@
     <div class="col-span-12 lg:col-span-7">
 
     <div class="mb-2">
-      <span class="text-sm font-bold" :class="postType === 'hiring' ? 'text-amber-700' : 'text-blue-700'">
-        {{ activeCat ? (jobCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}
-      </span>
-      <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">
-        {{ postType === 'hiring' ? '모든 채용 공고를 볼 수 있습니다' : '모든 구직 인재를 볼 수 있습니다' }}
-      </span>
+      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">❤️ 즐겨찾기 구인</span>
+      <template v-else>
+        <span class="text-sm font-bold" :class="postType === 'hiring' ? 'text-amber-700' : 'text-blue-700'">
+          {{ activeCat ? (jobCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}
+        </span>
+        <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">
+          {{ postType === 'hiring' ? '모든 채용 공고를 볼 수 있습니다' : '모든 구직 인재를 볼 수 있습니다' }}
+        </span>
+      </template>
     </div>
 
 
@@ -180,8 +188,8 @@
               <span v-if="item.view_count">👁{{ item.view_count }}</span>
             </div>
           </div>
-          <!-- 급여 (크게) -->
-          <div class="ml-3 flex-shrink-0 text-right">
+          <!-- 급여 + 하트 -->
+          <div class="ml-3 flex-shrink-0 text-right flex flex-col items-end gap-1">
             <div v-if="item.salary_min"
               class="font-black text-base whitespace-nowrap" :class="postType === 'hiring' ? 'text-amber-600' : 'text-blue-600'">
               ${{ item.salary_min }}~${{ item.salary_max }} <span class="text-xs font-bold text-gray-500">/ {{ {hourly:'hr',monthly:'mo',yearly:'yr'}[item.salary_type] || item.salary_type }}</span>
@@ -190,6 +198,10 @@
               class="font-black text-base" :class="postType === 'hiring' ? 'text-amber-600' : 'text-blue-600'">
               ${{ Number(item.price).toLocaleString() }}
             </div>
+            <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)"
+              class="text-sm hover:scale-110 transition">
+              {{ favorited.has(item.id) ? '❤️' : '🤍' }}
+            </button>
           </div>
         </div>
       </div>
@@ -202,7 +214,7 @@
 
     <!-- 오른쪽: 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
-      <SidebarWidgets :inline="true" api-url="/api/jobs" detail-path="/jobs/" :current-id="0"
+      <SidebarWidgets api-url="/api/jobs" detail-path="/jobs/" :current-id="0"
         :label="postType === 'hiring' ? '채용' : '구직'" :filter-params="locationParams" />
         <AdSlot page="jobs" position="right" :maxSlots="2" />
     </div>
@@ -267,12 +279,54 @@ function promotionClass(item) {
   return ''
 }
 
-// 깔끔 보더 스타일 (배경색 X, 왼쪽 보더만)
+// 프로모션: 굵은 보더 (6px) / 일반: 없음 → 눈에 띄는 구분
 function jobBorderClass(item) {
-  if (item.promotion_tier === 'national') return 'border-l-red-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'state_plus') return 'border-l-blue-500 hover:bg-gray-50'
-  if (item.promotion_tier === 'sponsored') return 'border-l-amber-400 hover:bg-gray-50'
+  if (item.promotion_tier === 'national') return '!border-l-[6px] border-l-red-500 hover:bg-gray-50'
+  if (item.promotion_tier === 'state_plus') return '!border-l-[6px] border-l-blue-500 hover:bg-gray-50'
+  if (item.promotion_tier === 'sponsored') return '!border-l-[6px] border-l-amber-400 hover:bg-gray-50'
   return 'border-l-transparent hover:bg-gray-50'
+}
+
+// 좋아요 (Bookmark)
+const favorited = ref(new Set())
+async function loadFavorited() {
+  if (!auth.isLoggedIn || !items.value.length) return
+  try {
+    const ids = items.value.map(i => i.id).join(',')
+    const { data } = await axios.get('/api/bookmarks/check', {
+      params: { type: 'App\\Models\\JobPost', ids },
+    })
+    favorited.value = new Set(data.data || [])
+  } catch {}
+}
+async function toggleFav(item) {
+  if (!auth.isLoggedIn) return
+  try {
+    const { data } = await axios.post('/api/bookmarks', {
+      bookmarkable_type: 'App\\Models\\JobPost',
+      bookmarkable_id: item.id,
+    })
+    if (data.bookmarked) favorited.value.add(item.id)
+    else favorited.value.delete(item.id)
+    favorited.value = new Set(favorited.value)
+  } catch {}
+}
+
+// 즐겨찾기 모드
+const showFavorites = ref(false)
+async function loadFavoritesPage() {
+  loading.value = true
+  showFavorites.value = true
+  try {
+    const { data } = await axios.get('/api/bookmarks', {
+      params: { type: 'App\\Models\\JobPost', per_page: 50 },
+    })
+    const bms = data.data?.data || []
+    items.value = bms.map(b => b.bookmarkable).filter(Boolean)
+    lastPage.value = 1
+    loadFavorited()
+  } catch {}
+  loading.value = false
 }
 
 // 카테고리 이모지
@@ -383,10 +437,12 @@ async function loadPage(p = 1) {
   if (activeCat.value) params.category = activeCat.value
   params.post_type = postType.value
 
+  showFavorites.value = false
   try {
     const { data } = await axios.get('/api/jobs', { params })
     items.value = data.data?.data || []
     lastPage.value = data.data?.last_page || 1
+    loadFavorited()
   } catch {}
   loading.value = false
 }
