@@ -151,13 +151,12 @@
         </div>
 
         <!-- 학교 -->
-        <div v-if="listing.zipcode" class="bg-white rounded-xl shadow-sm border p-4">
+        <div v-if="listing.lat && listing.lng" class="bg-white rounded-xl shadow-sm border p-4">
           <h2 class="font-bold text-sm text-gray-800 mb-2">🏫 주변 학교</h2>
-          <a :href="`https://www.greatschools.org/search/search.page?q=${listing.zipcode}&distance=5`"
-            target="_blank" rel="noopener"
+          <button @click="showSchools = true"
             class="inline-flex items-center gap-1 bg-green-500 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-green-600 text-xs">
-            🏫 주변 학교 보기 ({{ listing.zipcode }})
-          </a>
+            🏫 주변 학교 보기 (5마일 이내)
+          </button>
         </div>
 
         <!-- 수정/삭제 -->
@@ -201,6 +200,9 @@
   <!-- 신고 모달 -->
   <ReportModal :show="reportModal" reportableType="App\Models\RealEstateListing" :reportableId="listing?.id"
     contentType="trade" @close="reportModal=false" @reported="isReported=true; reportModal=false" />
+
+  <!-- 주변 학교 모달 -->
+  <NearbySchools :show="showSchools" :lat="listing?.lat" :lng="listing?.lng" @close="showSchools=false" />
 </div>
 </template>
 
@@ -213,6 +215,7 @@ import CommentSection from '../../components/CommentSection.vue'
 import AdSlot from '../../components/AdSlot.vue'
 import ReportModal from '../../components/ReportModal.vue'
 import MessageModal from '../../components/MessageModal.vue'
+import NearbySchools from '../../components/NearbySchools.vue'
 import { useFriendAction } from '../../composables/useSocialActions'
 import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
@@ -230,6 +233,7 @@ const isFavorited = ref(false)
 const isReported = ref(false)
 const favCount = ref(0)
 const reportModal = ref(false)
+const showSchools = ref(false)
 
 // 왼쪽 사이드바 카테고리 데이터
 const rentSubcats = [

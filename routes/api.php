@@ -40,6 +40,7 @@ use App\Http\Controllers\API\PokerTournamentController;
 use App\Http\Controllers\API\ConversationController;
 use App\Http\Controllers\API\CallController;
 use App\Http\Controllers\API\UserBlockController;
+use App\Http\Controllers\API\PlacesController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Cache;
 
@@ -265,6 +266,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/bookmarks', [BookmarkController::class, 'toggle']);
     Route::get('/bookmarks', [BookmarkController::class, 'index']);
     Route::get('/bookmarks/check', [BookmarkController::class, 'check']);
+
+    Route::get('/places/nearby-schools', [PlacesController::class, 'nearbySchools']);
 
     Route::get('/chat/rooms', [ChatController::class, 'rooms']);
     Route::post('/chat/rooms', [ChatController::class, 'createRoom']);
