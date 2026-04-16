@@ -299,7 +299,7 @@
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets :currentCategory="activeCat" :inline="true" @select="openItem" api-url="/api/businesses" detail-path="/directory/" :current-id="0"
         label="업소" :filter-params="locationParams"
-        :preloaded-popular="sidebarPopular" :preloaded-latest="sidebarLatest" />
+        :use-page-data="true" :preloaded-popular="sidebarPopular" :preloaded-latest="sidebarLatest" />
         <AdSlot page="directory" position="right" :maxSlots="2" />
     </div>
     </div>

@@ -141,6 +141,7 @@ const props = defineProps({
   // 부모에서 미리 로드한 데이터 (있으면 자체 API 호출 안 함)
   preloadedPopular: { type: Array, default: null },
   preloadedLatest: { type: Array, default: null },
+  usePageData: { type: Boolean, default: false }, // true면 preloaded 대기, 자체 API 안 함
 })
 
 const emit = defineEmits(['select'])
@@ -258,22 +259,22 @@ watch(() => props.filterParams, () => {
 onMounted(async () => {
   if (props.mode === 'detail') {
     await loadDetail(1)
-  } else {
-    // preloaded 데이터가 있으면 API 호출 없이 바로 사용
+    return
+  }
+
+  if (props.usePageData) {
+    // 부모가 page-data로 사이드바 데이터를 제공할 예정 → 자체 API 호출 안 함
+    // watch에서 preloadedPopular/preloadedLatest 변경을 감지하여 반영
     if (props.preloadedPopular) {
       viewsItems.value = props.preloadedPopular.filter(i => i.id !== Number(props.currentId)).slice(0, 10)
-      viewsLastPage.value = 1
     }
     if (props.preloadedLatest) {
       secondItemsData.value = props.preloadedLatest.filter(i => i.id !== Number(props.currentId)).slice(0, 10)
-      secondLastPage.value = 1
+      quickItems.value = secondItemsData.value.slice(0, 6)
     }
-    if (!props.preloadedPopular || !props.preloadedLatest) {
-      await Promise.allSettled([
-        !props.preloadedPopular ? loadTab('views', 1) : Promise.resolve(),
-        !props.preloadedLatest ? loadTab('second', 1) : Promise.resolve(),
-      ])
-    }
+  } else {
+    // 기존 방식: 자체 API 호출
+    await Promise.allSettled([loadTab('views', 1), loadTab('second', 1)])
     if (props.recommendLabel) {
       try {
         const data = await cachedGet(props.apiUrl, buildParams({ per_page: 5 }))
