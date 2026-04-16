@@ -30,27 +30,76 @@
 
       <!-- 중앙: 상세 -->
       <div class="col-span-12 lg:col-span-7 space-y-4">
-        <!-- 사진 갤러리 (메인 + 썸네일) -->
-        <div v-if="allPhotos.length" class="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <!-- 메인 사진 -->
-          <div class="relative cursor-pointer" @click="openLightbox(activePhotoIdx)">
-            <img :src="photoUrl(allPhotos[activePhotoIdx])" style="width:100%; height:400px; object-fit:cover;" />
-            <div class="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded">
-              {{ activePhotoIdx + 1 }} / {{ allPhotos.length }}
+        <!-- 사진 + 판매자 정보 (나란히) -->
+        <div class="flex gap-3">
+          <!-- 사진 갤러리 -->
+          <div class="flex-1 min-w-0">
+            <div v-if="allPhotos.length" class="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div class="relative cursor-pointer" @click="openLightbox(activePhotoIdx)">
+                <img :src="photoUrl(allPhotos[activePhotoIdx])" style="width:100%; height:400px; object-fit:cover;" />
+                <div class="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                  {{ activePhotoIdx + 1 }} / {{ allPhotos.length }}
+                </div>
+              </div>
+              <div v-if="allPhotos.length > 1" class="flex gap-1 p-2 overflow-x-auto bg-gray-50">
+                <div v-for="(p, idx) in allPhotos" :key="idx" @click="activePhotoIdx = idx"
+                  class="flex-shrink-0 rounded cursor-pointer border-2 transition overflow-hidden"
+                  :class="idx === activePhotoIdx ? 'border-amber-400' : 'border-transparent hover:border-gray-300'"
+                  style="width:60px; height:45px;">
+                  <img :src="photoUrl(p)" style="width:100%;height:100%;object-fit:cover;" />
+                </div>
+              </div>
             </div>
+            <div v-else class="bg-gray-100 rounded-xl flex items-center justify-center text-4xl" style="height:200px;">🏠</div>
           </div>
-          <!-- 썸네일 (아래) -->
-          <div v-if="allPhotos.length > 1" class="flex gap-1 p-2 overflow-x-auto bg-gray-50">
-            <div v-for="(p, idx) in allPhotos" :key="idx"
-              @click="activePhotoIdx = idx"
-              class="flex-shrink-0 rounded cursor-pointer border-2 transition overflow-hidden"
-              :class="idx === activePhotoIdx ? 'border-amber-400' : 'border-transparent hover:border-gray-300'"
-              style="width:60px; height:45px;">
-              <img :src="photoUrl(p)" style="width:100%; height:100%; object-fit:cover;" />
+
+          <!-- 판매자 정보 (사진 옆) -->
+          <div class="hidden lg:block flex-shrink-0" style="width:200px;">
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden h-full">
+              <div class="px-3 py-2 border-b bg-amber-50 font-bold text-[11px] text-amber-900">📋 판매자 정보</div>
+              <div class="p-3 space-y-2">
+                <div v-if="listing.user" class="flex items-center gap-2">
+                  <img v-if="listing.user.avatar" :src="listing.user.avatar" class="w-10 h-10 rounded-full object-cover border-2 border-amber-200" />
+                  <div v-else class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-sm font-bold text-amber-700">
+                    {{ (listing.user.nickname || listing.user.name || '?')[0] }}
+                  </div>
+                  <div class="min-w-0">
+                    <UserName :userId="listing.user.id" :name="listing.user.nickname || listing.user.name" className="text-xs font-bold text-gray-800 truncate block" />
+                    <div class="text-[9px] text-gray-400">가입: {{ fmtDate(listing.user.created_at) }}</div>
+                  </div>
+                </div>
+
+                <!-- 친구추가/쪽지 (항상) -->
+                <div v-if="auth.isLoggedIn && listing.user_id !== auth.user?.id" class="space-y-1.5 pt-2 border-t">
+                  <button @click="sendFriendRequest" class="w-full text-[11px] bg-green-50 text-green-700 font-bold py-1.5 rounded-lg hover:bg-green-100">👫 친구추가</button>
+                  <button @click="sendMessage" class="w-full text-[11px] bg-blue-50 text-blue-700 font-bold py-1.5 rounded-lg hover:bg-blue-100">✉️ 쪽지</button>
+                </div>
+
+                <!-- 전화/이메일 (있으면) -->
+                <div v-if="listing.contact_phone || listing.contact_email" class="space-y-1.5 pt-2 border-t">
+                  <a v-if="listing.contact_phone" :href="'tel:'+listing.contact_phone"
+                    class="flex items-center justify-center gap-1 w-full bg-amber-400 text-amber-900 font-bold py-1.5 rounded-lg hover:bg-amber-500 text-[11px]">
+                    📱 {{ listing.contact_phone }}
+                  </a>
+                  <a v-if="listing.contact_email" :href="'mailto:'+listing.contact_email"
+                    class="flex items-center justify-center w-full bg-gray-100 text-gray-700 font-bold py-1.5 rounded-lg hover:bg-gray-200 text-[11px] truncate px-2">
+                    📧 이메일
+                  </a>
+                </div>
+
+                <!-- 신고 -->
+                <div v-if="auth.isLoggedIn && listing.user_id !== auth.user?.id" class="pt-2 border-t">
+                  <button @click="reportUser" class="w-full text-[10px] text-gray-400 hover:text-red-500">🚨 신고</button>
+                </div>
+
+                <div class="text-[9px] text-gray-400 pt-2 border-t space-y-0.5">
+                  <div>📅 등록: {{ fmtDate(listing.created_at) }}</div>
+                  <div>👁 조회: {{ listing.view_count }}회</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div v-else class="bg-gray-100 rounded-xl flex items-center justify-center text-4xl" style="height:200px;">🏠</div>
 
         <!-- 가격 + 정보 -->
         <div class="bg-white rounded-xl shadow-sm border p-4">
@@ -103,53 +152,8 @@
         <CommentSection v-if="listing.id" type="realestate" :typeId="listing.id" />
       </div>
 
-      <!-- 오른쪽: 판매자 정보 + 위젯 -->
+      <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
-        <!-- 판매자/연락처 카드 -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div class="px-4 py-3 border-b bg-amber-50 font-bold text-xs text-amber-900">📋 판매자 정보</div>
-          <div class="p-4 space-y-3">
-            <div v-if="listing.user" class="flex items-center gap-3">
-              <img v-if="listing.user.avatar" :src="listing.user.avatar" class="w-12 h-12 rounded-full object-cover border-2 border-amber-200" />
-              <div v-else class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-lg font-bold text-amber-700">
-                {{ (listing.user.nickname || listing.user.name || '?')[0] }}
-              </div>
-              <div>
-                <UserName :userId="listing.user.id" :name="listing.user.nickname || listing.user.name" className="text-sm font-bold text-gray-800" />
-                <div class="text-[10px] text-gray-400">가입: {{ fmtDate(listing.user.created_at) }}</div>
-              </div>
-            </div>
-
-            <!-- 연락처 -->
-            <div class="space-y-2 pt-2 border-t">
-              <a v-if="listing.contact_phone" :href="'tel:'+listing.contact_phone"
-                class="flex items-center gap-2 w-full bg-blue-500 text-white font-bold px-3 py-2 rounded-lg hover:bg-blue-600 text-sm justify-center">
-                📱 {{ listing.contact_phone }}
-              </a>
-              <a v-if="listing.contact_email" :href="'mailto:'+listing.contact_email"
-                class="flex items-center gap-2 w-full bg-gray-100 text-gray-700 font-bold px-3 py-2 rounded-lg hover:bg-gray-200 text-sm justify-center">
-                📧 이메일 보내기
-              </a>
-            </div>
-
-            <!-- 액션 -->
-            <div v-if="auth.isLoggedIn && listing.user_id !== auth.user?.id" class="flex gap-2 pt-2 border-t">
-              <button @click="sendFriendRequest" class="flex-1 text-xs bg-green-50 text-green-700 font-bold py-2 rounded-lg hover:bg-green-100">👫 친구추가</button>
-              <button @click="sendMessage" class="flex-1 text-xs bg-blue-50 text-blue-700 font-bold py-2 rounded-lg hover:bg-blue-100">✉️ 쪽지</button>
-              <button @click="reportUser" class="text-xs bg-red-50 text-red-600 font-bold py-2 px-3 rounded-lg hover:bg-red-100">🚨</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 등록일/조회 -->
-        <div class="bg-white rounded-xl shadow-sm border p-4 text-xs text-gray-500 space-y-1">
-          <div>📅 등록일: {{ fmtDate(listing.created_at) }}</div>
-          <div>👁 조회: {{ listing.view_count }}회</div>
-          <div v-if="listing.promotion_tier && listing.promotion_tier !== 'none'">
-            🚀 상위노출: {{ {national:'전국구',state_plus:'주+',sponsored:'스폰서'}[listing.promotion_tier] }}
-          </div>
-        </div>
-
         <SidebarWidgets api-url="/api/realestate" detail-path="/realestate/" :current-id="listing.id"
           label="매물"
           :filter-params="listing.lat && listing.lng ? { lat: listing.lat, lng: listing.lng, radius: 50 } : {}" />
