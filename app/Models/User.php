@@ -24,6 +24,30 @@ class User extends Authenticatable implements JWTSubject
 
     protected $hidden = ['password', 'remember_token'];
 
+    protected $appends = ['display_name'];
+
+    /**
+     * 표시 이름: 닉네임 → 이메일 앞부분 → 실명 순서
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->nickname) return $this->nickname;
+        if ($this->email) return explode('@', $this->email)[0];
+        return $this->attributes['name'] ?? '회원';
+    }
+
+    /**
+     * API 응답에서 name → display_name으로 자동 교체
+     * 실명은 real_name 필드로 별도 접근 가능 (부동산 등)
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+        $array['real_name'] = $this->attributes['name'] ?? '';
+        $array['name'] = $this->display_name; // name 필드를 display_name으로 대체
+        return $array;
+    }
+
     protected function casts(): array
     {
         return [

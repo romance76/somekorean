@@ -112,7 +112,7 @@
                     {{ (listing.user.nickname || listing.user.name || '?')[0] }}
                   </div>
                   <div class="min-w-0">
-                    <UserName :userId="listing.user.id" :name="listing.user.nickname || listing.user.name" className="text-xs font-bold text-gray-800 truncate block" />
+                    <UserName :userId="listing.user.id" :name="listing.user.real_name || listing.user.name" className="text-xs font-bold text-gray-800 truncate block" />
                     <div class="text-[9px] text-gray-400">가입: {{ fmtDate(listing.user.created_at) }}</div>
                   </div>
                 </div>
