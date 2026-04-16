@@ -23,7 +23,10 @@ class EventController extends Controller
                    ->orWhere('venue', 'like', "%{$v}%")
                    ->orWhere('city', 'like', "%{$v}%");
             }))
-            ->when(!$request->boolean('past'), fn($q) => $q->where('start_date', '>=', now()))
+            ->when(!$request->boolean('past'), fn($q) => $q->where(function ($q2) {
+                $q2->where('start_date', '>=', now())
+                   ->orWhere('is_pinned', true); // 공식 이벤트는 날짜 무관 표시
+            }))
             ->when($request->has('is_active'), fn($q) => $q->where('is_active', $request->boolean('is_active')), fn($q) => $q->where('is_active', true));
 
         // 공식 이벤트 상단 고정
