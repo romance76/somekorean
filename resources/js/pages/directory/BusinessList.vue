@@ -229,7 +229,7 @@
         <!-- 오른쪽: 정보 -->
         <div class="flex-1 p-3 min-w-0">
           <div class="flex items-center gap-1.5 mb-0.5" v-if="item.promotion_tier && item.promotion_tier !== 'none'">
-            <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
+            <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌐 전국구</span>
             <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
             <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
           </div>

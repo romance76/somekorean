@@ -58,7 +58,7 @@
         <div v-else class="text-[10px] text-gray-500 mt-1.5">내 주 + 인접 주 자동 포함</div>
       </button>
 
-      <!-- 전국(National) 상위노출 -->
+      <!-- 전국구 (National) -->
       <button type="button" @click="selectTier('national')"
         :disabled="nationalUnselectable"
         class="p-3 rounded-lg border-2 text-left transition relative"
@@ -68,7 +68,7 @@
           'border-gray-200 bg-white hover:border-gray-300',
         ]">
         <div class="font-bold text-sm" :class="nationalFull ? 'text-red-800' : 'text-gray-800'">
-          전국(National) 상위노출
+          전국구 (National)
         </div>
         <div class="text-xs font-semibold" :class="nationalFull ? 'text-red-600' : 'text-purple-600'">
           하루 {{ prices.national }}P

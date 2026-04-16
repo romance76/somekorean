@@ -42,7 +42,7 @@
           <div class="px-3 lg:px-5 py-3 lg:py-4 border-b border-gray-100">
             <div class="flex items-center gap-2 flex-wrap mb-2">
               <!-- 프로모션 뱃지 -->
-              <span v-if="job.promotion_tier === 'national'" class="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">🌍 전국 상위노출</span>
+              <span v-if="job.promotion_tier === 'national'" class="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">🌐 전국구</span>
               <span v-else-if="job.promotion_tier === 'state_plus'" class="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold">⭐ 주+인접 상위노출</span>
               <span v-else-if="job.promotion_tier === 'sponsored'" class="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold">📢 스폰서</span>
               <span class="text-xs px-2 py-0.5 rounded-full font-bold" :class="typeClass(job.type)">{{ typeLabel(job.type) }}</span>

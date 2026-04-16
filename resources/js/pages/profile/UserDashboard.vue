@@ -289,7 +289,7 @@
                     :class="{'bg-green-100 text-green-700':m.status==='active','bg-amber-100 text-amber-700':m.status==='reserved','bg-gray-200 text-gray-500':m.status==='sold'}">
                     {{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[m.status] }}
                   </span>
-                  <span v-if="m.promotion_tier === 'national' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">🌍 전국</span>
+                  <span v-if="m.promotion_tier === 'national' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">🌐 전국구</span>
                   <span v-else-if="m.promotion_tier === 'state_plus' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold">⭐ 주+</span>
                   <span v-else-if="m.promotion_tier === 'sponsored' && m.promotion_expires_at && new Date(m.promotion_expires_at) > new Date()" class="text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">📢 스폰서</span>
                   <span v-if="m.boosted_until && new Date(m.boosted_until) > new Date()" class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold">🚀</span>
@@ -403,7 +403,7 @@
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" :class="r.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">{{ r.is_active ? '게시중' : '종료' }}</span>
                   <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-100 text-amber-700">{{ {rent:'렌트',sale:'매매',roommate:'룸메이트'}[r.type] }}</span>
-                  <span v-if="r.promotion_tier === 'national' && r.promotion_expires_at && new Date(r.promotion_expires_at) > new Date()" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">🌍 전국</span>
+                  <span v-if="r.promotion_tier === 'national' && r.promotion_expires_at && new Date(r.promotion_expires_at) > new Date()" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">🌐 전국구</span>
                   <span v-else-if="r.promotion_tier === 'state_plus' && r.promotion_expires_at && new Date(r.promotion_expires_at) > new Date()" class="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold">⭐ 주+</span>
                 </div>
                 <RouterLink :to="'/realestate/'+r.id" class="block mt-1">
@@ -782,7 +782,7 @@
               <div class="flex-1">
                 <div class="flex items-center gap-1.5">
                   <div class="text-sm font-bold text-gray-800">{{ biz.name }}</div>
-                  <span v-if="biz.promotion_tier === 'national' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
+                  <span v-if="biz.promotion_tier === 'national' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌐 전국구</span>
                   <span v-else-if="biz.promotion_tier === 'state_plus' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
                   <span v-else-if="biz.promotion_tier === 'sponsored' && biz.promotion_expires_at && new Date(biz.promotion_expires_at) > new Date()" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
                 </div>

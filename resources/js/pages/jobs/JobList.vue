@@ -162,7 +162,7 @@
           <div class="flex-1 min-w-0">
             <!-- 1행: 프로모션 뱃지 + 직종 태그 (제목 위로) -->
             <div class="flex items-center gap-1 mb-0.5 flex-wrap">
-              <span v-if="item.promotion_tier==='national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-px rounded">🌍 전국</span>
+              <span v-if="item.promotion_tier==='national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-px rounded">🌐 전국구</span>
               <span v-else-if="item.promotion_tier==='state_plus'" class="text-[8px] bg-blue-500 text-white font-bold px-1 py-px rounded">⭐ 주+</span>
               <span v-else-if="item.promotion_tier==='sponsored'" class="text-[8px] bg-amber-500 text-white font-bold px-1 py-px rounded">📢 스폰서</span>
               <span v-for="tag in (item.job_tags || []).slice(0,4)" :key="tag" class="text-[8px] bg-gray-100 text-gray-600 px-1 py-px rounded">{{ jobTagLabel(tag) }}</span>
@@ -284,9 +284,8 @@ function jobBorderClass(item) {
   return 'hover:bg-gray-50'
 }
 function jobBorderStyle(item) {
-  // 부드러운 파스텔 톤 (눈에 거슬리지 않게)
-  if (item.promotion_tier === 'national') return 'border: 2px solid #fed7aa; border-radius: 8px; background: #fffbf5;'
-  if (item.promotion_tier === 'state_plus') return 'border: 2px solid #bfdbfe; border-radius: 8px; background: #f8faff;'
+  if (item.promotion_tier === 'national') return 'border: 2px solid #fca5a5; border-radius: 8px; background: #fef2f2;'
+  if (item.promotion_tier === 'state_plus') return 'border: 2px solid #bfdbfe; border-radius: 8px; background: #f0f7ff;'
   if (item.promotion_tier === 'sponsored') return 'border: 2px solid #fde68a; border-radius: 8px; background: #fffef5;'
   return ''
 }

@@ -152,7 +152,7 @@
             <!-- 태그 줄 (왼쪽: 뱃지들, 오른쪽: 가격) -->
             <div class="flex items-center justify-between gap-1 mb-0.5">
               <div class="flex items-center gap-1 flex-wrap min-w-0">
-                <span v-if="item.promotion_tier === 'national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-px rounded">🌍전국</span>
+                <span v-if="item.promotion_tier === 'national'" class="text-[8px] bg-red-500 text-white font-bold px-1 py-px rounded">🌐 전국구</span>
                 <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[8px] bg-blue-500 text-white font-bold px-1 py-px rounded">⭐주+</span>
                 <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[8px] bg-amber-500 text-white font-bold px-1 py-px rounded">📢스폰</span>
                 <span v-if="item.is_negotiable" class="text-[8px] bg-green-100 text-green-700 font-bold px-1 py-px rounded">가격협의</span>
@@ -195,7 +195,7 @@
         <div class="flex items-center justify-between flex-1 min-w-0 px-4 py-3">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-1.5 mb-0.5">
-              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
+              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌐 전국구</span>
               <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
               <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
             </div>

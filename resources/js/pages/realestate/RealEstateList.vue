@@ -163,7 +163,7 @@
           </div>
           <!-- 좌상단: 프로모션 뱃지 -->
           <div v-if="item.promotion_tier && item.promotion_tier !== 'none'" class="absolute top-2 left-2">
-            <span v-if="item.promotion_tier === 'national'" class="text-[10px] bg-red-500 text-white font-bold px-2 py-1 rounded shadow">🌍 전국</span>
+            <span v-if="item.promotion_tier === 'national'" class="text-[10px] bg-red-500 text-white font-bold px-2 py-1 rounded shadow">🌐 전국구</span>
             <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[10px] bg-blue-500 text-white font-bold px-2 py-1 rounded shadow">⭐ 주+</span>
             <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[10px] bg-amber-500 text-white font-bold px-2 py-1 rounded shadow">📢 스폰서</span>
           </div>
@@ -239,7 +239,7 @@
         <div class="flex items-center justify-between flex-1 min-w-0 px-4 py-3">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-1.5 mb-0.5">
-              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌍 전국</span>
+              <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌐 전국구</span>
               <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
               <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
             </div>
