@@ -15,10 +15,8 @@ class ChatController extends Controller
 
         // 본인이 멤버인 방
         $memberRoomIds = ChatRoomUser::where('user_id', $userId)->pluck('chat_room_id');
-
         // 공개 방은 멤버십 없이 모두 표시
         $publicRoomIds = ChatRoom::where('type', 'public')->pluck('id');
-
         $allRoomIds = $memberRoomIds->merge($publicRoomIds)->unique();
 
         // 차단된 방 제외
@@ -31,7 +29,61 @@ class ChatController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
+        // 유저의 last_read_at 맵
+        $reads = ChatRoomUser::where('user_id', $userId)
+            ->whereIn('chat_room_id', $allRoomIds)
+            ->get()
+            ->keyBy('chat_room_id');
+
+        // 각 방 미읽음 수 집계
+        $rooms = $rooms->map(function ($r) use ($reads, $userId) {
+            $cru = $reads->get($r->id);
+            $hasEntered = (bool) $cru;
+            $lastRead = $cru?->last_read_at;
+
+            if (!$hasEntered) {
+                // 한번도 들어간 적 없음 = new
+                $r->has_entered = false;
+                $r->unread_count = 0;
+                $r->is_new = true;
+            } else {
+                $q = ChatMessage::where('chat_room_id', $r->id)
+                    ->where('user_id', '!=', $userId);
+                if ($lastRead) $q->where('created_at', '>', $lastRead);
+                $cnt = $q->count();
+                $r->has_entered = true;
+                $r->unread_count = $cnt > 300 ? 301 : $cnt; // 300+ 처리
+                $r->is_new = false;
+            }
+            return $r;
+        });
+
         return response()->json(['success'=>true,'data'=>$rooms]);
+    }
+
+    // 채팅방 읽음 표시 (last_read_at = now)
+    public function markRead($id) {
+        $userId = auth()->id();
+        ChatRoomUser::updateOrCreate(
+            ['chat_room_id' => $id, 'user_id' => $userId],
+            ['last_read_at' => now()]
+        );
+        return response()->json(['success' => true]);
+    }
+
+    // 메시지 검색
+    public function searchMessages(Request $request, $id) {
+        $q = trim((string) $request->q);
+        if (strlen($q) < 1) return response()->json(['success' => true, 'data' => []]);
+
+        $msgs = ChatMessage::with('user:id,name,nickname,avatar')
+            ->where('chat_room_id', $id)
+            ->where('content', 'like', '%' . $q . '%')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $msgs]);
     }
 
     public function createRoom(Request $request) {
@@ -44,22 +96,16 @@ class ChatController extends Controller
     // 채팅방에 실제로 글을 남긴 유저들 (참가자) + 멤버 등록된 유저 합친 목록
     public function participants($id) {
         $room = ChatRoom::findOrFail($id);
+        $me = auth()->id();
 
-        // 1) chat_room_users 테이블 (명시적 멤버)
         $memberIds = ChatRoomUser::where('chat_room_id', $id)->pluck('user_id');
-
-        // 2) 최근 이 방에 메시지 남긴 유저 (최신 100건 기준 distinct)
         $activeUserIds = ChatMessage::where('chat_room_id', $id)
             ->whereNotNull('user_id')
-            ->orderByDesc('created_at')
-            ->limit(100)
-            ->pluck('user_id')
-            ->unique();
+            ->orderByDesc('created_at')->limit(100)
+            ->pluck('user_id')->unique();
 
         $allIds = $memberIds->merge($activeUserIds)->unique()->filter()->values();
-        if ($allIds->isEmpty()) {
-            return response()->json(['success' => true, 'data' => []]);
-        }
+        if ($allIds->isEmpty()) return response()->json(['success' => true, 'data' => []]);
 
         $users = \App\Models\User::whereIn('id', $allIds)
             ->where('is_banned', false)
@@ -67,15 +113,20 @@ class ChatController extends Controller
             ->orderByDesc('last_active_at')
             ->get();
 
-        // 각 유저의 이 방 메시지 수 (활성도)
         $msgCounts = ChatMessage::where('chat_room_id', $id)
             ->whereIn('user_id', $users->pluck('id'))
             ->selectRaw('user_id, count(*) as c')
-            ->groupBy('user_id')
-            ->pluck('c', 'user_id');
+            ->groupBy('user_id')->pluck('c', 'user_id');
 
-        $users = $users->map(function ($u) use ($msgCounts) {
+        // 내가 신고한 유저 ID 목록
+        $reportedIds = \App\Models\Report::where('reporter_id', $me)
+            ->where('reportable_type', 'App\\Models\\User')
+            ->whereIn('reportable_id', $users->pluck('id'))
+            ->pluck('reportable_id')->toArray();
+
+        $users = $users->map(function ($u) use ($msgCounts, $reportedIds) {
             $u->message_count = (int) ($msgCounts[$u->id] ?? 0);
+            $u->is_reported = in_array($u->id, $reportedIds);
             return $u;
         });
 
@@ -83,8 +134,10 @@ class ChatController extends Controller
     }
 
     public function messages($id) {
+        $userId = auth()->id();
+
         // 차단된 유저는 메시지 조회 불가
-        $banned = DB::table('chat_room_bans')->where('chat_room_id', $id)->where('user_id', auth()->id())->exists();
+        $banned = DB::table('chat_room_bans')->where('chat_room_id', $id)->where('user_id', $userId)->exists();
         if ($banned) return response()->json(['success'=>false,'message'=>'이 채팅방에서 차단되었습니다.'], 403);
 
         $messages = ChatMessage::with('user:id,name,nickname,avatar,role')
@@ -92,15 +145,22 @@ class ChatController extends Controller
             ->orderByDesc('created_at')
             ->paginate(50);
 
-        // 활성 공지 (pinned_until > now)
         $pinned = ChatMessage::with('user:id,name,nickname,avatar,role')
             ->where('chat_room_id', $id)
             ->where('type', 'system')
             ->where('pinned_until', '>', now())
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at')->get();
 
-        return response()->json(['success'=>true,'data'=>$messages,'pinned'=>$pinned]);
+        // 유저의 마지막 읽음 시각 (읽음 표시 전에 조회)
+        $cru = ChatRoomUser::where('chat_room_id', $id)->where('user_id', $userId)->first();
+        $lastReadAt = $cru?->last_read_at;
+
+        return response()->json([
+            'success' => true,
+            'data' => $messages,
+            'pinned' => $pinned,
+            'last_read_at' => $lastReadAt,
+        ]);
     }
 
     public function sendMessage(Request $request, $id) {

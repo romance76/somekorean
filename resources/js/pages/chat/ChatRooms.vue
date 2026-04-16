@@ -15,9 +15,15 @@
           <button v-for="room in rooms" :key="room.id" @click="selectRoom(room)"
             class="w-full text-left px-3 py-2.5 border-b last:border-0 transition text-xs"
             :class="activeRoom?.id === room.id ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
-            <div class="flex items-center justify-between">
-              <span class="truncate">{{ room.name }}</span>
-              <span v-if="room.messages?.length" class="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></span>
+            <div class="flex items-center justify-between gap-1">
+              <span class="truncate flex-1">{{ room.name }}</span>
+              <!-- 한번도 안들어간 방: NEW -->
+              <span v-if="room.is_new" class="text-[9px] bg-red-500 text-white font-bold px-1 py-0.5 rounded flex-shrink-0">NEW</span>
+              <!-- 미읽음 있음: (N) 또는 300+ -->
+              <span v-else-if="room.unread_count > 0" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded flex-shrink-0">
+                {{ room.unread_count > 300 ? '300+' : room.unread_count }}
+              </span>
+              <span v-else-if="room.messages?.length" class="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></span>
             </div>
           </button>
           <div v-if="!rooms.length && !loading" class="px-3 py-4 text-xs text-gray-400 text-center">채팅방 없음</div>
@@ -36,15 +42,30 @@
 
       <div v-if="activeRoom" :class="isMobile ? 'fixed left-0 right-0 top-0 bg-white flex flex-col' : 'col-span-12 lg:col-span-6'"
         :style="isMobile ? 'bottom: 56px; z-index: 40;' : ''">
-        <div :class="isMobile ? 'flex flex-col h-full overflow-hidden' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'" :style="isMobile ? '' : 'height: 70vh'">
+        <div :class="isMobile ? 'flex flex-col h-full overflow-hidden relative' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative'" :style="isMobile ? '' : 'height: 70vh'">
           <!-- 채팅방 헤더 -->
           <div class="px-4 py-3 border-b bg-amber-50 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-2">
-              <!-- 모바일 뒤로가기 -->
               <button @click="activeRoom = null; activeMessages = []" class="lg:hidden text-amber-700 text-sm font-bold mr-1">←</button>
               <div class="font-bold text-sm text-amber-900">{{ activeRoom.name }}</div>
             </div>
-            <span class="text-[10px] text-green-600 bg-green-100 px-2 py-0.5 rounded-full">🟢 공개 채팅방</span>
+            <div class="flex items-center gap-2">
+              <button @click="openMsgSearch" class="text-amber-700 hover:text-amber-900 text-base" title="메시지 검색">🔍</button>
+              <span class="text-[10px] text-green-600 bg-green-100 px-2 py-0.5 rounded-full">🟢 공개</span>
+            </div>
+          </div>
+
+          <!-- 메시지 검색 팝업 -->
+          <div v-if="msgSearchOpen" class="border-b bg-white px-3 py-2 flex items-center gap-2 flex-shrink-0">
+            <input ref="msgSearchInput" v-model="msgSearchQ" @input="runMsgSearch" @keydown.enter.prevent="navMsgSearch(1)"
+              type="text" placeholder="메시지에서 검색..."
+              class="flex-1 border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+            <span class="text-[10px] text-gray-400 whitespace-nowrap">
+              {{ msgSearchResults.length ? (msgSearchIdx+1) + '/' + msgSearchResults.length : '0' }}
+            </span>
+            <button @click="navMsgSearch(-1)" :disabled="!msgSearchResults.length" class="text-xs w-7 h-7 rounded hover:bg-gray-100 disabled:opacity-30" title="이전">↑</button>
+            <button @click="navMsgSearch(1)" :disabled="!msgSearchResults.length" class="text-xs w-7 h-7 rounded hover:bg-gray-100 disabled:opacity-30" title="다음">↓</button>
+            <button @click="closeMsgSearch" class="text-gray-500 hover:text-gray-800 text-lg px-1" title="닫기">×</button>
           </div>
 
           <!-- 📌 활성 공지 배너 -->
@@ -59,9 +80,25 @@
           </div>
 
           <!-- 메시지 영역 -->
-          <div ref="msgArea" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-            <div v-for="msg in activeMessages" :key="msg.id"
-              class="flex" :class="msg.user_id === auth.user?.id ? 'justify-end' : 'justify-start'">
+          <div ref="msgArea" class="flex-1 overflow-y-auto px-4 py-3 space-y-3" @scroll="onMsgScroll">
+            <template v-for="(msg, idx) in activeMessages" :key="msg.id">
+              <!-- 날짜 구분선 -->
+              <div v-if="showDateDivider(idx)" class="flex items-center justify-center py-2">
+                <div class="h-px bg-gray-200 flex-1"></div>
+                <span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full mx-2 whitespace-nowrap">{{ dateLabel(msg.created_at) }}</span>
+                <div class="h-px bg-gray-200 flex-1"></div>
+              </div>
+              <!-- 읽음 경계선 -->
+              <div v-if="showUnreadDivider(idx)" class="flex items-center justify-center py-1" :id="'unread-marker-' + activeRoom?.id">
+                <div class="h-px bg-red-200 flex-1"></div>
+                <span class="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full mx-2 whitespace-nowrap font-bold">여기까지 읽음</span>
+                <div class="h-px bg-red-200 flex-1"></div>
+              </div>
+            <div :id="'msg-' + msg.id"
+              class="flex" :class="[
+                msg.user_id === auth.user?.id ? 'justify-end' : 'justify-start',
+                msgSearchResults[msgSearchIdx]?.id === msg.id ? 'ring-2 ring-amber-400 rounded-lg' : '',
+              ]">
               <div class="max-w-[75%]">
                 <div v-if="msg.user_id !== auth.user?.id" class="text-[10px] mb-0.5 flex items-center gap-1">
                   <span v-if="isAdminUser(msg.user)" class="bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold">👑 관리자</span>
@@ -96,7 +133,14 @@
                 </div>
               </div>
             </div>
+            </template>
             <div v-if="!activeMessages.length" class="text-center py-8 text-sm text-gray-400">첫 메시지를 보내보세요! 👋</div>
+          </div>
+          <!-- 자동스크롤 일시정지 알림 -->
+          <div v-if="autoScrollPaused && activeMessages.length" class="absolute bottom-20 right-6 z-10">
+            <button @click="scrollToBottomForce" class="bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:bg-amber-600">
+              ↓ 최신 메시지로 {{ pausedNewCount ? '('+pausedNewCount+')' : '' }}
+            </button>
           </div>
 
           <!-- 선택된 파일 미리보기 (다중) -->
@@ -141,47 +185,54 @@
       <!-- 오른쪽: 참가자 목록 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900 flex items-center justify-between">
+          <div class="px-3 py-2 border-b font-bold text-xs text-amber-900 flex items-center justify-between">
             <span>👥 참가자 {{ participants.length ? '(' + participants.length + ')' : '' }}</span>
             <button v-if="activeRoom" @click="loadParticipants" class="text-[10px] text-amber-600 hover:text-amber-800" title="새로고침">🔄</button>
           </div>
+          <!-- 참가자 검색 -->
+          <div v-if="activeRoom && participants.length > 3" class="px-2 py-1.5 border-b bg-gray-50">
+            <input v-model="partSearch" type="text" placeholder="이름 검색..."
+              class="w-full border rounded px-2 py-1 text-[11px] outline-none focus:ring-1 focus:ring-amber-400" />
+          </div>
           <div v-if="!activeRoom" class="px-3 py-4 text-xs text-gray-400 text-center">채팅방을 선택하세요</div>
           <div v-else-if="participantsLoading" class="px-3 py-4 text-xs text-gray-400 text-center">로딩중...</div>
-          <div v-else-if="!participants.length" class="px-3 py-4 text-xs text-gray-400 text-center">참가자가 없습니다</div>
-          <div v-else class="max-h-[600px] overflow-y-auto">
-            <div v-for="u in participants" :key="u.id" class="px-3 py-2 border-b last:border-0 hover:bg-amber-50/40">
-              <div class="flex items-center gap-2">
-                <img v-if="u.avatar" :src="u.avatar" class="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                  @error="e=>e.target.style.display='none'" />
-                <div v-else class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700 flex-shrink-0">
-                  {{ (u.nickname || u.name || '?')[0] }}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs font-bold text-gray-800 truncate">{{ u.nickname || u.name }}</span>
-                    <span v-if="u.role === 'admin' || u.role === 'super_admin'" class="text-[9px] bg-red-500 text-white px-1 rounded-full">👑</span>
-                    <span v-if="u.id === auth.user?.id" class="text-[9px] bg-amber-100 text-amber-700 px-1 rounded-full">나</span>
-                  </div>
-                  <div class="text-[10px] text-gray-400 truncate">
-                    <span v-if="u.city">📍 {{ u.city }}{{ u.state ? ', '+u.state : '' }}</span>
-                    <span v-if="u.message_count">· 💬 {{ u.message_count }}</span>
-                  </div>
-                </div>
+          <div v-else-if="!filteredParticipants.length" class="px-3 py-4 text-xs text-gray-400 text-center">
+            {{ partSearch ? '검색 결과 없음' : '참가자가 없습니다' }}
+          </div>
+          <div v-else class="max-h-[550px] overflow-y-auto">
+            <!-- 내 카드 (상단 고정) -->
+            <template v-for="u in filteredParticipants" :key="u.id">
+              <div v-if="u.id === auth.user?.id" class="px-2 py-1.5 border-b bg-amber-50/60 flex items-center gap-1.5">
+                <img v-if="u.avatar" :src="u.avatar" class="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                <div v-else class="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center text-[10px] font-bold text-amber-700 flex-shrink-0">{{ (u.nickname || u.name || '?')[0] }}</div>
+                <span class="text-[11px] font-bold text-amber-900 truncate flex-1">{{ u.nickname || u.name }}</span>
+                <span class="text-[9px] bg-amber-300 text-amber-900 px-1 rounded">나</span>
               </div>
-              <div v-if="u.id !== auth.user?.id" class="flex items-center gap-1 mt-1.5">
-                <button @click="openPartAction('friend', u)"
-                  :disabled="!u.allow_friend_request"
-                  class="flex-1 text-[10px] bg-green-50 text-green-700 font-bold px-1.5 py-1 rounded hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  :title="u.allow_friend_request ? '친구 요청' : '친구 요청 차단됨'">👫 친구</button>
-                <button @click="openPartAction('message', u)"
-                  :disabled="!u.allow_messages"
-                  class="flex-1 text-[10px] bg-blue-50 text-blue-700 font-bold px-1.5 py-1 rounded hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  :title="u.allow_messages ? '쪽지 보내기' : '쪽지 차단됨'">✉️ 쪽지</button>
+              <!-- 다른 사람: 한 줄 컴팩트 레이아웃 -->
+              <div v-else class="px-2 py-1.5 border-b hover:bg-amber-50/40 flex items-center gap-1.5">
+                <!-- 아이콘 작게 -->
+                <img v-if="u.avatar" :src="u.avatar" class="w-5 h-5 rounded-full object-cover flex-shrink-0" @error="e=>e.target.style.display='none'" />
+                <div v-else class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[9px] font-bold text-gray-600 flex-shrink-0">{{ (u.nickname || u.name || '?')[0] }}</div>
+                <!-- 아이디 -->
+                <span class="text-[11px] font-semibold text-gray-800 truncate flex-1 min-w-0">
+                  {{ u.nickname || u.name }}
+                  <span v-if="u.role === 'admin' || u.role === 'super_admin'" class="text-[9px] bg-red-500 text-white px-0.5 rounded ml-0.5">👑</span>
+                </span>
+                <!-- 사는 곳 (축약) -->
+                <span class="text-[10px] text-gray-400 truncate max-w-[60px]">{{ u.city || '' }}</span>
+                <!-- 친구/쪽지/신고 버튼 (컴팩트) -->
+                <button @click="openPartAction('friend', u)" :disabled="!u.allow_friend_request"
+                  class="text-[11px] hover:bg-green-50 rounded px-1 py-0.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                  :title="u.allow_friend_request ? '친구 요청' : '친구 요청 차단됨'">👫</button>
+                <button @click="openPartAction('message', u)" :disabled="!u.allow_messages"
+                  class="text-[11px] hover:bg-blue-50 rounded px-1 py-0.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                  :title="u.allow_messages ? '쪽지' : '쪽지 차단됨'">✉️</button>
                 <button @click="openPartAction('report', u)"
-                  class="text-[10px] bg-red-50 text-red-600 font-bold px-1.5 py-1 rounded hover:bg-red-100"
-                  title="신고">🚨</button>
+                  class="text-[11px] rounded px-1 py-0.5 hover:bg-red-50"
+                  :class="u.is_reported ? 'text-red-500' : 'text-gray-300'"
+                  :title="u.is_reported ? '이미 신고한 유저' : '신고'">🚨</button>
               </div>
-            </div>
+            </template>
           </div>
         </div>
 
@@ -414,23 +465,146 @@ function subscribeToRoom(roomId) {
       // 가드: 현재 활성 방의 메시지만 받음 (다른 방 채널 잔존 방지)
       if (Number(activeRoom.value?.id) !== Number(roomId)) return
       if (payload.chat_room_id && Number(payload.chat_room_id) !== Number(roomId)) return
-      // 중복 방지: 이미 같은 id가 있으면 무시
       if (activeMessages.value.some(m => m.id === payload.id)) return
       activeMessages.value.push(payload)
-      // 공지면 핀 배너에도 반영
       if (payload.type === 'system' && payload.pinned_until) {
         pinnedAnnouncements.value = [payload, ...pinnedAnnouncements.value.filter(p => p.id !== payload.id)]
       }
-      nextTick(() => {
-        if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
-      })
+      // 사용자가 위로 스크롤 중(일시정지)이면 자동 스크롤 안함, 대신 카운터 증가
+      if (autoScrollPaused.value) {
+        pausedNewCount.value++
+      } else {
+        nextTick(() => {
+          if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
+        })
+      }
     })
 }
 
 let selectRoomSeq = 0
+// ─── 날짜 구분선 + 읽음 마커 ───
+const lastReadAt = ref(null) // 서버에서 받은 이 방 내 last_read_at (처음 로드 시점 것)
+
+function sameDay(a, b) {
+  if (!a || !b) return false
+  const da = new Date(a), db = new Date(b)
+  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate()
+}
+function showDateDivider(idx) {
+  if (idx === 0) return true
+  const cur = activeMessages.value[idx]?.created_at
+  const prev = activeMessages.value[idx - 1]?.created_at
+  return !sameDay(cur, prev)
+}
+function dateLabel(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const today = new Date(); today.setHours(0,0,0,0)
+  const dd = new Date(d); dd.setHours(0,0,0,0)
+  const diffDays = (today - dd) / 86400000
+  if (diffDays === 0) return '오늘'
+  if (diffDays === 1) return '어제'
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`
+}
+function showUnreadDivider(idx) {
+  if (!lastReadAt.value) return false
+  const cur = activeMessages.value[idx]
+  const prev = activeMessages.value[idx - 1]
+  if (!cur) return false
+  // 본인 메시지는 경계선 스킵 (이미 읽은 것으로 간주)
+  if (cur.user_id === auth.user?.id) return false
+  const lr = new Date(lastReadAt.value).getTime()
+  const curT = new Date(cur.created_at).getTime()
+  const prevT = prev ? new Date(prev.created_at).getTime() : 0
+  // cur 이 lastRead 이후 첫 메시지
+  return curT > lr && prevT <= lr
+}
+
+// ─── 자동스크롤 일시정지 (텔레그램 스타일) ───
+const autoScrollPaused = ref(false)
+const pausedNewCount = ref(0)
+function onMsgScroll(e) {
+  const el = e.target
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+  if (atBottom) {
+    autoScrollPaused.value = false
+    pausedNewCount.value = 0
+  } else {
+    autoScrollPaused.value = true
+  }
+}
+function scrollToBottomForce() {
+  if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
+  autoScrollPaused.value = false
+  pausedNewCount.value = 0
+}
+
+// ─── 메시지 검색 팝업 ───
+const msgSearchOpen = ref(false)
+const msgSearchInput = ref(null)
+const msgSearchQ = ref('')
+const msgSearchResults = ref([])
+const msgSearchIdx = ref(0)
+let msgSearchTimer = null
+function openMsgSearch() {
+  msgSearchOpen.value = true
+  nextTick(() => msgSearchInput.value?.focus())
+}
+function closeMsgSearch() {
+  msgSearchOpen.value = false
+  msgSearchQ.value = ''
+  msgSearchResults.value = []
+  msgSearchIdx.value = 0
+}
+function runMsgSearch() {
+  clearTimeout(msgSearchTimer)
+  msgSearchTimer = setTimeout(async () => {
+    const q = msgSearchQ.value.trim()
+    if (!q || !activeRoom.value) { msgSearchResults.value = []; return }
+    try {
+      const { data } = await axios.get(`/api/chat/rooms/${activeRoom.value.id}/messages/search`, { params: { q } })
+      msgSearchResults.value = data.data || []
+      msgSearchIdx.value = 0
+      scrollToSearchResult()
+    } catch { msgSearchResults.value = [] }
+  }, 300)
+}
+function navMsgSearch(dir) {
+  if (!msgSearchResults.value.length) return
+  const n = msgSearchResults.value.length
+  msgSearchIdx.value = (msgSearchIdx.value + dir + n) % n
+  scrollToSearchResult()
+}
+async function scrollToSearchResult() {
+  const hit = msgSearchResults.value[msgSearchIdx.value]
+  if (!hit) return
+  // 화면에 보이는 메시지면 바로 스크롤, 아니면 해당 위치의 메시지를 로드해야 함
+  const exists = activeMessages.value.find(m => m.id === hit.id)
+  if (!exists) {
+    // 간단 버전: 검색 결과를 activeMessages 에 병합 (중복 제거)
+    const merged = [...activeMessages.value, ...msgSearchResults.value]
+      .reduce((acc, m) => { if (!acc.find(x => x.id === m.id)) acc.push(m); return acc }, [])
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    activeMessages.value = merged
+  }
+  await nextTick()
+  const el = document.getElementById('msg-' + hit.id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
 // ─── 참가자 목록 ───
 const participants = ref([])
 const participantsLoading = ref(false)
+const partSearch = ref('')
+const filteredParticipants = computed(() => {
+  const q = (partSearch.value || '').trim().toLowerCase()
+  if (!q) return participants.value
+  return participants.value.filter(u => {
+    return (u.nickname || '').toLowerCase().includes(q) ||
+           (u.name || '').toLowerCase().includes(q) ||
+           (u.city || '').toLowerCase().includes(q)
+  })
+})
 async function loadParticipants() {
   if (!activeRoom.value) return
   participantsLoading.value = true
@@ -480,6 +654,9 @@ async function submitPartAction() {
         content: partInput.value,
       })
       partMsg.value = '✅ 신고가 접수되었습니다'; partMsgOk.value = true
+      // 참가자 목록에 is_reported 즉시 반영
+      const p = participants.value.find(x => x.id === user.id)
+      if (p) p.is_reported = true
     }
     setTimeout(() => { partModal.value = null }, 1200)
   } catch (e) {
@@ -491,30 +668,45 @@ async function submitPartAction() {
 
 async function selectRoom(room) {
   const seq = ++selectRoomSeq
+  // 이전 방에 markRead — 방 나갈 때 읽음 시각 저장
+  const prevRoomId = activeRoom.value?.id
+  if (prevRoomId && prevRoomId !== room.id) {
+    try { axios.post(`/api/chat/rooms/${prevRoomId}/read`) } catch {}
+    // 리스트의 미읽음 배지 즉시 0 처리
+    const prev = rooms.value.find(r => r.id === prevRoomId)
+    if (prev) { prev.unread_count = 0; prev.is_new = false; prev.has_entered = true }
+  }
+
   activeRoom.value = room
-  // 클릭 즉시 이전 메시지 초기화 (이전 방 메시지가 잠깐 보이는 문제 방지)
   activeMessages.value = []
   pinnedAnnouncements.value = []
+  lastReadAt.value = null
+  autoScrollPaused.value = false
+  pausedNewCount.value = 0
+  closeMsgSearch()
   clearFiles()
   subscribeToRoom(room.id)
   try {
     const { data } = await axios.get(`/api/chat/rooms/${room.id}/messages`, {
-      params: { _ts: Date.now() }, // 캐시 방지
+      params: { _ts: Date.now() },
     })
-    // 도착 사이 다른 방으로 이동했으면 결과 무시 (race condition)
     if (seq !== selectRoomSeq || activeRoom.value?.id !== room.id) return
     const msgs = (data.data?.data || data.data || []).reverse()
-    // 안전: chat_room_id 가 다른 메시지 필터 (== 로 string/number 모두 매칭)
     const rid = Number(room.id)
     activeMessages.value = msgs.filter(m => !m.chat_room_id || Number(m.chat_room_id) === rid)
     pinnedAnnouncements.value = data.pinned || []
+    lastReadAt.value = data.last_read_at || null
     loadParticipants()
+
     await nextTick()
-    if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
-  } catch (e) {
-    if (seq === selectRoomSeq) {
-      console.warn('[chat] failed to load messages for room', room.id, e?.message)
+    const markerEl = document.getElementById('unread-marker-' + room.id)
+    if (markerEl && lastReadAt.value) {
+      markerEl.scrollIntoView({ block: 'center' })
+    } else if (msgArea.value) {
+      msgArea.value.scrollTop = msgArea.value.scrollHeight
     }
+  } catch (e) {
+    if (seq === selectRoomSeq) console.warn('[chat] failed to load messages for room', room.id, e?.message)
   }
 }
 
@@ -570,6 +762,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  // 페이지 떠날 때 현재 방 읽음 표시
+  if (activeRoom.value?.id) {
+    try { axios.post(`/api/chat/rooms/${activeRoom.value.id}/read`) } catch {}
+  }
   unsubscribeChannel()
   window.removeEventListener('resize', onResize)
 })
