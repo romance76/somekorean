@@ -23,7 +23,7 @@ class NewsController extends Controller
 
         $query->distinct();
 
-        $paginated = $query->paginate(10);
+        $paginated = $query->paginate($request->per_page ?? 10);
         $paginated->getCollection()->transform(function ($n) {
             // 로컬 이미지 우선 → 없으면 외부 URL 썸네일
             if ($n->local_image) {

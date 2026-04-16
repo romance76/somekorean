@@ -31,7 +31,7 @@ class GroupBuyController extends Controller
             $query->orderByDesc('created_at');
         }
 
-        $items = $query->paginate(20);
+        $items = $query->paginate($request->per_page ?? 20);
         $items->getCollection()->transform(function($item) {
             $item->append(['current_discount', 'current_price']);
             return $item;

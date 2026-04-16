@@ -249,7 +249,7 @@
     </div>
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
       <SidebarWidgets :currentCategory="activeItem ? (activeItem.category || '') : activeCat" :inline="true" @select="openItem" api-url="/api/events" detail-path="/events/" :current-id="activeItem?.id || 0"
-        :mode="activeItem ? 'detail' : 'list'" label="이벤트" :filter-params="locationParams" />
+        :mode="activeItem ? 'detail' : 'list'" :categoryLabel="eventCategories.find(c => c.value === (activeItem?.category || activeCat))?.label || activeItem?.category || ''" label="이벤트" :filter-params="locationParams" />
         <AdSlot page="events" position="right" :maxSlots="2" />
     </div>
     </div>

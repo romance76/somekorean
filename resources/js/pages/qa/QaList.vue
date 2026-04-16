@@ -179,7 +179,7 @@
       <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
         <SidebarWidgets :currentCategory="activeItem ? (activeItem.category_id || '') : (activeCat?.id || '')" categoryParam="category_id" :inline="true" @select="openItem" api-url="/api/qa" detail-path="/qa/" :current-id="activeItem?.id || 0"
-          :mode="activeItem ? 'detail' : 'list'" label="질문" />
+          :mode="activeItem ? 'detail' : 'list'" :categoryLabel="activeItem?.category?.name || activeCat?.name || ''" label="질문" />
         <AdSlot page="qa" position="right" :maxSlots="2" />
       </div>
     </div>

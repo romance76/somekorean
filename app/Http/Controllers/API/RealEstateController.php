@@ -56,7 +56,7 @@ class RealEstateController extends Controller
         $this->applyPromotionOrdering($query, $request->user_state, $hasLocation);
         $query->orderByDesc('created_at');
 
-        return response()->json(['success' => true, 'data' => $query->paginate(20)]);
+        return response()->json(['success' => true, 'data' => $query->paginate($request->per_page ?? 20)]);
     }
 
     public function show($id)
