@@ -5,32 +5,25 @@
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="listing">
 
-      <!-- ═══ 사진 갤러리 (Zillow 스타일) ═══ -->
-      <div v-if="photos.length" class="rounded-xl overflow-hidden mb-4">
-        <div class="grid gap-1" :class="photos.length >= 5 ? 'grid-cols-4 grid-rows-2' : photos.length >= 3 ? 'grid-cols-3' : photos.length === 2 ? 'grid-cols-2' : 'grid-cols-1'">
-          <!-- 메인 사진 (왼쪽 큰거) -->
-          <div :class="photos.length >= 5 ? 'col-span-2 row-span-2' : ''" class="relative cursor-pointer" @click="openLightbox(0)">
-            <img :src="photoUrl(photos[0])" class="w-full h-full object-cover" :class="photos.length >= 5 ? 'h-[400px]' : 'h-[300px]'" />
-            <div v-if="listing.promotion_tier && listing.promotion_tier !== 'none'" class="absolute top-3 left-3">
-              <span v-if="listing.promotion_tier==='national'" class="text-xs bg-red-500 text-white font-bold px-2 py-1 rounded shadow">🌐 전국구</span>
-              <span v-else-if="listing.promotion_tier==='state_plus'" class="text-xs bg-blue-500 text-white font-bold px-2 py-1 rounded shadow">⭐ 주+</span>
-              <span v-else-if="listing.promotion_tier==='sponsored'" class="text-xs bg-amber-500 text-white font-bold px-2 py-1 rounded shadow">📢 스폰서</span>
-            </div>
-          </div>
-          <!-- 서브 사진들 -->
-          <div v-for="(p, idx) in photos.slice(1, photos.length >= 5 ? 5 : 3)" :key="idx+1"
-            class="relative cursor-pointer" @click="openLightbox(idx+1)">
-            <img :src="photoUrl(p)" class="w-full h-full object-cover h-[198px]" />
-            <!-- 마지막 서브: +N 오버레이 -->
-            <div v-if="idx === (photos.length >= 5 ? 3 : 1) && photos.length > (photos.length >= 5 ? 5 : 3)"
-              class="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <span class="text-white font-bold text-lg">📷 +{{ photos.length - (photos.length >= 5 ? 5 : 3) }}</span>
-            </div>
+      <!-- ═══ 사진 갤러리 (가로 스크롤) ═══ -->
+      <div v-if="photos.length" class="mb-4">
+        <div class="flex gap-2 overflow-x-auto pb-2 rounded-xl" style="-webkit-overflow-scrolling: touch;">
+          <div v-for="(p, idx) in photos" :key="idx"
+            class="flex-shrink-0 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition relative"
+            @click="openLightbox(idx)">
+            <img :src="photoUrl(p)" class="h-[280px] w-auto object-cover"
+              @error="e => e.target.style.display='none'" />
+            <!-- 첫번째 사진에 프로모션 뱃지 -->
+            <template v-if="idx === 0 && listing.promotion_tier && listing.promotion_tier !== 'none'">
+              <span v-if="listing.promotion_tier==='national'" class="absolute top-2 left-2 text-[10px] bg-red-500 text-white font-bold px-2 py-1 rounded shadow">🌐 전국구</span>
+              <span v-else-if="listing.promotion_tier==='state_plus'" class="absolute top-2 left-2 text-[10px] bg-blue-500 text-white font-bold px-2 py-1 rounded shadow">⭐ 주+</span>
+              <span v-else-if="listing.promotion_tier==='sponsored'" class="absolute top-2 left-2 text-[10px] bg-amber-500 text-white font-bold px-2 py-1 rounded shadow">📢 스폰서</span>
+            </template>
           </div>
         </div>
+        <div class="text-[10px] text-gray-400 mt-1">📷 {{ photos.length }}장 · 클릭하면 크게 보기</div>
       </div>
-      <!-- 사진 없음 -->
-      <div v-else class="bg-gray-100 rounded-xl h-[200px] flex items-center justify-center text-4xl mb-4">🏠</div>
+      <div v-else class="bg-gray-100 rounded-xl h-[150px] flex items-center justify-center text-4xl mb-4">🏠</div>
 
       <div class="grid grid-cols-12 gap-4">
         <!-- 메인 컨텐츠 -->
