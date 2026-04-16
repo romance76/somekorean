@@ -113,9 +113,9 @@
                   </div>
                 </div>
                 <!-- 친구추가/쪽지 -->
-                <div v-if="listing.user_id !== auth.user?.id" class="space-y-1.5 pt-2 border-t">
-                  <button @click="sendFriendRequest" class="w-full text-[11px] bg-green-50 text-green-700 font-bold py-1.5 rounded-lg hover:bg-green-100">👫 친구추가</button>
-                  <button @click="sendMessage" class="w-full text-[11px] bg-blue-50 text-blue-700 font-bold py-1.5 rounded-lg hover:bg-blue-100">✉️ 쪽지</button>
+                <div v-if="listing.user_id !== auth.user?.id" class="flex gap-1.5 pt-2 border-t">
+                  <button @click="sendFriendRequest" class="flex-1 text-[11px] bg-green-50 text-green-700 font-bold py-1.5 rounded-lg hover:bg-green-100">👫 친구</button>
+                  <button @click="sendMessage" class="flex-1 text-[11px] bg-blue-50 text-blue-700 font-bold py-1.5 rounded-lg hover:bg-blue-100">✉️ 쪽지</button>
                 </div>
                 <!-- 전화/이메일 (등록자가 입력한 경우만) -->
                 <div v-if="listing.contact_phone || listing.contact_email" class="space-y-1.5 pt-2 border-t">
