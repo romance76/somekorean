@@ -94,34 +94,31 @@ export function useMessage() {
 }
 
 /**
- * 좋아요 토글 (Bookmark API 기반 — market, realestate, job 등)
+ * 좋아요 토글 (Bookmark Store 기반 — market, realestate, job 등)
  */
 export function useBookmarkLike(bookmarkableType) {
   const liked = ref(false)
   const loading = ref(false)
-  const site = useSiteStore()
 
   async function check(itemId) {
     const auth = useAuthStore()
     if (!auth.isLoggedIn || !itemId) return
-    try {
-      const { data } = await axios.get('/api/bookmarks/check', {
-        params: { type: bookmarkableType, ids: itemId },
-      })
-      liked.value = (data.data || []).includes(itemId)
-    } catch {}
+    // store에서 로컬 체크 (API 호출 없음)
+    const { useBookmarkStore } = await import('../stores/bookmarks')
+    const bStore = useBookmarkStore()
+    await bStore.loadAll()
+    liked.value = bStore.isBookmarked(bookmarkableType, itemId)
   }
 
   async function toggle(itemId) {
     if (!requireAuth()) return
     loading.value = true
     try {
-      const { data } = await axios.post('/api/bookmarks', {
-        bookmarkable_type: bookmarkableType,
-        bookmarkable_id: itemId,
-      })
-      liked.value = data.bookmarked
-      return data.bookmarked
+      const { useBookmarkStore } = await import('../stores/bookmarks')
+      const bStore = useBookmarkStore()
+      const result = await bStore.toggle(bookmarkableType, itemId)
+      liked.value = result
+      return result
     } catch (e) {
       site.toast('처리 실패', 'error')
     } finally {

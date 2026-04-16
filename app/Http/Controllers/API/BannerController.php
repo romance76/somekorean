@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BannerAd;
 use App\Traits\CompressesUploads;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BannerController extends Controller
 {
@@ -20,6 +21,16 @@ class BannerController extends Controller
         $user = auth('api')->user();
         $userState = $user->state ?? null;
         $userCounty = $user->city ?? null;
+
+        // Redis 캐시 (30분, 페이지+위치+지역 기준)
+        $cacheKey = "banners_{$page}_{$position}_" . ($userState ?: 'all');
+        $cached = Cache::get($cacheKey);
+        if ($cached) {
+            // 노출 수만 비동기 증가
+            $ids = collect($cached)->pluck('id')->filter();
+            if ($ids->count()) BannerAd::whereIn('id', $ids->toArray())->increment('impressions');
+            return response()->json(['success' => true, 'data' => $cached]);
+        }
 
         // 슬롯별 등급 정의
         $slotConfig = $position === 'left'
@@ -73,6 +84,9 @@ class BannerController extends Controller
             BannerAd::whereIn('id', $ids)->increment('impressions');
         }
 
+        // 30분 캐시 저장
+        Cache::put($cacheKey, $results, 1800);
+
         return response()->json(['success' => true, 'data' => $results]);
     }
 
@@ -80,6 +94,15 @@ class BannerController extends Controller
     public function mobileAd(Request $request)
     {
         $page = $request->page ?: 'home';
+
+        // Redis 캐시 (30분)
+        $mCacheKey = "banners_mobile_{$page}";
+        $mCached = Cache::get($mCacheKey);
+        if ($mCached) {
+            if ($mCached->id ?? null) BannerAd::where('id', $mCached->id)->increment('impressions');
+            return response()->json(['success' => true, 'data' => $mCached]);
+        }
+
         $query = BannerAd::active()
             ->where(function ($q) use ($page) {
                 $q->where('page', $page)->orWhere('page', 'all')
@@ -98,6 +121,7 @@ class BannerController extends Controller
         }
         $picked = $weighted[array_rand($weighted)];
         $picked->increment('impressions');
+        Cache::put($mCacheKey, $picked, 1800);
 
         return response()->json(['success' => true, 'data' => $picked]);
     }

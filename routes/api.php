@@ -115,7 +115,7 @@ Route::get('/music/categories', [MusicController::class, 'categories']);
 Route::get('/music/tracks/{categoryId}', [MusicController::class, 'tracks']);
 Route::get('/search', [SearchController::class, 'search']);
 Route::get('/comments/{type}/{id}', [CommentController::class, 'index']);
-Route::get('/settings/public', [AdminSettingsController::class, 'getPublic']);
+Route::get('/settings/public', [AdminSettingsController::class, 'getPublic'])->middleware('cache.api:1800'); // 30분 캐시
 Route::get('/settings/points', function () {
     $settings = \DB::table('point_settings')->pluck('value', 'key');
     return response()->json(['success' => true, 'data' => $settings]);

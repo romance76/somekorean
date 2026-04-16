@@ -17,9 +17,11 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { useSiteStore } from '../../stores/site'
 const content = ref('')
 onMounted(async () => {
-  try { const { data } = await axios.get('/api/settings/public'); content.value = data.data?.privacy_page || '' } catch {}
+  const site = useSiteStore()
+  await site.load()
+  content.value = site.getSetting('privacy_page', '')
 })
 </script>

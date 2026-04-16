@@ -85,10 +85,17 @@ import CommHub from './components/comms/CommHub.vue'
 import MiniPlayer from './components/MiniPlayer.vue'
 import GlobalChatPopup from './components/GlobalChatPopup.vue'
 
+import { useBookmarkStore } from './stores/bookmarks'
+
 const route = useRoute()
 const siteStore = useSiteStore()
 const auth = useAuthStore()
+const bookmarkStore = useBookmarkStore()
 const commHub = ref(null)
+
+// 앱 초기화: settings + 북마크 로드
+siteStore.load()
+if (auth.isLoggedIn) bookmarkStore.loadAll()
 
 // 글로벌: 어디서든 window.openCommChat(partner, convId) / window.startCommCall(partner) 호출 가능
 if (typeof window !== 'undefined') {
