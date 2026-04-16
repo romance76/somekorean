@@ -137,6 +137,9 @@ Route::get('/game-leaderboard', function () {
     return response()->json(['data' => []]);
 });
 
+// ─── Public API (no auth) ───
+Route::get('/places/nearby-schools', [PlacesController::class, 'nearbySchools']);
+
 // ─── Authenticated ───
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -266,8 +269,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/bookmarks', [BookmarkController::class, 'toggle']);
     Route::get('/bookmarks', [BookmarkController::class, 'index']);
     Route::get('/bookmarks/check', [BookmarkController::class, 'check']);
-
-    Route::get('/places/nearby-schools', [PlacesController::class, 'nearbySchools']);
 
     Route::get('/chat/rooms', [ChatController::class, 'rooms']);
     Route::post('/chat/rooms', [ChatController::class, 'createRoom']);
