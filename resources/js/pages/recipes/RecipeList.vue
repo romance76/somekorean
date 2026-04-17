@@ -271,19 +271,11 @@ async function loadRecipeFavorited() {
 }
 async function toggleFav(item) {
   if (!auth.isLoggedIn) return
-  try {
-    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\RecipePost', bookmarkable_id: item.id })
-    if (data.bookmarked) recipeFavorited.value.add(item.id)
+  const result = await bStore.toggle(BM_TYPE, item.id)
+  if (result !== null) {
+    if (result) recipeFavorited.value.add(item.id)
     else recipeFavorited.value.delete(item.id)
     recipeFavorited.value = new Set(recipeFavorited.value)
-  } catch {
-    // fallback: 기존 API
-    try {
-      const { data } = await axios.post(`/api/recipes/${item.id}/favorite`)
-      if (data.is_favorited) recipeFavorited.value.add(item.id)
-      else recipeFavorited.value.delete(item.id)
-      recipeFavorited.value = new Set(recipeFavorited.value)
-    } catch {}
   }
 }
 

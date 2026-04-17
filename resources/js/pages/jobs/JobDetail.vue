@@ -505,10 +505,10 @@ async function loadJob(id) {
 
 async function toggleJobFav() {
   if (!auth.isLoggedIn || !job.value) return
-  try {
-    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\JobPost', bookmarkable_id: job.value.id })
-    jobFavorited.value = data.bookmarked
-  } catch {}
+  const { useBookmarkStore } = await import('../../stores/bookmarks')
+  const bStore = useBookmarkStore()
+  const result = await bStore.toggle('App\\Models\\JobPost', job.value.id)
+  if (result !== null) jobFavorited.value = result
 }
 
 // ── Delete ──

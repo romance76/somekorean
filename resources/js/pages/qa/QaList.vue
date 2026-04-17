@@ -315,12 +315,12 @@ async function loadFavorited() {
 }
 async function toggleFav(item) {
   if (!auth.isLoggedIn) return
-  try {
-    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\QaPost', bookmarkable_id: item.id })
-    if (data.bookmarked) favorited.value.add(item.id)
+  const result = await bStore.toggle(BM_TYPE, item.id)
+  if (result !== null) {
+    if (result) favorited.value.add(item.id)
     else favorited.value.delete(item.id)
     favorited.value = new Set(favorited.value)
-  } catch {}
+  }
 }
 async function loadFavoritesPage() {
   loading.value = true
