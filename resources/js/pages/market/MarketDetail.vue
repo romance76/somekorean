@@ -20,7 +20,7 @@
             </RouterLink>
             <button v-if="auth.isLoggedIn" @click="$router.push('/market?fav=1')"
               class="w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
-              ❤️ 내 하트
+              ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
             </button>
           </div>
           <AdSlot page="market" position="left" :maxSlots="2" />
@@ -237,12 +237,16 @@ import ReportModal from '../../components/ReportModal.vue'
 import MessageModal from '../../components/MessageModal.vue'
 import AdSlot from '../../components/AdSlot.vue'
 import { useFriendAction, useBookmarkLike } from '../../composables/useSocialActions'
+import { useBookmarkStore } from '../../stores/bookmarks'
 import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const siteStore = useSiteStore()
+const bStore = useBookmarkStore()
+const BM_TYPE = 'App\\Models\\MarketItem'
+const favCount = computed(() => bStore.getBookmarkedIds(BM_TYPE).length)
 const item = ref(null)
 const loading = ref(true)
 const selectedImgIdx = ref(0)
@@ -308,9 +312,12 @@ async function submitBoost() {
   boostingInProgress.value = false
 }
 
-// 좋아요 (Bookmark API)
-const { liked, check: checkLike, toggle: doToggleLike } = useBookmarkLike('App\\Models\\MarketItem')
-async function toggleLike() { await doToggleLike(item.value.id) }
+// 좋아요 (Bookmark API — bStore 동기화)
+const { liked, check: checkLike, toggle: doToggleLike } = useBookmarkLike(BM_TYPE)
+async function toggleLike() {
+  const result = await bStore.toggle(BM_TYPE, item.value.id)
+  if (result !== null) liked.value = result
+}
 
 // 친구 요청
 const { sendRequest: doSendFriend } = useFriendAction()
@@ -351,6 +358,7 @@ async function loadItem() {
 }
 
 onMounted(async () => {
+  bStore.loadAll()
   await loadItem()
   loading.value = false
   if (item.value?.id) checkLike(item.value.id)
