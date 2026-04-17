@@ -23,7 +23,7 @@
               :class="gb.status==='completed' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">✅ 완료</RouterLink>
             <button v-if="auth.isLoggedIn" @click="$router.push('/groupbuy?fav=1')"
               class="w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
-              ❤️ 내 하트
+              ❤️ 내 하트<span v-if="gbFavCount > 0" class="ml-0.5">({{ gbFavCount }})</span>
             </button>
           </div>
           <AdSlot page="groupbuy" position="left" :maxSlots="2" />
@@ -414,6 +414,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useBookmarkStore } from '../../stores/bookmarks'
 import CommentSection from '../../components/CommentSection.vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import AdSlot from '../../components/AdSlot.vue'
@@ -426,9 +427,11 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+const gbStore = useBookmarkStore()
 const gb = ref(null)
 const loading = ref(true)
 const gbFavorited = ref(false)
+const gbFavCount = computed(() => gbStore.getBookmarkedIds('App\\Models\\GroupBuy').length)
 const participants = ref([])
 const selectedImgIdx = ref(0)
 const lightboxImg = ref(null)
@@ -602,10 +605,9 @@ async function loadDetail(id) {
 
 async function toggleGbFav() {
   if (!auth.isLoggedIn || !gb.value) return
-  try {
-    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\GroupBuy', bookmarkable_id: gb.value.id })
-    gbFavorited.value = data.bookmarked
-  } catch {}
+  const bStore = useBookmarkStore()
+  const result = await bStore.toggle('App\\Models\\GroupBuy', gb.value.id)
+  if (result !== null) gbFavorited.value = result
 }
 
 async function submitJoin() {
@@ -668,6 +670,7 @@ watch(() => route.params.id, (newId) => {
 })
 
 onMounted(() => {
+  gbStore.loadAll()
   if (route.params.id) loadDetail(route.params.id)
   countdownTimer = setInterval(() => { now.value = Date.now() }, 60000)
 })
