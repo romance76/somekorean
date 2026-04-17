@@ -106,6 +106,7 @@ Route::get('/recipes/categories', [RecipeController::class, 'categories']);
 Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 Route::get('/recipes/{id}/comments', [RecipeController::class, 'comments']);
 Route::get('/groupbuys', [GroupBuyController::class, 'index']);
+Route::get('/groupbuys/my-joined', [GroupBuyController::class, 'myJoined'])->middleware('auth:api');
 Route::get('/groupbuys/{id}', [GroupBuyController::class, 'show']);
 Route::get('/groupbuys/{id}/participants', [GroupBuyController::class, 'participants']);
 Route::get('/events', [EventController::class, 'index']);
@@ -245,7 +246,6 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/recipes/{id}/comments/{commentId}', [RecipeController::class, 'deleteComment']);
     Route::post('/recipes/{id}/favorite', [RecipeController::class, 'toggleFavorite']);
 
-    Route::get('/groupbuys/my-joined', [GroupBuyController::class, 'myJoined']);
     Route::post('/groupbuys', [GroupBuyController::class, 'store']);
     Route::put('/groupbuys/{id}', [GroupBuyController::class, 'update']);
     Route::delete('/groupbuys/{id}', [GroupBuyController::class, 'destroy']);
