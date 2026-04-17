@@ -93,10 +93,15 @@
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
-          <button v-for="c in clubCategories" :key="c.value" @click="catFilter=c.value; loadClubs()"
+          <button v-for="c in clubCategories" :key="c.value" @click="showFavorites=false; catFilter=c.value; loadClubs()"
             class="w-full text-left px-3 py-2 text-xs transition"
             :class="catFilter===c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">{{ c.label }}</button>
 
+          <button v-if="auth.isLoggedIn" @click="showFavorites=true; loadFavoritesPage()"
+            class="w-full text-left px-3 py-2 text-xs transition border-t"
+            :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
+            ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+          </button>
           <template v-if="auth.isLoggedIn && myClubs.length">
             <div class="px-3 py-2.5 border-t border-b font-bold text-xs text-amber-900 mt-1">👤 내 동호회</div>
             <router-link v-for="mc in myClubs" :key="mc.id" :to="`/clubs/${mc.id}`"
@@ -130,6 +135,9 @@
             <span class="px-2 py-0.5 rounded-full" :class="club.type==='online' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'">
               {{ club.type === 'online' ? '🌐 온라인' : '📍 지역' }}
             </span>
+            <button v-if="auth.isLoggedIn" @click.prevent.stop="toggleFav(club)" class="text-sm">
+              {{ favorited.has(club.id) ? '❤️' : '🤍' }}
+            </button>
           </div>
         </div>
       </RouterLink>
@@ -153,17 +161,23 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocation } from '../../composables/useLocation'
 import { useAuthStore } from '../../stores/auth'
+import { useBookmarkStore } from '../../stores/bookmarks'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
 
 const auth = useAuthStore()
+const bStore = useBookmarkStore()
+const BM_TYPE = 'App\\Models\\Club'
 const route = useRoute()
 const { city, locationQuery, koreanCities, init: initLocation, selectKoreanCity } = useLocation()
 
 const clubs = ref([])
 const loading = ref(true)
 const showFilter = ref(false)
+const showFavorites = ref(false)
+const favorited = ref(new Set())
+const favCount = computed(() => bStore.getBookmarkedIds(BM_TYPE).length)
 const myClubs = ref([])
 const catFilter = ref('')
 const clubCategories = [
@@ -234,6 +248,36 @@ async function loadClubs() {
     clubs.value = data.data?.data || data.data || []
   } catch {}
   loading.value = false
+  loadFavorited()
+}
+
+// 하트 (Bookmark)
+async function loadFavorited() {
+  if (!auth.isLoggedIn || !clubs.value.length) return
+  try {
+    const ids = clubs.value.map(i => i.id).join(',')
+    const { data } = await axios.get('/api/bookmarks/check', { params: { type: BM_TYPE, ids } })
+    favorited.value = new Set(data.data || [])
+  } catch {}
+}
+async function toggleFav(item) {
+  if (!auth.isLoggedIn) return
+  const result = await bStore.toggle(BM_TYPE, item.id)
+  if (result !== null) {
+    if (result) favorited.value.add(item.id)
+    else favorited.value.delete(item.id)
+    favorited.value = new Set(favorited.value)
+  }
+}
+async function loadFavoritesPage() {
+  loading.value = true
+  try {
+    const { data } = await axios.get('/api/bookmarks', { params: { type: BM_TYPE, per_page: 50 } })
+    const bms = data.data?.data || []
+    clubs.value = bms.map(b => b.bookmarkable).filter(Boolean)
+    loadFavorited()
+  } catch {}
+  loading.value = false
 }
 
 async function loadMyClubs() {
@@ -242,6 +286,7 @@ async function loadMyClubs() {
 }
 
 onMounted(async () => {
+  bStore.loadAll()
   await initLocation()
   if (city.value) { myCity.value = { ...city.value }; selectedCityIdx.value = '-2' }
   else { selectedCityIdx.value = '-1'; radius.value = '0' }

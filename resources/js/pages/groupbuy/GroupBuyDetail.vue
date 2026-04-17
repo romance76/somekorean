@@ -9,8 +9,29 @@
 
     <div v-else-if="gb" class="grid grid-cols-12 gap-4">
 
+      <!-- 왼쪽: 상태 필터 -->
+      <div class="col-span-12 lg:col-span-2 hidden lg:block">
+        <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
+            <RouterLink to="/groupbuy" class="block w-full text-left px-3 py-2 text-xs transition text-gray-600 hover:bg-amber-50/50">전체</RouterLink>
+            <RouterLink to="/groupbuy?status=recruiting" class="block w-full text-left px-3 py-2 text-xs transition"
+              :class="gb.status==='recruiting' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">🟢 모집중</RouterLink>
+            <RouterLink to="/groupbuy?status=confirmed" class="block w-full text-left px-3 py-2 text-xs transition"
+              :class="gb.status==='confirmed' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">🔵 확정</RouterLink>
+            <RouterLink to="/groupbuy?status=completed" class="block w-full text-left px-3 py-2 text-xs transition"
+              :class="gb.status==='completed' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">✅ 완료</RouterLink>
+            <button v-if="auth.isLoggedIn" @click="$router.push('/groupbuy?fav=1')"
+              class="w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
+              ❤️ 내 하트
+            </button>
+          </div>
+          <AdSlot page="groupbuy" position="left" :maxSlots="2" />
+        </div>
+      </div>
+
       <!-- ══════════ CENTER: Detail ══════════ -->
-      <main class="col-span-12 lg:col-span-8 md:col-span-8">
+      <main class="col-span-12 lg:col-span-7 md:col-span-7">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
           <!-- Header: status + title + organizer -->
@@ -23,7 +44,10 @@
                 {{ categoryLabel(gb.category) }}
               </span>
             </div>
-            <h1 class="text-xl lg:text-2xl font-bold text-gray-900 leading-snug">{{ gb.title }}</h1>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl lg:text-2xl font-bold text-gray-900 leading-snug flex-1">{{ gb.title }}</h1>
+              <button v-if="auth.isLoggedIn" @click="toggleGbFav" class="text-xl hover:scale-125 transition flex-shrink-0">{{ gbFavorited ? '❤️' : '🤍' }}</button>
+            </div>
             <div class="text-xs lg:text-sm text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
               <span class="flex items-center gap-1">
                 주최:
@@ -198,7 +222,7 @@
       </main>
 
       <!-- ══════════ RIGHT: Sidebar ══════════ -->
-      <aside class="col-span-4 md:col-span-4 lg:col-span-4 hidden md:block">
+      <aside class="col-span-4 md:col-span-4 lg:col-span-3 hidden md:block">
         <div class="space-y-3 sticky top-20">
           <!-- Organizer info -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -400,6 +424,7 @@ const auth = useAuthStore()
 
 const gb = ref(null)
 const loading = ref(true)
+const gbFavorited = ref(false)
 const participants = ref([])
 const selectedImgIdx = ref(0)
 const lightboxImg = ref(null)
@@ -562,6 +587,21 @@ async function loadDetail(id) {
   }
 
   loading.value = false
+  // 하트 체크
+  if (auth.isLoggedIn && gb.value) {
+    try {
+      const { data: bData } = await axios.get('/api/bookmarks/check', { params: { type: 'App\\Models\\GroupBuy', ids: gb.value.id } })
+      gbFavorited.value = (bData.data || []).includes(gb.value.id)
+    } catch {}
+  }
+}
+
+async function toggleGbFav() {
+  if (!auth.isLoggedIn || !gb.value) return
+  try {
+    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\GroupBuy', bookmarkable_id: gb.value.id })
+    gbFavorited.value = data.bookmarked
+  } catch {}
 }
 
 async function submitJoin() {

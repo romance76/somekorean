@@ -205,6 +205,7 @@
             </div>
             <div v-if="item.price" class="text-amber-600 font-black text-sm">${{ Number(item.price).toLocaleString() }}</div>
             <div v-else class="text-green-600 text-xs font-bold">무료</div>
+            <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)" class="text-base ml-1">{{ favorited.has(item.id) ? '❤️' : '🤍' }}</button>
           </div>
         </div>
 

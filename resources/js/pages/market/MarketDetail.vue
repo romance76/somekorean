@@ -18,6 +18,10 @@
               :class="item.category === c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
               {{ c.label }}
             </RouterLink>
+            <button v-if="auth.isLoggedIn" @click="$router.push('/market?fav=1')"
+              class="w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
+              ❤️ 내 하트
+            </button>
           </div>
           <AdSlot page="market" position="left" :maxSlots="2" />
         </div>

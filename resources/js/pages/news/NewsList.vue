@@ -302,7 +302,15 @@ async function loadNews(p = 1) {
   if (searchQ.value) params.search = searchQ.value
   try {
     const { data } = await axios.get('/api/news', { params })
-    items.value = data.data?.data || []
+    const raw = data.data?.data || []
+    // 중복 제거 (같은 title 기준)
+    const seen = new Set()
+    items.value = raw.filter(item => {
+      const key = item.title
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
     lastPage.value = data.data?.last_page || 1
   } catch {}
   loading.value = false
@@ -357,7 +365,10 @@ onMounted(async () => {
   if (activeCat.value) {
     await loadNews()
   } else if (nRes.status === 'fulfilled') {
-    items.value = nRes.value.data?.data?.data || []; lastPage.value = nRes.value.data?.data?.last_page || 1
+    const raw2 = nRes.value.data?.data?.data || []
+    const seen2 = new Set()
+    items.value = raw2.filter(item => { const k = item.title; if (seen2.has(k)) return false; seen2.add(k); return true })
+    lastPage.value = nRes.value.data?.data?.last_page || 1
   }
 
   // URL에 id가 있으면 해당 항목 인라인 열기

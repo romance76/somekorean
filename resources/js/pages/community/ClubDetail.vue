@@ -24,6 +24,10 @@
             :class="club.category === c.value ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">
             {{ c.label }}
           </router-link>
+          <router-link v-if="auth.isLoggedIn" to="/clubs?fav=1"
+            class="block w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
+            ❤️ 내 하트
+          </router-link>
           <template v-if="auth.isLoggedIn && myClubs.length">
             <div class="px-3 py-2.5 border-t border-b font-bold text-xs text-amber-900 mt-1">👤 내 동호회</div>
             <router-link v-for="mc in myClubs" :key="mc.id" :to="`/clubs/${mc.id}`"
@@ -53,7 +57,10 @@
                 <span v-else>{{ categoryEmoji }}</span>
               </div>
               <div class="flex-1 min-w-0 pt-8">
-                <h1 class="text-lg font-black text-gray-900 truncate">{{ club.name }}</h1>
+                <div class="flex items-center gap-2">
+                  <h1 class="text-lg font-black text-gray-900 truncate flex-1">{{ club.name }}</h1>
+                  <button v-if="auth.isLoggedIn" @click="toggleClubFav" class="text-xl hover:scale-125 transition flex-shrink-0">{{ clubFavorited ? '❤️' : '🤍' }}</button>
+                </div>
                 <div class="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
                   <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">{{ categoryLabel }}</span>
                   <span :class="club.type === 'online' ? 'text-blue-600' : 'text-green-600'" class="font-medium">
@@ -563,6 +570,7 @@ const siteStore = useSiteStore()
 // Club data
 const club = ref(null)
 const loading = ref(true)
+const clubFavorited = ref(false)
 const isMember = ref(false)
 const myGrade = ref('member')
 const myStatus = ref(null)
@@ -711,6 +719,21 @@ async function loadClub() {
     club.value = null
   }
   loading.value = false
+  // 하트 체크
+  if (auth.isLoggedIn && club.value) {
+    try {
+      const { data: bData } = await axios.get('/api/bookmarks/check', { params: { type: 'App\\Models\\Club', ids: club.value.id } })
+      clubFavorited.value = (bData.data || []).includes(club.value.id)
+    } catch {}
+  }
+}
+
+async function toggleClubFav() {
+  if (!auth.isLoggedIn || !club.value) return
+  try {
+    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\Club', bookmarkable_id: club.value.id })
+    clubFavorited.value = data.bookmarked
+  } catch {}
 }
 
 async function loadBoards() {
