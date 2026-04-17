@@ -20,7 +20,7 @@
             </RouterLink>
             <button v-if="auth.isLoggedIn" @click="$router.push('/market?fav=1')"
               class="w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
-              ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+              🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
             </button>
           </div>
           <AdSlot page="market" position="left" :maxSlots="2" />
@@ -62,7 +62,7 @@
                 <span v-if="item.hold_enabled" class="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">🔒 홀드가능</span>
               </div>
               <div class="flex items-center gap-3">
-                <button @click="toggleLike" class="text-xl hover:scale-125 transition">{{ liked ? '❤️' : '🤍' }}</button>
+                <BookmarkToggle :active="liked" @toggle="toggleLike" size="lg" />
                 <button @click="showReport = true" class="text-lg hover:scale-125 transition" style="filter:grayscale(100%);opacity:0.35;">🚨</button>
               </div>
             </div>
@@ -236,6 +236,7 @@ import CommentSection from '../../components/CommentSection.vue'
 import ReportModal from '../../components/ReportModal.vue'
 import MessageModal from '../../components/MessageModal.vue'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 import { useFriendAction, useBookmarkLike } from '../../composables/useSocialActions'
 import { useBookmarkStore } from '../../stores/bookmarks'
 import axios from 'axios'

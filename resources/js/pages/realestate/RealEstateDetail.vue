@@ -32,7 +32,7 @@
             </template>
             <!-- 내 하트 -->
             <RouterLink to="/realestate?fav=1" class="block w-full text-left px-3 py-1.5 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
-              ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5 text-red-500 font-bold">({{ favCount }})</span>
+              🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5 text-red-500 font-bold">({{ favCount }})</span>
             </RouterLink>
           </div>
           <AdSlot page="realestate" position="left" :maxSlots="2" />
@@ -77,9 +77,7 @@
                 <span v-else-if="listing.promotion_tier==='sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
               </div>
               <div class="flex items-center gap-3">
-                <button @click="toggleFav" class="text-xl hover:scale-125 transition" title="좋아요">
-                  {{ isFavorited ? '❤️' : '🤍' }}
-                </button>
+                <BookmarkToggle :active="isFavorited" @toggle="toggleFav" size="lg" />
                 <button v-if="listing.user_id !== auth.user?.id" @click="reportListing"
                   class="text-lg hover:scale-125 transition" :style="isReported ? '' : 'filter:grayscale(100%);opacity:0.35;'"
                   :title="isReported ? '신고됨' : '신고'">🚨</button>
@@ -206,6 +204,7 @@ import MessageModal from '../../components/MessageModal.vue'
 import { useFriendAction } from '../../composables/useSocialActions'
 import { useSiteStore } from '../../stores/site'
 import axios from 'axios'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const route = useRoute()
 const router = useRouter()

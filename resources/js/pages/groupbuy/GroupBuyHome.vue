@@ -83,7 +83,7 @@
           <button v-if="auth.isLoggedIn" @click="showFavorites=true; loadFavoritesPage()"
             class="w-full text-left px-3 py-2 text-xs transition border-t"
             :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
-            ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+            🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
           </button>
         </div>
         <AdSlot page="groupbuy" position="left" :maxSlots="2" />
@@ -134,9 +134,7 @@
             <div v-if="item.original_price" class="text-xs text-gray-400 line-through">${{ Number(item.original_price).toLocaleString() }}</div>
             <div class="text-amber-600 font-bold text-sm">${{ Number(item.group_price || item.original_price).toLocaleString() }}</div>
             <div v-if="currentDiscount(item)" class="text-[10px] text-red-500 font-bold">{{ currentDiscount(item) }}% OFF</div>
-            <button v-if="auth.isLoggedIn" @click.prevent.stop="toggleFav(item)" class="mt-1 text-sm">
-              {{ favorited.has(item.id) ? '❤️' : '🤍' }}
-            </button>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" />
           </div>
         </div>
       </RouterLink>
@@ -164,6 +162,7 @@ import { useBookmarkStore } from '../../stores/bookmarks'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

@@ -88,7 +88,7 @@
           <button v-if="auth.isLoggedIn" @click="showFavorites=true; activeItem=null; loadFavoritesPage()"
             class="w-full text-left px-3 py-2 text-xs transition border-t"
             :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
-            ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+            🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
           </button>
         </div>
         <AdSlot page="events" position="left" :maxSlots="2" />
@@ -97,7 +97,7 @@
     <div class="col-span-12 lg:col-span-7">
 
     <div class="mb-2">
-      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">❤️ 내 하트</span>
+      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">🔖 내 북마크</span>
       <template v-else>
         <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (eventCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
         <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 이벤트를 볼 수 있습니다</span>
@@ -135,7 +135,7 @@
           </div>
           <div class="flex items-center gap-2">
             <h2 class="text-lg font-bold text-gray-900 flex-1">{{ activeItem.title }}</h2>
-            <button v-if="auth.isLoggedIn" @click="toggleFav(activeItem)" class="text-xl hover:scale-125 transition flex-shrink-0">{{ favorited.has(activeItem.id) ? '❤️' : '🤍' }}</button>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(activeItem.id)" @toggle="toggleFav(activeItem)" size="lg" class="flex-shrink-0" />
           </div>
         </div>
         <!-- 공통 정보 -->
@@ -205,7 +205,7 @@
             </div>
             <div v-if="item.price" class="text-amber-600 font-black text-sm">${{ Number(item.price).toLocaleString() }}</div>
             <div v-else class="text-green-600 text-xs font-bold">무료</div>
-            <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)" class="text-base ml-1">{{ favorited.has(item.id) ? '❤️' : '🤍' }}</button>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" class="ml-1" />
           </div>
         </div>
 
@@ -221,9 +221,7 @@
             <div class="flex items-center gap-2">
               <span>👁 {{ item.view_count || 0 }}</span>
               <span>👥 {{ item.attendee_count || 0 }}</span>
-              <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)" class="text-sm">
-                {{ favorited.has(item.id) ? '❤️' : '🤍' }}
-              </button>
+              <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" />
             </div>
           </div>
         </div>
@@ -282,6 +280,7 @@ import CommentSection from '../../components/CommentSection.vue'
 import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const route = useRoute()

@@ -26,7 +26,7 @@
           </router-link>
           <router-link v-if="auth.isLoggedIn" to="/clubs?fav=1"
             class="block w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
-            ❤️ 내 하트
+            🔖 내 북마크
           </router-link>
           <template v-if="auth.isLoggedIn && myClubs.length">
             <div class="px-3 py-2.5 border-t border-b font-bold text-xs text-amber-900 mt-1">👤 내 동호회</div>
@@ -59,7 +59,7 @@
               <div class="flex-1 min-w-0 pt-8">
                 <div class="flex items-center gap-2">
                   <h1 class="text-lg font-black text-gray-900 truncate flex-1">{{ club.name }}</h1>
-                  <button v-if="auth.isLoggedIn" @click="toggleClubFav" class="text-xl hover:scale-125 transition flex-shrink-0">{{ clubFavorited ? '❤️' : '🤍' }}</button>
+                  <BookmarkToggle v-if="auth.isLoggedIn" :active="clubFavorited" @toggle="toggleClubFav" size="lg" class="flex-shrink-0" />
                 </div>
                 <div class="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
                   <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">{{ categoryLabel }}</span>
@@ -560,6 +560,7 @@ import AdSlot from '../../components/AdSlot.vue'
 import Pagination from '../../components/Pagination.vue'
 import { useChatStore } from '../../stores/chat'
 import axios from 'axios'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const route = useRoute()
 const router = useRouter()

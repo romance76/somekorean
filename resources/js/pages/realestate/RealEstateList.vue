@@ -114,7 +114,7 @@
           <button v-if="auth.isLoggedIn" @click="showFavorites=true; activeItem=null; loadFavoritesPage()"
             class="w-full text-left px-3 py-1.5 text-xs transition border-t"
             :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
-            ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+            🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
           </button>
         </div>
         <AdSlot page="realestate" position="left" :maxSlots="2" />
@@ -123,7 +123,7 @@
     <div class="col-span-12 lg:col-span-7">
 
     <div class="mb-2">
-      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">❤️ 내 하트</span>
+      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">🔖 내 북마크</span>
       <template v-else>
         <span class="font-bold text-sm" :class="reType==='rent' ? 'text-blue-700' : 'text-red-700'">
           {{ reType==='rent' ? '🔑 렌트' : '🏠 매매' }}
@@ -197,12 +197,9 @@
             <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[10px] bg-amber-500 text-white font-bold px-2 py-1 rounded shadow">📢 스폰서</span>
           </div>
           <!-- 우상단: 좋아요 -->
-          <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)"
-            class="absolute top-2 right-2 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center transition">
-            <span class="text-lg" :class="favorited.has(item.id) ? 'text-red-500' : 'text-gray-300 hover:text-red-400'">
-              {{ favorited.has(item.id) ? '❤️' : '🤍' }}
-            </span>
-          </button>
+          <div v-if="auth.isLoggedIn" class="absolute top-2 right-2" @click.stop>
+            <BookmarkToggle :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" />
+          </div>
         </div>
 
         <!-- 정보 영역 -->
@@ -315,6 +312,7 @@ import CommentSection from '../../components/CommentSection.vue'
 import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

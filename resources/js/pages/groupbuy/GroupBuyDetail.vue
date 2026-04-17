@@ -23,7 +23,7 @@
               :class="gb.status==='completed' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">✅ 완료</RouterLink>
             <button v-if="auth.isLoggedIn" @click="$router.push('/groupbuy?fav=1')"
               class="w-full text-left px-3 py-2 text-xs transition border-t text-gray-600 hover:bg-red-50/50">
-              ❤️ 내 하트<span v-if="gbFavCount > 0" class="ml-0.5">({{ gbFavCount }})</span>
+              🔖 내 북마크<span v-if="gbFavCount > 0" class="ml-0.5">({{ gbFavCount }})</span>
             </button>
           </div>
           <AdSlot page="groupbuy" position="left" :maxSlots="2" />
@@ -47,7 +47,7 @@
             </div>
             <div class="flex items-center gap-2">
               <h1 class="text-xl lg:text-2xl font-bold text-gray-900 leading-snug flex-1">{{ gb.title }}</h1>
-              <button v-if="auth.isLoggedIn" @click="toggleGbFav" class="text-xl hover:scale-125 transition flex-shrink-0">{{ gbFavorited ? '❤️' : '🤍' }}</button>
+              <BookmarkToggle v-if="auth.isLoggedIn" :active="gbFavorited" @toggle="toggleGbFav" size="lg" />
             </div>
             <div class="text-xs lg:text-sm text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
               <span class="flex items-center gap-1">
@@ -421,6 +421,7 @@ import AdSlot from '../../components/AdSlot.vue'
 import ReportModal from '../../components/ReportModal.vue'
 import MessageModal from '../../components/MessageModal.vue'
 import { useFriendAction } from '../../composables/useSocialActions'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 import axios from 'axios'
 
 const route = useRoute()

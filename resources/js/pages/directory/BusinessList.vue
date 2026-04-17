@@ -88,7 +88,7 @@
           <button v-if="auth.isLoggedIn" @click="showFavorites=true; activeItem=null; loadFavoritesPage()"
             class="w-full text-left px-3 py-2 text-xs transition border-t"
             :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
-            ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+            🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
           </button>
         </div>
         <AdSlot page="directory" position="left" :maxSlots="2" />
@@ -97,7 +97,7 @@
     <div class="col-span-12 lg:col-span-7">
 
     <div class="mb-2">
-      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">❤️ 내 하트</span>
+      <span v-if="showFavorites" class="font-bold text-red-600 text-sm">🔖 내 북마크</span>
       <template v-else>
         <span class="font-bold text-amber-700 text-sm">{{ activeCat ? (bizCategories.find(c => c.value === activeCat)?.label || activeCat) : '전체' }}</span>
         <span v-if="!activeCat" class="text-xs text-gray-400 ml-2">모든 업소를 볼 수 있습니다</span>
@@ -119,7 +119,7 @@
               <div class="flex items-center gap-1 mt-1"><span class="text-amber-400">{{'★'.repeat(Math.round(activeItem.rating))}}</span><span class="text-sm text-gray-600">{{ activeItem.rating }}</span><span class="text-xs text-gray-400">({{ activeItem.review_count }}리뷰)</span></div>
             </div>
             <div class="flex-shrink-0 mt-2 flex items-center gap-2">
-              <button v-if="auth.isLoggedIn" @click="toggleFav(activeItem)" class="text-xl hover:scale-125 transition">{{ favorited.has(activeItem.id) ? '❤️' : '🤍' }}</button>
+              <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(activeItem.id)" @toggle="toggleFav(activeItem)" size="lg" />
               <span v-if="activeItem.is_claimed" class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-bold">✅ 인증업체</span>
               <span v-else-if="claimStatus==='pending'" class="text-xs bg-amber-100 text-amber-700 px-3 py-1.5 rounded-full font-bold">⏳ 승인대기</span>
               <button v-else-if="auth.isLoggedIn" @click="showClaimModal=true" class="text-xs bg-amber-400 text-amber-900 px-3 py-1.5 rounded-full font-bold hover:bg-amber-500">🏪 내가 주인</button>
@@ -273,7 +273,7 @@
           <div class="flex items-center justify-between mt-0.5">
             <span v-if="item.phone" class="text-[10px] text-gray-400">📱 {{ item.phone }}</span>
             <span v-else></span>
-            <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)" class="text-sm">{{ favorited.has(item.id) ? '❤️' : '🤍' }}</button>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" />
           </div>
         </div>
       </div>
@@ -355,6 +355,7 @@ import { useMenuConfig } from '../../composables/useMenuConfig'
 import { thumb } from '../../utils/thumb'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

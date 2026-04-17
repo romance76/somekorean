@@ -159,11 +159,10 @@
                 <span v-if="item.favorite_count">💖 {{ item.favorite_count }}</span>
               </div>
             </div>
-            <!-- 찜 토글 -->
-            <button v-if="auth.isLoggedIn" @click.prevent.stop="toggleFav(item)"
-              class="absolute top-1.5 right-1.5 text-base">
-              {{ recipeFavorited.has(item.id) ? '❤️' : '🤍' }}
-            </button>
+            <!-- 북마크 토글 -->
+            <div v-if="auth.isLoggedIn" class="absolute top-1.5 right-1.5" @click.prevent.stop>
+              <BookmarkToggle :active="recipeFavorited.has(item.id)" @toggle="toggleFav(item)" size="sm" />
+            </div>
           </RouterLink>
           <MobileAdInline v-if="i === 4" page="recipes" />
           </template>
@@ -194,6 +193,7 @@ import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import { thumb } from '../../utils/thumb'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

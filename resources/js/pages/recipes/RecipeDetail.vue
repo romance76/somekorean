@@ -22,7 +22,7 @@
           </RouterLink>
           <RouterLink v-if="auth.isLoggedIn" to="/recipes?favorites=1"
             class="block w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-red-50/50 transition border-t">
-            ❤️ 내 하트
+            🔖 내 북마크
           </RouterLink>
         </div>
       </div>
@@ -66,14 +66,10 @@
 
           <!-- 액션 버튼 -->
           <div class="px-5 py-3 border-b flex items-center justify-between flex-wrap gap-2">
-            <!-- 찜/공유 -->
-            <div class="flex gap-2">
-              <button @click="toggleFavorite" :disabled="!auth.isLoggedIn"
-                class="px-4 py-1.5 rounded-full text-xs font-bold transition"
-                :class="recipe.is_favorited ? 'bg-red-500 text-white' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'">
-                {{ recipe.is_favorited ? '❤️' : '🤍' }}
-              </button>
-              <span v-if="!auth.isLoggedIn" class="text-[10px] text-gray-400 self-center">로그인 필요</span>
+            <!-- 북마크/공유 -->
+            <div class="flex gap-2 items-center">
+              <BookmarkToggle v-if="auth.isLoggedIn" :active="recipe.is_favorited" @toggle="toggleFavorite" size="lg" />
+              <span v-else class="text-[10px] text-gray-400">로그인 필요</span>
             </div>
             <!-- 소유자 수정/삭제 -->
             <div v-if="isOwner" class="flex gap-2">
@@ -230,6 +226,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const route = useRoute()

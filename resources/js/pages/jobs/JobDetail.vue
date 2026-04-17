@@ -88,10 +88,7 @@
               {{ salaryTypeLabel(job.salary_type) }}
             </span>
             <span class="text-xs text-gray-400 ml-auto">{{ job.view_count }}회 조회</span>
-            <button v-if="auth.isLoggedIn" @click="toggleJobFav"
-              class="text-base ml-2">
-              {{ jobFavorited ? '❤️' : '🤍' }}
-            </button>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="jobFavorited" @toggle="toggleJobFav" size="md" class="ml-2" />
           </div>
 
           <!-- Apply / Contact bar -->
@@ -303,6 +300,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useLocation } from '../../composables/useLocation'
 import CommentSection from '../../components/CommentSection.vue'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 import axios from 'axios'
 
 const route = useRoute()

@@ -100,7 +100,7 @@
           <button v-if="auth.isLoggedIn" @click="showFavorites=true; loadFavoritesPage()"
             class="w-full text-left px-3 py-2 text-xs transition border-t"
             :class="showFavorites ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-600 hover:bg-red-50/50'">
-            ❤️ 내 하트<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
+            🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
           </button>
           <template v-if="auth.isLoggedIn && myClubs.length">
             <div class="px-3 py-2.5 border-t border-b font-bold text-xs text-amber-900 mt-1">👤 내 동호회</div>
@@ -135,9 +135,7 @@
             <span class="px-2 py-0.5 rounded-full" :class="club.type==='online' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'">
               {{ club.type === 'online' ? '🌐 온라인' : '📍 지역' }}
             </span>
-            <button v-if="auth.isLoggedIn" @click.prevent.stop="toggleFav(club)" class="text-sm">
-              {{ favorited.has(club.id) ? '❤️' : '🤍' }}
-            </button>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(club.id)" @toggle="toggleFav(club)" size="sm" />
           </div>
         </div>
       </RouterLink>
@@ -165,6 +163,7 @@ import { useBookmarkStore } from '../../stores/bookmarks'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()
