@@ -70,11 +70,21 @@ class GroupBuyController extends Controller
             }
         }
 
+        // 내 참여 정보
+        $myParticipation = null;
+        if (auth('api')->check()) {
+            $myParticipation = $gb->participants
+                ->where('user_id', auth('api')->id())
+                ->whereIn('status', ['pending', 'paid'])
+                ->first();
+        }
+
         return response()->json(['success' => true, 'data' => array_merge($gb->toArray(), [
             'progress' => min($progress, 100),
             'time_remaining' => $timeRemaining,
             'next_tier' => $nextTier,
             'participants_count' => $gb->participants->count(),
+            'my_participation' => $myParticipation,
         ])]);
     }
 
