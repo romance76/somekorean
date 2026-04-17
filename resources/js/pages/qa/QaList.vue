@@ -126,9 +126,9 @@
                 <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ ans.content }}</div>
                 <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
                   <UserName :userId="ans.user?.id" :name="ans.user?.name" className="font-semibold text-gray-600" />
-                  <button @click="toggleAnswerLike(ans)" class="flex items-center gap-1 hover:text-red-500 transition"
-                    :class="ans._liked ? 'text-red-500' : 'text-gray-400'">
-                    {{ ans._liked ? '❤️' : '🤍' }} {{ ans.like_count || 0 }}
+                  <button @click="toggleAnswerLike(ans)" class="flex items-center gap-1 hover:text-blue-500 transition"
+                    :class="ans._liked ? 'text-blue-600' : 'text-gray-400'">
+                    {{ ans._liked ? '👍' : '👍' }} {{ ans.like_count || 0 }}
                   </button>
                   <span>{{ formatDate(ans.created_at) }}</span>
                   <button v-if="auth.user?.id === ans.user_id" @click="deleteAnswer(ans)"
