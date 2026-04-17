@@ -146,9 +146,8 @@
     <div v-else-if="viewMode==='card'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
-        class="relative rounded-xl shadow-sm border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex"
+        class="rounded-xl shadow-sm border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex"
         :class="promoRowClass(item)">
-        <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" ribbon />
         <!-- 왼쪽: 썸네일 -->
         <div class="w-32 h-32 flex-shrink-0 bg-gray-100">
           <img v-if="item.images?.length" :src="marketThumb(item)" loading="lazy" decoding="async"
@@ -170,7 +169,10 @@
                 <span v-if="item.is_negotiable" class="text-[10px] bg-green-100 text-green-700 font-bold px-1 py-px rounded">가격협의</span>
                 <span v-if="item.hold_enabled" class="text-[10px] bg-blue-100 text-blue-700 font-bold px-1 py-px rounded">홀드가능</span>
               </div>
-              <div class="text-amber-600 font-black text-base whitespace-nowrap flex-shrink-0">${{ Number(item.price || 0).toLocaleString() }}</div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-amber-600 font-black text-base whitespace-nowrap">${{ Number(item.price || 0).toLocaleString() }}</span>
+                <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" />
+              </div>
             </div>
             <!-- 제목 -->
             <div class="text-sm font-bold text-gray-800 truncate">{{ item.title }}</div>

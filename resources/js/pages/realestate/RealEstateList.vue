@@ -182,7 +182,6 @@
       <div @click="openItem(item)"
         class="relative bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all cursor-pointer border-2"
         :class="promoBorderClass(item)">
-        <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" ribbon />
         <!-- 사진 영역 -->
         <div class="relative h-[120px] bg-gray-100">
           <img v-if="item.images?.length" :src="realEstateThumb(item)" loading="lazy" decoding="async"
@@ -237,6 +236,7 @@
             <UserName v-if="item.user?.id" :userId="item.user.id" :name="item.user.name" className="text-[10px] text-gray-400" />
             <span v-if="item.created_at">· 🕐 {{ fmtDate(item.created_at) }}</span>
             <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">· {{ Number(item.distance).toFixed(1) }}mi</span>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="favorited.has(item.id)" @toggle="toggleFav(item)" size="sm" class="ml-auto" />
           </div>
         </div>
       </div>
