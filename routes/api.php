@@ -54,6 +54,16 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // ─── Public Read ───
+// 포인트 규칙 (Issue #10): 관리자 설정값을 공개 페이지에 노출
+Route::get('/point-rules', function () {
+    $publicCategories = ['earn', 'spend', 'game', 'market', 'image', 'auction'];
+    $rows = \DB::table('point_settings')
+        ->whereIn('category', $publicCategories)
+        ->orderBy('category')->orderBy('id')
+        ->get(['key','value','label','description','category']);
+    return response()->json(['success' => true, 'data' => $rows->groupBy('category')]);
+});
+
 Route::get('/boards', [BoardController::class, 'index']);
 Route::get('/posts', [PostController::class, 'index']);
 Route::get('/posts/{id}', [PostController::class, 'show']);
