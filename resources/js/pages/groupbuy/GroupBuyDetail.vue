@@ -43,6 +43,7 @@
               <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
                 {{ categoryLabel(gb.category) }}
               </span>
+              <span v-if="myParticipation" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-400 text-amber-900">🙋 참여중</span>
             </div>
             <div class="flex items-center gap-2">
               <h1 class="text-xl lg:text-2xl font-bold text-gray-900 leading-snug flex-1">{{ gb.title }}</h1>
@@ -179,9 +180,9 @@
                 class="inline-flex items-center gap-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-sm px-5 py-2.5 rounded-lg transition">
                 참여 취소
               </button>
-              <!-- 이미 참여 표시 -->
-              <span v-if="myParticipation" class="text-xs text-green-600 font-semibold bg-green-50 px-3 py-1.5 rounded-full">
-                ✅ 참여 중
+              <!-- 이미 참여 표시 (버튼 모양으로) -->
+              <span v-if="myParticipation" class="inline-flex items-center gap-1.5 bg-green-500 text-white font-bold text-sm px-6 py-2.5 rounded-lg">
+                ✅ 참여중
               </span>
               <!-- 승인 대기 -->
               <span v-if="gb.status === 'pending'" class="text-xs text-gray-500 font-medium">
@@ -345,7 +346,7 @@
                   <span class="text-sm font-bold text-blue-600">{{ auth.user?.points?.toLocaleString() || 0 }}P</span>
                 </div>
                 <div class="text-xs text-gray-400 mt-1">
-                  차감 예정: {{ (currentPrice * joinQuantity).toLocaleString() }}P
+                  차감 예정: {{ (currentPrice * 100 * joinQuantity).toLocaleString() }}P
                 </div>
               </div>
             </div>

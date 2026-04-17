@@ -250,7 +250,8 @@ class GroupBuyController extends Controller
         }
 
         $quantity = max(1, (int) $request->input('quantity', 1));
-        $amount = $gb->current_price * $quantity;
+        // $1 = 100P
+        $amount = $gb->current_price * $quantity * 100;
         $paymentType = 'none';
         $paymentId = null;
         $status = 'pending';
