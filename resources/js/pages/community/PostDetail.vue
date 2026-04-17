@@ -161,7 +161,7 @@ async function submitComment() {
 async function toggleBookmark() {
   if (!auth.isLoggedIn) return
   try {
-    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'post', bookmarkable_id: post.value.id })
+    const { data } = await axios.post('/api/bookmarks', { bookmarkable_type: 'App\\Models\\Post', bookmarkable_id: post.value.id })
     bookmarked.value = data.bookmarked
   } catch {}
 }

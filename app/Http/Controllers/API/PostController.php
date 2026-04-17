@@ -51,7 +51,7 @@ class PostController extends Controller
                 ->where('user_id', $userId)
                 ->exists();
             $post->is_bookmarked = \DB::table('bookmarks')
-                ->where('bookmarkable_type', 'post')
+                ->where('bookmarkable_type', 'App\\Models\\Post')
                 ->where('bookmarkable_id', $id)
                 ->where('user_id', $userId)
                 ->exists();

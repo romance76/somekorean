@@ -194,7 +194,7 @@ const route = useRoute()
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()
-const BM_TYPE = 'post'
+const BM_TYPE = 'App\\Models\\Post'
 const showFilter = ref(false)
 const showFavorites = ref(false)
 const favoritedList = ref(new Set())
@@ -262,7 +262,7 @@ async function toggleBookmark() {
   if (!auth.isLoggedIn || !activeItem.value) return
   try {
     const { data } = await axios.post('/api/bookmarks', {
-      bookmarkable_type: 'post',
+      bookmarkable_type: 'App\\Models\\Post',
       bookmarkable_id: activeItem.value.id
     })
     bookmarked.value = data.bookmarked
@@ -314,7 +314,7 @@ async function loadFavoritedList() {
   if (!auth.isLoggedIn || !items.value.length) return
   try {
     const ids = items.value.map(i => i.id).join(',')
-    const { data } = await axios.get('/api/bookmarks/check', { params: { type: 'post', ids } })
+    const { data } = await axios.get('/api/bookmarks/check', { params: { type: BM_TYPE, ids } })
     favoritedList.value = new Set(data.data || [])
   } catch {}
 }
@@ -330,7 +330,7 @@ async function toggleFavList(item) {
 async function loadFavoritesPage() {
   loading.value = true
   try {
-    const { data } = await axios.get('/api/bookmarks', { params: { type: 'post', per_page: 50 } })
+    const { data } = await axios.get('/api/bookmarks', { params: { type: 'App\\Models\\Post', per_page: 50 } })
     const bms = data.data?.data || []
     items.value = bms.map(b => b.bookmarkable).filter(Boolean)
     lastPage.value = 1
