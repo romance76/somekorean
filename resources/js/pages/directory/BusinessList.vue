@@ -129,7 +129,7 @@
         <div class="px-5 py-3 border-t text-sm text-gray-600 space-y-1">
           <div v-if="activeItem.phone">📱 <a :href="'tel:'+activeItem.phone" class="text-amber-600 hover:underline">{{ activeItem.phone }}</a></div>
           <div v-if="activeItem.address">📍 {{ activeItem.address }}</div>
-          <div v-if="activeItem.website">🌐 <a :href="activeItem.website" target="_blank" class="text-amber-600 hover:underline truncate block">{{ activeItem.website }}</a></div>
+          <div v-if="activeItem.website" class="truncate">🌐 <a :href="activeItem.website" target="_blank" class="text-amber-600 hover:underline">{{ activeItem.website }}</a></div>
         </div>
         <div v-if="activeItem.description" class="px-5 py-4 border-t text-sm text-gray-700 whitespace-pre-wrap">{{ activeItem.description }}</div>
         <!-- 영업시간 + 지도 (좌우 배치) -->
