@@ -56,8 +56,19 @@ export const useSiteStore = defineStore('site', () => {
     return settings.value?.[key] ?? defaultVal
   }
 
-  function isEnabled(key) { return true }
-  function getOrder(key) { return 999 }
+  // menu_config 에서 실제 enabled/order 반환. 기본값은 관리자 설정 없을 때만 적용.
+  function isEnabled(key) {
+    if (!menuConfig.value || !Array.isArray(menuConfig.value)) return true
+    const m = menuConfig.value.find(x => x.key === key)
+    if (!m) return true  // menu_config 에 없는 키는 기본 노출
+    return m.enabled !== false
+  }
+  function getOrder(key) {
+    if (!menuConfig.value || !Array.isArray(menuConfig.value)) return 999
+    const m = menuConfig.value.find(x => x.key === key)
+    if (!m) return 999
+    return typeof m.order === 'number' ? m.order : 999
+  }
 
   return {
     siteName, logoUrl, menus, loaded, darkMode, toasts, settings, menuConfig,

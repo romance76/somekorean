@@ -12,7 +12,7 @@ class TranslateRecipes extends Command
         {--limit=50 : 번역 대상 레시피 수}
         {--all : 전체 번역}
         {--force : 이미 번역된 것도 재번역}
-        {--engine=google : google / openai}';
+        {--engine=google : google (OpenAI 엔진은 2026-04-17 제거됨)}';
 
     protected $description = '레시피 ingredients/steps 한영 번역 + 구조화';
 
@@ -42,9 +42,7 @@ class TranslateRecipes extends Command
         $query->chunkById(20, function ($recipes) use (&$success, &$failed, $bar, $engine) {
             foreach ($recipes as $recipe) {
                 try {
-                    $result = $engine === 'openai'
-                        ? $this->translateViaOpenAI($recipe)
-                        : $this->translateViaGoogle($recipe);
+                    $result = $this->translateViaGoogle($recipe);
 
                     if ($result) {
                         $updates = [
@@ -259,58 +257,4 @@ class TranslateRecipes extends Command
         return $items;
     }
 
-    /**
-     * (선택) OpenAI 엔진
-     */
-    private function translateViaOpenAI(RecipePost $recipe): ?array
-    {
-        $apiKey = config('services.openai.key') ?: env('OPENAI_API_KEY');
-        if (!$apiKey) {
-            throw new \Exception('OPENAI_API_KEY 미설정');
-        }
-
-        $stepsForPrompt = collect($recipe->steps ?? [])
-            ->map(fn($s, $i) => ['order' => $s['order'] ?? ($i + 1), 'text' => $s['text'] ?? ''])
-            ->filter(fn($s) => trim($s['text']) !== '')
-            ->values()->all();
-
-        $payload = [
-            'title' => $recipe->title ?? '',
-            'ingredients' => $recipe->ingredients ?? '',
-            'steps' => $stepsForPrompt,
-        ];
-
-        $userPrompt = "Translate this Korean recipe to English. Return ONLY valid JSON matching this schema:\n"
-            . '{ "title_en": "...", "ingredients_en": "...", '
-            . '"ingredients_structured": [{"name_ko": "...", "name_en": "...", "amount": "..."}], '
-            . '"steps": [{"order": 1, "text_en": "..."}] }' . "\n\n"
-            . "Korean recipe:\n" . json_encode($payload, JSON_UNESCAPED_UNICODE);
-
-        $res = Http::timeout(60)
-            ->withHeaders(['Authorization' => 'Bearer ' . $apiKey])
-            ->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-4o-mini',
-                'messages' => [
-                    ['role' => 'system', 'content' => 'Output only valid JSON.'],
-                    ['role' => 'user', 'content' => $userPrompt],
-                ],
-                'response_format' => ['type' => 'json_object'],
-                'temperature' => 0.2,
-            ]);
-
-        if (!$res->ok()) throw new \Exception('OpenAI ' . $res->status());
-        $parsed = json_decode($res->json('choices.0.message.content') ?? '', true);
-        if (!is_array($parsed)) return null;
-
-        // steps 병합 (image_url 유지)
-        if (!empty($parsed['steps']) && is_array($parsed['steps'])) {
-            $trans = collect($parsed['steps'])->keyBy('order');
-            $parsed['steps'] = collect($recipe->steps ?? [])->map(function ($s) use ($trans) {
-                $s['text_en'] = $trans[$s['order'] ?? 0]['text_en'] ?? null;
-                return $s;
-            })->all();
-        }
-
-        return $parsed;
-    }
 }

@@ -3,9 +3,34 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class AdminSettingsController extends Controller
 {
+    /**
+     * 설정 저장 후 캐시·config 재생성 공통 훅 (2026-04-17 Phase 2-C 묶음 1).
+     * .env 를 건드린 경우 $envChanged=true 로 config:cache 재실행해 php-fpm 워커 동기화.
+     */
+    protected function afterSettingsSave(bool $envChanged = false): void
+    {
+        // public 설정 캐시 무효화 (60초 이내 자동 반영)
+        Cache::forget('public_settings');
+        Cache::forget('site_settings_public');
+        if (class_exists(\App\Support\PointRules::class)) \App\Support\PointRules::flush();
+        if (class_exists(\App\Support\PromotionSettings::class)) \App\Support\PromotionSettings::flush();
+
+        if ($envChanged) {
+            try {
+                Artisan::call('config:clear');
+                Artisan::call('config:cache');
+            } catch (\Throwable $e) {
+                Log::warning('config cache rebuild after env change failed: ' . $e->getMessage());
+            }
+        }
+    }
+
     // 전체 설정 로드 (이전 버전 호환)
     public function index() {
         $settings = SiteSetting::all()->pluck('value', 'key');
@@ -45,6 +70,7 @@ class AdminSettingsController extends Controller
         foreach ($request->all() as $key => $value) {
             SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$value]);
         }
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'회사 정보가 저장되었습니다']);
     }
 
@@ -54,12 +80,14 @@ class AdminSettingsController extends Controller
             $storeValue = is_bool($value) ? ($value ? '1' : '0') : (is_array($value) ? json_encode($value) : $value);
             SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$storeValue]);
         }
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'사이트 설정이 저장되었습니다']);
     }
 
     // 푸터 저장
     public function saveFooter(Request $request) {
         SiteSetting::updateOrCreate(['key'=>'footer_config'], ['value'=>json_encode($request->all())]);
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'푸터가 저장되었습니다']);
     }
 
@@ -67,16 +95,18 @@ class AdminSettingsController extends Controller
     public function saveTerms(Request $request, $type) {
         $key = $type === 'privacy' ? 'privacy_page' : 'terms_page';
         SiteSetting::updateOrCreate(['key'=>$key], ['value'=>$request->content]);
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'약관이 저장되었습니다']);
     }
 
     // 알림 설정 저장
     public function saveNotifications(Request $request) {
         SiteSetting::updateOrCreate(['key'=>'notification_config'], ['value'=>json_encode($request->all())]);
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'알림 설정이 저장되었습니다']);
     }
 
-    // Stripe 키 저장
+    // Stripe 키 저장 (.env 변경 → config:cache 재생성 필수)
     public function saveStripe(Request $request) {
         foreach (['stripe_publishable_key','stripe_secret_key','stripe_webhook_secret','stripe_test_mode'] as $k) {
             if ($request->has($k)) {
@@ -86,12 +116,15 @@ class AdminSettingsController extends Controller
         // .env 파일에도 반영
         $this->updateEnv('STRIPE_KEY', $request->stripe_publishable_key);
         $this->updateEnv('STRIPE_SECRET', $request->stripe_secret_key);
-        return response()->json(['success'=>true,'message'=>'Stripe 키가 저장되었습니다']);
+        // config:cache 재생성 (.env 변경 시 필수)
+        $this->afterSettingsSave(envChanged: true);
+        return response()->json(['success'=>true,'message'=>'Stripe 키가 저장되었습니다','config_cache_rebuilt'=>true]);
     }
 
     // 결제 게이트웨이 설정
     public function savePaymentGateway(Request $request) {
         SiteSetting::updateOrCreate(['key'=>'payment_config'], ['value'=>json_encode($request->all())]);
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'결제 설정이 저장되었습니다']);
     }
 
@@ -100,6 +133,7 @@ class AdminSettingsController extends Controller
         foreach ($request->all() as $key => $value) {
             SiteSetting::updateOrCreate(['key'=>'seo_'.$key], ['value'=>$value]);
         }
+        $this->afterSettingsSave();
         return response()->json(['success'=>true,'message'=>'SEO 설정이 저장되었습니다']);
     }
 
