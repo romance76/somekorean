@@ -30,6 +30,19 @@ class QaController extends Controller
         $post = QaPost::with('user:id,name,nickname,avatar', 'category:id,name', 'answers.user:id,name,nickname,avatar')
             ->findOrFail($id);
         $post->increment('view_count');
+
+        // 로그인 시 각 답변의 내 투표 상태
+        if (auth('api')->check()) {
+            $userId = auth('api')->id();
+            $votes = \DB::table('qa_answer_likes')
+                ->where('user_id', $userId)
+                ->whereIn('qa_answer_id', $post->answers->pluck('id'))
+                ->pluck('type', 'qa_answer_id');
+            $post->answers->each(function ($ans) use ($votes) {
+                $ans->_vote = $votes[$ans->id] ?? null;
+            });
+        }
+
         return response()->json(['success' => true, 'data' => $post]);
     }
 
@@ -105,11 +118,12 @@ class QaController extends Controller
         return response()->json(['success' => true, 'message' => '답변이 삭제되었습니다.']);
     }
 
-    // 답변 하트 (좋아요 토글)
-    public function likeAnswer($id, $answerId)
+    // 답변 좋아요/싫어요 토글
+    public function likeAnswer(Request $request, $id, $answerId)
     {
         $answer = QaAnswer::where('qa_post_id', $id)->findOrFail($answerId);
         $userId = auth()->id();
+        $type = $request->input('type', 'like'); // 'like' or 'dislike'
 
         $existing = \DB::table('qa_answer_likes')
             ->where('qa_answer_id', $answerId)
@@ -117,20 +131,39 @@ class QaController extends Controller
             ->first();
 
         if ($existing) {
-            \DB::table('qa_answer_likes')->where('id', $existing->id)->delete();
-            $answer->decrement('like_count');
-            $liked = false;
+            $oldType = $existing->type ?? 'like';
+            if ($oldType === $type) {
+                // 같은 버튼 다시 → 취소
+                \DB::table('qa_answer_likes')->where('id', $existing->id)->delete();
+                $answer->decrement($type === 'like' ? 'like_count' : 'dislike_count');
+            } else {
+                // 반대 버튼 → 전환
+                \DB::table('qa_answer_likes')->where('id', $existing->id)->update(['type' => $type, 'created_at' => now()]);
+                $answer->decrement($oldType === 'like' ? 'like_count' : 'dislike_count');
+                $answer->increment($type === 'like' ? 'like_count' : 'dislike_count');
+            }
         } else {
             \DB::table('qa_answer_likes')->insert([
                 'qa_answer_id' => $answerId,
                 'user_id' => $userId,
+                'type' => $type,
                 'created_at' => now(),
             ]);
-            $answer->increment('like_count');
-            $liked = true;
+            $answer->increment($type === 'like' ? 'like_count' : 'dislike_count');
         }
 
-        return response()->json(['success' => true, 'liked' => $liked, 'like_count' => $answer->fresh()->like_count]);
+        $fresh = $answer->fresh();
+        $myVote = \DB::table('qa_answer_likes')
+            ->where('qa_answer_id', $answerId)
+            ->where('user_id', $userId)
+            ->value('type');
+
+        return response()->json([
+            'success' => true,
+            'my_vote' => $myVote,
+            'like_count' => $fresh->like_count,
+            'dislike_count' => $fresh->dislike_count ?? 0,
+        ]);
     }
 
     public function categories()

@@ -126,9 +126,13 @@
                 <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ ans.content }}</div>
                 <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
                   <UserName :userId="ans.user?.id" :name="ans.user?.name" className="font-semibold text-gray-600" />
-                  <button @click="toggleAnswerLike(ans)" class="flex items-center gap-1 hover:text-blue-500 transition"
-                    :class="ans._liked ? 'text-blue-600' : 'text-gray-400'">
-                    {{ ans._liked ? '👍' : '👍' }} {{ ans.like_count || 0 }}
+                  <button @click="voteAnswer(ans, 'like')" class="flex items-center gap-1 hover:text-blue-500 transition"
+                    :class="ans._vote === 'like' ? 'text-blue-600' : 'text-gray-400'">
+                    👍 {{ ans.like_count || 0 }}
+                  </button>
+                  <button @click="voteAnswer(ans, 'dislike')" class="flex items-center gap-1 hover:text-red-500 transition"
+                    :class="ans._vote === 'dislike' ? 'text-red-500' : 'text-gray-400'">
+                    👎 {{ ans.dislike_count || 0 }}
                   </button>
                   <span>{{ formatDate(ans.created_at) }}</span>
                   <button v-if="auth.user?.id === ans.user_id" @click="deleteAnswer(ans)"
@@ -272,12 +276,13 @@ async function submitAnswer() {
   } catch {}
 }
 
-async function toggleAnswerLike(ans) {
+async function voteAnswer(ans, type) {
   if (!auth.isLoggedIn) { alert('로그인이 필요합니다.'); return }
   try {
-    const { data } = await axios.post(`/api/qa/${activeItem.value.id}/answer/${ans.id}/like`)
+    const { data } = await axios.post(`/api/qa/${activeItem.value.id}/answer/${ans.id}/like`, { type })
     ans.like_count = data.like_count
-    ans._liked = data.liked
+    ans.dislike_count = data.dislike_count
+    ans._vote = data.my_vote // 'like', 'dislike', or null
   } catch {}
 }
 
