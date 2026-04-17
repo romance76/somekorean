@@ -153,6 +153,50 @@ const routes = [
   { path: '/dashboard', name: 'dashboard', component: p('profile/UserDashboard'), meta: { auth: true } },
   { path: '/ad-apply', name: 'ad-apply', component: p('ads/AdApply'), meta: { auth: true } },
 
+  // MyPage v2 (Phase 2-C 묶음 3 스캐폴드 — 개별 페이지는 Placeholder, 실구현은 차후)
+  {
+    path: '/mypage',
+    component: p('mypage/MyPageLayout'),
+    meta: { auth: true },
+    children: [
+      { path: '', redirect: '/mypage/profile' },
+      { path: 'posts',                 component: p('mypage/MyPagePlaceholder') },
+      { path: 'comments',              component: p('mypage/MyPagePlaceholder') },
+      { path: 'market',                component: p('mypage/MyPagePlaceholder') },
+      { path: 'realestate',            component: p('mypage/MyPagePlaceholder') },
+      { path: 'jobs',                  component: p('mypage/MyPagePlaceholder') },
+      { path: 'groupbuy',              component: p('mypage/MyPagePlaceholder') },
+      { path: 'clubs',                 component: p('mypage/MyPagePlaceholder') },
+      { path: 'events',                component: p('mypage/MyPagePlaceholder') },
+      { path: 'business',              component: p('mypage/MyPagePlaceholder') },
+      { path: 'resume',                component: p('mypage/MyPagePlaceholder') },
+      { path: 'bookmarks',             component: p('mypage/MyPagePlaceholder') },
+      { path: 'friends',               component: p('mypage/MyPagePlaceholder') },
+      { path: 'messages',              component: p('mypage/MyPagePlaceholder') },
+      { path: 'chats',                 component: p('mypage/MyPagePlaceholder') },
+      { path: 'calls',                 component: p('mypage/MyPagePlaceholder') },
+      { path: 'notifications',         component: p('mypage/MyPagePlaceholder') },
+      { path: 'points',                component: p('mypage/MyPagePlaceholder') },
+      { path: 'payments',              component: p('mypage/MyPagePlaceholder') },
+      { path: 'ads',                   component: p('mypage/MyPagePlaceholder') },
+      { path: 'profile',               component: p('mypage/MyPagePlaceholder') },
+      { path: 'security',              component: p('mypage/MyPagePlaceholder') },
+      { path: 'notification-settings', component: p('mypage/MyPagePlaceholder') },
+      { path: 'privacy',               component: p('mypage/MyPagePlaceholder') },
+      { path: 'elder',                 component: p('mypage/MyPagePlaceholder') },
+    ],
+  },
+
+  // Admin v2 (Phase 2-C 묶음 4 스캐폴드 — 11 카테고리 그룹·역할 기반 동적 노출)
+  {
+    path: '/admin/v2',
+    component: p('admin/v2/AdminLayoutV2'),
+    meta: { auth: true, admin: true },
+    children: [
+      { path: '', redirect: '/admin/v2/dashboard' },
+    ],
+  },
+
   // Admin
   {
     path: '/admin',
