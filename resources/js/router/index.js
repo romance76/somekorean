@@ -88,7 +88,8 @@ const routes = [
   { path: '/games/bingo', component: p('games/BingoGame') },
   { path: '/games/2048', component: p('games/Game2048') },
   { path: '/games/omok', component: p('games/OmokGame') },
-  { path: '/games/gostop', component: p('games/GoStopSolo') },
+  { path: '/games/gostop', component: p('games/GoStop') },           // 허브(모드 선택) — Issue #25
+  { path: '/games/gostop/solo', component: p('games/GoStopSolo') },   // 솔로 AI
   { path: '/games/holdem', component: p('games/HoldemSolo') },
   { path: '/games/poker', component: p('games/PokerLobby'), meta: { auth: true } },
   { path: '/games/poker/play', component: p('games/PokerPlay'), meta: { auth: true } },
