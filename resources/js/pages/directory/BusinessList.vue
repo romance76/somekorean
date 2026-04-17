@@ -245,13 +245,9 @@
         class="rounded-xl shadow-sm border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex h-32"
         :class="bizPromoClass(item)">
         <!-- 왼쪽: 사진 -->
-        <div class="w-28 flex-shrink-0 bg-gray-100 relative">
+        <div class="w-28 flex-shrink-0 bg-gray-100">
           <img v-if="item.thumbnail_url || item.images?.length" :src="item.thumbnail_url || thumb(item.images[0], 240)" loading="lazy" decoding="async" class="w-full h-full object-cover" @error="e=>e.target.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center text-3xl bg-amber-50\'>🏪</div>'" />
           <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-amber-50">🏪</div>
-          <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)"
-            class="absolute top-1 right-1 w-7 h-7 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center transition">
-            <span class="text-sm">{{ favorited.has(item.id) ? '❤️' : '🤍' }}</span>
-          </button>
         </div>
         <!-- 오른쪽: 정보 -->
         <div class="flex-1 p-3 min-w-0">
@@ -274,7 +270,11 @@
             <span>📍 {{ item.city }}, {{ item.state }}</span>
             <span v-if="item.distance !== undefined && item.distance !== null" class="text-amber-600 font-semibold">{{ Number(item.distance).toFixed(1) }}mi</span>
           </div>
-          <div v-if="item.phone" class="text-[10px] text-gray-400 mt-0.5">📱 {{ item.phone }}</div>
+          <div class="flex items-center justify-between mt-0.5">
+            <span v-if="item.phone" class="text-[10px] text-gray-400">📱 {{ item.phone }}</span>
+            <span v-else></span>
+            <button v-if="auth.isLoggedIn" @click.stop="toggleFav(item)" class="text-sm">{{ favorited.has(item.id) ? '❤️' : '🤍' }}</button>
+          </div>
         </div>
       </div>
       <MobileAdInline v-if="i === 4" page="directory" />
