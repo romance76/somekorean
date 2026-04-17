@@ -1018,7 +1018,7 @@
             </div>
             <div>
               <label class="text-xs text-gray-500 mb-1 block">서비스 코드</label>
-              <input v-model="newApiKey.service" placeholder="예: youtube, stripe, openai" class="w-full border rounded-lg px-3 py-2 text-sm" />
+              <input v-model="newApiKey.service" placeholder="예: youtube, stripe, google_places" class="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
               <label class="text-xs text-gray-500 mb-1 block">API 키</label>
