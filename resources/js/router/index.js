@@ -247,7 +247,7 @@ const routes = [
       { path: 'communication/broadcast', component: p('admin/v2/Broadcast') },
       { path: 'communication/notices',   component: p('admin/v2/Broadcast') },
       { path: 'communication/push',      component: p('admin/v2/Broadcast') },
-      { path: 'communication/email-templates', component: p('admin/v2/ScaffoldPage'), props: { bundle: 4, icon: '📧', title: '이메일 템플릿', description: '정형화된 이메일 템플릿 CRUD (차후)' } },
+      { path: 'communication/email-templates', component: p('admin/v2/EmailTemplates') },
       { path: 'communication/messages',  component: p('admin/AdminChats') },
 
       // 묶음 5 — 사이트 설정 (기존 1702라인 재사용 + 개별 페이지는 차후)
