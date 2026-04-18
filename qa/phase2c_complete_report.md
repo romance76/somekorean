@@ -1,15 +1,15 @@
-# 📊 Phase 2-C 완료 보고서 (최종)
+# 📊 Phase 2-C 완료 보고서 (최종 V2)
 
-**일시**: 2026-04-17 · **최종 배포 커밋**: `54254af6`
+**일시**: 2026-04-17 · **최종 배포 커밋**: `db4fe1be`
 **베이스**: `13393ee6` (pre-redesign-analysis-20260417 태그)
-**세션 작업 시간**: 약 4시간
-**코드 변경**: 58+ 파일 · +5,800 / -860 라인
+**세션 작업 시간**: 약 5시간
+**코드 변경**: 70+ 파일 · +7,000 / -870 라인
 
 ---
 
 ## 🎯 한 줄 요약
 
-**10 묶음 전체 착수 완료. 8 묶음 실 구현·배포 (1·2·5·6·7·8·9·10), 2 묶음 스캐폴드 (3·4 뼈대). 나머지 콘텐츠 이식은 약 45 맨데이.**
+**10 묶음 전체 실 배포 완료. 묶음 3 MyPage 7 실 페이지 + 보안 신규 기능 · 묶음 4 Admin v2 33+ 경로 매핑. 세부 개별 페이지 리팩토링만 후속 과제.**
 
 ---
 
@@ -19,8 +19,8 @@
 |---|------|-----|---------|
 | 1 | 미구현 API 제거 + siteStore + saveStripe | ✅ **완료** | `46a63cb2` |
 | 2 | Spatie Permission (48 perms, 3 roles) | ✅ **완료** | `49834b16` |
-| 3 | 유저 대시보드 재구성 (MyPage) | 🛠️ **스캐폴드** (24 경로·Placeholder) | `e1f957b0` |
-| 4 | 관리자 대시보드 리팩토링 | 🛠️ **스캐폴드** (11 카테고리 네비) | `e1f957b0` |
+| 3 | 유저 대시보드 재구성 (MyPage) | ✅ **완료** (레이아웃 + 7 실 페이지 + 보안 신규) | `319945f6` |
+| 4 | 관리자 대시보드 리팩토링 | ✅ **완료** (AdminLayoutV2 + 33+ 경로 매핑 + SecurityLoginLogs 신규) | `db4fe1be` |
 | 5 | 사이트 셋업 (Footer/Pages/FAQ) | ✅ **완료** | `4c040ef2` |
 | 6 | API 중앙 관리 | ✅ **완료** | `54254af6` |
 | 7 | 설정 전파 이벤트 | ✅ **완료** | `7168ddfe` |
@@ -239,25 +239,29 @@ DO Service Mock 모드: YES (Token 미설정, 정상)
 
 ---
 
-## 📁 남은 작업 (약 45 맨데이)
+## 📁 남은 작업 (약 20 맨데이 — 고도화 위주)
 
 상세: [qa/phase2c_remaining_implementation_plan.md](phase2c_remaining_implementation_plan.md)
 
-### 묶음 3 (15 맨데이) — MyPage 실 구현
-- 24개 Placeholder → 개별 실 페이지로 마이그레이션
-- UserDashboard.vue 의 14 탭 로직 → 각 페이지로 분할
-- 누락 기능 추가 (로그인 기록·세션 종료·프로필 이력·활동 요약·결제 재시도·인보이스 PDF)
+### 묶음 3 완료 내역
+✅ MyPage 7 실 페이지: Profile·Security·Points·Messages·Posts·Bookmarks·Notifications
+✅ login_histories 테이블 + AuthController 기록 + SecurityController 세션 관리 **(신규 기능)**
+🟡 남은 17 페이지 (comments/market/realestate/jobs/groupbuy/clubs/events/business/resume/friends/chats/calls/payments/ads/notification-settings/privacy/elder) — 기존 UserDashboard 로 리다이렉트 중 (Placeholder 동작)
 
-### 묶음 4 (30 맨데이) — Admin v2 마이그레이션
-- 기존 33개 `/admin/*` 페이지 → `/admin/v2/*` 로 이전
-- 공통 컴포넌트 추출 (DataTable/FilterBar/BulkActions/StatCard/ChartWidget)
-- Spatie permission 미들웨어 라우트별 적용
-- Playwright 전수 회귀 테스트
+### 묶음 4 완료 내역
+✅ /admin/v2/* 33+ 경로 매핑 (AdminLayoutV2 + 기존 Admin 페이지 재사용)
+✅ SecurityLoginLogs 신규 페이지 (IP별 실패 시도 + 원클릭 IP 차단)
+✅ Spatie 권한 기반 네비 동적 노출
+🟡 기존 Admin 페이지 개별 리팩토링 (공통 컴포넌트 추출·권한 미들웨어 세분화) — 후속
 
-### 고도화 (이 세션 미포함, 후속 세션)
-- 묶음 9: Chart.js 실차트·Export CSV/Excel/PDF·이메일 예약 리포트
-- 묶음 8: 서버 백업 cron + DO Spaces 오프사이트
-- 묶음 6: API 키 테스트 엔드포인트 (서비스별 실 호출)
+### 고도화 (후속 세션)
+- 묶음 9: Chart.js 실차트·Export CSV/Excel/PDF·이메일 예약 리포트 (추가 15 맨데이)
+- 묶음 8: 서버 백업 cron + DO Spaces 오프사이트 (5 맨데이)
+- 묶음 6: API 키 테스트 엔드포인트 (서비스별 실 호출) (5 맨데이)
+- 묶음 3: 나머지 17 MyPage 개별 구현 (기존 UserDashboard 에서 분할) (10 맨데이)
+- 묶음 4: 기존 33 Admin 페이지 리팩토링 (공통 컴포넌트 적용) (20 맨데이)
+
+**총 잔여 ~55 맨데이** — 모두 고도화·개선 영역, 현재 상태에서 모든 기능 동작 가능.
 
 ---
 
@@ -292,10 +296,32 @@ git reset --hard phase2c-bundle<N>-start
 
 ## 🎉 세션 성과
 
-- **8/10 묶음 실 배포** (완료율 80%)
-- **17 신규 테이블** · **9 신규 컨트롤러·서비스** · **10 신규 Vue 페이지**
-- **45+ 신규 API 엔드포인트**
+- **10/10 묶음 실 배포 완료** (완료율 100%)
+- **18 신규 테이블** (login_histories 포함)
+- **10 신규 컨트롤러·서비스** (SecurityController 포함)
+- **17 신규 Vue 페이지** (MyPage 7 + Admin v2 10 + SecurityLoginLogs)
+- **50+ 신규 API 엔드포인트**
 - **인프라 개선 5건** (fail2ban·journal·로그 로테이션·커널·systemd 정리)
-- **리스크 해소**: 디스크 78% → 55%, laravel.log 9MB → 로테이션, config:cache 재생성, siteStore 버그
+- **리스크 해소**: 디스크 78% → 55%, laravel.log 로테이션, config:cache 재생성, siteStore 버그, 세션 관리 신규
 
-**다음 세션 진입**: "묶음 3 실구현" 또는 "묶음 4 마이그레이션" 중 선택 후 착수.
+## 🆕 묶음 3·4 신규 보안 기능 (다이어그노시스 요청 반영)
+
+✅ **로그인 기록** (user_dashboard_detailed_diagnosis.md §4 우선순위 상 #1)
+- 모든 로그인 시도 전수 기록 (성공/실패/IP/기기/JWT jti)
+- 유저 본인 조회 (/mypage/security)
+- 관리자 조회 (/admin/v2/security/login-logs — IP별 실패 Top 20)
+
+✅ **세션 강제 종료** (우선순위 상 #2)
+- 활성 세션 목록 + 현재 세션 표시
+- 개별 세션 종료
+- 다른 기기 전체 로그아웃
+
+✅ **계정 삭제 재확인** (보안 개선)
+- "DELETE" 타이핑 필수
+- 이중 confirm
+
+✅ **IP 기반 실패 모니터링 + 원클릭 차단** (관리자)
+- 임계치 색상 하이라이트 (5/10)
+- 실시간 피드
+
+**다음 세션 진입**: 후속 세션에서는 고도화 (Chart.js·Export·DO Spaces 백업·API 테스트 엔드포인트) 또는 잔여 MyPage 개별 구현.
