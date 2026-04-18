@@ -468,6 +468,9 @@ Route::middleware(['auth:api', 'admin', 'admin.audit'])->prefix('admin')->group(
     Route::post('/posts/{id}/hide', [AdminController::class, 'hidePost']);
     Route::post('/posts/{id}/pin', [AdminController::class, 'pinPost']);
     Route::delete('/posts/{id}', [AdminController::class, 'deletePost']);
+    // Phase 2-C Post: 대량 작업 (Kay #6)
+    Route::post('/posts/bulk-delete', [AdminController::class, 'bulkDeletePosts'])->middleware('permission:content.delete');
+    Route::post('/posts/bulk-hide',   [AdminController::class, 'bulkHidePosts'])->middleware('permission:content.hide');
     Route::get('/boards', [AdminController::class, 'boards']);
     Route::post('/boards', [AdminController::class, 'createBoard']);
     Route::put('/boards/{id}', [AdminController::class, 'updateBoard']);

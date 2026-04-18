@@ -206,10 +206,10 @@ const routes = [
       { path: 'analytics/custom',  component: p('admin/v2/AnalyticsDashboard') },
 
       // 묶음 4 — 기존 Admin 페이지를 v2 레이아웃으로 재사용 (점진 마이그레이션)
-      // Post: Members 는 DataTable 기반 MembersV2 로 업그레이드
+      // Post: Members/Content/Payments/Reports 는 DataTable 기반 v2 로 업그레이드
       { path: 'users',      component: p('admin/v2/MembersV2') },
-      { path: 'content',    component: p('admin/Content') },
-      { path: 'comments',   component: p('admin/Content') },  // 임시
+      { path: 'content',    component: p('admin/v2/ContentV2') },
+      { path: 'comments',   component: p('admin/v2/ContentV2') },  // 임시
       { path: 'boards',     component: p('admin/BoardManager') },
       { path: 'friends',    component: p('admin/AdminFriends') },
       { path: 'qa',         component: p('admin/AdminQa') },
@@ -228,7 +228,7 @@ const routes = [
       { path: 'clubs',      component: p('admin/AdminClubs') },
       { path: 'banners',        component: p('admin/Banners') },
       { path: 'ad-settings',    component: p('admin/AdSettings') },
-      { path: 'payments',       component: p('admin/Payments') },
+      { path: 'payments',       component: p('admin/v2/PaymentsV2') },
       { path: 'point-settings', component: p('admin/AdminPointSettings') },
       { path: 'hero-banners',   component: p('admin/AdminHeroBanners') },
       { path: 'poker',      component: p('admin/AdminPoker') },
@@ -238,7 +238,7 @@ const routes = [
       { path: 'elder',      component: p('admin/AdminElder') },
 
       // 묶음 4 — 보안 (신규 + 기존 매핑)
-      { path: 'security/reports',    component: p('admin/AdminSecurity') },
+      { path: 'security/reports',    component: p('admin/v2/ReportsV2') },
       { path: 'security/ip-bans',    component: p('admin/AdminSecurity') },
       { path: 'security/login-logs', component: p('admin/v2/SecurityLoginLogs') },
       { path: 'security/audit',      component: p('admin/v2/AuditLog') },

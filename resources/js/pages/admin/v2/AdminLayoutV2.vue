@@ -2,12 +2,12 @@
   <!-- 관리자 레이아웃 v2 (Phase 2-C 묶음 4 스캐폴드).
        11개 카테고리 그룹 네비 + 역할 기반 메뉴 필터링 + 브레드크럼.
        기존 /admin 은 유지, /admin/v2 경로로 점진 도입. -->
-  <div class="min-h-screen bg-gray-50">
+  <div :class="['min-h-screen transition-colors', darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800']">
     <!-- 헤더 -->
-    <header class="bg-white border-b sticky top-0 z-30 shadow-sm">
+    <header :class="['border-b sticky top-0 z-30 shadow-sm transition-colors', darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white']">
       <div class="flex items-center justify-between px-4 py-3">
         <div class="flex items-center gap-3">
-          <button @click="sidebarOpen=!sidebarOpen" class="lg:hidden p-2 hover:bg-gray-100 rounded">
+          <button @click="sidebarOpen=!sidebarOpen" :class="['lg:hidden p-2 rounded', darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100']">
             <span>☰</span>
           </button>
           <router-link to="/admin/v2" class="font-bold text-lg">
@@ -15,9 +15,12 @@
           </router-link>
         </div>
         <div class="flex items-center gap-3">
-          <input v-model="globalSearch" placeholder="전체 검색 (Ctrl+K)" class="hidden md:block px-3 py-1.5 border rounded-lg text-sm w-64" />
-          <button class="relative p-2 hover:bg-gray-100 rounded" title="알림">🔔</button>
-          <router-link to="/mypage/profile" class="flex items-center gap-2 hover:bg-gray-100 rounded px-2 py-1">
+          <input v-model="globalSearch" placeholder="전체 검색" :class="['hidden md:block px-3 py-1.5 border rounded-lg text-sm w-64', darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : '']" />
+          <button @click="toggleDarkMode" :class="['p-2 rounded transition-colors', darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100']" :title="darkMode ? '라이트 모드' : '다크 모드'">
+            {{ darkMode ? '☀️' : '🌙' }}
+          </button>
+          <button :class="['relative p-2 rounded', darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100']" title="알림">🔔</button>
+          <router-link to="/mypage/profile" :class="['flex items-center gap-2 rounded px-2 py-1', darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100']">
             <img :src="auth.user?.avatar || '/images/default-avatar.png'" class="w-7 h-7 rounded-full" @error="$event.target.src='/images/default-avatar.png'" />
             <span class="text-sm hidden md:inline">{{ auth.user?.nickname || auth.user?.name }}</span>
           </router-link>
@@ -88,6 +91,11 @@ const route = useRoute()
 const router = useRouter()
 const sidebarOpen = ref(false)
 const globalSearch = ref('')
+const darkMode = ref(localStorage.getItem('admin_dark_mode') === '1')
+function toggleDarkMode() {
+  darkMode.value = !darkMode.value
+  localStorage.setItem('admin_dark_mode', darkMode.value ? '1' : '0')
+}
 
 // 11 카테고리 구조 (관리자 상세 감사서 기반)
 const groups = [
