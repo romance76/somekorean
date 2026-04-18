@@ -438,6 +438,26 @@ Route::middleware('auth:api')->group(function () {
 });
 
 // ─── Admin ───
+// ─── Game Money (환전) ───
+Route::middleware('auth:api')->prefix('game-money')->group(function () {
+    $c = \App\Http\Controllers\API\GameMoneyController::class;
+    Route::get('/',           [$c, 'index']);
+    Route::post('/exchange',  [$c, 'exchange']);
+    Route::post('/withdraw',  [$c, 'withdraw']);
+    Route::get('/history',    [$c, 'history']);
+});
+
+// ─── Seven Poker (세븐포커) ───
+Route::middleware('auth:api')->prefix('poker7')->group(function () {
+    $c = \App\Http\Controllers\API\SevenPokerController::class;
+    Route::get('/rooms',              [$c, 'rooms']);
+    Route::post('/rooms',             [$c, 'createRoom']);
+    Route::get('/rooms/{id}/state',   [$c, 'state']);
+    Route::post('/rooms/{id}/join',   [$c, 'joinRoom']);
+    Route::post('/rooms/{id}/leave',  [$c, 'leaveRoom']);
+    Route::post('/rooms/{id}/start',  [$c, 'startGame']);
+});
+
 Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/overview', [AdminController::class, 'overview']);
 

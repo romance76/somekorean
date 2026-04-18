@@ -196,6 +196,10 @@ const routes = [
     ]
   },
 
+  // 세븐포커
+  { path: '/poker7',          component: p('games/SevenPokerLobby'), meta: { auth: true } },
+  { path: '/poker7/room/:id', component: p('games/SevenPokerRoom'),  meta: { auth: true } },
+
   // 404
   { path: '/404', name: 'not-found', component: p('NotFound') },
   { path: '/:pathMatch(.*)*', redirect: '/404' },
