@@ -133,6 +133,12 @@ Route::get('/music/tracks/{categoryId}', [MusicController::class, 'tracks']);
 Route::get('/search', [SearchController::class, 'search']);
 Route::get('/comments/{type}/{id}', [CommentController::class, 'index']);
 Route::get('/settings/public', [AdminSettingsController::class, 'getPublic'])->middleware('cache.api:1800'); // 30분 캐시
+
+// ─── 사이트 콘텐츠 공개 (Phase 2-C 묶음 5) ───
+Route::get('/site/footer-links', [\App\Http\Controllers\API\SiteContentController::class, 'footerLinks']);
+Route::get('/site/static-pages/{slug}', [\App\Http\Controllers\API\SiteContentController::class, 'staticPage']);
+Route::get('/site/faqs', [\App\Http\Controllers\API\SiteContentController::class, 'faqs']);
+Route::post('/site/faqs/{id}/helpful', [\App\Http\Controllers\API\SiteContentController::class, 'faqHelpful']);
 Route::get('/settings/points', function () {
     $settings = \DB::table('point_settings')->pluck('value', 'key');
     return response()->json(['success' => true, 'data' => $settings]);
@@ -493,6 +499,26 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings/seo', [AdminSettingsController::class, 'saveSeo']);
     Route::post('/settings/generate-vapid', [AdminSettingsController::class, 'generateVapid']);
     Route::get('/settings/menus', [AdminSettingsController::class, 'getMenus']);
+
+    // ─── 사이트 콘텐츠 관리 (Phase 2-C 묶음 5) ───
+    $sc = \App\Http\Controllers\API\AdminSiteContentController::class;
+    // Footer
+    Route::get('/site-content/footer-links', [$sc, 'footerLinks']);
+    Route::post('/site-content/footer-links', [$sc, 'footerLinkStore']);
+    Route::put('/site-content/footer-links/{id}', [$sc, 'footerLinkUpdate']);
+    Route::delete('/site-content/footer-links/{id}', [$sc, 'footerLinkDestroy']);
+    // Static pages
+    Route::get('/site-content/static-pages', [$sc, 'staticPages']);
+    Route::get('/site-content/static-pages/{slug}', [$sc, 'staticPageShow']);
+    Route::put('/site-content/static-pages/{slug}', [$sc, 'staticPageUpdate']);
+    Route::get('/site-content/static-pages/{slug}/versions', [$sc, 'staticPageVersions']);
+    // FAQ
+    Route::get('/site-content/faqs', [$sc, 'faqs']);
+    Route::post('/site-content/faqs', [$sc, 'faqStore']);
+    Route::put('/site-content/faqs/{id}', [$sc, 'faqUpdate']);
+    Route::delete('/site-content/faqs/{id}', [$sc, 'faqDestroy']);
+    // 설정 이력
+    Route::get('/site-content/settings-history', [$sc, 'settingsHistory']);
     Route::post('/settings/menus/batch', [AdminSettingsController::class, 'saveMenus']);
     Route::post('/settings/logo', [AdminSettingsController::class, 'uploadLogo']);
     Route::get('/api-keys', [AdminSettingsController::class, 'getApiKeys']);

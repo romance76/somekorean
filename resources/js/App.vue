@@ -34,36 +34,37 @@
       </router-view>
     </main>
 
-    <!-- 푸터 (데스크탑) -->
+    <!-- 푸터 (데스크탑) — Phase 2-C 묶음 5: DB 기반 동적 구성 -->
     <footer v-if="showNav" class="bg-gray-800 text-gray-400 mt-8 hidden md:block">
       <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="grid grid-cols-4 gap-4 mb-4">
           <div>
-            <div class="text-amber-400 font-black text-sm mb-2">SomeKorean</div>
-            <div class="text-xs text-gray-500">미국 한인 No.1 커뮤니티</div>
+            <div class="text-amber-400 font-black text-sm mb-2">{{ siteStore.siteName }}</div>
+            <div class="text-xs text-gray-500">{{ siteStore.getSetting('site_subtitle', '미국 한인 No.1 커뮤니티') }}</div>
           </div>
-          <div>
-            <div class="text-xs font-bold text-gray-300 mb-2">서비스</div>
-            <RouterLink to="/community" class="block text-xs hover:text-amber-400 mb-1">커뮤니티</RouterLink>
-            <RouterLink to="/jobs" class="block text-xs hover:text-amber-400 mb-1">구인구직</RouterLink>
-            <RouterLink to="/market" class="block text-xs hover:text-amber-400 mb-1">중고장터</RouterLink>
-            <RouterLink to="/directory" class="block text-xs hover:text-amber-400 mb-1">업소록</RouterLink>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-gray-300 mb-2">콘텐츠</div>
-            <RouterLink to="/news" class="block text-xs hover:text-amber-400 mb-1">뉴스</RouterLink>
-            <RouterLink to="/recipes" class="block text-xs hover:text-amber-400 mb-1">레시피</RouterLink>
-            <RouterLink to="/games" class="block text-xs hover:text-amber-400 mb-1">게임</RouterLink>
-            <RouterLink to="/music" class="block text-xs hover:text-amber-400 mb-1">음악</RouterLink>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-gray-300 mb-2">안내</div>
-            <RouterLink to="/about" class="block text-xs hover:text-amber-400 mb-1">소개</RouterLink>
-            <RouterLink to="/terms" class="block text-xs hover:text-amber-400 mb-1">이용약관</RouterLink>
-            <RouterLink to="/privacy" class="block text-xs hover:text-amber-400 mb-1">개인정보처리방침</RouterLink>
-          </div>
+          <!-- DB 기반 섹션 (services/content/info) -->
+          <template v-for="section in ['services','content','info']" :key="section">
+            <div>
+              <div class="text-xs font-bold text-gray-300 mb-2">{{ sectionLabel(section) }}</div>
+              <template v-if="footerLinks[section]?.length">
+                <RouterLink
+                  v-for="link in footerLinks[section]"
+                  :key="link.id"
+                  :to="link.route_path"
+                  class="block text-xs hover:text-amber-400 mb-1"
+                >{{ link.label }}</RouterLink>
+              </template>
+              <template v-else>
+                <!-- Fallback: DB 실패 시 최소 링크 -->
+                <RouterLink v-if="section === 'services'" to="/community" class="block text-xs hover:text-amber-400 mb-1">커뮤니티</RouterLink>
+                <RouterLink v-if="section === 'info'" to="/about" class="block text-xs hover:text-amber-400 mb-1">소개</RouterLink>
+              </template>
+            </div>
+          </template>
         </div>
-        <div class="border-t border-gray-700 pt-4 text-xs text-center text-gray-500">&copy; 2026 SomeKorean. All rights reserved.</div>
+        <div class="border-t border-gray-700 pt-4 text-xs text-center text-gray-500">
+          &copy; {{ new Date().getFullYear() }} {{ siteStore.siteName }}. All rights reserved.
+        </div>
       </div>
     </footer>
 
@@ -73,7 +74,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { useSiteStore } from './stores/site'
 import { useAuthStore } from './stores/auth'
@@ -96,6 +98,29 @@ const commHub = ref(null)
 // 앱 초기화: settings + 북마크 로드
 siteStore.load()
 if (auth.isLoggedIn) bookmarkStore.loadAll()
+
+// Footer 링크 DB 로드 (Phase 2-C 묶음 5)
+const footerLinks = ref({})
+const SECTION_LABELS = { services: '서비스', content: '콘텐츠', info: '안내', legal: '법적 고지' }
+const sectionLabel = (k) => SECTION_LABELS[k] || k
+onMounted(async () => {
+  try {
+    const { data } = await axios.get('/api/site/footer-links')
+    footerLinks.value = data?.data || {}
+  } catch {}
+  // 설정 변경 브로드캐스트 수신 시 Footer 도 재로드
+  try {
+    window.Echo?.channel('site-settings')
+      .listen('.settings.updated', async (e) => {
+        if (!e?.scope || ['company','site','footer','pages','general'].includes(e.scope)) {
+          try {
+            const { data } = await axios.get('/api/site/footer-links')
+            footerLinks.value = data?.data || {}
+          } catch {}
+        }
+      })
+  } catch {}
+})
 
 // 글로벌: 어디서든 window.openCommChat(partner, convId) / window.startCommCall(partner) 호출 가능
 if (typeof window !== 'undefined') {
