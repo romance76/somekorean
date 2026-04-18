@@ -83,7 +83,6 @@ const subTabs = {
   member: [
     { to: '/admin/members', icon: '👥', label: '회원관리' },
     { to: '/admin/friends', icon: '👫', label: '친구' },
-    { to: '/admin/communication', icon: '💬', label: '채팅·통화' },
   ],
   board: [
     { to: '/admin/community', icon: '💬', label: '커뮤니티' },
@@ -104,6 +103,7 @@ const subTabs = {
     { to: '/admin/games', icon: '🎮', label: '게임' },
     { to: '/admin/poker', icon: '♠️', label: '포커' },
     { to: '/admin/elder', icon: '💙', label: '안심' },
+    { to: '/admin/communication', icon: '💬', label: '채팅·통화' },
     { to: '/admin/claims', icon: '📋', label: '클레임' },
   ],
   ad: [
