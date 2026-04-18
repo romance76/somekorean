@@ -579,6 +579,16 @@ Route::middleware(['auth:api', 'admin', 'admin.audit'])->prefix('admin')->group(
     Route::post('/broadcast/notification',     [$bc, 'broadcastNotification'])->middleware('permission:notifications.send');
     Route::post('/broadcast/email',            [$bc, 'broadcastEmail'])->middleware('permission:notifications.bulk');
     Route::post('/broadcast/audience-preview', [$bc, 'audiencePreview'])->middleware('permission:notifications.send');
+
+    // Admin: 이메일 템플릿 (Phase 2-C Post)
+    $et = \App\Http\Controllers\API\AdminEmailTemplatesController::class;
+    Route::get('/email-templates',              [$et, 'index']);
+    Route::get('/email-templates/{id}',         [$et, 'show']);
+    Route::post('/email-templates',             [$et, 'store'])->middleware('permission:notifications.send');
+    Route::put('/email-templates/{id}',         [$et, 'update'])->middleware('permission:notifications.send');
+    Route::delete('/email-templates/{id}',      [$et, 'destroy'])->middleware('permission:notifications.send');
+    Route::post('/email-templates/{id}/render', [$et, 'render']);
+
     Route::post('/settings/menus/batch', [AdminSettingsController::class, 'saveMenus']);
     Route::post('/settings/logo', [AdminSettingsController::class, 'uploadLogo']);
     Route::get('/api-keys', [AdminSettingsController::class, 'getApiKeys']);
