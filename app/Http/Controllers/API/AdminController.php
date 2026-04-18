@@ -49,6 +49,30 @@ class AdminController extends Controller
     public function pinPost($id) { Post::findOrFail($id)->update(['is_pinned'=>!Post::find($id)->is_pinned]); return response()->json(['success'=>true]); }
     public function deletePost($id) { Post::findOrFail($id)->delete(); return response()->json(['success'=>true]); }
 
+    /** Phase 2-C Post: 게시글 대량 삭제 (Kay #6) */
+    public function bulkDeletePosts(Request $request) {
+        $ids = $request->validate(['ids' => 'required|array|min:1|max:500', 'ids.*' => 'integer'])['ids'];
+        $count = Post::whereIn('id', $ids)->delete();
+        if (\Schema::hasTable('admin_audit_log')) {
+            \DB::table('admin_audit_log')->insert([
+                'admin_id' => auth()->id(),
+                'action' => 'bulk_delete_posts',
+                'target_type' => 'post_batch',
+                'after_value' => json_encode(['ids' => $ids, 'deleted' => $count], JSON_UNESCAPED_UNICODE),
+                'ip' => request()->ip(),
+                'created_at' => now(),
+            ]);
+        }
+        return response()->json(['success' => true, 'deleted' => $count]);
+    }
+
+    /** 게시글 대량 숨김 toggle */
+    public function bulkHidePosts(Request $request) {
+        $data = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer', 'hidden' => 'boolean']);
+        $count = Post::whereIn('id', $data['ids'])->update(['is_hidden' => $data['hidden'] ?? true]);
+        return response()->json(['success' => true, 'updated' => $count]);
+    }
+
     public function boards() { return response()->json(['success'=>true,'data'=>Board::orderBy('sort_order')->get()]); }
     public function createBoard(Request $request) { return response()->json(['success'=>true,'data'=>Board::create($request->only('name','slug','description','sort_order'))]); }
     public function updateBoard(Request $request, $id) { Board::findOrFail($id)->update($request->only('name','slug','description','sort_order','is_active')); return response()->json(['success'=>true]); }
