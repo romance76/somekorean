@@ -117,6 +117,145 @@ class AdminBoardController extends Controller
     }
 
     // ═════════════════════════════════════
+    //   게시글 레벨 관리 액션
+    // ═════════════════════════════════════
+
+    /**
+     * 게시글 상세 + 관리 액션용 메타 (이 모델에서 사용 가능한 필드 플래그)
+     */
+    public function postDetail(string $slug, $id)
+    {
+        $cfg = $this->config($slug);
+        $model = $cfg['model'];
+        $item = $model::with('user:id,name,email,nickname')->findOrFail($id);
+        $fields = (new $model)->getFillable();
+
+        $actions = [
+            'pin'            => in_array('is_pinned', $fields),
+            'hide'           => in_array('is_hidden', $fields),
+            'active'         => in_array('is_active', $fields),
+            'resolved'       => in_array('is_resolved', $fields),
+            'approved'       => in_array('is_approved', $fields),
+            'verified'       => in_array('is_verified', $fields),
+            'claimed'        => in_array('is_claimed', $fields),
+            'lock_comments'  => in_array('is_locked', $fields),
+            'promote'        => in_array('promotion_tier', $fields),
+            'status'         => in_array('status', $fields),
+            'category'       => in_array(($cfg['category_field'] ?? 'category'), $fields),
+            'editable_fields'=> array_values(array_intersect($fields, ['title','name','content','description','price','category','city','state'])),
+        ];
+
+        // 게시글 관련 포인트 로그
+        $pointLogs = PointLog::where('related_type', $model)
+            ->where('related_id', $id)
+            ->orderByDesc('created_at')->limit(20)->get();
+
+        // 신고 수
+        $reports = Report::where('reportable_type', $model)
+            ->where('reportable_id', $id)
+            ->orderByDesc('created_at')->get();
+
+        return response()->json(['success' => true, 'data' => [
+            'item' => $item,
+            'actions' => $actions,
+            'point_logs' => $pointLogs,
+            'reports' => $reports,
+        ]]);
+    }
+
+    /**
+     * 불린 필드 토글 (is_pinned, is_hidden, is_active, is_locked 등)
+     */
+    public function toggleField(string $slug, $id, Request $request)
+    {
+        $cfg = $this->config($slug);
+        $model = $cfg['model'];
+        $field = $request->input('field');
+
+        $allowed = ['is_pinned','is_hidden','is_active','is_resolved','is_approved','is_verified','is_claimed','is_locked','is_pinned'];
+        if (!in_array($field, $allowed)) {
+            return response()->json(['success'=>false,'message'=>'허용되지 않은 필드입니다'], 422);
+        }
+        if (!in_array($field, (new $model)->getFillable())) {
+            return response()->json(['success'=>false,'message'=>"이 게시판에서는 {$field} 지원 안됨"], 422);
+        }
+
+        $item = $model::findOrFail($id);
+        $item->update([$field => !$item->$field]);
+        return response()->json(['success'=>true,'data'=>[$field => $item->$field]]);
+    }
+
+    /**
+     * 인라인 편집 (title/content/category 등)
+     */
+    public function updatePost(string $slug, $id, Request $request)
+    {
+        $cfg = $this->config($slug);
+        $model = $cfg['model'];
+        $fields = (new $model)->getFillable();
+
+        $editable = array_intersect($fields, [
+            'title','name','content','description','price','category','category_id',
+            'city','state','status','type','property_type','event_type',
+            'salary_min','salary_max','start_date','end_date',
+        ]);
+        $data = $request->only($editable);
+
+        $item = $model::findOrFail($id);
+        $item->update($data);
+
+        return response()->json(['success'=>true,'data'=>$item->fresh()]);
+    }
+
+    /**
+     * 게시글 삭제 (공통 — 기존 per-resource endpoint 필요없이)
+     */
+    public function deletePost(string $slug, $id)
+    {
+        $cfg = $this->config($slug);
+        $model = $cfg['model'];
+        $model::findOrFail($id)->delete();
+        return response()->json(['success'=>true]);
+    }
+
+    /**
+     * 작성자 포인트 수동 조정 (게시글 관련)
+     */
+    public function adjustPoints(string $slug, $id, Request $request)
+    {
+        $cfg = $this->config($slug);
+        $model = $cfg['model'];
+        $item = $model::findOrFail($id);
+        $user = \App\Models\User::find($item->user_id);
+        if (!$user) return response()->json(['success'=>false,'message'=>'작성자 없음'], 404);
+
+        $amount = (int)$request->input('amount', 0);
+        $reason = $request->input('reason', '관리자 수동 조정');
+        if ($amount === 0) return response()->json(['success'=>false,'message'=>'금액 입력 필요'], 422);
+
+        $user->addPoints($amount, $reason, 'admin_adjust', [
+            'type' => $model,
+            'id' => $item->id,
+        ]);
+
+        return response()->json(['success'=>true,'message'=>"{$amount}P 조정됨",'new_balance'=>$user->fresh()->points]);
+    }
+
+    /**
+     * 카테고리 변경 (문자열 또는 FK)
+     */
+    public function changeCategory(string $slug, $id, Request $request)
+    {
+        $cfg = $this->config($slug);
+        $model = $cfg['model'];
+        $catField = $cfg['category_field'] ?? 'category';
+
+        $item = $model::findOrFail($id);
+        $item->update([$catField => $request->input('category')]);
+        return response()->json(['success'=>true,'data'=>$item->fresh()]);
+    }
+
+    // ═════════════════════════════════════
     //   카테고리 관리
     // ═════════════════════════════════════
 

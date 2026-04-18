@@ -456,6 +456,13 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
         Route::post('/points',    [$c, 'savePoints']);
         Route::get('/banners',    [$c, 'banners']);
         Route::get('/reports',    [$c, 'reports']);
+        // 게시글 레벨 관리
+        Route::get('/posts/{id}',           [$c, 'postDetail']);
+        Route::put('/posts/{id}',           [$c, 'updatePost']);
+        Route::delete('/posts/{id}',        [$c, 'deletePost']);
+        Route::post('/posts/{id}/toggle',   [$c, 'toggleField']);
+        Route::post('/posts/{id}/category', [$c, 'changeCategory']);
+        Route::post('/posts/{id}/points',   [$c, 'adjustPoints']);
     });
 
     Route::get('/users', [AdminController::class, 'users']);

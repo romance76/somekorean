@@ -50,7 +50,7 @@
     <!-- 📝 게시글 -->
     <div v-if="activeTab==='posts'">
       <AdminListView :icon="icon" :title="''" :api-url="apiUrl" :delete-url="deleteUrl || apiUrl"
-        :extra-cols="extraCols" @open-user="u => $emit('openUser', u)" />
+        :extra-cols="extraCols" :board-slug="slug" @open-user="u => $emit('openUser', u)" />
     </div>
 
     <!-- 📂 카테고리 -->

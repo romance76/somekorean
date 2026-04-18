@@ -69,45 +69,42 @@ const auth = useAuthStore()
 const route = useRoute()
 const mobileMenu = ref(false)
 
-// 왼쪽 메인 메뉴 (5개만)
+// 왼쪽 메인 메뉴 (5개)
 const mainMenu = [
   { to: '/admin', icon: '📊', label: '대시보드', group: 'main' },
   { to: '/admin/members', icon: '👥', label: '회원', group: 'member' },
-  { to: '/admin/content', icon: '📝', label: '콘텐츠', group: 'content' },
-  { to: '/admin/directory', icon: '🏪', label: '서비스', group: 'service' },
+  { to: '/admin/market', icon: '📋', label: '게시판', group: 'board' },
   { to: '/admin/banners', icon: '📢', label: '광고관리', group: 'ad' },
   { to: '/admin/settings', icon: '⚙️', label: '시스템', group: 'system' },
 ]
 
-// 각 그룹의 서브 탭
+// 각 그룹의 서브 탭 (콘텐츠 + 서비스 통합)
 const subTabs = {
   member: [
     { to: '/admin/members', icon: '👥', label: '회원관리' },
     { to: '/admin/friends', icon: '👫', label: '친구' },
+    { to: '/admin/chats', icon: '💬', label: '채팅' },
+    { to: '/admin/calls', icon: '📞', label: '통화' },
   ],
-  content: [
-    { to: '/admin/content', icon: '📝', label: '게시글' },
-    { to: '/admin/news', icon: '📰', label: '뉴스' },
-    { to: '/admin/jobs', icon: '💼', label: '구인구직' },
+  board: [
+    { to: '/admin/content', icon: '💬', label: '커뮤니티' },
     { to: '/admin/market', icon: '🛒', label: '장터' },
+    { to: '/admin/jobs', icon: '💼', label: '구인구직' },
     { to: '/admin/realestate', icon: '🏠', label: '부동산' },
-    { to: '/admin/clubs', icon: '👥', label: '동호회' },
     { to: '/admin/qa', icon: '❓', label: 'Q&A' },
-    { to: '/admin/recipes', icon: '🍳', label: '레시피' },
     { to: '/admin/events', icon: '🎉', label: '이벤트' },
-  ],
-  service: [
+    { to: '/admin/clubs', icon: '👥', label: '동호회' },
+    { to: '/admin/recipes', icon: '🍳', label: '레시피' },
+    { to: '/admin/news', icon: '📰', label: '뉴스' },
     { to: '/admin/directory', icon: '🏪', label: '업소록' },
-    { to: '/admin/claims', icon: '📋', label: '클레임' },
+    { to: '/admin/groupbuy', icon: '🛍', label: '공동구매' },
+    { to: '/admin/music', icon: '🎵', label: '음악' },
+    { to: '/admin/shorts', icon: '🎬', label: '숏츠' },
+    { to: '/admin/shopping', icon: '🛒', label: '쇼핑' },
     { to: '/admin/games', icon: '🎮', label: '게임' },
     { to: '/admin/poker', icon: '♠️', label: '포커' },
-    { to: '/admin/music', icon: '🎵', label: '음악' },
-    { to: '/admin/shorts', icon: '📱', label: '숏츠' },
-    { to: '/admin/shopping', icon: '🛍️', label: '쇼핑' },
-    { to: '/admin/groupbuy', icon: '🤝', label: '공동구매' },
-    { to: '/admin/elder', icon: '💙', label: '안심서비스' },
-    { to: '/admin/chats', icon: '💬', label: '채팅' },
-    { to: '/admin/calls', icon: '📞', label: '통화내역' },
+    { to: '/admin/elder', icon: '💙', label: '안심' },
+    { to: '/admin/claims', icon: '📋', label: '클레임' },
   ],
   ad: [
     { to: '/admin/banners', icon: '📢', label: '광고 목록' },
@@ -116,7 +113,7 @@ const subTabs = {
     { to: '/admin/payments', icon: '💳', label: '결제/오더' },
   ],
   system: [
-    { to: '/admin/security', icon: '🔒', label: '보안' },
+    { to: '/admin/security', icon: '🔒', label: '보안/신고' },
     { to: '/admin/settings', icon: '⚙️', label: '설정' },
     { to: '/admin/point-settings', icon: '💰', label: '포인트' },
     { to: '/admin/system', icon: '🖥️', label: '시스템' },
