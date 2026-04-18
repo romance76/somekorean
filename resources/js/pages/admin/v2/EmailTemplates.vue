@@ -50,7 +50,7 @@
             <input v-model="form.name" class="w-full border rounded px-3 py-2 mt-1 text-sm" />
           </label>
           <label class="block">
-            <span class="text-xs text-gray-500">제목 (Subject) — 변수 지원: {{ '{{' }}var{{ '}}' }}</span>
+            <span class="text-xs text-gray-500">제목 (Subject) — 변수 지원: <code v-pre>{{var}}</code></span>
             <input v-model="form.subject" class="w-full border rounded px-3 py-2 mt-1 text-sm" />
           </label>
           <label class="block">
