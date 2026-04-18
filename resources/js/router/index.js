@@ -148,6 +148,7 @@ const routes = [
   { path: '/about', name: 'about', component: p('static/About') },
   { path: '/terms', name: 'terms', component: p('static/Terms') },
   { path: '/privacy', name: 'privacy', component: p('static/Privacy') },
+  { path: '/faq', name: 'faq', component: p('static/FAQ') },
   { path: '/profile/edit', component: p('profile/ProfileEdit'), meta: { auth: true } },
   { path: '/profile/:id', name: 'profile', component: p('profile/UserProfile') },
   { path: '/dashboard', name: 'dashboard', component: p('profile/UserDashboard'), meta: { auth: true } },
