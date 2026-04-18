@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Phase 2-C Post: Brute-force 자동 IP 차단.
- * login_histories 에서 최근 1시간 실패 ≥10회 IP 자동으로 ip_bans 에 추가.
- * cron: */15 * * * * (15분 간격).
+ * login_histories 에서 최근 1시간 실패 10회 이상 IP 자동으로 ip_bans 에 추가.
+ * cron 15분 간격 실행.
  */
 class AutoBanBruteForce extends Command
 {
