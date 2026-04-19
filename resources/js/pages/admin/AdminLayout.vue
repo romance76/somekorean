@@ -106,6 +106,7 @@ const subTabs = {
     { to: '/admin/claims', icon: '📋', label: '클레임' },
   ],
   ad: [
+    { to: '/admin/ad-center', icon: '🎯', label: '광고 센터' },
     { to: '/admin/banners', icon: '📢', label: '광고 목록' },
     { to: '/admin/hero-banners', icon: '🎪', label: '히어로 배너' },
     { to: '/admin/ad-settings', icon: '📐', label: '페이지별 설정' },

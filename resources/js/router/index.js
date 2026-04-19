@@ -186,6 +186,7 @@ const routes = [
       { path: 'chats', component: p('admin/AdminChats') },
       { path: 'calls', component: p('admin/AdminCalls') },
       { path: 'communication', component: p('admin/AdminCommunication') },
+      { path: 'ad-center', component: p('admin/AdminAdCenter') },
       { path: 'banners', component: p('admin/Banners') },
       { path: 'ad-settings', component: p('admin/AdSettings') },
       { path: 'payments', component: p('admin/Payments') },

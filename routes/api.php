@@ -461,6 +461,15 @@ Route::middleware('auth:api')->prefix('poker7')->group(function () {
 Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/overview', [AdminController::class, 'overview']);
 
+    // ─── 광고 센터 (통합 관리) ───
+    Route::prefix('ad-center')->group(function () {
+        $c = \App\Http\Controllers\API\AdminAdCenterController::class;
+        Route::get('/overview',      [$c, 'overview']);
+        Route::get('/slot-map',      [$c, 'slotMap']);
+        Route::get('/banner/{id}',   [$c, 'bannerDetail']);
+        Route::get('/geo-list',      [$c, 'geoList']);
+    });
+
     // ─── 게시판별 통합 관리 ───
     Route::get('/board-manager/list', [\App\Http\Controllers\API\AdminBoardController::class, 'list']);
     Route::get('/board-manager/full-report', [\App\Http\Controllers\API\AdminBoardController::class, 'fullReport']);
