@@ -106,6 +106,12 @@
 
       <div v-if="!selectedSub" class="text-center py-8 text-xs text-gray-400">먼저 Step 1에서 페이지를 선택해 주세요</div>
 
+      <div v-else-if="!pageSlotConfig.left_slots && !pageSlotConfig.right_slots" class="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+        <div class="text-3xl mb-2">🚫</div>
+        <div class="text-sm font-bold text-gray-700">이 페이지에는 광고 슬롯이 설정되지 않았습니다</div>
+        <div class="text-xs text-gray-500 mt-1">관리자 페이지에서 좌/우 슬롯 수를 1 이상으로 설정해야 노출됩니다</div>
+      </div>
+
       <template v-else>
         <div class="border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50">
           <div class="bg-gradient-to-r from-amber-400 to-orange-400 h-8 flex items-center px-4">
@@ -315,8 +321,11 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useSiteStore } from '../../stores/site'
 import { useModal } from '../../composables/useModal'
 import axios from 'axios'
+
+const siteStore = useSiteStore()
 
 const props = defineProps({ embedded: { type: Boolean, default: false } })
 const router = useRouter()
@@ -350,15 +359,19 @@ const pageConfigs = ref({})
 
 const adForm = reactive({ title: '', link_url: '', bid_amount: 4000, geo_scope: 'county', geo_value: '' })
 
-const subPages = [
-  { key: 'community', icon: '💬', label: '커뮤니티' }, { key: 'qa', icon: '❓', label: 'Q&A' },
-  { key: 'jobs', icon: '💼', label: '구인구직' }, { key: 'market', icon: '🛒', label: '중고장터' },
-  { key: 'realestate', icon: '🏠', label: '부동산' }, { key: 'directory', icon: '🏪', label: '업소록' },
-  { key: 'clubs', icon: '👥', label: '동호회' }, { key: 'news', icon: '📰', label: '뉴스' },
-  { key: 'recipes', icon: '🍳', label: '레시피' }, { key: 'groupbuy', icon: '🤝', label: '공동구매' },
-  { key: 'events', icon: '🎉', label: '이벤트' }, { key: 'shorts', icon: '🎬', label: '숏츠' },
-  { key: 'games', icon: '🎮', label: '게임' }, { key: 'music', icon: '🎵', label: '음악' },
-]
+// 광고 노출 가능 서브 페이지 — 활성 메뉴 기반 (home 제외, 관리자에서 슬롯 0/0 으로 꺼놓은 것도 제외)
+const subPages = computed(() => {
+  const mc = siteStore.menuConfig
+  if (!mc || !Array.isArray(mc)) return []
+  return mc
+    .filter(m => m.enabled !== false && !m.admin_only && m.key !== 'home')
+    .filter(m => {
+      const cfg = pageConfigs.value[m.key]
+      if (!cfg) return true // 설정이 없으면 일단 노출 (admin 에서 설정 전)
+      return (cfg.left_slots || 0) > 0 || (cfg.right_slots || 0) > 0
+    })
+    .map(m => ({ key: m.key, icon: m.icon, label: m.label }))
+})
 
 // 전국 페이지 (자동 geo_scope='all')
 const nationalPages = ['home', 'community', 'qa', 'news', 'recipes', 'shorts', 'games', 'music']
@@ -383,12 +396,11 @@ const selectedPageLabel = computed(() => {
   return subPages.find(s => s.key === selectedSub.value)?.label || selectedSub.value
 })
 
-// 선택된 페이지의 슬롯 설정 (관리자 API 데이터 기반, 기본값 fallback)
+// 선택된 페이지의 슬롯 설정 — 관리자 설정이 없으면 0/0 으로 취급 (명시적 활성화 필요)
 const pageSlotConfig = computed(() => {
   const cfg = pageConfigs.value[selectedSub.value]
   if (cfg) return cfg
-  // 기본값: 좌 3, 우 2
-  return { left_slots: 3, right_slots: 2 }
+  return { left_slots: 0, right_slots: 0 }
 })
 
 // 메인 콘텐츠 컬럼 span (사이드바 유무에 따라 동적)
@@ -677,7 +689,7 @@ async function loadPrices() {
   } catch {}
 }
 
-onMounted(() => { loadMyAds(); loadPrices(); loadDraft() })
+onMounted(() => { siteStore.load(); loadMyAds(); loadPrices(); loadDraft() })
 </script>
 <style scoped>
 .slide-enter-active,.slide-leave-active{transition:all .3s ease}

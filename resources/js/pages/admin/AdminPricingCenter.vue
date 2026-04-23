@@ -120,31 +120,36 @@
     <!-- 페이지별 슬롯 수 -->
     <div class="bg-white rounded-xl shadow-sm border p-4">
       <div class="font-bold text-sm text-gray-800 mb-1">📄 페이지별 광고 슬롯 수</div>
-      <p class="text-xs text-gray-500 mb-3">각 페이지의 좌/우측 사이드바에 노출할 슬롯 수 (0~5)</p>
+      <p class="text-xs text-gray-500 mb-3">관리자 메뉴에서 활성화된 페이지가 자동으로 나열됩니다. 좌/우 둘 다 0 이면 해당 페이지 광고 자체가 꺼집니다.</p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div v-for="(cfg, pageKey) in pageConfig" :key="pageKey" class="bg-gray-50 rounded-lg border p-3 flex items-center gap-3">
+        <div v-for="menu in adEligibleMenus" :key="menu.key" class="bg-gray-50 rounded-lg border p-3 flex items-center gap-3"
+          :class="isPageOff(menu.key) ? 'opacity-60 border-dashed' : ''">
           <div class="w-20 flex-shrink-0">
-            <div class="text-xs font-bold text-gray-800">{{ cfg.label || pageKey }}</div>
-            <div class="text-[10px] text-gray-400">/{{ pageKey === 'home' ? '' : pageKey }}</div>
+            <div class="text-xs font-bold text-gray-800 flex items-center gap-1">
+              <span>{{ menu.icon }}</span>{{ menu.label }}
+              <span v-if="isPageOff(menu.key)" class="text-[9px] text-gray-400 font-normal">(꺼짐)</span>
+            </div>
+            <div class="text-[10px] text-gray-400">{{ menu.path }}</div>
           </div>
           <div class="flex-1 grid grid-cols-2 gap-2">
             <div>
               <label class="text-[10px] font-bold text-blue-600 block mb-0.5">좌</label>
               <div class="flex items-center gap-1">
-                <input type="range" v-model.number="cfg.left_slots" min="0" max="5" class="flex-1" />
-                <span class="text-xs font-bold text-blue-700 w-4 text-center">{{ cfg.left_slots }}</span>
+                <input type="range" :value="slotOf(menu.key).left_slots" @input="setSlot(menu, 'left_slots', $event.target.value)" min="0" max="5" class="flex-1" />
+                <span class="text-xs font-bold text-blue-700 w-4 text-center">{{ slotOf(menu.key).left_slots }}</span>
               </div>
             </div>
             <div>
               <label class="text-[10px] font-bold text-orange-600 block mb-0.5">우</label>
               <div class="flex items-center gap-1">
-                <input type="range" v-model.number="cfg.right_slots" min="0" max="5" class="flex-1" />
-                <span class="text-xs font-bold text-orange-700 w-4 text-center">{{ cfg.right_slots }}</span>
+                <input type="range" :value="slotOf(menu.key).right_slots" @input="setSlot(menu, 'right_slots', $event.target.value)" min="0" max="5" class="flex-1" />
+                <span class="text-xs font-bold text-orange-700 w-4 text-center">{{ slotOf(menu.key).right_slots }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <div v-if="!adEligibleMenus.length" class="text-center py-6 text-sm text-gray-400">활성화된 메뉴가 없습니다</div>
       <button @click="savePageConfig" :disabled="savingPageConfig" class="mt-3 bg-amber-400 text-amber-900 font-bold px-4 py-1.5 rounded text-xs hover:bg-amber-500 disabled:opacity-50">
         {{ savingPageConfig ? '저장중...' : '💾 슬롯 수 저장' }}
       </button>
@@ -229,8 +234,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { useSiteStore } from '../../stores/site'
+
+const siteStore = useSiteStore()
 
 // ─── 공용 상태 ───────────────────────────────────────────────
 const loading = ref(true)
@@ -298,6 +306,32 @@ async function loadAdSettings() {
   } catch {}
 }
 
+// 광고 슬롯 설정 대상 메뉴: 관리자에서 활성화된 모든 메뉴 (admin_only 는 제외)
+const adEligibleMenus = computed(() => {
+  const mc = siteStore.menuConfig
+  if (!mc || !Array.isArray(mc)) return []
+  return mc.filter(m => m.enabled !== false && !m.admin_only)
+})
+
+// 특정 메뉴의 슬롯 설정 (없으면 0/0 기본값)
+function slotOf(key) {
+  return pageConfig.value[key] || { left_slots: 0, right_slots: 0 }
+}
+
+function setSlot(menu, field, value) {
+  const existing = pageConfig.value[menu.key] || { left_slots: 0, right_slots: 0, label: menu.label }
+  pageConfig.value = {
+    ...pageConfig.value,
+    [menu.key]: { ...existing, label: menu.label, [field]: Number(value) },
+  }
+}
+
+function isPageOff(key) {
+  const cfg = pageConfig.value[key]
+  if (!cfg) return true
+  return (cfg.left_slots || 0) === 0 && (cfg.right_slots || 0) === 0
+}
+
 async function saveAdPrices() {
   savingAds.value = true; adPriceMsg.value = ''
   try {
@@ -310,8 +344,18 @@ async function saveAdPrices() {
 
 async function savePageConfig() {
   savingPageConfig.value = true; pageConfigMsg.value = ''
+  // 활성 메뉴 기준으로 최종 config 구성 (신규 메뉴는 0/0, 사라진 메뉴는 유지하되 덮어쓰기 가능)
+  const finalConfig = { ...pageConfig.value }
+  adEligibleMenus.value.forEach(menu => {
+    if (!finalConfig[menu.key]) {
+      finalConfig[menu.key] = { left_slots: 0, right_slots: 0, label: menu.label }
+    } else if (!finalConfig[menu.key].label) {
+      finalConfig[menu.key].label = menu.label
+    }
+  })
   try {
-    await axios.post('/api/admin/ad-settings', { config: pageConfig.value })
+    await axios.post('/api/admin/ad-settings', { config: finalConfig })
+    pageConfig.value = finalConfig
     pageConfigMsg.value = '저장됨!'
   } catch { pageConfigMsg.value = '저장 실패' }
   savingPageConfig.value = false
@@ -406,6 +450,7 @@ function isActiveNow(p) {
 
 // ─── 초기 로드 ──────────────────────────────────────────────
 onMounted(async () => {
+  siteStore.load() // 활성 메뉴 리스트 필요
   await Promise.all([loadPoints(), loadAdSettings(), loadPromos()])
   loading.value = false
 })
