@@ -61,13 +61,13 @@
             <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :style="{ background: b.color }"></span>
             <span class="text-xs text-gray-700 truncate">{{ b.name }}</span>
           </div>
-          <div class="flex items-center gap-1.5 flex-shrink-0">
-            <span class="text-[9px] text-gray-400 flex items-center gap-0.5">
-              <span>👥</span>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <span class="text-[10px] text-gray-400 flex items-center gap-0.5">
+              <span class="text-[9px]">👥</span>
               <span class="font-bold">{{ b.visitors }}</span>
             </span>
-            <span v-if="b.badge === 'NEW'" class="text-[9px] font-black text-white bg-green-500 px-1.5 py-0.5 rounded">NEW</span>
-            <span v-else-if="b.badge === 'HOT'" class="text-[9px] font-black text-white bg-red-500 px-1.5 py-0.5 rounded">HOT</span>
+            <span v-if="b.badge === 'NEW'" class="text-[7px] font-black text-green-600">NEW</span>
+            <span v-else-if="b.badge === 'HOT'" class="text-[7px] font-black text-red-500">HOT</span>
           </div>
         </RouterLink>
       </div>
