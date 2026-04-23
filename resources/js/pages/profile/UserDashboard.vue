@@ -22,7 +22,10 @@
         <h2 class="font-bold text-gray-800 mb-4">📝 프로필 수정</h2>
         <!-- 아바타 -->
         <div class="flex items-center gap-4 mb-5">
-          <div class="w-16 h-16 rounded-full bg-amber-400 text-white flex items-center justify-center text-2xl font-bold">{{ (auth.user?.name||'?')[0] }}</div>
+          <div class="w-16 h-16 rounded-full bg-amber-400 text-white flex items-center justify-center text-2xl font-bold overflow-hidden relative">
+            <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="avatar" class="absolute inset-0 w-full h-full object-cover" @error="(e)=>{ e.target.style.display='none' }" />
+            <span v-else>{{ (auth.user?.name||'?')[0] }}</span>
+          </div>
           <label class="cursor-pointer text-sm text-amber-600 font-bold hover:text-amber-800">
             📷 사진 변경<input type="file" accept="image/*" @change="uploadAvatar" class="hidden" />
           </label>
@@ -976,6 +979,13 @@ function switchTab(key) {
   if (!loaded[key]) { loadTab(key); loaded[key] = true }
   else if (key === 'messages') loadMessages() // 쪽지 탭은 매번 새로고침
 }
+
+// URL ?tab= 이 바뀌면 탭 자동 전환 (NavBar 벨 알림 → /dashboard?tab=messages 대응)
+watch(() => route.query.tab, (newTab) => {
+  if (newTab && newTab !== tab.value && tabs.find(t => t.key === newTab)) {
+    switchTab(newTab)
+  }
+})
 
 function fmtDate(dt) {
   if (!dt) return ''

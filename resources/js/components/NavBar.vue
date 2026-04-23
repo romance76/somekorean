@@ -61,8 +61,9 @@
             </div>
           </div>
           <div class="relative">
-            <button @click="showDropdown=!showDropdown" class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">
-              {{ (auth.user?.name || '?')[0] }}
+            <button @click="showDropdown=!showDropdown" class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold overflow-hidden relative">
+              <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="avatar" class="absolute inset-0 w-full h-full object-cover" @error="(e)=>{ e.target.style.display='none' }" />
+              <span v-else>{{ (auth.user?.name || '?')[0] }}</span>
             </button>
             <div v-if="showDropdown" class="absolute right-0 top-9 bg-white border border-gray-200 rounded-xl shadow-lg py-2 w-48 z-50" @click="showDropdown=false">
               <div class="px-4 py-2 border-b">
@@ -71,7 +72,7 @@
                 <div class="text-[10px] text-amber-600 font-semibold mt-0.5">{{ auth.user?.points || 0 }}P</div>
               </div>
               <RouterLink to="/dashboard" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">👤 마이페이지</RouterLink>
-              <RouterLink to="/dashboard?tab=messages" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">✉️ 쪽지</RouterLink>
+              <RouterLink to="/messages" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">✉️ 쪽지</RouterLink>
               <RouterLink to="/friends" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">👫 친구</RouterLink>
               <div v-if="auth.isAdmin">
                 <div class="border-t my-1"></div>
@@ -272,9 +273,9 @@ function clickNotif(n) {
     axios.post(`/api/notifications/${n.id}/read`).catch(() => {})
   }
   showNotifs.value = false
-  // 쪽지 알림이면 대시보드 쪽지 탭으로
+  // 쪽지 알림이면 쪽지함으로 이동
   if (n.type === 'message') {
-    router.push('/dashboard?tab=messages')
+    router.push('/messages')
   } else if (n.data?.url) {
     router.push(n.data.url)
   }
