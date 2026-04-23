@@ -176,8 +176,8 @@
             <input v-model="promoForm.title" placeholder="예: 신년 40% 할인" class="w-full border rounded px-2 py-1 text-sm" />
           </div>
           <div>
-            <label class="text-[11px] font-bold text-gray-600 block mb-0.5">할인 % (1~95)</label>
-            <input v-model.number="promoForm.discount_pct" type="number" min="1" max="95" class="w-full border rounded px-2 py-1 text-sm" />
+            <label class="text-[11px] font-bold text-gray-600 block mb-0.5">할인 % (0~100)</label>
+            <input v-model.number="promoForm.discount_pct" type="number" min="0" max="100" class="w-full border rounded px-2 py-1 text-sm" />
           </div>
           <div>
             <label class="text-[11px] font-bold text-gray-600 block mb-0.5">시작 일시</label>

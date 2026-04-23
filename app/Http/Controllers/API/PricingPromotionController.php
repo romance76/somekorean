@@ -62,7 +62,7 @@ class PricingPromotionController extends Controller
     {
         return $request->validate([
             'title' => 'required|string|max:100',
-            'discount_pct' => 'required|integer|min:1|max:95',
+            'discount_pct' => 'required|integer|min:0|max:100',
             'applies_to_ads' => 'nullable|boolean',
             'applies_to_packages' => 'nullable|boolean',
             'starts_at' => 'required|date',
