@@ -177,11 +177,15 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useSiteStore } from '../stores/site'
+import { useLangStore } from '../stores/lang'
 import AdSlot from '../components/AdSlot.vue'
 import axios from 'axios'
 
 const router = useRouter()
 const auth = useAuthStore()
+const siteStore = useSiteStore()
+const langStore = useLangStore()
 const searchQ = ref('')
 
 // 히어로 슬라이드 (기본 홈 + 이벤트 배너)
@@ -213,20 +217,49 @@ const jobs = ref([])
 const market = ref([])
 const loading = ref(true)
 
-const services = [
-  { to: '/community', icon: '💬', name: '커뮤니티' },
-  { to: '/jobs', icon: '💼', name: '구인구직' },
-  { to: '/market', icon: '🛒', name: '중고장터' },
-  { to: '/directory', icon: '🏪', name: '업소록' },
-  { to: '/realestate', icon: '🏠', name: '부동산' },
-  { to: '/news', icon: '📰', name: '뉴스' },
-  { to: '/events', icon: '🎉', name: '이벤트' },
-  { to: '/qa', icon: '❓', name: 'Q&A' },
-  { to: '/clubs', icon: '👥', name: '동호회' },
-  { to: '/recipes', icon: '🍳', name: '레시피' },
-  { to: '/games', icon: '🎮', name: '게임' },
-  { to: '/elder', icon: '💙', name: '안심서비스' },
+// 히어로 밑 메뉴 그리드 — 관리자 페이지 메뉴 설정(menuConfig)과 동기화
+// NavBar 상단 메뉴와 동일한 enabled/login_required/admin_only 필터 적용
+const serviceDefaults = [
+  { key: 'community', label: '커뮤니티', label_en: 'Community', icon: '💬', path: '/community' },
+  { key: 'jobs', label: '구인구직', label_en: 'Jobs', icon: '💼', path: '/jobs' },
+  { key: 'market', label: '중고장터', label_en: 'Market', icon: '🛒', path: '/market' },
+  { key: 'directory', label: '업소록', label_en: 'Directory', icon: '🏪', path: '/directory' },
+  { key: 'realestate', label: '부동산', label_en: 'Real Estate', icon: '🏠', path: '/realestate' },
+  { key: 'news', label: '뉴스', label_en: 'News', icon: '📰', path: '/news' },
+  { key: 'events', label: '이벤트', label_en: 'Events', icon: '🎉', path: '/events' },
+  { key: 'qa', label: 'Q&A', label_en: 'Q&A', icon: '❓', path: '/qa' },
+  { key: 'clubs', label: '동호회', label_en: 'Clubs', icon: '👥', path: '/clubs' },
+  { key: 'recipes', label: '레시피', label_en: 'Recipes', icon: '🍳', path: '/recipes' },
+  { key: 'games', label: '게임', label_en: 'Games', icon: '🎮', path: '/games' },
+  { key: 'elder', label: '안심서비스', label_en: 'Elder Care', icon: '💙', path: '/elder' },
 ]
+
+const services = computed(() => {
+  const ko = langStore.locale === 'ko'
+  const mc = siteStore.menuConfig
+  if (mc && Array.isArray(mc)) {
+    const defMap = {}
+    serviceDefaults.forEach(m => { defMap[m.key] = m })
+    return mc
+      .filter(m => m.key !== 'home')
+      .filter(m => m.enabled !== false)
+      .filter(m => !m.admin_only || auth.isAdmin)
+      .filter(m => !m.login_required || auth.isLoggedIn)
+      .map(m => {
+        const def = defMap[m.key] || {}
+        return {
+          to: m.path || def.path || `/${m.key}`,
+          icon: m.icon || def.icon || '📄',
+          name: ko ? (m.label || def.label || m.key) : (m.label_en || def.label_en || m.label || def.label || m.key),
+        }
+      })
+  }
+  // 폴백: menuConfig 로드 전 기본값
+  return serviceDefaults.map(m => ({
+    to: m.path, icon: m.icon,
+    name: ko ? m.label : m.label_en,
+  }))
+})
 
 const boards = [
   { slug: 'free', name: '자유게시판' },
@@ -248,6 +281,8 @@ function openPopup(userId) {
 
 onMounted(async () => {
   loading.value = true
+  // 메뉴 설정 로드 (이미 NavBar에서 로드했다면 캐시 사용)
+  siteStore.load()
   // 히어로 배너 로드
   try {
     const { data } = await axios.get('/api/hero-banners')

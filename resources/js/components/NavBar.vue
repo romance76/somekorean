@@ -87,8 +87,8 @@
           <RouterLink to="/login" class="text-xs text-gray-600 hover:text-amber-700 px-1.5 py-1 hidden sm:block">로그인</RouterLink>
           <RouterLink to="/register" class="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1 rounded-lg hover:bg-amber-500">가입</RouterLink>
         </template>
-        <button @click="langStore.toggle()" class="text-[11px] font-bold px-2 py-1 rounded border border-gray-200">
-          {{ langStore.locale === 'ko' ? 'EN' : '한' }}
+        <button @click="togglePageLang()" class="text-[11px] font-bold px-2 py-1 rounded border border-gray-200" :title="isTranslatedEn ? '한국어로 돌아가기' : 'Translate to English'">
+          {{ isTranslatedEn ? '한' : 'EN' }}
         </button>
       </div>
     </div>
@@ -167,6 +167,29 @@ import { useLangStore } from '../stores/lang'
 
 const auth = useAuthStore()
 const langStore = useLangStore()
+
+// Google Translate 위젯 연동: googtrans 쿠키 토글 + reload
+const isTranslatedEn = ref(typeof document !== 'undefined' && document.cookie.includes('googtrans=/ko/en'))
+function togglePageLang() {
+  const host = location.hostname
+  // www. 를 뗀 루트 도메인 (예: awesomekorean.com)
+  const root = host.replace(/^www\./, '')
+  const domains = ['', host, '.' + host, '.' + root]
+  // 기존 googtrans 쿠키 모두 제거
+  for (const d of domains) {
+    document.cookie = 'googtrans=; path=/; max-age=0' + (d ? `; domain=${d}` : '')
+  }
+  if (!isTranslatedEn.value) {
+    // 한국어 → 영어
+    document.cookie = 'googtrans=/ko/en; path=/'
+    document.cookie = 'googtrans=/ko/en; path=/; domain=.' + root
+    langStore.setLang('en')
+  } else {
+    // 영어 → 한국어
+    langStore.setLang('ko')
+  }
+  location.reload()
+}
 import { useNavFavoritesStore } from '../stores/navFavorites'
 const navFavStore = useNavFavoritesStore()
 const router = useRouter()
