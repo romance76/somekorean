@@ -140,7 +140,8 @@ const routes = [
 
   // User
   { path: '/friends', name: 'friends', component: p('friends/FriendList'), meta: { auth: true } },
-  { path: '/messages', name: 'messages', component: p('messages/MessageInbox'), meta: { auth: true } },
+  // 기존 스탠드얼론 쪽지함은 대시보드 탭으로 통합 — 북마크/공유 링크 대응용 리다이렉트
+  { path: '/messages', redirect: '/dashboard?tab=messages' },
   { path: '/notifications', name: 'notifications', component: p('Notifications'), meta: { auth: true } },
   { path: '/points', name: 'points', component: p('points/PointDashboard'), meta: { auth: true } },
   { path: '/points/rules', component: p('PointRules') },

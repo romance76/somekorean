@@ -72,7 +72,7 @@
                 <div class="text-[10px] text-amber-600 font-semibold mt-0.5">{{ auth.user?.points || 0 }}P</div>
               </div>
               <RouterLink to="/dashboard" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">👤 마이페이지</RouterLink>
-              <RouterLink to="/messages" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">✉️ 쪽지</RouterLink>
+              <RouterLink to="/dashboard?tab=messages" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">✉️ 쪽지</RouterLink>
               <RouterLink to="/friends" class="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50">👫 친구</RouterLink>
               <div v-if="auth.isAdmin">
                 <div class="border-t my-1"></div>
@@ -309,7 +309,7 @@ function resolveNotifRoute(n) {
   // 명시적 URL (일부 알림은 data.url 로 지정)
   if (d.url) return d.url
   // 타입별 매핑
-  if (n.type === 'message') return '/messages'
+  if (n.type === 'message') return '/dashboard?tab=messages'
   if (n.type === 'friend_request') return '/friends'
   if (n.type === 'elder_call_missed') return '/elder/guardian'
   if (n.type === 'elder_checkin_missed') {
