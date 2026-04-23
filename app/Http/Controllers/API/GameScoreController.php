@@ -50,6 +50,16 @@ class GameScoreController extends Controller
         ]);
     }
 
+    /** 포인트 → 레벨 이름 매핑 */
+    private function levelName(int $points): string
+    {
+        if ($points >= 50000) return '참나무';
+        if ($points >= 10000) return '숲';
+        if ($points >= 3000)  return '나무';
+        if ($points >= 500)   return '새싹';
+        return '씨앗';
+    }
+
     /** 통합 리더보드 (타입별): points / posts / quiz */
     public function overallLeaderboard(Request $request)
     {
@@ -66,7 +76,7 @@ class GameScoreController extends Controller
                     'username' => $u->nickname ?: (explode('@', $u->email ?? '')[0] ?: $u->name),
                     'name' => $u->name,
                     'avatar' => $u->avatar,
-                    'level' => $u->level ?? '씨앗',
+                    'level' => $this->levelName((int) ($u->points ?? 0)),
                     'value' => (int) ($u->points ?? 0),
                 ]);
         } elseif ($type === 'posts') {
@@ -78,7 +88,7 @@ class GameScoreController extends Controller
                 ->limit($limit)
                 ->get();
             $userIds = $rows->pluck('user_id')->filter()->values();
-            $usersById = \App\Models\User::select('id', 'name', 'nickname', 'email', 'avatar', 'level')
+            $usersById = \App\Models\User::select('id', 'name', 'nickname', 'email', 'avatar', 'points')
                 ->whereIn('id', $userIds)->get()->keyBy('id');
             $users = $rows->map(function ($r) use ($usersById) {
                 $u = $usersById[$r->user_id] ?? null;
@@ -88,7 +98,7 @@ class GameScoreController extends Controller
                     'username' => $u->nickname ?: (explode('@', $u->email ?? '')[0] ?: $u->name),
                     'name' => $u->name,
                     'avatar' => $u->avatar,
-                    'level' => $u->level ?? '씨앗',
+                    'level' => $this->levelName((int) ($u->points ?? 0)),
                     'value' => (int) $r->post_count,
                 ];
             })->filter()->values();
@@ -102,7 +112,7 @@ class GameScoreController extends Controller
                 ->limit($limit)
                 ->get();
             $userIds = $rows->pluck('user_id')->filter()->values();
-            $usersById = \App\Models\User::select('id', 'name', 'nickname', 'email', 'avatar', 'level')
+            $usersById = \App\Models\User::select('id', 'name', 'nickname', 'email', 'avatar', 'points')
                 ->whereIn('id', $userIds)->get()->keyBy('id');
             $users = $rows->map(function ($r) use ($usersById) {
                 $u = $usersById[$r->user_id] ?? null;
@@ -112,7 +122,7 @@ class GameScoreController extends Controller
                     'username' => $u->nickname ?: (explode('@', $u->email ?? '')[0] ?: $u->name),
                     'name' => $u->name,
                     'avatar' => $u->avatar,
-                    'level' => $u->level ?? '씨앗',
+                    'level' => $this->levelName((int) ($u->points ?? 0)),
                     'value' => (int) $r->total_score,
                 ];
             })->filter()->values();
