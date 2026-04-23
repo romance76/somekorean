@@ -10,10 +10,9 @@
         </svg>
       </button>
 
-      <!-- Logo (임시 텍스트 로고 — 실제 로고 이미지 교체 예정) -->
-      <RouterLink to="/" class="flex items-center gap-2 flex-shrink-0">
-        <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center text-white text-xs font-black shadow-sm">AK</div>
-        <span class="font-black text-amber-800 text-sm hidden sm:inline">AwesomeKorean</span>
+      <!-- Logo -->
+      <RouterLink to="/" class="flex items-center flex-shrink-0" aria-label="AwesomeKorean">
+        <img src="/images/logo.png" alt="AwesomeKorean" class="h-8 w-auto" style="max-height:32px" />
       </RouterLink>
 
       <!-- Search (데스크톱만 — 모바일은 햄버거 메뉴 안에) -->

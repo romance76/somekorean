@@ -15,7 +15,7 @@
             :style="{ background: 'linear-gradient(135deg, ' + (event.banner_color || '#F5A623') + ', ' + (event.banner_color || '#F5A623') + '99)', height: '280px' }">
             <div class="z-10 max-w-[65%]">
               <div class="flex items-center gap-2 mb-3">
-                <span class="text-xs bg-white/30 text-white font-bold px-2.5 py-1 rounded-full">⭐ 썸코리안 공식</span>
+                <span class="text-xs bg-white/30 text-white font-bold px-2.5 py-1 rounded-full">⭐ 어썸코리안 공식</span>
               </div>
               <h2 class="text-2xl lg:text-3xl font-black text-white leading-tight">{{ event.title }}</h2>
               <div v-if="event.banner_subtitle" class="text-base text-white/80 mt-2">{{ event.banner_subtitle }}</div>
@@ -27,7 +27,7 @@
           <!-- 헤더 -->
           <div class="px-4 lg:px-5 py-4">
             <div class="flex items-center gap-2 flex-wrap mb-2">
-              <span v-if="event.event_type === 'awesomekorean'" class="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full font-bold">⭐ 썸코리안 공식</span>
+              <span v-if="event.event_type === 'awesomekorean'" class="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full font-bold">⭐ 어썸코리안 공식</span>
               <span v-if="event.reward_points" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">🎁 최대 {{ event.reward_points }}P</span>
               <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ event.category || '이벤트' }}</span>
               <span v-if="event.is_free || !event.price" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">무료</span>

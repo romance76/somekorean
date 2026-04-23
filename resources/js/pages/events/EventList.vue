@@ -114,7 +114,7 @@
           <div v-else class="absolute inset-0 flex items-center justify-between px-6">
             <div class="z-10 max-w-[60%]">
               <div class="flex items-center gap-2 mb-2">
-                <span class="text-xs bg-white/30 text-white font-bold px-2.5 py-1 rounded-full">⭐ 썸코리안 공식</span>
+                <span class="text-xs bg-white/30 text-white font-bold px-2.5 py-1 rounded-full">⭐ 어썸코리안 공식</span>
                 <span class="text-xs bg-white/20 text-white font-bold px-2 py-0.5 rounded-full">{{ eventStatusLabel(activeItem) }}</span>
               </div>
               <h2 class="text-xl font-black text-white leading-tight">{{ activeItem.title }}</h2>
@@ -180,7 +180,7 @@
           :style="{ background: 'linear-gradient(135deg, ' + (item.banner_color || '#F5A623') + ', ' + (item.banner_color || '#F5A623') + 'cc)' }">
           <div class="z-10">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-[10px] bg-white/30 text-white font-bold px-2 py-0.5 rounded-full">⭐ 썸코리안 공식</span>
+              <span class="text-[10px] bg-white/30 text-white font-bold px-2 py-0.5 rounded-full">⭐ 어썸코리안 공식</span>
               <span class="text-[10px] bg-white/20 text-white font-bold px-2 py-0.5 rounded-full">
                 {{ eventStatusLabel(item) }}
               </span>
@@ -332,7 +332,7 @@ function eventStatusLabel(item) {
   return '진행중'
 }
 const eventCategories = [
-  { value: '', label: '전체' },{ value: 'awesomekorean', label: '⭐ 썸코리안', isType: true },{ value: 'culture', label: '🎭 문화' },{ value: 'networking', label: '🤝 네트워킹' },
+  { value: '', label: '전체' },{ value: 'awesomekorean', label: '⭐ 어썸코리안', isType: true },{ value: 'culture', label: '🎭 문화' },{ value: 'networking', label: '🤝 네트워킹' },
   { value: 'education', label: '📚 교육' },{ value: 'community', label: '👥 커뮤니티' },
   { value: 'sports', label: '⚽ 스포츠' },{ value: 'food', label: '🍽️ 음식' },
 ]
