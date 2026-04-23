@@ -147,6 +147,9 @@ Route::get('/poker/tournaments/{id}', [PokerTournamentController::class, 'show']
 Route::get('/poker/tournaments/{id}/results', [PokerTournamentController::class, 'results']);
 Route::get('/poker/leaderboard', [PokerController::class, 'leaderboard']);
 
+// 게임 목록 (유저 GameLobby 용, DB 기반 활성 게임)
+Route::get('/games', [\App\Http\Controllers\API\GameController::class, 'publicIndex']);
+
 // 게임 호환 API (old_site GameLobby용)
 Route::get('/game-categories', function () {
     $settings = \App\Models\GameSetting::all()->groupBy('game_type');
@@ -538,6 +541,15 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/popup-banners/{id}', [\App\Http\Controllers\API\PopupBannerController::class, 'update']); // multipart 편의상 POST 허용
     Route::put('/popup-banners/{id}', [\App\Http\Controllers\API\PopupBannerController::class, 'update']);
     Route::delete('/popup-banners/{id}', [\App\Http\Controllers\API\PopupBannerController::class, 'destroy']);
+
+    // 게임 관리 (활성 토글 + 개별 설정)
+    Route::get('/games', [\App\Http\Controllers\API\GameController::class, 'index']);
+    Route::put('/games/{id}', [\App\Http\Controllers\API\GameController::class, 'update']);
+    Route::post('/games/{id}/toggle', [\App\Http\Controllers\API\GameController::class, 'toggle']);
+    Route::post('/games/reorder', [\App\Http\Controllers\API\GameController::class, 'reorder']);
+    Route::get('/games/{slug}/settings', [\App\Http\Controllers\API\GameController::class, 'show']);
+    Route::post('/games/{slug}/settings', [\App\Http\Controllers\API\GameController::class, 'saveSettings']);
+    Route::delete('/games/{slug}/settings/{key}', [\App\Http\Controllers\API\GameController::class, 'deleteSetting']);
 
     // 할인 이벤트 관리
     Route::get('/pricing-promotions', [\App\Http\Controllers\API\PricingPromotionController::class, 'index']);

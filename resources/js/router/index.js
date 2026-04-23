@@ -181,6 +181,7 @@ const routes = [
       { path: 'directory', component: p('admin/Business') },
       { path: 'claims', component: p('admin/AdminClaims') },
       { path: 'games', component: p('admin/AdminGames') },
+      { path: 'games/settings/:slug', component: p('admin/AdminGameSettings') },
       { path: 'poker', component: p('admin/AdminPoker') },
       { path: 'music', component: p('admin/AdminMusic') },
       { path: 'groupbuy', component: p('admin/GroupBuy') },

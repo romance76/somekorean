@@ -34,12 +34,14 @@
           </button>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div v-if="loading" class="text-center py-16 text-sm text-gray-400">로딩중...</div>
+        <div v-else-if="!filteredGames.length" class="text-center py-16 text-sm text-gray-400">게임이 없습니다</div>
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <RouterLink v-for="game in filteredGames" :key="game.path" :to="game.path"
             class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all text-center group">
             <div class="text-3xl mb-2">{{ game.icon }}</div>
             <div class="text-sm font-bold text-gray-800 group-hover:text-amber-700">{{ game.name }}</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">{{ game.desc }}</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">{{ game.description }}</div>
           </RouterLink>
         </div>
       </div>
@@ -68,11 +70,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
+import axios from 'axios'
 
 const auth = useAuthStore()
 const activeCat = ref('all')
+const allGames = ref([])
+const loading = ref(true)
 
 const categories = [
   { key: 'all', icon: '🎮', label: '전체' },
@@ -83,42 +88,24 @@ const categories = [
   { key: 'education', icon: '📚', label: '교육' },
 ]
 
-const allGames = [
-  { path: '/games/gostop', icon: '🎴', name: '고스톱', desc: '한국 전통 카드', cat: 'card' },
-  { path: '/games/poker', icon: '♠️', name: '토너먼트 포커', desc: 'AI 대전 토너먼트', cat: 'card' },
-  { path: '/games/holdem', icon: '♦️', name: '홀덤', desc: '1인 홀덤', cat: 'card' },
-  { path: '/games/blackjack', icon: '🂡', name: '블랙잭', desc: '21 카드', cat: 'card' },
-  { path: '/games/memory', icon: '🧩', name: '메모리', desc: '카드 짝맞추기', cat: 'brain' },
-  { path: '/games/2048', icon: '🔢', name: '2048', desc: '숫자 퍼즐', cat: 'brain' },
-  { path: '/games/omok', icon: '⚫', name: '오목', desc: '5목', cat: 'brain' },
-  { path: '/games/puzzle', icon: '🧩', name: '퍼즐', desc: '조각 맞추기', cat: 'brain' },
-  { path: '/games/bingo', icon: '📋', name: '빙고', desc: '빙고 게임', cat: 'brain' },
-  { path: '/games/speedcalc', icon: '➕', name: '빠른계산', desc: '암산 훈련', cat: 'brain' },
-  { path: '/games/seniormemory', icon: '🧠', name: '시니어 기억력', desc: '기억력 훈련', cat: 'brain' },
-  { path: '/games/snake', icon: '🐍', name: '스네이크', desc: '뱀 키우기', cat: 'arcade' },
-  { path: '/games/towerdefense', icon: '🏰', name: '타워 디펜스', desc: '타워 방어', cat: 'arcade' },
-  { path: '/games/slots', icon: '🎰', name: '슬롯머신', desc: '행운의 슬롯', cat: 'arcade' },
-  { path: '/games/stocksim', icon: '📈', name: '주식 시뮬', desc: '모의 투자', cat: 'arcade' },
-  { path: '/games/wordle', icon: '🔤', name: '워들', desc: '5글자 단어', cat: 'word' },
-  { path: '/games/quiz', icon: '❓', name: '퀴즈', desc: '일반 상식', cat: 'word' },
-  { path: '/games/wordchain', icon: '🔗', name: '끝말잇기', desc: '단어 이어가기', cat: 'word' },
-  { path: '/games/wordblank', icon: '📝', name: '빈칸채우기', desc: '단어 완성', cat: 'word' },
-  { path: '/games/spelling', icon: '📖', name: '스펠링', desc: '영단어', cat: 'word' },
-  { path: '/games/typing', icon: '⌨️', name: '타이핑', desc: '타자 연습', cat: 'word' },
-  { path: '/games/hangul', icon: '🇰🇷', name: '한글', desc: '한글 학습', cat: 'education' },
-  { path: '/games/counting', icon: '🔢', name: '수세기', desc: '유아 수학', cat: 'education' },
-  { path: '/games/colors', icon: '🎨', name: '색깔', desc: '색상 학습', cat: 'education' },
-  { path: '/games/shapes', icon: '🔷', name: '도형', desc: '도형 학습', cat: 'education' },
-  { path: '/games/satwords', icon: '📚', name: 'SAT 단어', desc: 'SAT 준비', cat: 'education' },
-  { path: '/games/proverb', icon: '📜', name: '속담 퀴즈', desc: '한국 속담', cat: 'education' },
-  { path: '/games/flag', icon: '🏳️', name: '국기 퀴즈', desc: '세계 국기', cat: 'education' },
-  { path: '/games/uslife', icon: '🇺🇸', name: '미국 생활', desc: '시민권 퀴즈', cat: 'education' },
-]
-
 const filteredGames = computed(() => {
-  if (activeCat.value === 'all') return allGames
-  return allGames.filter(g => g.cat === activeCat.value)
+  if (activeCat.value === 'all') return allGames.value
+  return allGames.value.filter(g => g.category === activeCat.value)
 })
 
-const popularGames = allGames.slice(0, 8)
+const popularGames = computed(() => allGames.value.slice(0, 8))
+
+onMounted(async () => {
+  try {
+    const { data } = await axios.get('/api/games')
+    allGames.value = (data.data || []).map(g => ({
+      path: g.path,
+      icon: g.icon,
+      name: g.name,
+      description: g.description,
+      category: g.category,
+    }))
+  } catch {}
+  loading.value = false
+})
 </script>
