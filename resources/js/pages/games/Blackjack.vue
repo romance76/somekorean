@@ -92,7 +92,7 @@
           {{ b.toLocaleString() }}
         </button>
       </div>
-      <div class="text-center text-white/60 text-sm mb-3">선택: <span class="text-yellow-300 font-bold">{{ bet.toLocaleString() }} 게임머���</span></div>
+      <div class="text-center text-white/60 text-sm mb-3">선택: <span class="text-yellow-300 font-bold">{{ bet.toLocaleString() }} 게임머니</span></div>
       <button @click="startRound" :disabled="bet > chips"
         class="w-full bg-yellow-500 text-yellow-900 font-black py-3 rounded-xl text-lg hover:bg-yellow-400 disabled:opacity-40 transition">
         딜!
