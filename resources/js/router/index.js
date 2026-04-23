@@ -148,6 +148,7 @@ const routes = [
   { path: '/home-sample/magazine', component: p('samples/HomeMagazine') },
   { path: '/home-sample/feed',     component: p('samples/HomeFeed') },
   { path: '/home-sample/unified',  component: p('samples/HomeUnified') },
+  { path: '/home-sample/final',    component: p('samples/HomeFinal') },
   { path: '/notifications', name: 'notifications', component: p('Notifications'), meta: { auth: true } },
   { path: '/points', name: 'points', component: p('points/PointDashboard'), meta: { auth: true } },
   { path: '/points/rules', component: p('PointRules') },
