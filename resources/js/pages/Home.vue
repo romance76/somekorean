@@ -158,18 +158,25 @@
         </div>
       </div>
 
-      <!-- HOT 장터 이미지 카드 -->
-      <div v-if="imageCards.length" class="bg-white rounded-xl border shadow-sm p-3">
+      <!-- 최신 부동산 이미지 카드 -->
+      <div v-if="realestateCards.length" class="bg-white rounded-xl border shadow-sm p-3">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-black text-gray-800">🔥 HOT 장터</span>
-          <RouterLink to="/market" class="text-[10px] text-amber-600 font-bold">더보기 →</RouterLink>
+          <span class="text-xs font-black text-gray-800">🏠 최신 부동산</span>
+          <RouterLink to="/realestate" class="text-[10px] text-amber-600 font-bold">더보기 →</RouterLink>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <RouterLink v-for="c in imageCards.slice(0,4)" :key="c.id" :to="c.to"
+          <RouterLink v-for="c in realestateCards.slice(0,4)" :key="c.id" :to="c.to"
             class="block rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition group">
             <div class="aspect-square bg-gray-100 relative overflow-hidden">
-              <img :src="c.image" class="w-full h-full object-cover group-hover:scale-105 transition-transform" @error="($event.target.style.display='none')" />
-              <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] font-black px-1.5 py-0.5 rounded">${{ c.price }}</span>
+              <img v-if="c.image" :src="c.image" class="w-full h-full object-cover group-hover:scale-105 transition-transform" @error="($event.target.style.display='none')" />
+              <div v-else class="absolute inset-0 flex items-center justify-center text-4xl opacity-30">🏠</div>
+              <span class="absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded text-white"
+                :class="c.type === 'rent' ? 'bg-blue-500' : c.type === 'sale' ? 'bg-red-500' : 'bg-green-500'">
+                {{ c.typeLabel }}
+              </span>
+              <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] font-black px-1.5 py-0.5 rounded">
+                ${{ Number(c.price).toLocaleString() }}{{ c.type === 'rent' ? '/월' : '' }}
+              </span>
             </div>
             <div class="p-1.5">
               <div class="text-[10px] font-bold text-gray-700 truncate">{{ c.title }}</div>
@@ -239,6 +246,7 @@ const auth = useAuthStore()
 const posts = ref([])
 const jobs = ref([])
 const market = ref([])
+const realestate = ref([])
 const heroBanners = ref([])
 const heroIdx = ref(0)
 let heroInterval = null
@@ -291,10 +299,14 @@ const todayPosts = computed(() => posts.value.length * 12)
 const todayMarket = computed(() => market.value.length * 3)
 const todaySignups = computed(() => Math.max(12, Math.floor(posts.value.length * 1.5)))
 
-const imageCards = computed(() => market.value.filter(m => m.images?.[0] || m.image).slice(0, 4).map(m => ({
-  id: m.id, to: `/market/${m.id}`,
-  image: m.images?.[0] || m.image,
-  title: m.title, price: m.price,
+const typeLabels = { rent: '렌트', sale: '매매', roommate: '룸메' }
+const realestateCards = computed(() => realestate.value.slice(0, 4).map(r => ({
+  id: r.id, to: `/realestate/${r.id}`,
+  image: r.images?.[0] || r.image || null,
+  title: r.title,
+  price: r.price,
+  type: r.type || 'sale',
+  typeLabel: typeLabels[r.type] || '매매',
 })))
 
 onMounted(async () => {
@@ -303,14 +315,16 @@ onMounted(async () => {
     heroBanners.value = data.data || []
     startHeroSlide()
   } catch {}
-  const [p, j, m] = await Promise.allSettled([
+  const [p, j, m, r] = await Promise.allSettled([
     axios.get('/api/posts?per_page=10'),
     axios.get('/api/jobs?per_page=10'),
     axios.get('/api/market?per_page=10'),
+    axios.get('/api/realestate?per_page=6'),
   ])
   if (p.status === 'fulfilled') posts.value = p.value.data?.data?.data || []
   if (j.status === 'fulfilled') jobs.value = j.value.data?.data?.data || []
   if (m.status === 'fulfilled') market.value = m.value.data?.data?.data || []
+  if (r.status === 'fulfilled') realestate.value = r.value.data?.data?.data || r.value.data?.data || []
 })
 </script>
 
