@@ -1,0 +1,12 @@
+[     880ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-DCBrgFTV.js:47
+[     881ms] [LOG] [PeerJS] Initializing as sk-202-kobe @ https://awesomekorean.com/build/assets/app-DCBrgFTV.js:47
+[     883ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-DCBrgFTV.js:47
+[    1288ms] [LOG] [PeerJS] ✅ Connected as sk-202-kobe @ https://awesomekorean.com/build/assets/app-DCBrgFTV.js:47
+[   15968ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-DCBrgFTV.js:47
+[  650963ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  675956ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  700950ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  720983ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/heartbeat:0
+[  720994ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/notifications:0
+[  725959ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  750953ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0

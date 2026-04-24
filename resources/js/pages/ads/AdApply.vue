@@ -505,12 +505,13 @@ function getBasePrice(position, tier) {
 // 텍스트 인라인 전용 가중치 (작은 단위: 시티 -200, 카운티 0, 주 +200, 전국 +400)
 const textGeoMarkup = { city: -200, county: 0, state: 200, national: 400 }
 
-// 지역 추가금 계산 (단일 페이지)
-const geoExtra = computed(() => {
+/** 주어진 tier 기반 지역 가중치 계산 (슬롯별 독립 가격 표시용)
+ *  - tier === 'text' → 작은 가중치 (±200/±400)
+ *  - 그 외 (premium/standard/economy) → 이미지 광고 가중치 */
+function computeGeoExtra(tier) {
   if (!selectedSub.value) return 0
 
-  // 텍스트 인라인: 작은 가중치 (이미지 광고와 별도)
-  if (isTextAd.value) {
+  if (tier === 'text') {
     if (isNationalPage.value || adForm.geo_scope === 'all') return textGeoMarkup.national
     if (adForm.geo_scope === 'state') return textGeoMarkup.state
     if (adForm.geo_scope === 'county') return textGeoMarkup.county
@@ -522,12 +523,18 @@ const geoExtra = computed(() => {
   if (isNationalPage.value) {
     return geoMarkup.value.state + geoMarkup.value.national
   }
-  // 지역별 페이지: 카운티가 기본(0), 시티는 -1000, 주는 +2000, 전국은 +5000
+  // 지역별 페이지
   if (adForm.geo_scope === 'city') return -geoMarkup.value.cityDiscount
   if (adForm.geo_scope === 'county') return 0
   if (adForm.geo_scope === 'state') return geoMarkup.value.state
   if (adForm.geo_scope === 'all') return geoMarkup.value.state + geoMarkup.value.national
   return 0
+}
+
+// 현재 선택된 슬롯의 지역 가중치 (4️⃣ 섹션 가격 산출용)
+const geoExtra = computed(() => {
+  if (!selectedSlot.value) return 0
+  return computeGeoExtra(selectedSlot.value.tier)
 })
 
 // 슬롯 1개의 기본가
@@ -551,18 +558,18 @@ function applyDiscount(price) {
   return Math.round(price * (100 - adDiscountPct.value) / 100)
 }
 
-// 원가(할인 전) — 취소선 표시용
+// 원가(할인 전) — 취소선 표시용 (각 슬롯은 자기 tier 기준 가중치로 계산)
 function slotOriginalPrice(position, tier) {
-  return getBasePrice(position, tier) + geoExtra.value
+  return getBasePrice(position, tier) + computeGeoExtra(tier)
 }
 
 // 총 최소 입찰가 = (기본가 + 지역 추가금) × 할인 적용
 const totalMinBid = computed(() => applyDiscount(basePricePerSlot.value + geoExtra.value))
 const totalMinBidOriginal = computed(() => basePricePerSlot.value + geoExtra.value)
 
-// 슬롯 선택 UI에 표시할 가격 (할인 적용)
+// 슬롯 선택 UI에 표시할 가격 (할인 적용) — 각 슬롯은 자기 tier 기준 가중치로 독립 계산
 function slotMinPrice(position, tier) {
-  return applyDiscount(getBasePrice(position, tier) + geoExtra.value)
+  return applyDiscount(getBasePrice(position, tier) + computeGeoExtra(tier))
 }
 
 const hasEnough = computed(() => (auth.user?.points || 0) >= (adForm.bid_amount || 0))
@@ -586,7 +593,7 @@ function isSelected(pos, slot) { return selectedSlot.value?.position === pos && 
 
 function selectSlot(position, slot, tier) {
   selectedSlot.value = { position, slot, tier }
-  adForm.bid_amount = getBasePrice(position, tier) + geoExtra.value
+  adForm.bid_amount = getBasePrice(position, tier) + computeGeoExtra(tier)
   saveDraft()
 }
 
