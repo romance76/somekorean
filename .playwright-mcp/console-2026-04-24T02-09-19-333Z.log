@@ -1,0 +1,14 @@
+[     278ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[     280ms] [LOG] [PeerJS] Initializing as sk-202-8y1w @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[     283ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[     487ms] [LOG] [PeerJS] ✅ Connected as sk-202-8y1w @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[    6069ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  185301ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  185301ms] [LOG] [PeerJS] Initializing as sk-202-37ge @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  185302ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  185526ms] [LOG] [PeerJS] ✅ Connected as sk-202-37ge @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  187285ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  707961ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  707962ms] [LOG] [PeerJS] Initializing as sk-202-np1t @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  707964ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
+[  708258ms] [LOG] [PeerJS] ✅ Connected as sk-202-np1t @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47

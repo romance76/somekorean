@@ -49,11 +49,8 @@
 
   <!-- ═════ 2. 메인 3-column 포털 레이아웃 ═════ -->
   <div class="max-w-7xl mx-auto px-3 py-4 grid grid-cols-12 gap-3">
-    <!-- 왼쪽 사이드바 (데스크톱 전용) -->
+    <!-- 왼쪽 사이드바 (데스크톱 전용: 카테고리/위젯 먼저, 광고는 맨 아래) -->
     <aside class="col-span-12 lg:col-span-3 space-y-3 hidden lg:block">
-      <!-- 좌측 광고 배너 -->
-      <AdSlot page="home" position="left" :maxSlots="2" />
-
       <!-- 인기 게시판 -->
       <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
         <div class="px-4 py-2.5 border-b bg-amber-50 flex items-center gap-1.5">
@@ -100,6 +97,9 @@
           <div class="flex items-center justify-between"><span class="text-gray-500">신규 가입</span><span class="font-bold text-purple-600">{{ todaySignups }}</span></div>
         </div>
       </div>
+
+      <!-- 좌측 광고: 카테고리/위젯 아래 나란히 -->
+      <AdSlot page="home" position="left" :maxSlots="3" />
     </aside>
 
     <!-- 중앙 콘텐츠 -->
@@ -230,9 +230,6 @@
         </div>
       </div>
 
-      <!-- 우측 광고 -->
-      <AdSlot page="home" position="right" :maxSlots="2" />
-
       <!-- 즐겨찾기 -->
       <div class="bg-white rounded-xl border shadow-sm p-4">
         <div class="text-xs font-black text-gray-800 mb-2 flex items-center gap-1.5"><span>⭐</span><span>즐겨찾기</span></div>
@@ -244,6 +241,9 @@
           </RouterLink>
         </div>
       </div>
+
+      <!-- 우측 광고: 위젯 아래 나란히 (데스크톱만) -->
+      <AdSlot page="home" position="right" :maxSlots="2" class="hidden lg:block" />
 
       <!-- 비로그인 CTA -->
       <div v-if="!auth.isLoggedIn" class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl p-4 shadow-sm">

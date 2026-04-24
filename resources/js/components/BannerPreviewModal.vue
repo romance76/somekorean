@@ -36,19 +36,25 @@
         <div class="mock-3col">
           <div class="mock-side">
             <div class="side-label">좌측 사이드바</div>
-            <div class="slot slot-premium" @click="selectSlot('left-1')" :class="{highlight: highlighted==='left-1'}">
-              <div class="slot-tag">🥇 슬롯 1 · 프리미엄</div>
-              <div class="slot-size">200×150 · 최고가 확정</div>
+            <div class="side-filler">📋 카테고리</div>
+            <div class="side-filler">🔥 인기 게시판</div>
+            <div class="side-filler">🏷️ 트렌딩 태그</div>
+            <div class="side-filler">👥 실시간 활동</div>
+            <div class="ad-stack">
+              <div class="ad-stack-label">📢 좌측 광고 (위젯 아래, 나란히)</div>
+              <div class="slot slot-premium" @click="selectSlot('left-1')" :class="{highlight: highlighted==='left-1'}">
+                <div class="slot-tag">🥇 프리미엄 · 200×150</div>
+                <div class="slot-size">최고가 확정 · 1개</div>
+              </div>
+              <div class="slot slot-standard" @click="selectSlot('left-2')" :class="{highlight: highlighted==='left-2'}">
+                <div class="slot-tag">🥈 스탠다드 · 200×150</div>
+                <div class="slot-size">Top 랜덤 · 최대 2</div>
+              </div>
+              <div class="slot slot-economy" @click="selectSlot('left-3')" :class="{highlight: highlighted==='left-3'}">
+                <div class="slot-tag">🥉 이코노미 · 200×150</div>
+                <div class="slot-size">Top 랜덤 · 최대 5</div>
+              </div>
             </div>
-            <div class="slot slot-standard" @click="selectSlot('left-2')" :class="{highlight: highlighted==='left-2'}">
-              <div class="slot-tag">🥈 슬롯 2 · 스탠다드</div>
-              <div class="slot-size">200×150 · 랜덤×2</div>
-            </div>
-            <div class="slot slot-economy" @click="selectSlot('left-3')" :class="{highlight: highlighted==='left-3'}">
-              <div class="slot-tag">🥉 슬롯 3 · 이코노미</div>
-              <div class="slot-size">200×150 · 랜덤×5</div>
-            </div>
-            <div class="side-filler">카테고리 · 인기게시판</div>
           </div>
           <div class="mock-main">
             <div class="main-label">중앙 콘텐츠</div>
@@ -58,16 +64,21 @@
           </div>
           <div class="mock-side">
             <div class="side-label">우측 사이드바</div>
-            <div class="side-filler">날씨 / 환율</div>
-            <div class="slot slot-premium" @click="selectSlot('right-1')" :class="{highlight: highlighted==='right-1'}">
-              <div class="slot-tag">🥇 슬롯 1 · 프리미엄</div>
-              <div class="slot-size">300×250 · 최고가 확정</div>
+            <div class="side-filler">☀️ 날씨</div>
+            <div class="side-filler">💱 환율</div>
+            <div class="side-filler">⭐ 즐겨찾기</div>
+            <div class="side-filler">🎁 가입 CTA</div>
+            <div class="ad-stack">
+              <div class="ad-stack-label">📢 우측 광고 (위젯 아래, 나란히)</div>
+              <div class="slot slot-premium" @click="selectSlot('right-1')" :class="{highlight: highlighted==='right-1'}">
+                <div class="slot-tag">🥇 프리미엄 · 300×250</div>
+                <div class="slot-size">최고가 확정 · 1개</div>
+              </div>
+              <div class="slot slot-economy" @click="selectSlot('right-3')" :class="{highlight: highlighted==='right-3'}">
+                <div class="slot-tag">🥉 이코노미 · 300×250</div>
+                <div class="slot-size">Top 랜덤 · 최대 3</div>
+              </div>
             </div>
-            <div class="slot slot-economy" @click="selectSlot('right-3')" :class="{highlight: highlighted==='right-3'}">
-              <div class="slot-tag">🥉 슬롯 3 · 이코노미</div>
-              <div class="slot-size">300×250 · 랜덤×3</div>
-            </div>
-            <div class="side-filler">즐겨찾기 / 가입 CTA</div>
           </div>
         </div>
         <div class="mock-footer">BottomNav · Footer</div>
@@ -116,15 +127,18 @@
         <div class="mock-3col mock-3col-narrow">
           <div class="mock-side">
             <div class="side-label">좌측: 필터/카테고리</div>
-            <div class="side-filler">전체 · 카테고리 A/B/C</div>
-            <div class="side-filler">위치 · 가격 범위</div>
-            <div class="slot slot-premium" @click="selectSlot('list-left-1')" :class="{highlight: highlighted==='list-left-1'}">
-              <div class="slot-tag">🥇 슬롯 1 · 프리미엄</div>
-              <div class="slot-size">200×150</div>
-            </div>
-            <div class="slot slot-economy" @click="selectSlot('list-left-3')" :class="{highlight: highlighted==='list-left-3'}">
-              <div class="slot-tag">🥉 슬롯 3 · 이코노미</div>
-              <div class="slot-size">200×150 · 랜덤</div>
+            <div class="side-filler">📋 전체 · 카테고리 A/B/C</div>
+            <div class="side-filler">📍 위치 · 가격 범위</div>
+            <div class="side-filler">🔖 내 북마크</div>
+            <div class="ad-stack">
+              <div class="ad-stack-label">📢 좌측 광고 (카테고리 아래, 나란히)</div>
+              <div class="slot slot-premium" @click="selectSlot('list-left-1')" :class="{highlight: highlighted==='list-left-1'}">
+                <div class="slot-tag">🥇 프리미엄 · 200×150</div>
+              </div>
+              <div class="slot slot-economy" @click="selectSlot('list-left-3')" :class="{highlight: highlighted==='list-left-3'}">
+                <div class="slot-tag">🥉 이코노미 · 200×150</div>
+                <div class="slot-size">Top 랜덤</div>
+              </div>
             </div>
           </div>
           <div class="mock-main">
@@ -144,16 +158,19 @@
           </div>
           <div class="mock-side">
             <div class="side-label">우측: 추천/인기</div>
-            <div class="slot slot-premium" @click="selectSlot('list-right-1')" :class="{highlight: highlighted==='list-right-1'}">
-              <div class="slot-tag">🥇 슬롯 1 · 프리미엄</div>
-              <div class="slot-size">300×250</div>
-            </div>
             <div class="side-filler">🔥 인기글 TOP 10</div>
-            <div class="slot slot-economy" @click="selectSlot('list-right-3')" :class="{highlight: highlighted==='list-right-3'}">
-              <div class="slot-tag">🥉 슬롯 3 · 이코노미</div>
-              <div class="slot-size">300×250 · 랜덤</div>
+            <div class="side-filler">📂 같은 카테고리</div>
+            <div class="side-filler">⏱️ 최근 활동</div>
+            <div class="ad-stack">
+              <div class="ad-stack-label">📢 우측 광고 (위젯 아래, 나란히)</div>
+              <div class="slot slot-premium" @click="selectSlot('list-right-1')" :class="{highlight: highlighted==='list-right-1'}">
+                <div class="slot-tag">🥇 프리미엄 · 300×250</div>
+              </div>
+              <div class="slot slot-economy" @click="selectSlot('list-right-3')" :class="{highlight: highlighted==='list-right-3'}">
+                <div class="slot-tag">🥉 이코노미 · 300×250</div>
+                <div class="slot-size">Top 랜덤</div>
+              </div>
             </div>
-            <div class="side-filler">최근 활동</div>
           </div>
         </div>
         <div class="mock-footer">Footer</div>
@@ -218,17 +235,20 @@
           </div>
           <div class="mock-side">
             <div class="side-label">우측: 추천/관련</div>
-            <div class="slot slot-premium" @click="selectSlot('detail-right-1')" :class="{highlight: highlighted==='detail-right-1'}">
-              <div class="slot-tag">🥇 슬롯 1 · 프리미엄</div>
-              <div class="slot-size">300×250</div>
-            </div>
             <div class="side-filler">📂 같은 카테고리</div>
             <div class="side-filler">🔥 인기 관련글</div>
-            <div class="slot slot-economy" @click="selectSlot('detail-right-3')" :class="{highlight: highlighted==='detail-right-3'}">
-              <div class="slot-tag">🥉 슬롯 3 · 이코노미</div>
-              <div class="slot-size">300×250 · 랜덤</div>
+            <div class="side-filler">👤 작성자 다른 글</div>
+            <div class="side-filler">🔗 관련 링크</div>
+            <div class="ad-stack">
+              <div class="ad-stack-label">📢 우측 광고 (위젯 아래, 나란히)</div>
+              <div class="slot slot-premium" @click="selectSlot('detail-right-1')" :class="{highlight: highlighted==='detail-right-1'}">
+                <div class="slot-tag">🥇 프리미엄 · 300×250</div>
+              </div>
+              <div class="slot slot-economy" @click="selectSlot('detail-right-3')" :class="{highlight: highlighted==='detail-right-3'}">
+                <div class="slot-tag">🥉 이코노미 · 300×250</div>
+                <div class="slot-size">Top 랜덤</div>
+              </div>
             </div>
-            <div class="side-filler">작성자 다른 글</div>
           </div>
         </div>
         <div class="mock-footer">Footer</div>
@@ -352,6 +372,10 @@ function selectSlot(key) { highlighted.value = highlighted.value === key ? null 
 .slot-size { font-size: 9px; opacity: 0.9; font-family: monospace; }
 
 .inline-ad { margin: 4px 0; }
+
+/* 광고 블록 - 카테고리/위젯 아래 나란히 */
+.ad-stack { margin-top: 8px; padding-top: 8px; border-top: 2px dashed #cbd5e1; display: flex; flex-direction: column; gap: 6px; }
+.ad-stack-label { font-size: 9px; font-weight: 700; color: #7c3aed; text-align: center; text-transform: uppercase; letter-spacing: 0.3px; }
 
 /* 모바일 mock */
 .mobile-wrap { display: flex; flex-direction: row; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
