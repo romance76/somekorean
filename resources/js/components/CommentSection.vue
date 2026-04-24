@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
 import CommentItem from './CommentItem.vue'
@@ -108,5 +108,18 @@ async function loadComments() {
 }
 
 onMounted(loadComments)
+
+// typeId 변경 시 이전 글의 댓글/입력 상태를 완전 초기화 + 리로드
+// (PostNavigator 등으로 같은 페이지에서 글 이동할 때 이전 댓글이 남던 버그 수정)
+watch(() => [props.type, props.typeId], ([t, id], [pt, pid]) => {
+  if (t === pt && id === pid) return
+  comments.value = []
+  newComment.value = ''
+  replyTo.value = null
+  replyName.value = ''
+  replyText.value = ''
+  if (id) loadComments()
+})
+
 defineExpose({ loadComments })
 </script>
