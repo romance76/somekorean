@@ -240,7 +240,19 @@
             </div>
             <!-- 실시간 미리보기 — 데스크톱 + 모바일 실제 사이즈 -->
             <div>
-              <label class="text-xs font-bold text-gray-600 block mb-2">🔍 실시간 미리보기 (실제 노출 크기)</label>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold text-gray-600">🔍 실시간 미리보기 (실제 노출 크기)</label>
+                <!-- 속도 조절 -->
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] text-gray-500 mr-1">속도:</span>
+                  <button v-for="s in speedOptions" :key="s.value" type="button"
+                    @click="previewSpeed = s.value"
+                    :class="previewSpeed === s.value ? 'bg-purple-500 text-white border-purple-500' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'"
+                    class="text-[10px] font-bold px-2 py-0.5 border rounded-full transition">
+                    {{ s.label }}
+                  </button>
+                </div>
+              </div>
 
               <!-- 🖥️ 데스크톱 (약 640px, 리스트 중앙 영역 폭) -->
               <div class="mb-3">
@@ -249,7 +261,7 @@
                   <span class="text-gray-400">리스트 중앙 영역 폭 ≈ 640px</span>
                 </div>
                 <div class="border border-dashed border-gray-300 rounded-lg p-2 bg-gray-50" style="width: 640px; max-width: 100%; overflow: hidden;">
-                  <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" />
+                  <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" :speed="previewSpeed" />
                 </div>
               </div>
 
@@ -260,12 +272,12 @@
                   <span class="text-gray-400">iPhone 기본 폭 ≈ 375px</span>
                 </div>
                 <div class="border border-dashed border-gray-300 rounded-lg p-2 bg-gray-50" style="width: 375px; max-width: 100%; overflow: hidden;">
-                  <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" />
+                  <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" :speed="previewSpeed" />
                 </div>
               </div>
 
               <div class="text-[10px] text-gray-400 mt-2">
-                💡 긴 텍스트는 마퀴로 좌→우 스크롤, 짧으면 좌우 왕복 애니메이션으로 노출됩니다
+                💡 긴 텍스트는 마퀴로 좌→우 스크롤, 짧으면 좌우 왕복 애니메이션으로 노출됩니다. 실제 노출은 <strong>느림</strong> 기본입니다.
               </div>
             </div>
           </template>
@@ -437,6 +449,14 @@ const textPreviewAd = computed(() => ({
   phone: adForm.phone,
   description: adForm.description || '설명을 입력하면 여기에 보입니다',
 }))
+
+// 미리보기 속도 (slow/normal/fast)
+const previewSpeed = ref('slow')
+const speedOptions = [
+  { value: 'slow',   label: '🐢 느림' },
+  { value: 'normal', label: '⏱️ 보통' },
+  { value: 'fast',   label: '⚡ 빠름' },
+]
 
 // 광고 노출 가능 서브 페이지 — 활성 메뉴 중 관리자 광고 슬롯이 > 0 인 것만
 const subPages = computed(() => {

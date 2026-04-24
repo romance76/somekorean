@@ -2235,3 +2235,11 @@
 [46980973ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
 [46980973ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
 [46980974ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[49284731ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[49284732ms] [LOG] [PeerJS] Initializing as sk-202-9vfy @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[49284732ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[49284979ms] [LOG] [PeerJS] ✅ Connected as sk-202-9vfy @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[49285293ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[49285293ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[49285293ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[49287154ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47

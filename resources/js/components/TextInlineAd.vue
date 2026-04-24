@@ -29,6 +29,8 @@ const props = defineProps({
   manualAd: { type: Object, default: null },
   // API 자동 로드 on/off
   autoLoad: { type: Boolean, default: true },
+  // 애니메이션 속도: 'slow'(느림, 기본) | 'normal' | 'fast'
+  speed: { type: String, default: 'slow' },
 })
 
 const ad = ref(null)
@@ -54,11 +56,16 @@ async function measureOverflow() {
   const fw = frameRef.value.offsetWidth
   const cw = contentRef.value.scrollWidth
   isOverflowing.value = cw > fw + 2
+
+  // 속도별 배수 (값이 클수록 느림)
+  // slow=0.06 (기존 3배 느림) / normal=0.035 / fast=0.02 (기존값)
+  const factor = { slow: 0.06, normal: 0.035, fast: 0.02 }[props.speed] || 0.06
+  const swayFactor = { slow: 6, normal: 4.5, fast: 3 }[props.speed] || 6
+
   if (isOverflowing.value) {
-    // 길이에 비례해서 duration 계산 (px 당 0.02s, 최소 10s / 최대 30s)
-    duration.value = Math.min(30, Math.max(10, Math.round(cw * 0.02)))
+    duration.value = Math.min(60, Math.max(12, Math.round(cw * factor)))
   } else {
-    duration.value = 4
+    duration.value = swayFactor
   }
 }
 
@@ -79,6 +86,7 @@ onMounted(async () => {
 })
 onUnmounted(() => ro?.disconnect())
 watch(() => [props.page, props.manualAd], async () => { await loadAd(); await measureOverflow() })
+watch(() => props.speed, measureOverflow)
 </script>
 
 <style scoped>

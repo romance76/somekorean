@@ -1,0 +1,10 @@
+[     479ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[     481ms] [LOG] [PeerJS] Initializing as sk-202-u7eu @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[     483ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[    1197ms] [LOG] [PeerJS] ✅ Connected as sk-202-u7eu @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[    9897ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[   58262ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[   58263ms] [LOG] [PeerJS] Initializing as sk-202-4f7v @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[   58264ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[   58507ms] [LOG] [PeerJS] ✅ Connected as sk-202-4f7v @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
+[   60812ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-BLDxwc6l.js:47
