@@ -2,7 +2,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-3xl mx-auto px-4 py-5">
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-black text-gray-800">✉️ 쪽지</h1>
+      <h1 class="text-xl font-black text-gray-800">✉️ 쪽지함</h1>
       <div class="flex items-center gap-2">
         <span v-if="unreadCount" class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ unreadCount }}</span>
         <button @click="showCompose=true" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">✏️ 새 쪽지</button>

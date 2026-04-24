@@ -1028,7 +1028,7 @@ async function sendMsg() {
 const roomFilter = ref('all')
 const roomFilterTabs = [
   { value: 'all',    label: '전체', icon: '' },
-  { value: 'dm',     label: '쪽지', icon: '💌' },
+  { value: 'dm',     label: '1:1', icon: '💌' },
   { value: 'group',  label: '그룹', icon: '👥' },
   { value: 'public', label: '공개', icon: '🌐' },
 ]
@@ -1044,7 +1044,7 @@ function filterCount(filter) {
   return n ? `(${n})` : ''
 }
 const currentFilterTitle = computed(() => {
-  if (roomFilter.value === 'dm') return '💌 1:1 쪽지'
+  if (roomFilter.value === 'dm') return '💌 1:1 채팅'
   if (roomFilter.value === 'group') return '👥 그룹'
   if (roomFilter.value === 'public') return '🌐 공개 채팅방'
   return '💬 전체 채팅방'
@@ -1082,7 +1082,7 @@ function goBackToList() {
 
 // ─── 새 채팅 모달 (Issue #20) ───
 const createTypes = [
-  { value: 'dm',     label: '1:1 쪽지',  icon: '💌' },
+  { value: 'dm',     label: '1:1 채팅',  icon: '💌' },
   { value: 'group',  label: '그룹',      icon: '👥' },
   { value: 'public', label: '공개방',    icon: '🌐' },
 ]

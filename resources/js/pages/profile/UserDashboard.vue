@@ -207,7 +207,7 @@
     <div v-else-if="tab==='messages'" class="space-y-4">
       <div class="bg-white rounded-xl shadow-sm border p-5">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="font-bold text-gray-800">✉️ 쪽지</h2>
+          <h2 class="font-bold text-gray-800">✉️ 쪽지함</h2>
           <span v-if="msgUnread" class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ msgUnread }}</span>
         </div>
         <div class="flex gap-1 mb-3 bg-gray-50 rounded-lg p-1">
@@ -967,7 +967,7 @@ const tab = ref(route.query.tab || 'profile')
 const allTabs = [
   { key: 'profile',    icon: '📝', label: '프로필' },
   { key: 'points',     icon: '💰', label: '포인트' },
-  { key: 'messages',   icon: '✉️', label: '쪽지' },
+  { key: 'messages',   icon: '✉️', label: '쪽지함' },
   { key: 'posts',      icon: '📄', label: '내 글' },
   { key: 'market',     icon: '🛒', label: '내 장터',     menuKey: 'market' },
   { key: 'jobs',       icon: '💼', label: '내 구인',     menuKey: 'jobs' },
