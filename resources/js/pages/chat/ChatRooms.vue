@@ -51,8 +51,8 @@
         </div>
       </div>
 
-      <div v-if="activeRoom" :class="isMobile ? 'fixed left-0 right-0 top-0 bg-white flex flex-col' : 'col-span-12 lg:col-span-6'"
-        :style="isMobile ? 'bottom: 56px; z-index: 60;' : ''">
+      <div v-if="activeRoom" :class="isMobile ? 'fixed left-0 right-0 top-0 bottom-0 bg-white flex flex-col' : 'col-span-12 lg:col-span-6'"
+        :style="isMobile ? 'z-index: 60;' : ''">
         <div :class="isMobile ? 'flex flex-col h-full overflow-hidden relative' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative'" :style="isMobile ? '' : 'height: 70vh'">
           <!-- 채팅방 헤더 -->
           <div class="px-4 py-3 border-b bg-amber-50 flex items-center justify-between flex-shrink-0">
@@ -206,21 +206,34 @@
             </div>
           </div>
 
-          <!-- 입력 (아이폰 safe-area 대응) -->
+          <!-- 입력 (텔레그램 스타일: 이모티콘·첨부가 입력창 내부) -->
           <div class="border-t px-3 py-2 flex-shrink-0" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom));">
             <form @submit.prevent="sendMsg" class="flex gap-2 items-center">
-              <button type="button" @click="toggleEmojiPicker"
-                class="bg-gray-100 text-gray-600 w-9 h-9 flex items-center justify-center rounded-full text-base hover:bg-gray-200 flex-shrink-0"
-                :class="[!auth.isLoggedIn ? 'opacity-50 cursor-not-allowed' : '', showEmojiPicker ? 'bg-amber-200 text-amber-800' : '']"
-                :disabled="!auth.isLoggedIn" title="이모티콘">😊</button>
-              <label class="bg-gray-100 text-gray-600 w-9 h-9 flex items-center justify-center rounded-full text-sm hover:bg-gray-200 cursor-pointer flex-shrink-0" :class="!auth.isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''" title="이미지·압축파일 첨부">
-                📎
-                <input type="file" accept="image/*,.zip,.rar,.7z,.tar,.gz,.tgz,application/zip,application/x-rar-compressed,application/x-7z-compressed,application/gzip" multiple @change="onSelectFiles" class="hidden" :disabled="!auth.isLoggedIn" />
-              </label>
-              <input v-model="newMsg" type="text" :placeholder="auth.isLoggedIn ? '메시지 입력...' : '로그인 후 참여 가능'" :disabled="!auth.isLoggedIn"
-                class="flex-1 min-w-0 border rounded-full px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none disabled:bg-gray-100" />
+              <!-- 통합 입력 박스 -->
+              <div class="flex-1 min-w-0 flex items-center gap-1 bg-gray-50 border rounded-full pl-1 pr-1 focus-within:ring-2 focus-within:ring-amber-400 transition"
+                :class="!auth.isLoggedIn ? 'opacity-60' : ''">
+                <!-- 이모티콘 (왼쪽 끝) -->
+                <button type="button" @click="toggleEmojiPicker"
+                  class="w-8 h-8 flex items-center justify-center text-lg flex-shrink-0 rounded-full hover:bg-gray-200 transition"
+                  :class="showEmojiPicker ? 'bg-amber-100' : ''"
+                  :disabled="!auth.isLoggedIn" title="이모티콘">😊</button>
+                <!-- 입력 필드 -->
+                <input v-model="newMsg" type="text" :placeholder="auth.isLoggedIn ? '메시지 입력...' : '로그인 후 참여 가능'" :disabled="!auth.isLoggedIn"
+                  class="flex-1 min-w-0 bg-transparent border-0 px-1 py-2 text-sm outline-none disabled:cursor-not-allowed" />
+                <!-- 파일 첨부 (오른쪽 끝) -->
+                <label class="w-8 h-8 flex items-center justify-center text-base flex-shrink-0 rounded-full hover:bg-gray-200 cursor-pointer transition"
+                  :class="!auth.isLoggedIn ? 'cursor-not-allowed' : ''" title="이미지·압축파일 첨부">
+                  📎
+                  <input type="file" accept="image/*,.zip,.rar,.7z,.tar,.gz,.tgz,application/zip,application/x-rar-compressed,application/x-7z-compressed,application/gzip" multiple @change="onSelectFiles" class="hidden" :disabled="!auth.isLoggedIn" />
+                </label>
+              </div>
+              <!-- 전송 버튼 (원형) -->
               <button type="submit" :disabled="(!newMsg.trim() && !selectedFiles.length) || !auth.isLoggedIn || sending"
-                class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-full text-sm hover:bg-amber-500 disabled:opacity-50 flex-shrink-0 whitespace-nowrap">{{ sending ? '...' : '전송' }}</button>
+                class="bg-amber-400 text-amber-900 w-10 h-10 flex items-center justify-center rounded-full text-lg font-bold hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                :title="sending ? '전송 중...' : '전송'">
+                <span v-if="sending" class="text-xs">...</span>
+                <span v-else>➤</span>
+              </button>
             </form>
           </div>
         </div>

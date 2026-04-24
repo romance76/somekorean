@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden"
+  <div v-if="!hideOnChatRoom" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden"
        style="padding-bottom: var(--sab)">
     <!-- 스와이프 가능한 탭 영역 -->
     <div ref="scrollEl" class="flex items-center h-13 overflow-x-auto scrollbar-hide scroll-smooth"
@@ -32,6 +32,12 @@ const scrollEl = ref(null)
 const currentPage = ref(0)
 
 const favMenus = computed(() => navStore.favoriteMenus)
+
+// 채팅방 입장 (/chat/:id) 시에는 하단 네비 숨김 — 대기실(/chat) 에서는 정상 표시
+const hideOnChatRoom = computed(() => {
+  const p = route.path || ''
+  return /^\/chat\/\d+/.test(p)
+})
 
 // 탭 너비: 5개 이하면 균등 분배, 6개 이상이면 고정 75px
 const tabStyle = computed(() => {
