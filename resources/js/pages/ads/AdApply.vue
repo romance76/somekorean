@@ -12,15 +12,6 @@
       </div>
     </div>
 
-    <!-- 📝 텍스트 인라인 광고 안내 배너 -->
-    <RouterLink to="/ad-apply/text" class="block mb-5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition">
-      <span class="text-2xl">📝</span>
-      <div class="flex-1 min-w-0">
-        <div class="text-sm font-bold text-purple-800">텍스트 인라인 광고 — 이미지 없이 간편하게!</div>
-        <div class="text-[11px] text-purple-600 mt-0.5">상호 + 전화 + 한 줄 설명 · 리스트/상세 중간에 노출 · <strong class="text-purple-700">월 1,000P부터</strong></div>
-      </div>
-      <span class="text-purple-500 text-lg font-bold">→</span>
-    </RouterLink>
 
     <!-- ═══ Step 1: 페이지 선택 (단일 선택) ═══ -->
     <div class="bg-white rounded-2xl shadow-sm border p-5 mb-5">
@@ -256,10 +247,35 @@
               <input v-model="adForm.description" @input="saveDraft" maxlength="120" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="예: 한인 전용 $30부터 · 첫방문 20% 할인 · Duluth GA" />
               <div class="text-[10px] text-gray-400 mt-0.5">{{ (adForm.description || '').length }}/120</div>
             </div>
-            <!-- 실시간 미리보기 -->
+            <!-- 실시간 미리보기 — 데스크톱 + 모바일 실제 사이즈 -->
             <div>
-              <label class="text-xs font-bold text-gray-600 block mb-1">🔍 실시간 미리보기 (실제 노출 모양)</label>
-              <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" />
+              <label class="text-xs font-bold text-gray-600 block mb-2">🔍 실시간 미리보기 (실제 노출 크기)</label>
+
+              <!-- 🖥️ 데스크톱 (약 640px, 리스트 중앙 영역 폭) -->
+              <div class="mb-3">
+                <div class="flex items-center gap-2 text-[10px] text-gray-500 mb-1">
+                  <span class="bg-gray-100 px-1.5 py-0.5 rounded font-bold">🖥️ 데스크톱</span>
+                  <span class="text-gray-400">리스트 중앙 영역 폭 ≈ 640px</span>
+                </div>
+                <div class="border border-dashed border-gray-300 rounded-lg p-2 bg-gray-50" style="width: 640px; max-width: 100%; overflow: hidden;">
+                  <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" />
+                </div>
+              </div>
+
+              <!-- 📱 모바일 (375px, iPhone 기본) -->
+              <div>
+                <div class="flex items-center gap-2 text-[10px] text-gray-500 mb-1">
+                  <span class="bg-gray-100 px-1.5 py-0.5 rounded font-bold">📱 모바일</span>
+                  <span class="text-gray-400">iPhone 기본 폭 ≈ 375px</span>
+                </div>
+                <div class="border border-dashed border-gray-300 rounded-lg p-2 bg-gray-50" style="width: 375px; max-width: 100%; overflow: hidden;">
+                  <TextInlineAd :manualAd="textPreviewAd" :autoLoad="false" />
+                </div>
+              </div>
+
+              <div class="text-[10px] text-gray-400 mt-2">
+                💡 긴 텍스트는 마퀴로 좌→우 스크롤, 짧으면 좌우 왕복 애니메이션으로 노출됩니다
+              </div>
             </div>
           </template>
 
@@ -305,6 +321,10 @@
               <div class="flex justify-between">
                 <span class="text-gray-500">슬롯: {{ posLabels[selectedSlot.position] }} {{ tierLabels[selectedSlot.tier] }}</span>
                 <span class="font-bold">{{ basePricePerSlot.toLocaleString() }}P</span>
+              </div>
+              <div v-if="isTextAd" class="flex justify-between text-purple-600 bg-purple-50 -mx-1 px-1 py-0.5 rounded">
+                <span class="font-bold">📝 텍스트 인라인 할인 적용 중</span>
+                <span class="text-[10px]">시티 -200 · 카운티 0 · 주 +200 · 전국 +400</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-500">지역 {{ geoExtra >= 0 ? '추가금' : '할인' }}</span>
@@ -482,10 +502,23 @@ function getBasePrice(position, tier) {
   return basePrices.value[`${position}_${tier}`] || 4000
 }
 
+// 텍스트 인라인 전용 가중치 (작은 단위: 시티 -200, 카운티 0, 주 +200, 전국 +400)
+const textGeoMarkup = { city: -200, county: 0, state: 200, national: 400 }
+
 // 지역 추가금 계산 (단일 페이지)
 const geoExtra = computed(() => {
   if (!selectedSub.value) return 0
-  // 전국 페이지는 자동 전국이지만 추가금 포함
+
+  // 텍스트 인라인: 작은 가중치 (이미지 광고와 별도)
+  if (isTextAd.value) {
+    if (isNationalPage.value || adForm.geo_scope === 'all') return textGeoMarkup.national
+    if (adForm.geo_scope === 'state') return textGeoMarkup.state
+    if (adForm.geo_scope === 'county') return textGeoMarkup.county
+    if (adForm.geo_scope === 'city') return textGeoMarkup.city
+    return 0
+  }
+
+  // 이미지 광고 (기존): 전국 페이지는 자동 전국이지만 추가금 포함
   if (isNationalPage.value) {
     return geoMarkup.value.state + geoMarkup.value.national
   }
