@@ -1,0 +1,11 @@
+[     145ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/login:0
+[   11618ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   11619ms] [LOG] [PeerJS] Initializing as sk-202-ip8p @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   11621ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   11740ms] [LOG] [PeerJS] ✅ Connected as sk-202-ip8p @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   16831ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   19340ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   19341ms] [LOG] [PeerJS] Initializing as sk-202-952m @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   19342ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   19563ms] [LOG] [PeerJS] ✅ Connected as sk-202-952m @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47
+[   20593ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-6FHybCUm.js:47

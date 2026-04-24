@@ -558,6 +558,10 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/games/{slug}/settings', [\App\Http\Controllers\API\GameController::class, 'saveSettings']);
     Route::delete('/games/{slug}/settings/{key}', [\App\Http\Controllers\API\GameController::class, 'deleteSetting']);
 
+    // 상위노출 강제 해제 (공통) — 리소스는 URL 세그먼트 (market/realestate/jobs/businesses)
+    Route::post('/{resource}/{id}/clear-promotion', [\App\Http\Controllers\API\AdminController::class, 'clearPromotion'])
+        ->where('resource', 'market|realestate|jobs|businesses');
+
     // 퀴즈 문제 CRUD (게임별: animals/flag/proverb/satwords/uslife 등)
     Route::get('/games/{slug}/questions',          [\App\Http\Controllers\API\QuizQuestionController::class, 'index']);
     Route::post('/games/{slug}/questions',         [\App\Http\Controllers\API\QuizQuestionController::class, 'store']);

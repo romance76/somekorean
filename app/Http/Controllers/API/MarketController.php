@@ -397,6 +397,18 @@ class MarketController extends Controller
             return response()->json(['success' => false, 'message' => '활성 상태의 물건만 부스트 가능합니다'], 422);
         }
 
+        // 중복 결제 방지: 이미 상위노출 활성 중이면 차단 (만료 대기 후 재신청)
+        if ($item->boosted_until && $item->boosted_until->isFuture()) {
+            return response()->json([
+                'success' => false,
+                'message' => '이미 상위노출 중입니다. ' . $item->boosted_until->format('Y-m-d H:i') . ' 이후 다시 신청할 수 있습니다.',
+                'data' => [
+                    'already_active' => true,
+                    'boosted_until' => $item->boosted_until,
+                ],
+            ], 422);
+        }
+
         $costPerDay = 100; // 하루 100포인트
         $totalCost = $days * $costPerDay;
 
@@ -410,12 +422,8 @@ class MarketController extends Controller
         // 포인트 차감 (point_logs 에 기록)
         $user->addPoints(-$totalCost, "상위노출: {$item->title} ({$days}일)", 'boost');
 
-        // 기존 부스트가 있으면 연장, 없으면 지금부터
-        $currentBoostEnd = $item->boosted_until && $item->boosted_until->isFuture()
-            ? $item->boosted_until
-            : now();
         $item->update([
-            'boosted_until' => $currentBoostEnd->addDays($days),
+            'boosted_until' => now()->addDays($days),
             'updated_at' => now(), // 최신 게시물처럼 날짜도 갱신
         ]);
 

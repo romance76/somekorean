@@ -163,6 +163,7 @@
                 <span v-if="item.promotion_tier === 'national'" class="text-[10px] bg-red-500 text-white font-bold px-1 py-px rounded">🌐 전국구</span>
                 <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[10px] bg-blue-500 text-white font-bold px-1 py-px rounded">⭐주+</span>
                 <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[10px] bg-amber-500 text-white font-bold px-1 py-px rounded">📢스폰</span>
+                <span v-else-if="isBoosted(item)" class="text-[10px] bg-purple-500 text-white font-bold px-1 py-px rounded">🚀 상위노출</span>
                 <span v-if="item.is_negotiable" class="text-[10px] bg-green-100 text-green-700 font-bold px-1 py-px rounded">가격협의</span>
                 <span v-if="item.hold_enabled" class="text-[10px] bg-blue-100 text-blue-700 font-bold px-1 py-px rounded">홀드가능</span>
               </div>
@@ -209,6 +210,7 @@
               <span v-if="item.promotion_tier === 'national'" class="text-[9px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded">🌐 전국구</span>
               <span v-else-if="item.promotion_tier === 'state_plus'" class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">⭐ 주+</span>
               <span v-else-if="item.promotion_tier === 'sponsored'" class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">📢 스폰서</span>
+              <span v-else-if="isBoosted(item)" class="text-[9px] bg-purple-500 text-white font-bold px-1.5 py-0.5 rounded">🚀 상위노출</span>
             </div>
             <div class="text-sm font-medium text-gray-800 truncate">{{ item.title || item.name }}</div>
             <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -351,7 +353,13 @@ function promoRowClass(item) {
   if (item.promotion_tier === 'national') return 'border-2 border-red-400 rounded-lg hover:bg-gray-50'
   if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400 rounded-lg hover:bg-gray-50'
   if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400 rounded-lg hover:bg-gray-50'
+  if (isBoosted(item)) return 'border-2 border-purple-400 rounded-lg hover:bg-gray-50 bg-purple-50/30'
   return 'hover:bg-amber-50/50'
+}
+
+// legacy boosted_until 활성 여부 (MarketDetail 의 부스트 결제와 동일)
+function isBoosted(item) {
+  return item.boosted_until && new Date(item.boosted_until) > new Date()
 }
 
 // 사용자가 썸네일로 선택한 이미지. 없으면 첫 번째 이미지.

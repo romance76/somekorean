@@ -59,6 +59,7 @@
                   <span v-if="item.is_pinned" title="고정" class="text-red-500 text-xs">📌</span>
                   <span v-if="item.is_hidden" title="숨김" class="text-gray-400 text-xs">🙈</span>
                   <span v-if="item.is_locked" title="잠김" class="text-orange-500 text-xs">🔒</span>
+                  <span v-if="isPromoted(item)" :title="promoTooltip(item)" class="text-[9px] font-bold text-white bg-purple-500 px-1 py-px rounded">🚀 {{ promoBadgeLabel(item) }}</span>
                   <div class="truncate text-sm font-medium text-gray-800">{{ item.title || item.name }}</div>
                 </div>
                 <div class="text-[10px] text-gray-400 truncate mt-0.5">{{ (item.content || item.description || '').slice(0, 60) }}{{ (item.content || item.description || '').length > 60 ? '...' : '' }}</div>
@@ -148,7 +149,24 @@
           <button @click="openMoveModal" class="text-[10px] px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">
             📂 카테고리 변경
           </button>
+          <button v-if="isPromoted(activeItem)" @click="clearPromotion(activeItem)"
+            class="text-[10px] px-2 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200"
+            :title="promoTooltip(activeItem)">
+            🚀 상위노출 해제
+          </button>
           <button @click="deleteItem(activeItem)" class="text-[10px] px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 ml-auto">🗑 삭제</button>
+        </div>
+
+        <!-- 상위노출 상태 배너 (활성 중이면 표시) -->
+        <div v-if="detailData && isPromoted(activeItem)" class="px-4 py-2 bg-purple-50 border-b border-purple-200 flex items-center justify-between">
+          <div class="text-xs">
+            <span class="font-bold text-purple-800">🚀 상위노출 중</span>
+            <span class="text-purple-600 ml-2">{{ promoBadgeLabel(activeItem) }}</span>
+            <span class="text-gray-500 ml-2">만료: {{ promoExpiresDisplay(activeItem) }}</span>
+          </div>
+          <button @click="clearPromotion(activeItem)" class="text-[10px] text-purple-700 hover:text-purple-900 underline">
+            강제 해제
+          </button>
         </div>
 
         <!-- 제목/내용 (편집 모드) -->
@@ -549,6 +567,54 @@ async function deleteItem(item) {
   } catch (e) {
     alert(e.response?.data?.message || '삭제 실패')
   }
+}
+
+// ─── 상위노출(promotion) 상태 helper ────────────────────────────────
+function isPromoted(item) {
+  if (!item) return false
+  // modern tier 시스템
+  if (item.promotion_tier && item.promotion_tier !== 'none' && item.promotion_expires_at
+      && new Date(item.promotion_expires_at) > new Date()) return true
+  // legacy boost 시스템
+  if (item.boosted_until && new Date(item.boosted_until) > new Date()) return true
+  return false
+}
+function promoBadgeLabel(item) {
+  if (item.promotion_tier === 'national')   return '전국구'
+  if (item.promotion_tier === 'state_plus') return '주+'
+  if (item.promotion_tier === 'sponsored')  return '스폰'
+  if (item.boosted_until) return '부스트'
+  return '노출'
+}
+function promoExpiresDisplay(item) {
+  const d = item.promotion_expires_at || item.boosted_until
+  if (!d) return '-'
+  return new Date(d).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+function promoTooltip(item) {
+  return `상위노출 활성 중 · 만료: ${promoExpiresDisplay(item)}`
+}
+
+async function clearPromotion(item) {
+  if (!confirm('상위노출을 즉시 해제할까요? (포인트 환불 없음)')) return
+  try {
+    await axios.post(`/api/admin/${detectResourceFromUrl()}/${item.id}/clear-promotion`)
+    // 로컬 업데이트
+    item.promotion_tier = 'none'
+    item.promotion_expires_at = null
+    item.boosted_until = null
+    if (activeItem.value?.id === item.id) {
+      activeItem.value = { ...item }
+    }
+  } catch (e) {
+    alert(e.response?.data?.message || '해제 실패')
+  }
+}
+
+function detectResourceFromUrl() {
+  // /api/market → market, /api/businesses → businesses 등
+  const m = (props.apiUrl || '').match(/\/api\/([a-z_-]+)/)
+  return m ? m[1] : 'market'
 }
 
 onMounted(() => load())

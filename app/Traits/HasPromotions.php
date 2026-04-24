@@ -100,6 +100,21 @@ trait HasPromotions
             'days' => 'required|integer|min:1|max:90',
         ]);
 
+        // 중복 결제 방지: 이미 활성 중이면 차단 (만료 후 재신청)
+        if ($item->promotion_tier && $item->promotion_tier !== 'none'
+            && $item->promotion_expires_at && $item->promotion_expires_at->isFuture()) {
+            return response()->json([
+                'success' => false,
+                'message' => '이미 상위노출이 활성 중입니다 (' . $item->promotion_tier . '). '
+                    . $item->promotion_expires_at->format('Y-m-d H:i') . ' 이후 다시 신청할 수 있습니다.',
+                'data' => [
+                    'already_active' => true,
+                    'current_tier' => $item->promotion_tier,
+                    'expires_at' => $item->promotion_expires_at,
+                ],
+            ], 422);
+        }
+
         $resource = $this->promoResourceName();
         $tier = $request->tier;
         $days = (int) $request->days;

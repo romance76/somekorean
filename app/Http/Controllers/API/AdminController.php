@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\{User, Post, JobPost, MarketItem, Business, BusinessClaim, Event, News, Report, Board, Banner, IpBan, Payment, ChatRoom, ChatRoomUser, ChatMessage, ElderCheckinLog, ElderSosLog, QaPost, RealEstateListing, GroupBuy, Club};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminController extends Controller
 {
@@ -15,6 +16,37 @@ class AdminController extends Controller
             'new_users_week' => User::where('created_at', '>=', now()->subWeek())->count(),
             'pending_reports' => Report::where('status','pending')->count(),
         ]]);
+    }
+
+    /** 관리자: 상위노출 강제 해제 (공통) — 리소스별 모델 매핑 */
+    public function clearPromotion(string $resource, int $id)
+    {
+        $map = [
+            'market'      => MarketItem::class,
+            'realestate'  => RealEstateListing::class,
+            'jobs'        => JobPost::class,
+            'businesses'  => Business::class,
+        ];
+        $modelClass = $map[$resource] ?? null;
+        if (!$modelClass) {
+            return response()->json(['success' => false, 'message' => '지원하지 않는 리소스'], 422);
+        }
+        $item = $modelClass::findOrFail($id);
+
+        $updates = [];
+        if (Schema::hasColumn($item->getTable(), 'promotion_tier')) {
+            $updates['promotion_tier'] = 'none';
+            $updates['promotion_expires_at'] = null;
+        }
+        if (Schema::hasColumn($item->getTable(), 'promotion_states')) {
+            $updates['promotion_states'] = null;
+        }
+        if (Schema::hasColumn($item->getTable(), 'boosted_until')) {
+            $updates['boosted_until'] = null;
+        }
+        if ($updates) $item->update($updates);
+
+        return response()->json(['success' => true, 'message' => '상위노출이 해제되었습니다', 'data' => $item->fresh()]);
     }
 
     public function users(Request $request) {
