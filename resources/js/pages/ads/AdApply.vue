@@ -12,6 +12,16 @@
       </div>
     </div>
 
+    <!-- 📝 텍스트 인라인 광고 안내 배너 -->
+    <RouterLink to="/ad-apply/text" class="block mb-5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition">
+      <span class="text-2xl">📝</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-purple-800">텍스트 인라인 광고 — 이미지 없이 간편하게!</div>
+        <div class="text-[11px] text-purple-600 mt-0.5">상호 + 전화 + 한 줄 설명 · 리스트/상세 중간에 노출 · <strong class="text-purple-700">월 1,000P부터</strong></div>
+      </div>
+      <span class="text-purple-500 text-lg font-bold">→</span>
+    </RouterLink>
+
     <!-- ═══ Step 1: 페이지 선택 (단일 선택) ═══ -->
     <div class="bg-white rounded-2xl shadow-sm border p-5 mb-5">
       <h2 class="font-bold text-gray-800 text-sm mb-3">1️⃣ 광고 노출 페이지 선택</h2>

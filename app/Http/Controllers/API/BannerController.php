@@ -127,6 +127,103 @@ class BannerController extends Controller
     }
 
     /**
+     * 텍스트 인라인 광고 신청 (이미지 없음, 간단 필드만)
+     * POST /api/banners/text-apply
+     */
+    public function textApply(Request $request)
+    {
+        $data = $request->validate([
+            'title'       => 'required|string|max:80',
+            'phone'       => 'nullable|string|max:30',
+            'description' => 'required|string|max:200',
+            'link_url'    => 'nullable|url|max:500',
+            'page'        => 'required|string|max:40',
+            'days'        => 'required|integer|min:1|max:365',
+            'bid_amount'  => 'required|integer|min:100',
+        ]);
+
+        $user = auth()->user();
+        $cost = (int) $data['bid_amount'];
+        if ($user->points < $cost) {
+            return response()->json(['success' => false, 'message' => "포인트 부족. 필요 {$cost}P"], 422);
+        }
+        $user->addPoints(-$cost, 'banner_text', "텍스트 인라인 광고 신청 · {$data['days']}일");
+
+        $ad = BannerAd::create([
+            'user_id'     => $user->id,
+            'title'       => $data['title'],
+            'image_url'   => null,
+            'link_url'    => $data['link_url'] ?? null,
+            'ad_type'     => 'text',
+            'phone'       => $data['phone'] ?? null,
+            'description' => $data['description'],
+            'page'        => $data['page'],
+            'position'    => 'inline-text',
+            'slot_number' => 1,
+            'geo_scope'   => 'all',
+            'bid_amount'  => $cost,
+            'daily_cost'  => (int) ceil($cost / $data['days']),
+            'total_cost'  => $cost,
+            'start_date'  => now()->toDateString(),
+            'end_date'    => now()->addDays($data['days'])->toDateString(),
+            'status'      => 'pending', // 관리자 승인 후 active
+        ]);
+
+        \Cache::forget("banner_text_inline_{$data['page']}");
+        \Cache::forget("banner_text_inline_all");
+
+        return response()->json([
+            'success' => true,
+            'message' => "광고 신청 완료! {$cost}P 차감. 관리자 승인 후 활성화됩니다.",
+            'data'    => $ad,
+        ]);
+    }
+
+    /**
+     * 텍스트 인라인 광고 (리스트 중간 · 상세 본문 하단 공용)
+     * GET /api/banners/text-inline?page=community
+     *   ad_type='text' + position='inline-text' 중 bid_amount 최고가 확정 + 타입 필터
+     *   10분 Redis 캐시
+     */
+    public function textInline(Request $request)
+    {
+        $page = $request->page ?: 'home';
+        $cacheKey = "banner_text_inline_{$page}";
+        $cached = \Cache::get($cacheKey);
+        if ($cached) {
+            if (isset($cached->id)) BannerAd::where('id', $cached->id)->increment('impressions');
+            return response()->json(['success' => true, 'data' => $cached]);
+        }
+
+        // 상위 10개 중 bid_amount 가중 랜덤 (높은 입찰가가 더 자주 노출)
+        $ads = BannerAd::active()
+            ->where('ad_type', 'text')
+            ->where('position', 'inline-text')
+            ->where(function ($q) use ($page) {
+                $q->where('page', $page)->orWhere('page', 'all')
+                  ->orWhereJsonContains('target_pages', $page)
+                  ->orWhere('target_pages', 'LIKE', '%"' . $page . '"%');
+            })
+            ->orderByDesc('bid_amount')
+            ->limit(10)
+            ->get();
+
+        if ($ads->isEmpty()) return response()->json(['success' => true, 'data' => null]);
+
+        // 가중치 = bid_amount / 100 (최소 1). 높은 입찰 = 더 자주.
+        $weighted = [];
+        foreach ($ads as $a) {
+            $w = max(1, (int) ($a->bid_amount / 100));
+            for ($i = 0; $i < $w; $i++) $weighted[] = $a;
+        }
+        $ad = $weighted[array_rand($weighted)];
+
+        $ad->increment('impressions');
+        \Cache::put($cacheKey, $ad, 300); // 5분 회전
+        return response()->json(['success' => true, 'data' => $ad]);
+    }
+
+    /**
      * 모바일 전용 단일 슬롯 배너
      * GET /api/banners/mobile-slot?page=home&slot=premium|random
      *   premium → 슬롯 1 의 bid_amount 최고가 1개 확정

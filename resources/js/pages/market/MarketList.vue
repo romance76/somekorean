@@ -188,11 +188,13 @@
         </div>
       </div>
       <MobileAdInline v-if="i === 4" page="market" />
+      <TextInlineAd v-if="i === 5" page="market" class="col-span-full" />
       </template>
     </div>
     <!-- 리스트형 뷰 -->
     <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
+      <TextInlineAd v-if="i === 5" page="market" />
       <div @click="openItem(item)"
         class="flex border-b border-gray-50 hover:border-l-2 transition cursor-pointer overflow-hidden"
         :class="promoRowClass(item)">
@@ -229,6 +231,7 @@
         </div>
       </div>
       <MobileAdInline v-if="i === 4" page="market" />
+      <TextInlineAd v-if="i === 5" page="market" />
       </template>
     </div>
 
@@ -255,6 +258,7 @@ import CommentSection from '../../components/CommentSection.vue'
 import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
+import TextInlineAd from '../../components/TextInlineAd.vue'
 import BookmarkToggle from '../../components/BookmarkToggle.vue'
 
 const auth = useAuthStore()

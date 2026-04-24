@@ -9,6 +9,7 @@ class BannerAd extends Model
     protected $fillable = [
         'user_id', 'title', 'image_url', 'link_url',
         'page', 'target_pages', 'position', 'slot_number',
+        'ad_type', 'phone', 'description',
         'geo_scope', 'geo_value',
         'start_date', 'end_date', 'auction_month', 'auction_rank',
         'daily_cost', 'total_cost', 'bid_amount',

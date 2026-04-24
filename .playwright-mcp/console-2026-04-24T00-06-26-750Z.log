@@ -168,3 +168,24 @@
 [ 8110379ms] [LOG] [PeerJS] ✅ Connected as sk-202-8l3i @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
 [ 8110626ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-D0kywsP1.js:47
 [ 8134550ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://awesomekorean.com/storage//storage/avatars/img_69ea2201ab9733.97381590.png:0
+[ 9238717ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[ 9238718ms] [LOG] [PeerJS] Initializing as sk-202-bf9l @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[ 9238720ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[ 9238914ms] [LOG] [PeerJS] ✅ Connected as sk-202-bf9l @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[ 9239351ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://awesomekorean.com/storage//storage/avatars/img_69ea2201ab9733.97381590.png:0
+[ 9247922ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[ 9788798ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9813808ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9838802ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/heartbeat:0
+[ 9838898ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/notifications:0
+[ 9838914ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9863796ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9888804ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9913789ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9938801ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9963790ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[ 9988801ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[10013802ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[10038802ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[10063791ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[10088801ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0

@@ -1,0 +1,46 @@
+[      39ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[      41ms] [LOG] [PeerJS] Initializing as sk-202-c4kr @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[      41ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[     262ms] [LOG] [PeerJS] ✅ Connected as sk-202-c4kr @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[    1634ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:47
+[    4335ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[    4335ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[    4335ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://awesomekorean.com/dashboard:0
+[    9031ms] [ERROR] TypeError: ce.find is not a function
+    at xy.fn (https://awesomekorean.com/build/assets/AdApply-DQIfwaP9.js:1:6128)
+    at cd (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:25923)
+    at get value (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:37546)
+    at Proxy.<anonymous> (https://awesomekorean.com/build/assets/AdApply-DQIfwaP9.js:7:2651)
+    at ql (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:63272)
+    at rd.ie [as fn] (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:72796)
+    at rd.run (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:24510)
+    at rd.runIfDirty (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:24820)
+    at Ds (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:39448)
+    at Sd (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:41201) @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:7
+[   15134ms] [ERROR] TypeError: ce.find is not a function
+    at xy.fn (https://awesomekorean.com/build/assets/AdApply-DQIfwaP9.js:1:6128)
+    at cd (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:25923)
+    at get value (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:37546)
+    at Proxy.<anonymous> (https://awesomekorean.com/build/assets/AdApply-DQIfwaP9.js:7:2651)
+    at ql (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:63272)
+    at rd.ie [as fn] (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:72796)
+    at rd.run (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:24510)
+    at rd.runIfDirty (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:24820)
+    at Ds (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:39448)
+    at Sd (https://awesomekorean.com/build/assets/app-DnwYba8f.js:8:41201) @ https://awesomekorean.com/build/assets/app-DnwYba8f.js:7
+[  525129ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  550118ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  575130ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  600190ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/heartbeat:0
+[  600200ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  600201ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/notifications:0
+[  625113ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  650120ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  675124ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  700118ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  725124ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  750118ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  775125ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  800122ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  825110ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0
+[  850118ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/comms/presence/ping:0

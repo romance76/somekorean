@@ -1,0 +1,187 @@
+<template>
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-2xl mx-auto px-4 py-5">
+    <RouterLink to="/ad-apply" class="text-xs text-gray-500 hover:text-amber-600 mb-2 block">← 이미지 광고 신청으로</RouterLink>
+    <h1 class="text-xl font-black text-gray-800 mb-1">📝 텍스트 인라인 광고 신청</h1>
+    <p class="text-sm text-gray-500 mb-4">상호 + 전화 + 한 줄 설명으로 리스트/상세 중간에 노출 · 이미지 불필요</p>
+
+    <!-- 실시간 미리보기 -->
+    <div class="mb-5">
+      <div class="text-[11px] font-bold text-gray-500 mb-1.5">🔍 실시간 미리보기 (실제 노출 모양)</div>
+      <TextInlineAd :manualAd="previewAd" :autoLoad="false" />
+    </div>
+
+    <!-- 입력 폼 -->
+    <div class="bg-white rounded-xl border shadow-sm p-5 space-y-4">
+      <!-- 상호 -->
+      <div>
+        <label class="text-xs font-bold text-gray-700 block mb-1">상호 *</label>
+        <input v-model="form.title" maxlength="30" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+          placeholder="예: 💈 강남미용실" />
+        <div class="text-[10px] text-gray-400 mt-0.5">{{ form.title.length }}/30 · 이모지 앞에 붙이면 눈에 잘 띕니다</div>
+      </div>
+
+      <!-- 전화 -->
+      <div>
+        <label class="text-xs font-bold text-gray-700 block mb-1">전화번호</label>
+        <input v-model="form.phone" maxlength="20" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+          placeholder="예: 770-555-1234" />
+      </div>
+
+      <!-- 설명 -->
+      <div>
+        <label class="text-xs font-bold text-gray-700 block mb-1">한 줄 설명 *</label>
+        <input v-model="form.description" maxlength="120" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+          placeholder="예: 한인 전용 $30부터 · 첫방문 20% 할인 · Duluth GA" />
+        <div class="text-[10px] text-gray-400 mt-0.5">{{ form.description.length }}/120</div>
+      </div>
+
+      <!-- 링크 -->
+      <div>
+        <label class="text-xs font-bold text-gray-700 block mb-1">클릭 시 이동 링크 (선택)</label>
+        <input v-model="form.link_url" type="url" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+          placeholder="https://example.com" />
+      </div>
+
+      <!-- 노출 페이지 -->
+      <div>
+        <label class="text-xs font-bold text-gray-700 block mb-2">노출 페이지 *</label>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <button v-for="p in pages" :key="p.value" type="button"
+            @click="form.page = p.value"
+            :class="form.page === p.value ? 'bg-purple-100 border-purple-400 text-purple-800' : 'bg-white border-gray-200 text-gray-600 hover:border-purple-200'"
+            class="border-2 rounded-lg px-3 py-2 text-xs font-bold transition">
+            {{ p.icon }} {{ p.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 기간 -->
+      <div>
+        <label class="text-xs font-bold text-gray-700 block mb-2">노출 기간 *</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button v-for="p in periods" :key="p.days" type="button"
+            @click="form.period = p.days"
+            :class="form.period === p.days ? 'bg-purple-100 border-purple-400 text-purple-800' : 'bg-white border-gray-200 text-gray-600 hover:border-purple-200'"
+            class="border-2 rounded-lg p-3 text-center transition">
+            <div class="text-sm font-black">{{ p.label }}</div>
+            <div class="text-[11px] font-bold text-purple-600 mt-1">{{ p.price.toLocaleString() }}P</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 결제 요약 -->
+      <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-purple-700">총 결제 금액</div>
+          <div class="text-[10px] text-gray-500">입찰가 (높을수록 노출 확률 ↑) 기본 {{ selectedPrice.toLocaleString() }}P</div>
+        </div>
+        <div class="text-right">
+          <input v-model.number="form.bid_amount" type="number" :min="selectedPrice" step="100"
+            class="w-32 border rounded-lg px-2 py-1 text-right text-lg font-black text-purple-800" />
+          <div class="text-[10px] text-gray-400">P (최소 {{ selectedPrice.toLocaleString() }})</div>
+        </div>
+      </div>
+
+      <!-- 제출 -->
+      <button @click="submit" :disabled="!canSubmit || submitting"
+        class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black py-3 rounded-lg disabled:opacity-50 hover:shadow-lg transition">
+        {{ submitting ? '신청 중...' : `광고 신청 (${(form.bid_amount || 0).toLocaleString()}P)` }}
+      </button>
+
+      <p v-if="!auth.isLoggedIn" class="text-xs text-center text-red-500">로그인 후 신청 가능합니다</p>
+      <p v-else-if="(auth.user?.points || 0) < form.bid_amount" class="text-xs text-center text-red-500">
+        포인트 부족 · 보유: {{ (auth.user?.points || 0).toLocaleString() }}P
+      </p>
+    </div>
+  </div>
+</div>
+</template>
+
+<script setup>
+import { ref, reactive, computed } from 'vue'
+import { useRouter, RouterLink } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
+import { useSiteStore } from '../../stores/site'
+import TextInlineAd from '../../components/TextInlineAd.vue'
+import axios from 'axios'
+
+const router = useRouter()
+const auth = useAuthStore()
+const site = useSiteStore()
+const submitting = ref(false)
+
+const form = reactive({
+  title: '',
+  phone: '',
+  description: '',
+  link_url: '',
+  page: 'community',
+  period: 30,
+  bid_amount: 1000,
+})
+
+const pages = [
+  { value: 'all',         icon: '🌐', label: '전체' },
+  { value: 'home',        icon: '🏠', label: '홈' },
+  { value: 'community',   icon: '💬', label: '커뮤니티' },
+  { value: 'market',      icon: '🛒', label: '장터' },
+  { value: 'jobs',        icon: '💼', label: '구인구직' },
+  { value: 'realestate',  icon: '🏠', label: '부동산' },
+  { value: 'directory',   icon: '🏪', label: '업소록' },
+  { value: 'clubs',       icon: '👥', label: '동호회' },
+  { value: 'events',      icon: '🎉', label: '이벤트' },
+]
+
+const periods = [
+  { days: 7,  label: '7일',  price: 500 },
+  { days: 30, label: '30일', price: 1000 },
+  { days: 90, label: '90일', price: 2500 },
+]
+
+const selectedPrice = computed(() => periods.find(p => p.days === form.period)?.price || 1000)
+
+// 페이지/기간 선택 시 기본 입찰가 자동 세팅
+import { watch } from 'vue'
+watch(() => form.period, (v) => {
+  const base = periods.find(p => p.days === v)?.price || 1000
+  if (form.bid_amount < base) form.bid_amount = base
+})
+
+const previewAd = computed(() => ({
+  id: 0,
+  title: form.title || '📝 상호를 입력하세요',
+  phone: form.phone,
+  description: form.description || '설명을 입력하면 여기에 보입니다',
+}))
+
+const canSubmit = computed(() =>
+  auth.isLoggedIn
+  && form.title.trim()
+  && form.description.trim()
+  && form.page
+  && form.bid_amount >= selectedPrice.value
+  && (auth.user?.points || 0) >= form.bid_amount
+)
+
+async function submit() {
+  if (!canSubmit.value || submitting.value) return
+  submitting.value = true
+  try {
+    const { data } = await axios.post('/api/banners/text-apply', {
+      title: form.title,
+      phone: form.phone || null,
+      description: form.description,
+      link_url: form.link_url || null,
+      page: form.page,
+      days: form.period,
+      bid_amount: form.bid_amount,
+    })
+    site.toast?.(data.message || '광고 신청 완료! 검토 후 활성화됩니다.', 'success')
+    router.push('/dashboard')
+  } catch (e) {
+    site.toast?.(e.response?.data?.message || '신청 실패', 'error')
+  }
+  submitting.value = false
+}
+</script>

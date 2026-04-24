@@ -107,6 +107,8 @@ Route::get('/thumb', [ThumbnailController::class, 'show']);
 Route::get('/banners/active', [\App\Http\Controllers\API\BannerController::class, 'show']);
 Route::get('/banners/mobile', [\App\Http\Controllers\API\BannerController::class, 'mobileAd']);
 Route::get('/banners/mobile-slot', [\App\Http\Controllers\API\BannerController::class, 'mobileSlot']);
+Route::get('/banners/text-inline', [\App\Http\Controllers\API\BannerController::class, 'textInline']);
+Route::middleware('auth:sanctum')->post('/banners/text-apply', [\App\Http\Controllers\API\BannerController::class, 'textApply']);
 Route::get('/banners/all', [\App\Http\Controllers\API\BannerController::class, 'all']);
 Route::get('/hero-banners', function () {
     return response()->json(['success' => true, 'data' => \App\Models\HeroBanner::active()->orderBy('sort_order')->get()]);

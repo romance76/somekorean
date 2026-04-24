@@ -147,9 +147,9 @@
             <div class="list-row">📝 아이템 2</div>
             <div class="list-row">📝 아이템 3</div>
             <div class="list-row">📝 아이템 4</div>
-            <div class="slot slot-random inline-ad" @click="selectSlot('list-inline')" :class="{highlight: highlighted==='list-inline'}">
-              <div class="slot-tag">📢 인라인 광고 · 리스트 중간</div>
-              <div class="slot-size">728×90 (PC) · 스크롤 중 노출</div>
+            <div class="slot slot-text inline-ad" @click="selectSlot('list-inline')" :class="{highlight: highlighted==='list-inline'}">
+              <div class="slot-tag">📝 텍스트 인라인 광고 · 리스트 중간</div>
+              <div class="slot-size">상호 + ☎ + 한 줄 · 마퀴 애니 · <strong>1,000P/월~</strong></div>
             </div>
             <div class="list-row">📝 아이템 5</div>
             <div class="list-row">📝 아이템 6</div>
@@ -244,9 +244,9 @@
             <div class="main-block" style="padding:22px">🖼️ 이미지 갤러리 / 썸네일</div>
             <div class="main-block">제목 · 가격/급여 · 카테고리 · 위치 · 작성자</div>
             <div class="main-block" style="padding:32px">본문 내용 / 상세 설명</div>
-            <div class="slot slot-random inline-ad" @click="selectSlot('detail-inline')" :class="{highlight: highlighted==='detail-inline'}">
-              <div class="slot-tag">📢 본문 하단 인라인 광고</div>
-              <div class="slot-size">728×90 · 본문 읽고 난 직후 노출</div>
+            <div class="slot slot-text inline-ad" @click="selectSlot('detail-inline')" :class="{highlight: highlighted==='detail-inline'}">
+              <div class="slot-tag">📝 텍스트 인라인 광고 · 본문 하단</div>
+              <div class="slot-size">상호 + ☎ + 한 줄 · 마퀴 애니 · <strong>1,000P/월~</strong></div>
             </div>
             <div class="main-block">💬 댓글 / 리뷰 / 문의</div>
             <div class="main-block">◀ 이전글 · 다음글 ▶</div>
@@ -309,10 +309,10 @@
 
     <!-- 공통 하단: 규칙 요약 -->
     <div class="bp-rules">
-      <div class="rule-item rule-gold">🥇 프리미엄 — <strong>bid_amount 최고가 1명 확정</strong> (노출 보장)</div>
-      <div class="rule-item rule-silver">🥈 스탠다드 — Top N <strong>랜덤 회전</strong> (최대 2)</div>
-      <div class="rule-item rule-bronze">🥉 이코노미 — Top N <strong>랜덤 회전</strong> (최대 5)</div>
-      <div class="rule-item rule-random">🎲 모바일 랜덤 — 슬롯 2/3 <strong>가중 랜덤</strong> (60:40)</div>
+      <div class="rule-item rule-gold">🥇 프리미엄 — <strong>최고 입찰가 확정</strong> (8,000P/월)</div>
+      <div class="rule-item rule-silver">🥈 스탠다드 — Top N 랜덤 회전 (5,000P/월)</div>
+      <div class="rule-item rule-bronze">🥉 이코노미 — Top N 랜덤 회전 (3,000P/월)</div>
+      <div class="rule-item rule-text">📝 <strong>텍스트 인라인</strong> · 상호+전화+한줄 (1,000P/월~)</div>
     </div>
 
     <div class="bp-foot">
@@ -387,6 +387,7 @@ function selectSlot(key) { highlighted.value = highlighted.value === key ? null 
 .slot-standard { background: linear-gradient(135deg, #64748b, #475569); }
 .slot-economy { background: linear-gradient(135deg, #c2410c, #9a3412); }
 .slot-random { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.slot-text { background: linear-gradient(135deg, #c026d3, #a21caf); }
 .slot-tag { font-size: 10px; font-weight: 900; margin-bottom: 2px; }
 .slot-size { font-size: 9px; opacity: 0.9; font-family: monospace; }
 
@@ -425,6 +426,7 @@ function selectSlot(key) { highlighted.value = highlighted.value === key ? null 
 .rule-silver { background: #e5e7eb; color: #334155; }
 .rule-bronze { background: #fed7aa; color: #7c2d12; }
 .rule-random { background: #ede9fe; color: #5b21b6; }
+.rule-text { background: #fdf4ff; color: #86198f; }
 
 .bp-foot { padding: 12px 22px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .bp-hint { font-size: 11px; color: #6b7280; }

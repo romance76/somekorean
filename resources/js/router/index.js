@@ -155,6 +155,7 @@ const routes = [
   { path: '/profile/:id', name: 'profile', component: p('profile/UserProfile') },
   { path: '/dashboard', name: 'dashboard', component: p('profile/UserDashboard'), meta: { auth: true } },
   { path: '/ad-apply', name: 'ad-apply', component: p('ads/AdApply'), meta: { auth: true } },
+  { path: '/ad-apply/text', name: 'ad-apply-text', component: p('ads/AdApplyText'), meta: { auth: true } },
 
   // Admin
   {
