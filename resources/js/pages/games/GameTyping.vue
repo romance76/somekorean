@@ -71,6 +71,7 @@
         <div class="r-stat"><span>점수</span><strong>{{ score }}점</strong></div>
       </div>
       <div v-if="leveled" class="levelup-badge">🌟 레벨업! 레벨 {{ level }}!</div>
+      <GameResultExtras :rec="rec" slug="typing" />
       <button class="start-btn" @click="startGame">다시 하기 🔄</button>
       <button class="home-btn" @click="$router.push('/games')">홈으로 🏠</button>
     </div>
@@ -81,7 +82,10 @@
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import GameResultExtras from '../../components/GameResultExtras.vue'
+import { useGameRecord } from '../../composables/useGameRecord'
 const router = useRouter()
+const rec = useGameRecord('typing')
 const level = ref(parseInt(localStorage.getItem('typing_level')||'1'))
 const score = ref(0); const typed = ref(0); const mistakes = ref(0)
 const leveled = ref(false); const phase = ref('start')
@@ -119,6 +123,7 @@ function getPool() {
 function startGame() {
   score.value=0; typed.value=0; mistakes.value=0; leveled.value=false
   phase.value='play'; timeLeft.value=totalTime; userInput.value=''; inputStatus.value=''
+  rec.start(level.value)
   wordQueue.value = shuffle([...getPool(), ...getPool()]).slice(0, 20)
   loadNextWord()
   startTimer()
@@ -172,6 +177,7 @@ async function endGame() {
     level.value++; localStorage.setItem('typing_level', level.value); leveled.value = true
     speak('훌륭해요! 레벨업!')
   } else speak('잘 했어요! 더 빠르게 연습해봐요!')
+  await rec.end({ won: passed, leveledUp: leveled.value, score: score.value })
   const token = localStorage.getItem('token')
   if (token) {
     try {

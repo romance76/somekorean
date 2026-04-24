@@ -49,6 +49,7 @@
       <div class="res-score">{{ score }}점</div>
       <div class="res-detail">{{ correct }}/{{ totalQ }} 정답</div>
       <div v-if="leveled" class="levelup">🎉 레벨업! 레벨 {{ level }}!</div>
+      <GameResultExtras :rec="rec" slug="spelling" />
       <div class="res-btns">
         <button class="rbtn" @click="startGame">다시 🔄</button>
         <button class="rbtn home" @click="goBack">홈 🏠</button>
@@ -60,7 +61,10 @@
 <script setup>
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import GameResultExtras from '../../components/GameResultExtras.vue'
+import { useGameRecord } from '../../composables/useGameRecord'
 const router = useRouter()
+const rec = useGameRecord('spelling')
 
 const quizDB = [
   {level:1,context:'밥을 <u>먹었어요</u> / <u>먹었어요</u>',options:[{text:'먹었어요',correct:true},{text:'먹었서요',correct:false}],explain:'"먹었어요"가 올바른 표현이에요.'},
@@ -117,6 +121,7 @@ function startGame() {
   maxTime.value = level.value<=2?20:level.value<=4?15:10
   const pool = getPool()
   queue = shuffle(pool).slice(0,totalQ.value)
+  rec.start(level.value)
   phase.value='play'
   nextQuestion()
 }
@@ -155,9 +160,11 @@ function selectAnswer(opt) {
   setTimeout(nextQuestion,2800)
 }
 
-function endGame() {
+async function endGame() {
   clearInterval(timer); phase.value='result'
-  if(correct.value>=8){ level.value++; localStorage.setItem('spelling_level',level.value); leveled.value=true; speak('레벨업!') }
+  const won = correct.value >= 8
+  if(won){ level.value++; localStorage.setItem('spelling_level',level.value); leveled.value=true; speak('레벨업!') }
+  await rec.end({ won, leveledUp: leveled.value, score: score.value })
 }
 
 function goBack() { clearInterval(timer); router.push('/games') }

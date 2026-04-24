@@ -47,6 +47,7 @@
       <h2 class="end-title">훌륭해요!</h2>
       <p class="end-score">{{ score }}점 · {{ correct }}/{{ totalQ }} 정답</p>
       <div v-if="leveled" class="levelup-badge">🌟 레벨업! 레벨 {{ level }}!</div>
+      <GameResultExtras :rec="rec" slug="shapes" />
       <button class="start-btn" @click="startGame">다시 하기 🔄</button>
     </div>
 
@@ -67,7 +68,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import GameResultExtras from '../../components/GameResultExtras.vue'
+import { useGameRecord } from '../../composables/useGameRecord'
 const router = useRouter()
+const rec = useGameRecord('shapes')
 const level = ref(parseInt(localStorage.getItem('shapes_level')||'1'))
 const score = ref(0)
 const qIdx = ref(0)
@@ -118,6 +122,7 @@ function buildQuestions() {
 function startGame() {
   score.value=0; qIdx.value=0; correct.value=0; leveled.value=false
   answered.value=false; showFeedback.value=false; phase.value='play'
+  rec.start(level.value)
   questions.value = buildQuestions()
   speak('도형 이름을 맞춰보세요!')
 }
@@ -149,14 +154,16 @@ function answer(opt) {
   triggerFeedback(isCorrect)
 }
 
-function endGame() {
+async function endGame() {
   phase.value = 'end'
   const needed = Math.ceil(totalQ * 0.7)
-  if (correct.value >= needed) {
+  const won = correct.value >= needed
+  if (won) {
     level.value++; localStorage.setItem('shapes_level', level.value)
     leveled.value = true
     speak('훌륭해요! 레벨업!')
   } else { speak('잘 했어요! 다시 도전해봐요!') }
+  await rec.end({ won, leveledUp: leveled.value, score: score.value })
 }
 </script>
 
