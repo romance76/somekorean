@@ -280,47 +280,7 @@
           </div>
         </div>
 
-        <!-- 간단 참가자 액션 모달 -->
-        <div v-if="partModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="partModal=null">
-          <div class="bg-white rounded-xl w-full max-w-sm shadow-xl p-4 space-y-3">
-            <div class="flex items-center gap-2">
-              <img v-if="partModal.user.avatar" :src="partModal.user.avatar" class="w-10 h-10 rounded-full object-cover" />
-              <div v-else class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-700">{{ (partModal.user.nickname || partModal.user.name || '?')[0] }}</div>
-              <div>
-                <div class="font-bold text-gray-800 text-sm">{{ partModal.user.nickname || partModal.user.name }}</div>
-                <div class="text-[10px] text-gray-400">{{ partModal.user.city }}{{ partModal.user.state ? ', '+partModal.user.state : '' }}</div>
-              </div>
-            </div>
-            <h3 class="font-bold text-sm text-gray-800">
-              <span v-if="partModal.type === 'friend'">👫 친구 요청 보내기</span>
-              <span v-else-if="partModal.type === 'message'">✉️ 쪽지 보내기</span>
-              <span v-else>🚨 신고</span>
-            </h3>
-            <textarea v-if="partModal.type === 'message'" v-model="partInput" rows="4" maxlength="500" placeholder="쪽지 내용..." class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 resize-none"></textarea>
-            <div v-else-if="partModal.type === 'friend'">
-              <input v-model="partInput" maxlength="100" placeholder="인사말 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
-            </div>
-            <div v-else>
-              <select v-model="partReportReason" class="w-full border rounded-lg px-3 py-2 text-sm mb-2">
-                <option value="spam">스팸/광고</option>
-                <option value="abuse">욕설/비방</option>
-                <option value="inappropriate">부적절한 내용</option>
-                <option value="harassment">괴롭힘</option>
-                <option value="other">기타</option>
-              </select>
-              <textarea v-model="partInput" rows="3" maxlength="500" placeholder="신고 상세 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
-            </div>
-            <div v-if="partMsg" class="text-xs" :class="partMsgOk ? 'text-green-600' : 'text-red-500'">{{ partMsg }}</div>
-            <div class="flex gap-2 justify-end">
-              <button @click="partModal=null" class="text-gray-500 text-xs px-4 py-2">취소</button>
-              <button @click="submitPartAction" :disabled="partSubmitting"
-                class="font-bold px-4 py-2 rounded-lg text-xs text-white disabled:opacity-50"
-                :class="partModal.type === 'report' ? 'bg-red-500 hover:bg-red-600' : partModal.type === 'friend' ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'">
-                {{ partSubmitting ? '...' : (partModal.type === 'report' ? '신고 접수' : partModal.type === 'friend' ? '요청 보내기' : '쪽지 전송') }}
-              </button>
-            </div>
-          </div>
-        </div>
+        <!-- (참가자 액션 모달은 사이드바 hidden 문제로 아래 최상위 영역에서 렌더링) -->
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
           <div class="font-bold text-xs text-gray-800 mb-2">📢 채팅 안내</div>
@@ -329,6 +289,48 @@
             <div>• 로그인 후 메시지를 보낼 수 있어요</div>
             <div>• 욕설/광고는 자동 차단됩니다</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 👫✉️🚨 참가자 액션 모달 (사이드바 hidden lg:block 밖에서 렌더 — 모바일에서도 동작) -->
+    <div v-if="partModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style="z-index: 85;" @click.self="partModal=null">
+      <div class="bg-white rounded-xl w-full max-w-sm shadow-xl p-4 space-y-3">
+        <div class="flex items-center gap-2">
+          <img v-if="partModal.user.avatar" :src="partModal.user.avatar" class="w-10 h-10 rounded-full object-cover" />
+          <div v-else class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-700">{{ (partModal.user.nickname || partModal.user.name || '?')[0] }}</div>
+          <div>
+            <div class="font-bold text-gray-800 text-sm">{{ partModal.user.nickname || partModal.user.name }}</div>
+            <div class="text-[10px] text-gray-400">{{ partModal.user.city || '' }}{{ partModal.user.state ? ', '+partModal.user.state : '' }}</div>
+          </div>
+        </div>
+        <h3 class="font-bold text-sm text-gray-800">
+          <span v-if="partModal.type === 'friend'">👫 친구 요청 보내기</span>
+          <span v-else-if="partModal.type === 'message'">✉️ 쪽지 보내기</span>
+          <span v-else>🚨 신고</span>
+        </h3>
+        <textarea v-if="partModal.type === 'message'" v-model="partInput" rows="4" maxlength="500" placeholder="쪽지 내용..." class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 resize-none"></textarea>
+        <div v-else-if="partModal.type === 'friend'">
+          <input v-model="partInput" maxlength="100" placeholder="인사말 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+        </div>
+        <div v-else>
+          <select v-model="partReportReason" class="w-full border rounded-lg px-3 py-2 text-sm mb-2">
+            <option value="spam">스팸/광고</option>
+            <option value="abuse">욕설/비방</option>
+            <option value="inappropriate">부적절한 내용</option>
+            <option value="harassment">괴롭힘</option>
+            <option value="other">기타</option>
+          </select>
+          <textarea v-model="partInput" rows="3" maxlength="500" placeholder="신고 상세 (선택)" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+        </div>
+        <div v-if="partMsg" class="text-xs" :class="partMsgOk ? 'text-green-600' : 'text-red-500'">{{ partMsg }}</div>
+        <div class="flex gap-2 justify-end">
+          <button @click="partModal=null" class="text-gray-500 text-xs px-4 py-2">취소</button>
+          <button @click="submitPartAction" :disabled="partSubmitting"
+            class="font-bold px-4 py-2 rounded-lg text-xs text-white disabled:opacity-50"
+            :class="partModal.type === 'report' ? 'bg-red-500 hover:bg-red-600' : partModal.type === 'friend' ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'">
+            {{ partSubmitting ? '...' : (partModal.type === 'report' ? '신고 접수' : partModal.type === 'friend' ? '요청 보내기' : '쪽지 전송') }}
+          </button>
         </div>
       </div>
     </div>
@@ -998,6 +1000,7 @@ async function sendMsg() {
     })
     newMsg.value = ''
     clearFiles()
+    showEmojiPicker.value = false
     await nextTick()
     if (msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight
   } catch (e) {
