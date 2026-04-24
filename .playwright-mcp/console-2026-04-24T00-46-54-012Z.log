@@ -1,0 +1,5 @@
+[     207ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     208ms] [LOG] [PeerJS] Initializing as sk-202-d9si @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     209ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     468ms] [LOG] [PeerJS] ✅ Connected as sk-202-d9si @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[   16118ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47

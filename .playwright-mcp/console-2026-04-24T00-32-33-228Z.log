@@ -1,0 +1,5 @@
+[     209ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     209ms] [LOG] [PeerJS] Initializing as sk-202-4lf6 @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     211ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     442ms] [LOG] [PeerJS] ✅ Connected as sk-202-4lf6 @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     868ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://awesomekorean.com/storage//storage/avatars/img_69ea2201ab9733.97381590.png:0

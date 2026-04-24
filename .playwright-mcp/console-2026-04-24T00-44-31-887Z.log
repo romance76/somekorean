@@ -1,0 +1,8 @@
+[     147ms] [LOG] [CommHub] Initializing for user: 202 @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     149ms] [LOG] [PeerJS] Initializing as sk-202-8epj @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     150ms] [WARNING] [PushService] Firebase config missing — push disabled @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     392ms] [LOG] [PeerJS] ✅ Connected as sk-202-8epj @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[     661ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://awesomekorean.com/storage//storage/avatars/img_69ea2201ab9733.97381590.png:0
+[    6524ms] [LOG] [Ringtone] <audio> source pre-loaded (no play) @ https://awesomekorean.com/build/assets/app-Ft3sy7jX.js:47
+[   82099ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://awesomekorean.com/api/market/324/boost:0
+[   95003ms] [ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Content) @ https://awesomekorean.com/api/market/324/boost:0

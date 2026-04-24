@@ -599,12 +599,19 @@ async function clearPromotion(item) {
   if (!confirm('상위노출을 즉시 해제할까요? (포인트 환불 없음)')) return
   try {
     await axios.post(`/api/admin/${detectResourceFromUrl()}/${item.id}/clear-promotion`)
-    // 로컬 업데이트
-    item.promotion_tier = 'none'
-    item.promotion_expires_at = null
-    item.boosted_until = null
+    // 리스트의 실제 항목을 찾아 in-place 교체 (Vue reactivity 안전)
+    const idx = items.value.findIndex(x => x.id === item.id)
+    if (idx >= 0) {
+      items.value[idx] = {
+        ...items.value[idx],
+        promotion_tier: 'none',
+        promotion_expires_at: null,
+        boosted_until: null,
+        promotion_states: null,
+      }
+    }
     if (activeItem.value?.id === item.id) {
-      activeItem.value = { ...item }
+      activeItem.value = { ...(idx >= 0 ? items.value[idx] : item) }
     }
   } catch (e) {
     alert(e.response?.data?.message || '해제 실패')
