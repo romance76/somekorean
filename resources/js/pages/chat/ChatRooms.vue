@@ -300,10 +300,10 @@
       </div>
     </div>
 
-    <!-- 🖼️ 이미지 라이트박스 -->
-    <div v-if="lightboxSrc" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" @click="lightboxSrc = null">
-      <img :src="lightboxSrc" class="max-w-full max-h-full object-contain" />
-      <button class="absolute top-4 right-4 text-white text-3xl">✕</button>
+    <!-- 🖼️ 이미지 라이트박스 — 모바일 채팅창(z-60)·새채팅 모달(z-70) 위에 표시 -->
+    <div v-if="lightboxSrc" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4" style="z-index: 80;" @click="lightboxSrc = null">
+      <img :src="lightboxSrc" class="max-w-full max-h-full object-contain" @click.stop />
+      <button @click="lightboxSrc = null" class="absolute top-4 right-4 text-white text-3xl w-10 h-10 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60">✕</button>
     </div>
 
     <!-- 새 채팅 모달 (타입·참여자 선택 Issue #20) — z-[70] 로 NavBar/BottomNav 위에 -->
