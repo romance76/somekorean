@@ -104,6 +104,7 @@
         <div class="star-earn" v-if="earnedStars > 0">
           <div class="earn-anim">⭐ {{ earnedStars }} STAR 획득!</div>
         </div>
+        <GameResultExtras :rec="rec" slug="alphabet" />
         <div class="result-btns">
           <button class="retry-btn" @click="startGame(currentMode)">🔄 다시 하기</button>
           <button class="menu-btn" @click="gameState = 'mode'">📋 메뉴로</button>
@@ -117,8 +118,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import GameResultExtras from '../../components/GameResultExtras.vue'
+import { useGameRecord } from '../../composables/useGameRecord'
 
 const router = useRouter()
+const rec = useGameRecord('alphabet')
+// 모드별로 레벨 구분: case=1, word=2, sound=3
+const modeToLevel = { case: 1, word: 2, sound: 3 }
 
 const letters = [
   { upper: 'A', lower: 'a', emoji: '🍎', word: 'Apple' },
@@ -195,6 +201,7 @@ function startGame(mode) {
   selectedAnswer.value = null
   feedback.value = null
   questionPool.value = shuffle(letters).slice(0, totalQuestions)
+  rec.start(modeToLevel[mode] || 1)
   gameState.value = 'playing'
   loadQuestion()
 }
@@ -271,6 +278,7 @@ async function finishGame() {
       totalStars.value += earnedStars.value
     } catch (e) {}
   }
+  await rec.end({ won: score.value >= 7, leveledUp: false, score: score.value })
 }
 
 function playSound(type) {

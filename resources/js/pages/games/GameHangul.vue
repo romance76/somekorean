@@ -100,6 +100,7 @@
         ⭐ {{ starsEarned }} STAR 획득!
       </div>
       <div class="result-message">{{ resultMessage }}</div>
+      <GameResultExtras :rec="rec" slug="hangul" />
       <div class="result-buttons">
         <button class="btn-retry" @click="startGame">다시 하기 🎮</button>
         <button class="btn-home" @click="goBack">게임 목록 🏠</button>
@@ -117,8 +118,11 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import GameResultExtras from '../../components/GameResultExtras.vue'
+import { useGameRecord } from '../../composables/useGameRecord'
 
 const router = useRouter()
+const rec = useGameRecord('hangul')
 
 // ─── Sound System ────────────────────────────────────────────────────────────
 const speak = (text) => {
@@ -363,6 +367,7 @@ async function finishRound() {
   }
 
   claimReward()
+  rec.end({ won: true, leveledUp: didLevelUp, score: score.value })
 }
 
 function getLevelUpMsg(lv) {
@@ -401,8 +406,8 @@ function startGame() {
   showLevelUp.value = false
   answerResult.value = null
   feedbackMsg.value = ''
-  // Refresh level from storage in case it changed
   level.value = calcLevel(totalRoundsPlayed.value)
+  rec.start(level.value)
   pickQuestion()
 }
 
