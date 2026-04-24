@@ -300,10 +300,28 @@
       </div>
     </div>
 
-    <!-- 🖼️ 이미지 라이트박스 — 모바일 채팅창(z-60)·새채팅 모달(z-70) 위에 표시 -->
+    <!-- 🖼️ 이미지 라이트박스 — 어디든 탭하면 닫힘, 하단 툴바 액션 -->
     <div v-if="lightboxSrc" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4" style="z-index: 80;" @click="lightboxSrc = null">
-      <img :src="lightboxSrc" class="max-w-full max-h-full object-contain" @click.stop />
-      <button @click="lightboxSrc = null" class="absolute top-4 right-4 text-white text-3xl w-10 h-10 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60">✕</button>
+      <img :src="lightboxSrc" class="max-w-full max-h-full object-contain" />
+      <!-- 닫기 버튼 -->
+      <button @click.stop="lightboxSrc = null" class="absolute top-4 right-4 text-white text-2xl w-10 h-10 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 active:bg-black/70">✕</button>
+      <!-- 하단 툴바: 다운로드 / 공유 / 새창 (탭 전파 차단) -->
+      <div class="absolute left-0 right-0 flex items-center justify-center gap-6 text-white"
+        style="bottom: max(1rem, env(safe-area-inset-bottom));"
+        @click.stop>
+        <button @click.stop="downloadLightbox" class="flex flex-col items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/20 transition" title="다운로드">
+          <span class="text-2xl">⬇️</span>
+          <span class="text-[11px]">저장</span>
+        </button>
+        <button @click.stop="shareLightbox" class="flex flex-col items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/20 transition" title="공유">
+          <span class="text-2xl">🔗</span>
+          <span class="text-[11px]">공유</span>
+        </button>
+        <button @click.stop="openLightboxNewTab" class="flex flex-col items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/20 transition" title="새 창">
+          <span class="text-2xl">↗️</span>
+          <span class="text-[11px]">새창</span>
+        </button>
+      </div>
     </div>
 
     <!-- 새 채팅 모달 (타입·참여자 선택 Issue #20) — z-[70] 로 NavBar/BottomNav 위에 -->
@@ -427,6 +445,46 @@ const msgArea = ref(null)
 const selectedFiles = ref([])   // [{file, preview, type}]
 const sending = ref(false)
 const lightboxSrc = ref(null)
+
+async function downloadLightbox() {
+  const url = lightboxSrc.value
+  if (!url) return
+  try {
+    const res = await fetch(url, { credentials: 'omit' })
+    const blob = await res.blob()
+    const obj = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = obj
+    a.download = (url.split('/').pop() || 'image').split('?')[0] || 'image.jpg'
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(obj), 2000)
+  } catch {
+    // CORS 등으로 fetch 실패 시 새 탭 열기 fallback
+    window.open(url, '_blank', 'noopener')
+  }
+}
+
+async function shareLightbox() {
+  const url = lightboxSrc.value
+  if (!url) return
+  const absUrl = url.startsWith('http') ? url : (location.origin + url)
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: '이미지', url: absUrl })
+      return
+    }
+  } catch {} // 사용자 취소 무시
+  try {
+    await navigator.clipboard.writeText(absUrl)
+    siteStore.toast('링크가 복사되었습니다', 'success')
+  } catch {
+    window.prompt('이미지 링크', absUrl)
+  }
+}
+
+function openLightboxNewTab() {
+  if (lightboxSrc.value) window.open(lightboxSrc.value, '_blank', 'noopener')
+}
 
 function isAdminUser(u) {
   return u && ['admin', 'super_admin'].includes(u.role)
