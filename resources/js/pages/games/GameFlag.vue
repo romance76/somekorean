@@ -82,8 +82,12 @@
         alt="trophy" style="width:100px;height:100px"/>
     </div>
     <div class="result-score">{{ score }}점</div>
-    <div class="result-detail">{{ correct }} / {{ totalQ }} 정답</div>
+    <div class="result-detail">{{ correct }} / {{ totalQ }} 정답 · ⏱️ {{ formatTime(elapsedMs) }}</div>
     <div v-if="leveled" class="level-up-badge">🎉 레벨업! → 레벨 {{ level }}</div>
+    <div v-if="pointsEarned > 0" class="points-earned-badge">+{{ pointsEarned }}P 획득!</div>
+    <div v-if="newRecord" class="new-record-badge">⭐ 신기록! (이전: {{ prevTimeMs ? formatTime(prevTimeMs) : '처음 기록' }})</div>
+    <!-- 리더보드 -->
+    <GameLeaderboard ref="lbRef" slug="flag" :level="recordLevel" />
     <div class="result-btns">
       <button class="rbtn retry" @click="startGame">다시 하기 🔄</button>
       <button class="rbtn home" @click="$router.push('/games')">목록으로 🏠</button>
@@ -96,6 +100,9 @@
 import { ref, onUnmounted } from 'vue'
 import axios from 'axios'
 import GameShell from '../../components/GameShell.vue'
+import GameLeaderboard from '../../components/GameLeaderboard.vue'
+import { useAuthStore } from '../../stores/auth'
+import { useSiteStore } from '../../stores/site'
 
 const levelDesc = [
   {lv:1, desc:'친숙한 국가 (10개국)'},
@@ -126,6 +133,17 @@ const loadingPool = ref(false)
 let fbTimer = null
 let countTimer = null
 let queue = []
+// 시간 측정 + 기록 전송
+const startAt = ref(0)
+const elapsedMs = ref(0)
+const recordLevel = ref(1)      // 이번 판의 레벨 (레벨업 후에도 기록 조회용)
+const pointsEarned = ref(0)
+const newRecord = ref(false)
+const prevTimeMs = ref(null)
+const lbRef = ref(null)
+const auth = useAuthStore()
+const siteStore = useSiteStore()
+function formatTime(ms) { return (Math.round(ms / 10) / 100).toFixed(2) + '초' }
 
 function onImgError(e) {
   e.target.src = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f3f3/512.png'
@@ -152,6 +170,10 @@ async function startGame() {
   maxTime.value = level.value >= 4 ? 10 : 0
   queue = shuffle(pool.value).slice(0, Math.min(totalQ.value, pool.value.length))
   totalQ.value = queue.length
+  recordLevel.value = level.value
+  pointsEarned.value = 0; newRecord.value = false; prevTimeMs.value = null
+  elapsedMs.value = 0
+  startAt.value = Date.now()
   phase.value = 'play'
   loadQuestion()
 }
@@ -220,14 +242,39 @@ function triggerFeedback(isCorrect) {
   }, 50)
 }
 
-function endGame() {
+async function endGame() {
+  elapsedMs.value = Date.now() - startAt.value
   phase.value = 'result'
   const threshold = level.value <= 1 ? 7 : level.value <= 2 ? 8 : 9
-  if (correct.value >= threshold && level.value < 5) {
+  const won = correct.value >= threshold
+  const clearedLevel = recordLevel.value
+  if (won && level.value < 5) {
     level.value++
     localStorage.setItem('flag_level', level.value)
     leveled.value = true
     loadPool()
+  }
+  // 기록 저장 + 포인트 처리 (로그인한 사람만, 이겼을 때만)
+  if (auth.isLoggedIn && won) {
+    try {
+      const { data } = await axios.post('/api/games/result', {
+        game_slug: 'flag',
+        level: clearedLevel,
+        time_ms: elapsedMs.value,
+        score: score.value,
+        won: true,
+        leveled_up: leveled.value,
+      })
+      const r = data.data || {}
+      pointsEarned.value = r.points_earned || 0
+      newRecord.value = !!r.new_record
+      prevTimeMs.value = r.prev_time_ms
+      if (pointsEarned.value > 0) {
+        siteStore.toast(`+${pointsEarned.value}P 획득!`, 'success')
+        auth.user && (auth.user.points = r.balance ?? auth.user.points)
+      }
+      lbRef.value?.reload?.()
+    } catch {}
   }
 }
 
@@ -292,7 +339,9 @@ loadPool()
 .result-img { margin-bottom:10px; }
 .result-score { font-size:56px; font-weight:900; color:#1d4ed8; }
 .result-detail { color:#1e40af; font-size:18px; margin:6px 0 16px; }
-.level-up-badge { background:#3b82f6; color:#fff; padding:10px 24px; border-radius:20px; font-size:18px; font-weight:800; margin-bottom:20px; }
+.level-up-badge { background:#3b82f6; color:#fff; padding:10px 24px; border-radius:20px; font-size:18px; font-weight:800; margin-bottom:8px; }
+.points-earned-badge { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; padding:8px 20px; border-radius:18px; font-size:16px; font-weight:800; margin-bottom:8px; }
+.new-record-badge { background:linear-gradient(135deg,#ec4899,#be185d); color:#fff; padding:8px 20px; border-radius:18px; font-size:14px; font-weight:800; margin-bottom:12px; }
 .result-btns { display:flex; gap:12px; }
 .rbtn { padding:14px 28px; border-radius:20px; border:none; font-size:16px; font-weight:700; cursor:pointer; }
 .rbtn.retry { background:#3b82f6; color:#fff; }

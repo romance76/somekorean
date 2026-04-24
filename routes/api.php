@@ -161,6 +161,9 @@ Route::get('/games/group/{group}', [\App\Http\Controllers\API\GameController::cl
 // 퀴즈 문제 (공개: 동물/국기/속담 등에서 사용)
 Route::get('/quiz/{slug}', [\App\Http\Controllers\API\QuizQuestionController::class, 'publicIndex']);
 
+// 게임 리더보드 (공개 조회)
+Route::get('/games/{slug}/leaderboard', [\App\Http\Controllers\API\GameRecordController::class, 'leaderboard']);
+
 // 게임 호환 API (old_site GameLobby용)
 Route::get('/game-categories', function () {
     $settings = \App\Models\GameSetting::all()->groupBy('game_type');
@@ -176,6 +179,9 @@ Route::get('/places/nearby-schools', [PlacesController::class, 'nearbySchools'])
 // ─── Authenticated ───
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // 게임 결과 기록 (레벨업 +3P, 신기록 +10P)
+    Route::post('/games/result', [\App\Http\Controllers\API\GameRecordController::class, 'store']);
 
     // 온라인 heartbeat
     Route::post('/heartbeat', function () {

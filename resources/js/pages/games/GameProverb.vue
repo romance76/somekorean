@@ -40,8 +40,11 @@
     <div v-if="phase==='result'" class="result-box">
       <div style="font-size:80px">🏆</div>
       <div class="res-score">{{ score }}점</div>
-      <div class="res-detail">{{ correct }}/{{ totalQ }} 정답</div>
+      <div class="res-detail">{{ correct }}/{{ totalQ }} 정답 · ⏱️ {{ formatTime(elapsedMs) }}</div>
       <div v-if="leveled" class="levelup">🎉 레벨업! 레벨 {{ level }}!</div>
+      <div v-if="pointsEarned > 0" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; padding:8px 20px; border-radius:18px; font-size:16px; font-weight:800; margin:4px auto; display:inline-block;">+{{ pointsEarned }}P 획득!</div>
+      <div v-if="newRecord" style="background:linear-gradient(135deg,#ec4899,#be185d); color:#fff; padding:8px 20px; border-radius:18px; font-size:14px; font-weight:800; margin:4px auto 12px; display:inline-block;">⭐ 신기록! (이전: {{ prevTimeMs ? formatTime(prevTimeMs) : '처음 기록' }})</div>
+      <GameLeaderboard ref="lbRef" slug="proverb" :level="recordLevel" />
       <div class="res-btns">
         <button class="rbtn" @click="startGame">다시 🔄</button>
         <button class="rbtn home" @click="goBack">홈 🏠</button>
@@ -53,7 +56,13 @@
 <script setup>
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
+import GameLeaderboard from '../../components/GameLeaderboard.vue'
+import { useAuthStore } from '../../stores/auth'
+import { useSiteStore } from '../../stores/site'
 const router = useRouter()
+const auth = useAuthStore()
+const siteStore = useSiteStore()
 
 const proverbs = [
   {proverb:'가는 말이 고와야 오는 말이 곱다',meaning:'내가 먼저 잘 대해야 상대도 잘 대한다',level:1},
@@ -89,6 +98,14 @@ const timeLeft = ref(20)
 const maxTime = ref(20)
 let timer = null
 let queue = []
+const startAt = ref(0)
+const elapsedMs = ref(0)
+const recordLevel = ref(1)
+const pointsEarned = ref(0)
+const newRecord = ref(false)
+const prevTimeMs = ref(null)
+const lbRef = ref(null)
+function formatTime(ms) { return (Math.round(ms/10)/100).toFixed(2) + '초' }
 
 function getPool() {
   const maxLv=level.value<=2?1:level.value<=4?2:3
@@ -109,6 +126,10 @@ function startGame() {
   score.value=0; correct.value=0; leveled.value=false; qIdx.value=0
   const pool=getPool()
   queue=shuffle(pool).slice(0,totalQ.value)
+  recordLevel.value = level.value
+  pointsEarned.value = 0; newRecord.value = false; prevTimeMs.value = null
+  elapsedMs.value = 0
+  startAt.value = Date.now()
   phase.value='play'; nextQuestion()
 }
 
@@ -145,9 +166,29 @@ function selectAnswer(opt) {
   setTimeout(nextQuestion,2800)
 }
 
-function endGame() {
+async function endGame() {
   clearInterval(timer); phase.value='result'
-  if(correct.value>=8){ level.value++; localStorage.setItem('proverb_level',level.value); leveled.value=true; speak('레벨업!') }
+  elapsedMs.value = Date.now() - startAt.value
+  const won = correct.value >= 8
+  const clearedLevel = recordLevel.value
+  if(won){ level.value++; localStorage.setItem('proverb_level',level.value); leveled.value=true; speak('레벨업!') }
+  if (auth.isLoggedIn && won) {
+    try {
+      const { data } = await axios.post('/api/games/result', {
+        game_slug: 'proverb', level: clearedLevel, time_ms: elapsedMs.value,
+        score: score.value, won: true, leveled_up: leveled.value,
+      })
+      const r = data.data || {}
+      pointsEarned.value = r.points_earned || 0
+      newRecord.value = !!r.new_record
+      prevTimeMs.value = r.prev_time_ms
+      if (pointsEarned.value > 0) {
+        siteStore.toast(`+${pointsEarned.value}P 획득!`, 'success')
+        auth.user && (auth.user.points = r.balance ?? auth.user.points)
+      }
+      lbRef.value?.reload?.()
+    } catch {}
+  }
 }
 
 function goBack() { clearInterval(timer); router.push('/games') }
