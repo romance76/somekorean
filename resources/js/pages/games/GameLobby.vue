@@ -13,7 +13,7 @@
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <button v-for="cat in categories" :key="cat.key" @click="activeCat=cat.key"
             class="w-full text-left px-3 py-2 text-xs transition"
@@ -65,14 +65,14 @@
 
       <!-- 오른쪽: 위젯 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔥 인기 게임</div>
           <RouterLink v-for="g in popularGames" :key="g.path" :to="g.path"
             class="block px-3 py-2 hover:bg-amber-50/50 transition text-xs text-gray-600 hover:text-amber-700">
             {{ g.icon }} {{ g.name }}
           </RouterLink>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
           <div class="font-bold text-xs text-gray-800 mb-2">📢 게임 안내</div>
           <div class="text-[10px] text-gray-500 space-y-1">
             <div>• 게임 플레이 시 포인트 획득</div>

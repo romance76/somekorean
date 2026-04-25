@@ -22,7 +22,7 @@
     </div>
 
     <!-- 거래 내역 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">📊 포인트 내역</div>
       <div v-if="loading" class="py-8 text-center text-gray-400">로딩중...</div>
       <div v-else>

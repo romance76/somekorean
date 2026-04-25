@@ -3,7 +3,7 @@
   <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
     <h1 class="text-xl font-black text-gray-800">🏠 매물 등록</h1>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <!-- 사진 업로드 (최대 20장, 기본 5장 무료) -->
       <div>
         <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">

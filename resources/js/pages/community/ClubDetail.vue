@@ -17,7 +17,7 @@
     <div v-else-if="club" class="grid grid-cols-12 gap-4">
       <!-- Left sidebar: Category list (like ClubList) -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <router-link v-for="c in clubCategories" :key="c.value"
             :to="c.value ? `/clubs?category=${c.value}` : '/clubs'"
@@ -44,7 +44,7 @@
       <!-- Center content -->
       <div class="col-span-12 lg:col-span-7">
         <!-- Club header / banner -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
           <!-- Cover image -->
           <div class="h-36 sm:h-48 bg-gradient-to-r from-amber-400 to-orange-400 relative">
             <img v-if="club.cover_image" :src="coverImageUrl" class="w-full h-full object-cover"
@@ -121,7 +121,7 @@
         </div>
 
         <!-- Rules section (show for non-members, or if club has rules) -->
-        <div v-if="club.rules && (!isMember || activeTab === 'board')" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div v-if="club.rules && (!isMember || activeTab === 'board')" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
           <div class="px-5 py-3 border-b bg-amber-50/50">
             <h3 class="text-sm font-bold text-amber-900 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -132,7 +132,7 @@
         </div>
 
         <!-- Horizontal tab buttons (inside center content) -->
-        <div v-if="isMember" class="flex items-center gap-1 mb-4 bg-white rounded-xl shadow-sm border border-gray-100 px-3 py-2 overflow-x-auto">
+        <div v-if="isMember" class="flex items-center gap-1 mb-4 bg-white rounded-xl shadow-sm border border-gray-200 px-3 py-2 overflow-x-auto">
           <button @click="activeTab = 'board'"
             class="px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap"
             :class="activeTab === 'board' ? 'bg-amber-400 text-amber-900' : 'text-gray-500 hover:bg-amber-50'">
@@ -156,7 +156,7 @@
         </div>
 
         <!-- ====== NON-MEMBER VIEW: Recent posts preview ====== -->
-        <div v-if="!isMember" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-if="!isMember" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-5 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             <span>최근 게시글</span>
           </div>
@@ -178,7 +178,7 @@
         <!-- ====== MEMBER VIEW: Board Tab ====== -->
         <div v-if="isMember && activeTab === 'board'" class="space-y-4">
           <!-- Board selector -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-3 border-b flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2 flex-wrap">
                 <button @click="selectedBoard = null; loadPosts()"
@@ -311,7 +311,7 @@
 
         <!-- ====== MEMBER VIEW: Members Tab ====== -->
         <div v-if="isMember && activeTab === 'members'">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
               <span>회원 목록 ({{ members.length }}명)</span>
             </div>
@@ -360,7 +360,7 @@
         <!-- ====== ADMIN VIEW: Settings Tab ====== -->
         <div v-if="isMember && isAdmin && activeTab === 'settings'" class="space-y-4">
           <!-- Club settings -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-3 border-b bg-amber-50">
               <h3 class="text-sm font-bold text-amber-900">동호회 관리</h3>
             </div>
@@ -379,7 +379,7 @@
           </div>
 
           <!-- Board management -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-3 border-b bg-amber-50 flex items-center justify-between">
               <h3 class="text-sm font-bold text-amber-900">게시판 관리</h3>
               <button @click="showAddBoard = !showAddBoard"
@@ -399,7 +399,7 @@
 
               <!-- Board list -->
               <div v-for="board in boards" :key="board.id"
-                class="flex items-center justify-between px-4 py-3 rounded-xl border border-gray-100 hover:border-amber-200 transition">
+                class="flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 hover:border-amber-200 transition">
                 <div v-if="editingBoard?.id === board.id" class="flex-1 flex gap-2">
                   <input v-model="editingBoard.name" type="text"
                     class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-400" />
@@ -422,7 +422,7 @@
           </div>
 
           <!-- Pending members -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-3 border-b bg-amber-50 flex items-center justify-between">
               <h3 class="text-sm font-bold text-amber-900">가입 승인 대기</h3>
               <button @click="loadPendingMembers" class="text-xs text-amber-700 hover:text-amber-900 font-bold transition">
@@ -460,7 +460,7 @@
           </div>
 
           <!-- Chat room -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-3 border-b bg-amber-50">
               <h3 class="text-sm font-bold text-amber-900">채팅방</h3>
             </div>
@@ -497,7 +497,7 @@
       <!-- Right sidebar -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
         <!-- Club info card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3 sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3 sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">동호회 정보</div>
           <div class="p-3 space-y-2">
             <div class="flex items-center justify-between text-xs">

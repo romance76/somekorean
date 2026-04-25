@@ -5,7 +5,7 @@
       🤝 공동구매 등록
     </router-link>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-5">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
 
       <!-- 1. 제목 -->
       <div>

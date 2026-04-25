@@ -53,7 +53,7 @@
       <!-- 왼쪽: 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
             <button @click="showFavorites=false; activeCat=null; activeItem=null; loadNews()" class="w-full text-left px-3 py-2 text-xs transition"
               :class="!showFavorites && !activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
@@ -83,7 +83,7 @@
 
         <!-- ═══ 상세 모드 ═══ -->
         <div v-if="activeItem">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-5 py-4">
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.category?.name || '뉴스' }}</span>
@@ -160,7 +160,7 @@
         <div v-else class="space-y-2">
           <template v-for="(item, i) in items" :key="item.id">
           <div @click="openItem(item)"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-amber-300 transition cursor-pointer">
+            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-amber-300 transition cursor-pointer">
             <div class="flex gap-3 p-3">
               <!-- 썸네일 (항상 표시: 이미지 있으면 이미지, 없으면 이모지) -->
               <div class="w-24 h-16 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">

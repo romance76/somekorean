@@ -11,7 +11,7 @@
     <div v-else-if="post" class="grid grid-cols-12 gap-4">
       <!-- 메인 -->
       <div class="col-span-12 lg:col-span-9">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <!-- 헤더 -->
           <div class="px-5 py-4 border-b">
             <div class="flex items-center gap-2 mb-2">
@@ -65,7 +65,7 @@
       <!-- 사이드바 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
         <!-- 작성자 정보 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div class="font-bold text-sm text-amber-900 mb-3">✍️ 작성자 정보</div>
           <RouterLink :to="`/profile/${post.user?.id}`" class="flex items-center gap-2 hover:bg-amber-50 -mx-2 px-2 py-1 rounded-lg transition">
             <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-sm font-bold text-amber-700">{{ (post.user?.name || '?')[0] }}</div>

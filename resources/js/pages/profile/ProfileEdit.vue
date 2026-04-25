@@ -2,7 +2,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-3xl mx-auto px-4 py-5">
     <h1 class="text-xl font-black text-gray-800 mb-4">✏️ 프로필 수정</h1>
-    <div v-if="auth.user" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div v-if="auth.user" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <!-- 프로필 사진 -->
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center text-2xl font-black overflow-hidden">
@@ -57,7 +57,7 @@
 
     <!-- 비밀번호 변경 -->
     <h2 class="text-lg font-bold text-gray-800 mt-6 mb-3">🔒 비밀번호 변경</h2>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <div><label class="text-sm font-semibold text-gray-700">현재 비밀번호</label><input v-model="pwForm.current_password" type="password" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       <div><label class="text-sm font-semibold text-gray-700">새 비밀번호</label><input v-model="pwForm.password" type="password" minlength="6" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>
       <div><label class="text-sm font-semibold text-gray-700">새 비밀번호 확인</label><input v-model="pwForm.password_confirmation" type="password" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" /></div>

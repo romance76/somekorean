@@ -80,7 +80,7 @@
     <!-- 왼쪽: 카테고리 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 업종</div>
           <button v-for="c in bizCategories" :key="c.value" @click="showFavorites=false; activeCat=c.value; activeItem=null; loadPage()"
             class="w-full text-left px-3 py-2 text-xs transition"
@@ -106,7 +106,7 @@
 
     <!-- 상세 모드 -->
     <div v-if="activeItem">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <!-- 사진 갤러리 (클릭 확대) -->
         <div v-if="activeItem.images?.length" class="flex gap-1 overflow-x-auto p-2 bg-gray-50">
           <img v-for="(img, i) in activeItem.images" :key="i" :src="img" @click="lightboxImg=img" class="h-32 rounded-lg object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition" @error="e=>e.target.style.display='none'" />
@@ -159,7 +159,7 @@
       </div>
 
       <!-- 메뉴 섹션 -->
-      <div v-if="activeItem.menus?.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3">
+      <div v-if="activeItem.menus?.length" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-3">
         <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">🍽️ 메뉴 {{ activeItem.menus.length }}개</div>
         <div class="divide-y">
           <div v-for="menu in activeItem.menus" :key="menu.id" class="px-5 py-3 flex items-center gap-3">
@@ -179,7 +179,7 @@
       </div>
 
       <!-- 리뷰 섹션 -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-3">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-3">
         <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">⭐ 리뷰 {{ activeItem.review_count || 0 }}개</div>
 
         <!-- 리뷰 작성 -->
@@ -281,7 +281,7 @@
       </template>
     </div>
     <!-- 리스트형 -->
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
         class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">
@@ -492,7 +492,7 @@ function bizPromoClass(item) {
   if (item.promotion_tier === 'national') return 'bg-white border-2 border-red-400'
   if (item.promotion_tier === 'state_plus') return 'bg-white border-2 border-blue-400'
   if (item.promotion_tier === 'sponsored') return 'bg-white border-2 border-amber-400'
-  return 'bg-white border border-gray-100'
+  return 'bg-white border border-gray-200'
 }
 
 async function loadPage(p = 1) {

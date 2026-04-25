@@ -2,7 +2,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-3xl mx-auto px-4 py-5">
     <h1 class="text-xl font-black text-gray-800 mb-4">🎉 {{ isEdit ? '이벤트 수정' : '이벤트 등록' }}</h1>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <div>
         <label class="text-sm font-semibold text-gray-700">제목 *</label>
         <input v-model="form.title" type="text" placeholder="예: 한인 문화 축제" class="w-full border rounded-lg px-3 py-2 mt-1 text-sm focus:ring-2 focus:ring-amber-400 outline-none" />

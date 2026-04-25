@@ -6,7 +6,7 @@
     <div v-else-if="biz" class="grid grid-cols-12 gap-4">
       <div class="col-span-12 lg:col-span-9">
       <!-- 업소 정보 -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
         <div class="px-5 py-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ biz.category }}</span>
@@ -46,7 +46,7 @@
       </div>
 
       <!-- 리뷰 -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-5 py-3 border-b font-bold text-sm text-gray-800">📝 리뷰 {{ biz.review_count }}개</div>
 
         <!-- 리뷰 작성 -->

@@ -4,7 +4,7 @@
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="user">
       <!-- 프로필 헤더 -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
         <div class="bg-gradient-to-r from-amber-400 to-orange-400 h-24"></div>
         <div class="px-5 pb-4 -mt-10">
           <div class="w-20 h-20 rounded-full bg-amber-500 text-white flex items-center justify-center text-3xl font-black border-4 border-white shadow">
@@ -28,7 +28,7 @@
       </div>
 
       <!-- 게시글 -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-5 py-3 border-b font-bold text-sm text-amber-900">📝 작성한 글</div>
         <div v-for="post in posts" :key="post.id">
           <RouterLink :to="`/community/${post.board?.slug || 'free'}/${post.id}`" class="block px-5 py-3 border-b hover:bg-amber-50/50 transition">

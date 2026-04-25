@@ -183,7 +183,7 @@
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <RouterLink v-for="c in realestateCards.slice(0,4)" :key="c.id" :to="c.to"
-            class="block rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition group">
+            class="block rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition group">
             <div class="aspect-square bg-gray-100 relative overflow-hidden">
               <img v-if="c.image" :src="c.image" class="w-full h-full object-cover group-hover:scale-105 transition-transform" @error="($event.target.style.display='none')" />
               <div v-else class="absolute inset-0 flex items-center justify-center text-4xl opacity-30">🏠</div>

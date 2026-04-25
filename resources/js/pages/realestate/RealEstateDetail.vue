@@ -13,7 +13,7 @@
       <!-- 왼쪽: 카테고리 (리스트와 동일) -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 부동산</div>
             <div class="flex border-b">
               <RouterLink to="/realestate?type=rent" class="flex-1 py-1.5 text-[10px] font-bold text-center transition"

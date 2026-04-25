@@ -6,7 +6,7 @@
 
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="!logs.length" class="text-center py-12 text-gray-400">체크인 기록이 없습니다</div>
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div v-for="log in logs" :key="log.id" class="px-4 py-3 border-b last:border-0 flex items-center gap-3">
         <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0"
           :class="log.status === 'ok' ? 'bg-green-100' : log.status === 'sos' ? 'bg-red-100' : 'bg-gray-100'">

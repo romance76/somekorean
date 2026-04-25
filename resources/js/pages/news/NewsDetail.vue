@@ -7,7 +7,7 @@
 
       <!-- 왼쪽: 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <RouterLink to="/news" class="block px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50 transition">전체</RouterLink>
           <RouterLink v-for="cat in categories" :key="cat.id" :to="`/news?category=${cat.id}`"
@@ -20,7 +20,7 @@
 
       <!-- 메인 콘텐츠 -->
       <div class="col-span-12 lg:col-span-7">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-5 py-4">
             <div class="flex items-center gap-2 mb-2">
               <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ news.category?.name || '뉴스' }}</span>

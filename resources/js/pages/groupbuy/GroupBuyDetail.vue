@@ -13,7 +13,7 @@
       <!-- 왼쪽: 상태 필터 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
             <RouterLink to="/groupbuy" class="block w-full text-left px-3 py-2 text-xs transition text-gray-600 hover:bg-amber-50/50">전체</RouterLink>
             <RouterLink to="/groupbuy?status=recruiting" class="block w-full text-left px-3 py-2 text-xs transition"
@@ -215,7 +215,7 @@
         <!-- 주최자 + 공동구매 정보 (본문 안에 2열) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
           <!-- 주최자 정보 -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div class="text-xs font-bold text-gray-500 mb-3">주최자 정보</div>
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-lg font-bold text-amber-700 overflow-hidden flex-shrink-0">
@@ -235,7 +235,7 @@
           </div>
 
           <!-- 공동구매 정보 -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div class="text-xs font-bold text-gray-500 mb-3">공동구매 정보</div>
             <div class="space-y-2 text-xs">
               <div class="flex justify-between">

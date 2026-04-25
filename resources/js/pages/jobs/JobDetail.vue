@@ -12,7 +12,7 @@
 
       <!-- ══════════ LEFT: 카테고리 사이드바 (JobList와 동일) ══════════ -->
       <aside class="col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">📋 카테고리</div>
           <div class="flex border-b">
             <router-link to="/jobs?type=hiring"
@@ -37,7 +37,7 @@
 
       <!-- ══════════ CENTER: Job Detail Card ══════════ -->
       <main class="col-span-12 lg:col-span-7 md:col-span-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 
           <!-- Header: badges + title + company + location -->
           <div class="px-3 lg:px-5 py-3 lg:py-4 border-b border-gray-100">
@@ -267,7 +267,7 @@
 
       <!-- ══════════ RIGHT: 내 위치 기반 관련 목록 ══════════ -->
       <aside class="col-span-4 md:col-span-4 lg:col-span-3 hidden md:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900 flex items-center gap-1">
             <span>{{ categoryLabel(job.category) }}</span>
             <span v-if="nearbyLabel" class="text-[10px] text-gray-400 font-normal">· {{ nearbyLabel }}</span>

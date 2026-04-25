@@ -6,7 +6,7 @@
     </div>
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="!items.length" class="text-center py-12 text-gray-400">등록된 글이 없습니다</div>
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <RouterLink v-for="item in items" :key="item.id" :to="'/community/free/' + item.id"
         class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition">
         <div class="text-sm font-medium text-gray-800">{{ item.title }}</div>

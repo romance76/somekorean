@@ -73,7 +73,7 @@
       <!-- 왼쪽: 카테고리 + 광고 (함께 sticky, 뷰포트 초과시 스크롤) -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 분류</div>
             <button @click="selectCategory('', false)"
               class="w-full text-left px-3 py-2 text-xs transition"
@@ -127,7 +127,7 @@
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <template v-for="(item, i) in items" :key="item.id">
           <RouterLink :to="'/recipes/' + item.id"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex h-32 relative">
+            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex h-32 relative">
             <!-- 왼쪽: 사진 (썸네일 프록시) -->
             <div class="w-28 flex-shrink-0 bg-gray-100 relative">
               <img v-if="item.thumbnail_url || item.thumbnail" :src="item.thumbnail_url || thumb(item.thumbnail, 240)" loading="lazy" decoding="async" class="w-full h-full object-cover"

@@ -11,7 +11,7 @@
       <div class="text-xs text-gray-400 mt-1">피보호자가 보호자로 등록하면 여기에 표시됩니다</div>
     </div>
     <div v-else class="space-y-3">
-      <div v-for="ward in wards" :key="ward.id" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div v-for="ward in wards" :key="ward.id" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-xl">👤</div>
           <div class="flex-1">

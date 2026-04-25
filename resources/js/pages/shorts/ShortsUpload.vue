@@ -2,7 +2,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-3xl mx-auto px-4 py-5">
     <h1 class="text-xl font-black text-gray-800 mb-4">📱 숏츠 업로드</h1>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <div>
         <label class="text-sm font-semibold text-gray-700">YouTube URL</label>
         <input v-model="form.video_url" type="url" placeholder="https://youtube.com/shorts/... 또는 https://youtu.be/..."

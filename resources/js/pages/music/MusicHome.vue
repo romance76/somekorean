@@ -8,7 +8,7 @@
 
       <!-- 카테고리 + 내 플레이리스트 -->
       <div class="col-span-12 lg:col-span-3 space-y-3">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900">🎵 카테고리</div>
           <button v-for="cat in categories" :key="cat.id" @click="selectCategory(cat)"
             class="w-full text-left px-4 py-2.5 text-sm transition"
@@ -18,7 +18,7 @@
         </div>
 
         <!-- 내 하트 -->
-        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <button @click="loadFavorites"
             class="w-full text-left px-4 py-3 border-b font-bold text-sm transition"
             :class="showFavorites ? 'bg-red-50 text-red-700' : 'text-amber-900'">
@@ -27,7 +27,7 @@
         </div>
 
         <!-- 내 플레이리스트 -->
-        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             📋 내 플레이리스트
             <button @click="showCreatePL = true" class="text-amber-600 text-xs hover:text-amber-800">+ 새로 만들기</button>
@@ -45,7 +45,7 @@
         </div>
 
         <!-- YouTube 링크로 추가 -->
-        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+        <div v-if="auth.isLoggedIn" class="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
           <div class="font-bold text-xs text-gray-800 mb-2">🔗 YouTube 링크로 추가</div>
           <textarea v-model="youtubeUrl" rows="2" placeholder="YouTube 곡 또는 플레이리스트 URL 붙여넣기" class="w-full border rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea>
           <div class="flex gap-1 mt-1">
@@ -64,7 +64,7 @@
 
       <!-- 트랙 목록 (오른쪽에 플로팅 플레이어 공간 확보) -->
       <div class="col-span-12 lg:col-span-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-4 py-3 border-b font-bold text-sm text-amber-900 flex items-center justify-between">
             <span>🎶 {{ showFavorites ? '❤️ 내 하트' : (activePL ? activePL.name : (activeCat?.name || '트랙')) }}</span>
             <div class="flex items-center gap-2">

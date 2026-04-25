@@ -19,7 +19,7 @@
 
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="!messages.length" class="text-center py-12 text-gray-400">{{ tab==='received' ? '받은 쪽지가 없습니다' : '보낸 쪽지가 없습니다' }}</div>
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div v-for="msg in messages" :key="msg.id" @click="openMsg(msg)"
         class="px-4 py-3 border-b last:border-0 cursor-pointer hover:bg-amber-50/50 transition"
         :class="tab==='received' && !msg.is_read ? 'bg-amber-50' : ''">

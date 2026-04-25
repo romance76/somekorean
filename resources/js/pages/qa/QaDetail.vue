@@ -6,7 +6,7 @@
     <div v-else-if="qa" class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <RouterLink to="/qa" class="block px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50">전체</RouterLink>
           <RouterLink v-for="cat in categories" :key="cat.id" :to="`/qa?category=${cat.id}`"
@@ -17,7 +17,7 @@
 
       <div class="col-span-12 lg:col-span-7">
       <!-- 질문 카드 -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
         <div class="px-5 py-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ qa.category?.name }}</span>
@@ -49,7 +49,7 @@
       </div>
 
       <!-- 답변 작성 -->
-      <div v-if="auth.isLoggedIn && !qa.is_resolved" class="bg-white rounded-xl shadow-sm border border-gray-100 mt-4 p-5">
+      <div v-if="auth.isLoggedIn && !qa.is_resolved" class="bg-white rounded-xl shadow-sm border border-gray-200 mt-4 p-5">
         <h3 class="font-bold text-sm text-gray-800 mb-3">✍️ 답변 작성</h3>
         <textarea v-model="newAnswer" rows="4" placeholder="답변을 입력하세요..." class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea>
         <button @click="submitAnswer" :disabled="!newAnswer.trim()" class="mt-2 bg-amber-400 text-amber-900 font-bold px-5 py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50">답변 등록</button>

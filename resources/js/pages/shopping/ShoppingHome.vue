@@ -23,7 +23,7 @@
     <div v-else-if="!deals.length" class="text-center py-12 text-gray-400">등록된 딜이 없습니다</div>
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       <a v-for="deal in deals" :key="deal.id" :href="deal.url || '#'" target="_blank"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
+        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition group">
         <div class="aspect-square bg-gray-100 flex items-center justify-center">
           <img v-if="deal.image_url" :src="deal.thumbnail_url || thumb(deal.image_url, 320)" loading="lazy" decoding="async" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
           <span v-else class="text-4xl">🛍️</span>

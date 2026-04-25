@@ -77,7 +77,7 @@
     <!-- 왼쪽: 카테고리 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <button v-for="c in marketCategories" :key="c.value" @click="showFavorites=false; activeCat=c.value; activeItem=null; loadPage()"
             class="w-full text-left px-3 py-2 text-xs transition"
@@ -110,7 +110,7 @@
     </div>
     <!-- 상세 모드 -->
     <div v-if="activeItem">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-5 py-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs px-2 py-0.5 rounded-full font-bold" :class="{'bg-green-100 text-green-700':activeItem.status==='active','bg-amber-100 text-amber-700':activeItem.status==='reserved','bg-gray-200 text-gray-500':activeItem.status==='sold'}">{{ {active:'판매중',reserved:'예약중',sold:'판매완료'}[activeItem.status] }}</span>
@@ -192,7 +192,7 @@
       </template>
     </div>
     <!-- 리스트형 뷰 -->
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
         class="flex border-b border-gray-50 hover:border-l-2 transition cursor-pointer overflow-hidden"

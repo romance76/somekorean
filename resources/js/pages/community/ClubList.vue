@@ -91,7 +91,7 @@
     <!-- 왼쪽: 카테고리 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
           <button v-for="c in clubCategories" :key="c.value" @click="showFavorites=false; catFilter=c.value; loadClubs()"
             class="w-full text-left px-3 py-2 text-xs transition"
@@ -241,7 +241,7 @@ function clubRowClass(club) {
   if (club.promotion_tier === 'state_plus') return 'bg-white border-2 border-blue-400'
   if (club.promotion_tier === 'sponsored') return 'bg-white border-2 border-amber-400'
   if (isPromoted(club)) return 'bg-purple-50/30 border-2 border-purple-400'
-  return 'bg-white border border-gray-100'
+  return 'bg-white border border-gray-200'
 }
 
 function onCityChange() {

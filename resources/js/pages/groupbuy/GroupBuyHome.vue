@@ -75,7 +75,7 @@
     <!-- 왼쪽: 상태 필터 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 상태</div>
           <button v-for="s in statusFilters" :key="s.value" @click="showFavorites=false; statusFilter=s.value; loadPage()"
             class="w-full text-left px-3 py-2 text-xs transition"
@@ -98,7 +98,7 @@
       <div class="text-gray-500 font-semibold">검색 결과가 없습니다</div>
       <div class="text-xs text-gray-400 mt-1">다른 도시를 선택하거나 '전국'으로 검색해보세요</div>
     </div>
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <RouterLink :to="'/groupbuy/' + item.id"
         class="block px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 transition"

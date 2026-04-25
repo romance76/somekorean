@@ -67,7 +67,7 @@
       <!-- 왼쪽: 게시판 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 게시판</div>
             <button @click="showFavorites=false; activeBoard=null; activeItem=null; loadPosts()" class="w-full text-left px-3 py-2 text-xs transition"
               :class="!showFavorites && !activeBoard ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
@@ -100,7 +100,7 @@
 
         <!-- ═══ 상세 모드 ═══ -->
         <div v-if="activeItem">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3">
             <div class="px-5 py-4 border-b">
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ activeItem.board?.name }}</span>
@@ -139,7 +139,7 @@
         <div v-else-if="!items.length" class="text-center py-12 text-gray-400">게시글이 없습니다</div>
 
         <!-- 리스트 뷰 -->
-        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <template v-for="(item, i) in items" :key="item.id">
           <div @click="openItem(item)"
             class="px-4 py-3 border-b border-gray-50 hover:bg-amber-50/50 hover:border-l-2 hover:border-l-amber-400 transition cursor-pointer">

@@ -8,7 +8,7 @@
     <div v-if="loading" class="text-center text-gray-400 py-12">로딩 중...</div>
     <div v-else class="space-y-4">
       <section v-for="section in visibleSections" :key="section.key"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 py-3 border-b font-bold text-sm" :class="section.headerClass">
           {{ section.title }}
         </div>

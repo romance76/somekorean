@@ -6,7 +6,7 @@
       <button @click="$router.back()" class="text-sm text-gray-500 hover:text-amber-600">← 뒤로</button>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <!-- 썸네일 이미지 업로드 -->
       <div>
         <label class="text-sm font-semibold text-gray-700">대표 이미지</label>

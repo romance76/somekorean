@@ -2,7 +2,7 @@
 <div class="space-y-3">
   <!-- ══ 상세 모드: 같은 카테고리 글 목록 ══ -->
   <template v-if="mode === 'detail'">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <!-- 카테고리 헤더 -->
       <div v-if="displayCategoryLabel" class="px-3 py-2.5 border-b bg-amber-50">
         <span class="text-xs font-bold text-amber-800">📁 {{ displayCategoryLabel }}</span>
@@ -39,7 +39,7 @@
 
   <!-- ══ 리스트 모드 (기존 + 카테고리 지원) ══ -->
   <template v-else>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="flex border-b">
         <button @click="popTab='views'; loadTab('views')" class="flex-1 py-2.5 text-xs font-bold transition"
           :class="popTab==='views' ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-400'">많이 본 {{ label }}</button>
@@ -68,7 +68,7 @@
     </div>
 
     <!-- 추천 글 -->
-    <div v-if="recommendLabel && recommendItems.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-if="recommendLabel && recommendItems.length" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">👍 {{ recommendLabel }}</div>
       <div class="py-1">
         <component v-for="item in recommendItems" :key="item.id"
@@ -82,7 +82,7 @@
     </div>
 
     <!-- 실시간/바로가기 -->
-    <div v-if="quickLabel && quickItems.length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-if="quickLabel && quickItems.length" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-3 py-2.5 border-b font-bold text-xs text-gray-800">⚡ {{ quickLabel }}</div>
       <div class="py-1">
         <component v-for="item in quickItems" :key="item.id"
@@ -97,7 +97,7 @@
   </template>
 
   <!-- 빠른 링크 (공통) -->
-  <div v-if="links.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+  <div v-if="links.length" class="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
     <div class="font-bold text-xs text-gray-800 mb-2">📋 바로가기</div>
     <RouterLink v-for="link in links" :key="link.to" :to="link.to"
       class="block text-xs text-gray-600 hover:text-amber-700 py-1 transition">

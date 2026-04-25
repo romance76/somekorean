@@ -3,7 +3,7 @@
   <div class="max-w-3xl mx-auto px-4 py-5 space-y-4">
     <h1 class="text-xl font-black text-gray-800">🛒 {{ isEdit ? '물품 수정' : '물품 등록' }}</h1>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
 
       <!-- ═══ 1. 사진 (맨 위) ═══ -->
       <div>

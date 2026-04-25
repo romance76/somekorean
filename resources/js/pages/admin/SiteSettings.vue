@@ -42,7 +42,7 @@
     <div v-else>
       <!-- ========================= TAB 1: 회사 정보 ========================= -->
       <div v-show="activeTab === 'company'">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 class="text-base font-semibold text-gray-800 mb-6">회사 정보</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
@@ -120,7 +120,7 @@
 
       <!-- ========================= TAB 2: 사이트 설정 ========================= -->
       <div v-show="activeTab === 'site'">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 class="text-base font-semibold text-gray-800 mb-6">사이트 설정</h2>
 
           <!-- 회원 설정 -->
@@ -310,7 +310,7 @@
 
       <!-- ========================= TAB 3: 푸터 편집 ========================= -->
       <div v-show="activeTab === 'footer'">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <h2 class="text-base font-semibold text-gray-800 mb-6">푸터 편집</h2>
 
           <!-- Footer columns -->
@@ -414,7 +414,7 @@
 
       <!-- ========================= TAB 4: 약관 관리 ========================= -->
       <div v-show="activeTab === 'terms'">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 class="text-base font-semibold text-gray-800 mb-5">약관 관리</h2>
 
           <!-- Sub tabs -->
@@ -495,7 +495,7 @@
       <div v-show="activeTab === 'notifications'">
 
         <!-- Stripe 결제 키 설정 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -581,7 +581,7 @@
         </div>
 
         <!-- 결제 일반 설정 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <div class="flex items-center justify-between mb-5">
             <h2 class="text-base font-semibold text-gray-800">결제 시스템 연결</h2>
             <span :class="[
@@ -708,7 +708,7 @@
         </div>
 
         <!-- 시스템 공지사항 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <div class="flex items-center justify-between mb-5">
             <h2 class="text-base font-semibold text-gray-800">시스템 공지사항</h2>
             <button @click="showAnnouncementForm = !showAnnouncementForm" class="btn-secondary text-sm">
@@ -804,7 +804,7 @@
         </div>
 
         <!-- 이메일 알림 설정 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <h2 class="text-base font-semibold text-gray-800 mb-5">이메일 알림 설정</h2>
           <ToggleRow v-model="notifications.email.enabled" label="알림 이메일 활성화" desc="관리자에게 이메일 알림을 전송합니다" class="mb-4" />
           <div :class="['space-y-3 transition-opacity', notifications.email.enabled ? 'opacity-100' : 'opacity-40 pointer-events-none']">
@@ -824,7 +824,7 @@
         </div>
 
         <!-- 푸시 알림 설정 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <h2 class="text-base font-semibold text-gray-800 mb-5">푸시 알림 설정 (VAPID)</h2>
           <div class="space-y-4">
             <div>
@@ -857,7 +857,7 @@
         </div>
 
         <!-- SEO 설정 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-4">
           <h2 class="text-base font-semibold text-gray-800 mb-5">SEO 설정</h2>
           <div class="space-y-4">
             <div>

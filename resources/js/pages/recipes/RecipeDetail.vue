@@ -10,7 +10,7 @@
     <div class="grid grid-cols-12 gap-4">
       <!-- 왼쪽: 카테고리 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-20">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-20">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 분류</div>
           <RouterLink to="/recipes"
             class="block w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-amber-50/50 transition">
@@ -32,7 +32,7 @@
       <div class="col-span-12 lg:col-span-7">
         <div v-if="loading" class="text-center py-16 text-gray-400">로딩중...</div>
 
-        <div v-else-if="recipe" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-else-if="recipe" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <!-- 히어로 이미지 -->
           <div class="relative h-56 sm:h-72 bg-gradient-to-br from-amber-100 to-orange-100 overflow-hidden">
             <img v-if="recipe.thumbnail" :src="recipe.thumbnail" :alt="recipe.title"

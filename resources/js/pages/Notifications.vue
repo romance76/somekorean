@@ -7,7 +7,7 @@
     </div>
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="!notifs.length" class="text-center py-12 text-gray-400">알림이 없습니다</div>
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div v-for="n in notifs" :key="n.id"
         class="px-4 py-3 border-b last:border-0 transition"
         :class="n.read_at ? 'bg-white' : 'bg-amber-50'">

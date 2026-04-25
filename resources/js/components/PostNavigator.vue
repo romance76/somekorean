@@ -1,6 +1,6 @@
 <template>
   <!-- 이전글 / 목록 / 다음글 네비 (모든 Detail 하단 공통) -->
-  <div class="mt-4 flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-100 text-sm">
+  <div class="mt-4 flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 text-sm">
     <RouterLink v-if="prevId" :to="detailPath(prevId)"
       class="flex-1 px-4 py-3 hover:bg-amber-50 text-left text-gray-700 truncate border-r border-gray-100">
       <span class="text-gray-400 text-xs">← 이전글</span>

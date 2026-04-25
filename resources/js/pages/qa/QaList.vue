@@ -57,7 +57,7 @@
       <!-- 왼쪽: 카테고리 + 상태 -->
       <div class="col-span-12 lg:col-span-2 hidden lg:block">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">📋 카테고리</div>
             <button @click="showFavorites=false; activeCat=null; activeItem=null; loadQa()" class="w-full text-left px-3 py-2 text-xs transition"
               :class="!showFavorites && !activeCat ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-amber-50/50'">전체</button>
@@ -70,7 +70,7 @@
               🔖 내 북마크<span v-if="favCount > 0" class="ml-0.5">({{ favCount }})</span>
             </button>
           </div>
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">🔍 상태</div>
             <button v-for="s in statusFilters" :key="s.value" @click="statusFilter=s.value; activeItem=null; loadQa()"
               class="w-full text-left px-3 py-2 text-xs transition"
@@ -95,7 +95,7 @@
         <div v-if="activeItem">
 
           <!-- 질문 카드 -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3">
             <div class="px-5 py-4">
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">{{ activeItem.category?.name }}</span>
@@ -140,7 +140,7 @@
           </div>
 
           <!-- 답변 작성 -->
-          <div v-if="auth.isLoggedIn && !activeItem.is_resolved" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div v-if="auth.isLoggedIn && !activeItem.is_resolved" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <h3 class="font-bold text-sm text-gray-800 mb-2">✍️ 답변 작성</h3>
             <textarea v-model="newAnswer" rows="4" placeholder="답변을 입력하세요..." class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea>
             <button @click="submitAnswer" :disabled="!newAnswer.trim()" class="mt-2 bg-amber-400 text-amber-900 font-bold px-5 py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50">답변 등록</button>
@@ -165,7 +165,7 @@
           <div v-else class="space-y-2">
             <template v-for="(item, i) in items" :key="item.id">
             <div @click="openItem(item)"
-              class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 hover:shadow-md hover:border-amber-300 transition cursor-pointer">
+              class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 hover:shadow-md hover:border-amber-300 transition cursor-pointer">
               <div class="flex items-center gap-2 mb-1">
                 <span v-if="!activeCat" class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">{{ item.category?.name || 'Q&A' }}</span>
                 <span v-if="item.bounty_points > 0" class="text-[10px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full font-bold">🏆 {{ item.bounty_points }}P</span>

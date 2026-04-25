@@ -10,7 +10,7 @@
           <button @click="showCreate = true" class="bg-amber-400 text-amber-900 font-bold px-4 py-2 rounded-lg text-sm hover:bg-amber-500">+ 새 채팅</button>
         </div>
         <!-- 타입 필터 탭 (Issue #21) -->
-        <div class="flex gap-1 mb-2 bg-white rounded-lg border border-gray-100 p-1 text-[11px]">
+        <div class="flex gap-1 mb-2 bg-white rounded-lg border border-gray-200 p-1 text-[11px]">
           <button v-for="t in roomFilterTabs" :key="t.value"
             @click="roomFilter = t.value"
             :class="['flex-1 py-1.5 rounded-md font-semibold transition',
@@ -19,7 +19,7 @@
           </button>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs text-amber-900">{{ currentFilterTitle }}</div>
           <div v-if="loading" class="py-4 text-center text-xs text-gray-400">로딩중...</div>
           <button v-for="room in filteredRooms" :key="room.id" @click="selectRoom(room)"
@@ -44,7 +44,7 @@
       <!-- 메인: 채팅 창 -->
       <!-- 모바일: fixed 전체화면 / PC: 그리드 내 -->
       <div v-if="!activeRoom && !isMobile" class="col-span-12 lg:col-span-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <div class="text-4xl mb-3">💬</div>
           <div class="text-gray-500 font-semibold">채팅방을 선택해주세요</div>
           <div class="text-xs text-gray-400 mt-1">왼쪽에서 지역 채팅방을 클릭하세요</div>
@@ -53,7 +53,7 @@
 
       <div v-if="activeRoom" :class="isMobile ? 'fixed left-0 right-0 top-0 bottom-0 bg-white flex flex-col' : 'col-span-12 lg:col-span-6'"
         :style="isMobile ? 'z-index: 60;' : ''">
-        <div :class="isMobile ? 'flex flex-col h-full overflow-hidden relative' : 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative'" :style="isMobile ? '' : 'height: 70vh'">
+        <div :class="isMobile ? 'flex flex-col h-full overflow-hidden relative' : 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative'" :style="isMobile ? '' : 'height: 70vh'">
           <!-- 채팅방 헤더 -->
           <div class="px-4 py-3 border-b bg-amber-50 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-2">
@@ -241,7 +241,7 @@
 
       <!-- 오른쪽: 참가자 목록 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block space-y-3">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2 border-b font-bold text-xs text-amber-900 flex items-center justify-between">
             <span>👥 참가자 {{ participants.length ? '(' + participants.length + ')' : '' }}</span>
             <button v-if="activeRoom" @click="loadParticipants" class="text-[10px] text-amber-600 hover:text-amber-800" title="새로고침">🔄</button>
@@ -295,7 +295,7 @@
 
         <!-- (참가자 액션 모달은 사이드바 hidden 문제로 아래 최상위 영역에서 렌더링) -->
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
           <div class="font-bold text-xs text-gray-800 mb-2">📢 채팅 안내</div>
           <div class="text-[10px] text-gray-500 space-y-1">
             <div>• 누구나 참여할 수 있는 공개 채팅방입니다</div>

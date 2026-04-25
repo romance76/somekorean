@@ -65,11 +65,11 @@
     <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-3">
       <h1 class="text-xl font-black text-gray-800 flex-shrink-0">🏠 부동산</h1>
 
-      <!-- 렌트/매매/룸메이트 세그먼트 (데스크탑에서 큰 버튼으로) -->
-      <div class="flex border rounded-lg overflow-hidden bg-white shadow-sm flex-1 min-w-[320px] max-w-md">
+      <!-- 렌트/매매/룸메이트 세그먼트 -->
+      <div class="flex border border-gray-200 rounded-lg overflow-hidden bg-white">
         <button v-for="t in reTypeTabs" :key="t.value"
           @click="changeReType(t.value)"
-          :class="['flex-1 py-2 text-sm font-bold transition whitespace-nowrap',
+          :class="['px-3 py-1 text-xs font-bold transition whitespace-nowrap',
             reType===t.value ? `${t.activeBg} text-white` : 'text-gray-500 hover:bg-gray-50']">
           {{ t.icon }} {{ t.label }}
         </button>
@@ -99,7 +99,7 @@
     <!-- 왼쪽: 카테고리 -->
     <div class="col-span-12 lg:col-span-2 hidden lg:block">
       <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pr-0.5">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="px-3 py-2.5 border-b font-bold text-xs"
             :class="reType==='rent' ? 'text-blue-700' : reType==='sale' ? 'text-red-700' : 'text-green-700'">
             {{ reType==='rent' ? '🔑 렌트' : reType==='sale' ? '🏠 매매' : '👥 룸메이트' }} 카테고리
@@ -151,7 +151,7 @@
     </div>
     <!-- 상세 모드 -->
     <div v-if="activeItem">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-5 py-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs px-2 py-0.5 rounded-full font-bold" :class="activeItem.type==='sale'?'bg-red-100 text-red-700':activeItem.type==='rent'?'bg-blue-100 text-blue-700':'bg-green-100 text-green-700'">{{ {rent:'렌트',sale:'매매',roommate:'룸메이트'}[activeItem.type] }}</span>
@@ -253,7 +253,7 @@
       </template>
     </div>
     <!-- 리스트형 -->
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <template v-for="(item, i) in items" :key="item.id">
       <div @click="openItem(item)"
         class="flex border-b border-gray-50 hover:border-l-2 transition cursor-pointer overflow-hidden"
@@ -500,7 +500,7 @@ function promoBorderClass(item) {
   if (item.promotion_tier === 'national') return 'border-2 border-red-400'
   if (item.promotion_tier === 'state_plus') return 'border-2 border-blue-400'
   if (item.promotion_tier === 'sponsored') return 'border-2 border-amber-400'
-  return 'border border-gray-100'
+  return 'border border-gray-200'
 }
 
 const propertyTypeLabels = { house:'하우스', apt:'아파트', condo:'콘도', studio:'스튜디오', office:'오피스', commercial:'상가', etc:'기타' }

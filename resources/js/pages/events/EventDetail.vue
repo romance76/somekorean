@@ -6,7 +6,7 @@
     <div v-if="loading" class="text-center py-12 text-gray-400">로딩중...</div>
     <div v-else-if="event" class="grid grid-cols-12 gap-4">
       <div class="col-span-12 lg:col-span-9">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <!-- 이미지 또는 배너 색상 -->
           <div v-if="event.image_url" class="h-48 lg:h-64 bg-gray-200 overflow-hidden">
             <img :src="event.image_url" class="w-full h-full object-cover" @error="e=>e.target.style.display='none'" />
