@@ -225,6 +225,69 @@ class AdminController extends Controller
         return response()->json(['success'=>true,'data'=>$user->fresh(),'message'=>'회원 정보가 수정되었습니다']);
     }
 
+    // 유저로 로그인 (impersonate) — super_admin 만
+    public function impersonate($id) {
+        $admin = auth()->user();
+        if ($admin->role !== 'super_admin') {
+            return response()->json(['success'=>false,'message'=>'슈퍼관리자만 사용 가능합니다'], 403);
+        }
+        $target = User::findOrFail($id);
+        if ($target->id === $admin->id) {
+            return response()->json(['success'=>false,'message'=>'자기 자신은 impersonate 할 수 없습니다'], 422);
+        }
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($target);
+        \Log::info('Admin impersonate', ['admin_id'=>$admin->id,'target_id'=>$target->id]);
+        return response()->json([
+            'success'=>true,
+            'message'=>"'{$target->name}' 으로 로그인합니다",
+            'data'=>['token'=>$token,'user'=>$target],
+        ]);
+    }
+
+    // 비밀번호 초기화 — admin/super_admin
+    public function resetUserPassword(Request $request, $id) {
+        $admin = auth()->user();
+        if (!in_array($admin->role, ['admin','super_admin'])) {
+            return response()->json(['success'=>false,'message'=>'권한 없음'], 403);
+        }
+        $user = User::findOrFail($id);
+        // 슈퍼관리자는 다른 슈퍼관리자 비번도 바꿀 수 있지만, admin 은 super_admin 비번 못 바꿈
+        if ($user->role === 'super_admin' && $admin->role !== 'super_admin') {
+            return response()->json(['success'=>false,'message'=>'슈퍼관리자 비밀번호는 변경 불가'], 403);
+        }
+        $newPassword = $request->input('password') ?: \Str::random(12);
+        $user->update(['password' => \Hash::make($newPassword)]);
+        \Log::info('Admin reset password', ['admin_id'=>$admin->id,'target_id'=>$user->id]);
+        return response()->json([
+            'success'=>true,
+            'message'=>'비밀번호가 변경되었습니다',
+            'data'=>['temporary_password'=>$newPassword],
+        ]);
+    }
+
+    // 계정 삭제 — super_admin 만, 소프트 삭제 (is_banned=true, email=deleted_{id}_{orig})
+    public function deleteUserAccount($id) {
+        $admin = auth()->user();
+        if ($admin->role !== 'super_admin') {
+            return response()->json(['success'=>false,'message'=>'슈퍼관리자만 계정을 삭제할 수 있습니다'], 403);
+        }
+        $user = User::findOrFail($id);
+        if ($user->id === $admin->id) {
+            return response()->json(['success'=>false,'message'=>'자기 계정은 삭제할 수 없습니다'], 422);
+        }
+        if ($user->role === 'super_admin') {
+            return response()->json(['success'=>false,'message'=>'다른 슈퍼관리자 계정은 삭제할 수 없습니다'], 422);
+        }
+        $user->update([
+            'is_banned' => true,
+            'ban_reason' => '관리자에 의한 계정 삭제',
+            'email' => 'deleted_' . $user->id . '_' . $user->email,
+            'password' => \Hash::make(\Str::random(32)),
+        ]);
+        \Log::warning('Admin deleted account', ['admin_id'=>$admin->id,'target_id'=>$user->id]);
+        return response()->json(['success'=>true,'message'=>'계정이 삭제되었습니다 (복구 가능)']);
+    }
+
     // 게시글 상세 (관리자 인라인 뷰용)
     public function postDetail($id) {
         $post = Post::with('user:id,name,email','board:id,name,slug','comments.user:id,name')->findOrFail($id);
