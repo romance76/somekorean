@@ -196,7 +196,7 @@ class AdminController extends Controller
         $events = Event::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
         $qa = QaPost::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
         $banners = \App\Models\BannerAd::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
-        $reports_filed = Report::where('user_id',$id)->orderByDesc('created_at')->limit(10)->get();
+        $reports_filed = Report::where('reporter_id',$id)->orderByDesc('created_at')->limit(10)->get();
 
         // 요약 통계
         $summary = [
