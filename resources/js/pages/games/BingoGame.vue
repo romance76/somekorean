@@ -3,10 +3,13 @@
     <div class="max-w-6xl mx-auto">
 
       <!-- Header -->
-      <div class="relative text-center mb-6">
-        <button @click="$router.push('/games')" class="absolute left-0 top-1 text-white/60 hover:text-white text-sm bg-white/10 px-3 py-1.5 rounded-lg transition">← 목록</button>
-        <h1 class="text-4xl font-bold tracking-widest text-yellow-300 drop-shadow-lg">🎯 빙고 게임</h1>
-        <p class="text-purple-300 mt-1 text-sm">한인 커뮤니티 빙고 · 혼자서 컴퓨터와 대결!</p>
+      <div class="flex items-center gap-3 mb-6">
+        <RouterLink to="/games" class="text-white bg-white/15 hover:bg-white/25 text-sm font-bold px-3 py-2 rounded-lg transition flex-shrink-0">← 목록</RouterLink>
+        <div class="flex-1 text-center">
+          <h1 class="text-3xl lg:text-4xl font-bold tracking-widest text-yellow-300 drop-shadow-lg">🎯 빙고 게임</h1>
+          <p class="text-purple-300 mt-1 text-xs">한인 커뮤니티 빙고 · 혼자서 컴퓨터와 대결!</p>
+        </div>
+        <div class="w-[68px] flex-shrink-0"></div>
       </div>
 
       <!-- Status Bar -->

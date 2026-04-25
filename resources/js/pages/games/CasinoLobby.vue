@@ -140,6 +140,15 @@ const games = [
     bets: [50, 100, 500, 1000],
     path: '/games/blackjack',
   },
+  {
+    key: 'slots',
+    name: '슬롯머신',
+    icon: '🎰',
+    description: '운빨의 슬롯 · 잭팟 도전',
+    typeLabel: 'Luck',
+    bets: [10, 50, 100, 500],
+    path: '/games/slots',
+  },
 ]
 
 const selectedBet = reactive(Object.fromEntries(games.map(g => [g.key, g.bets[0]])))

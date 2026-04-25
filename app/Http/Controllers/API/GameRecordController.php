@@ -13,6 +13,31 @@ class GameRecordController extends Controller
     private const NEW_RECORD_POINTS = 10;
 
     /**
+     * 유저의 게임 진행도 (해당 게임에서 완료한 최대 레벨)
+     * GET /api/games/{slug}/progress
+     * returns: { max_completed_level, max_unlocked_level }
+     *   - max_completed_level: 클리어한 가장 높은 레벨 (없으면 0)
+     *   - max_unlocked_level: 플레이 가능한 최대 레벨 (= 완료 + 1, 최소 1)
+     */
+    public function progress(Request $request, string $slug)
+    {
+        if (!auth()->check()) {
+            return response()->json(['success'=>true, 'data'=>['max_completed_level'=>0,'max_unlocked_level'=>1]]);
+        }
+        $userId = auth()->id();
+        $maxCompleted = (int) GameRecord::where('user_id', $userId)
+            ->where('game_slug', $slug)
+            ->max('level');
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'max_completed_level' => $maxCompleted,
+                'max_unlocked_level'  => max(1, $maxCompleted + 1),
+            ],
+        ]);
+    }
+
+    /**
      * 게임 결과 기록
      * POST /api/games/result
      * body: { game_slug, level, time_ms, score?, won? , leveled_up? }

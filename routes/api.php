@@ -163,6 +163,7 @@ Route::get('/quiz/{slug}', [\App\Http\Controllers\API\QuizQuestionController::cl
 
 // 게임 리더보드 (공개 조회)
 Route::get('/games/{slug}/leaderboard', [\App\Http\Controllers\API\GameRecordController::class, 'leaderboard']);
+Route::get('/games/{slug}/progress', [\App\Http\Controllers\API\GameRecordController::class, 'progress']);
 
 // 게임 호환 API (old_site GameLobby용)
 Route::get('/game-categories', function () {

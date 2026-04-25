@@ -1,8 +1,46 @@
 <template>
 <GameShell title="한국어 워들" icon="🔡" :points="coinStr">
   <template #meta>
+    <button @click="showHelp = true" class="new-btn" style="background:#3b82f6;">❓ 도움말</button>
     <button @click="newGame" class="new-btn">새 게임</button>
   </template>
+
+  <!-- 도움말 모달 -->
+  <div v-if="showHelp" class="help-overlay" @click.self="showHelp = false">
+    <div class="help-modal">
+      <h2 class="help-title">🔡 한국어 워들 규칙</h2>
+      <div class="help-section">
+        <h3>🎯 목표</h3>
+        <p>4글자 한국어 단어를 6번 안에 맞히세요!</p>
+      </div>
+      <div class="help-section">
+        <h3>⌨️ 입력 방법</h3>
+        <ol>
+          <li>아래 키보드에서 자음/모음 버튼을 눌러 4글자를 만듭니다</li>
+          <li>"입력 ↵" 버튼으로 추측을 제출합니다</li>
+          <li>잘못 입력했으면 "⌫ 지우기"로 마지막 글자 삭제</li>
+        </ol>
+      </div>
+      <div class="help-section">
+        <h3>🟩 색상 의미</h3>
+        <ul class="help-colors">
+          <li><span class="color-box correct"></span> <strong>초록</strong> — 정확한 글자가 정확한 위치</li>
+          <li><span class="color-box present"></span> <strong>노랑</strong> — 글자는 맞지만 위치가 다름</li>
+          <li><span class="color-box absent"></span> <strong>회색</strong> — 정답에 없는 글자</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3>💡 예시</h3>
+        <p>정답이 <strong>"김치찌개"</strong>일 때 <strong>"김밥볶음"</strong>을 입력하면<br>
+          김(🟩) 밥(⬜) 볶(⬜) 음(⬜) — "김"만 정답!</p>
+      </div>
+      <div class="help-section">
+        <h3>🎁 보상</h3>
+        <p>정답을 맞히면 <strong>+30 코인</strong> 획득!</p>
+      </div>
+      <button @click="showHelp = false" class="help-close-btn">시작하기</button>
+    </div>
+  </div>
 
   <div class="wordle-box">
     <div class="wordle-card">
@@ -65,8 +103,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import GameShell from '../../components/GameShell.vue'
+
+const showHelp = ref(false)
+
+onMounted(() => {
+  // 첫 방문 시 자동으로 도움말 표시
+  if (!localStorage.getItem('wordle_help_seen')) {
+    showHelp.value = true
+    localStorage.setItem('wordle_help_seen', '1')
+  }
+})
 
 const WORD_LEN = 4
 const MAX_ROWS = 6
@@ -200,8 +248,24 @@ onUnmounted(() => { window.removeEventListener('keydown', handleKeyPress) })
 </script>
 
 <style scoped>
-.new-btn { background: rgba(99, 102, 241, 0.1); color: #4338ca; border: 1px solid rgba(99,102,241,0.3); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.new-btn { background: rgba(99, 102, 241, 0.1); color: #4338ca; border: 1px solid rgba(99,102,241,0.3); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; margin-left: 4px; }
 .new-btn:hover { background: rgba(99,102,241,0.2); }
+
+.help-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.help-modal { background: #fff; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+.help-title { font-size: 22px; font-weight: 900; color: #1f2937; margin: 0 0 16px; text-align: center; }
+.help-section { margin-bottom: 16px; }
+.help-section h3 { font-size: 14px; font-weight: 800; color: #4338ca; margin: 0 0 6px; }
+.help-section p, .help-section ol, .help-section ul { font-size: 13px; color: #374151; line-height: 1.6; margin: 0; padding-left: 20px; }
+.help-section ol li, .help-section ul li { margin-bottom: 4px; }
+.help-colors { list-style: none !important; padding-left: 0 !important; }
+.help-colors li { display: flex; align-items: center; gap: 8px; }
+.color-box { width: 18px; height: 18px; border-radius: 4px; display: inline-block; }
+.color-box.correct { background: #10b981; }
+.color-box.present { background: #f59e0b; }
+.color-box.absent { background: #9ca3af; }
+.help-close-btn { display: block; width: 100%; background: linear-gradient(to right, #6366f1, #8b5cf6); color: #fff; font-weight: 800; padding: 12px; border: none; border-radius: 12px; font-size: 15px; cursor: pointer; margin-top: 8px; }
+.help-close-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(99,102,241,0.3); }
 
 .wordle-box { max-width: 480px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .wordle-card { background: #fff; border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); padding: 20px; }

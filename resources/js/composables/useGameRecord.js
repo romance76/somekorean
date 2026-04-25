@@ -30,6 +30,9 @@ export function useGameRecord(slug) {
   const prevTimeMs = ref(null)
   const lbRef = ref(null)
 
+  const maxCompletedLevel = ref(0)
+  const maxUnlockedLevel = ref(1)
+
   function start(level) {
     recordLevel.value = Number(level) || 1
     pointsEarned.value = 0
@@ -37,6 +40,27 @@ export function useGameRecord(slug) {
     prevTimeMs.value = null
     elapsedMs.value = 0
     startAt.value = Date.now()
+  }
+
+  /**
+   * 서버에서 유저의 해당 게임 진행도(완료한 최대 레벨)를 불러옴.
+   * 비로그인 또는 미플레이 시 maxCompletedLevel=0, maxUnlockedLevel=1.
+   */
+  async function loadProgress() {
+    if (!auth.isLoggedIn) {
+      maxCompletedLevel.value = 0
+      maxUnlockedLevel.value = 1
+      return { max_completed_level: 0, max_unlocked_level: 1 }
+    }
+    try {
+      const { data } = await axios.get(`/api/games/${slug}/progress`)
+      const r = data.data || {}
+      maxCompletedLevel.value = r.max_completed_level || 0
+      maxUnlockedLevel.value = r.max_unlocked_level || 1
+      return r
+    } catch {
+      return { max_completed_level: 0, max_unlocked_level: 1 }
+    }
   }
 
   async function end({ won, leveledUp = false, score = 0 } = {}) {
@@ -70,6 +94,7 @@ export function useGameRecord(slug) {
 
   return {
     startAt, elapsedMs, recordLevel, pointsEarned, newRecord, prevTimeMs, lbRef,
-    start, end, formatTime,
+    maxCompletedLevel, maxUnlockedLevel,
+    start, end, formatTime, loadProgress,
   }
 }
