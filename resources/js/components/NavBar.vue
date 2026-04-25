@@ -84,8 +84,8 @@
           </div>
         </template>
         <template v-else>
-          <RouterLink to="/login" class="text-xs text-gray-600 hover:text-amber-700 px-1.5 py-1 hidden sm:block">로그인</RouterLink>
-          <RouterLink to="/register" class="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1 rounded-lg hover:bg-amber-500">가입</RouterLink>
+          <RouterLink to="/login" class="text-xs font-bold text-amber-700 hover:text-amber-900 border border-amber-300 bg-white hover:bg-amber-50 px-2.5 py-1 rounded-lg">로그인</RouterLink>
+          <RouterLink to="/register" class="text-xs bg-amber-400 text-amber-900 font-bold px-2.5 py-1 rounded-lg hover:bg-amber-500">가입</RouterLink>
         </template>
         <button @click="togglePageLang()" translate="no" class="notranslate text-[11px] font-bold px-2 py-1 rounded border border-gray-200" :title="isTranslatedEn ? '한국어로 돌아가기' : 'Translate to English'">
           <span translate="no" class="notranslate">{{ isTranslatedEn ? '한' : 'EN' }}</span>
