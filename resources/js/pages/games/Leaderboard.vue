@@ -72,8 +72,8 @@
             <div class="list-sub">@{{ user.username }}</div>
           </div>
           <div class="list-value">
-            <div class="value-main">{{ formatVal(user.value) }}</div>
-            <div class="value-unit">{{ unitLabel }}</div>
+            <span class="value-main">{{ formatVal(user.value) }}</span>
+            <span class="value-unit">{{ unitLabel }}</span>
           </div>
         </div>
       </div>
@@ -219,9 +219,9 @@ onMounted(loadData)
 .lv-forest { background: #d1fae5; color: #047857; }
 .lv-oak { background: #fef3c7; color: #92400e; }
 .list-sub { font-size: 11px; color: #9ca3af; }
-.list-value { text-align: right; flex-shrink: 0; }
+.list-value { text-align: right; flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 3px; }
 .value-main { font-weight: 800; color: #d97706; font-size: 15px; }
-.value-unit { font-size: 10px; color: #9ca3af; }
+.value-unit { font-size: 11px; color: #9ca3af; font-weight: 600; }
 
 .my-rank { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 14px 18px; background: #dbeafe; border: 1px solid #93c5fd; border-radius: 14px; }
 .my-badge { font-size: 20px; font-weight: 900; color: #1d4ed8; }
