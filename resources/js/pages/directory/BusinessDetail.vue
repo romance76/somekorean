@@ -74,6 +74,7 @@
 
       <!-- 댓글 -->
       <CommentSection v-if="biz.id" :type="'business'" :typeId="biz.id" class="mt-4" />
+      <MobileBanner page="directory" class="lg:hidden mt-3" />
       </div>
       <!-- 사이드바 -->
       <div class="col-span-12 lg:col-span-3 hidden lg:block">
@@ -91,6 +92,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import CommentSection from '../../components/CommentSection.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import LeafletMap from '../../components/LeafletMap.vue'
 import BoostButton from '../../components/BoostButton.vue'

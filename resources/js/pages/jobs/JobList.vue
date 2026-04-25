@@ -199,10 +199,12 @@
           </div>
         </div>
       </div>
-      <MobileAdInline v-if="i === 4" page="jobs" />
+      <MobileBanner v-if="i === 4" page="jobs" class="lg:hidden" />
       </template>
     </div>
 
+    <!-- 📝 텍스트 인라인: 페이지네이션 위 한 줄 -->
+    <TextInlineAd page="jobs" class="mt-3" />
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />
     </div>
 
@@ -227,6 +229,8 @@ import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
 import BookmarkToggle from '../../components/BookmarkToggle.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
+import TextInlineAd from '../../components/TextInlineAd.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

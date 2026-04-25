@@ -9,18 +9,20 @@ use App\Models\JobPromotion;
 use App\Traits\AdminAuthorizes;
 use App\Traits\CompressesUploads;
 use App\Traits\HasAdjacent;
+use App\Traits\HasPromotions;
 use Illuminate\Http\Request;
 
 class JobController extends Controller
 {
-    use AdminAuthorizes, CompressesUploads, HasAdjacent;
+    use AdminAuthorizes, CompressesUploads, HasAdjacent, HasPromotions;
+
+    protected string $promoResource = 'jobs';
+    protected string $promoModel = JobPost::class;
+    protected string $promoCategoryColumn = 'category';
 
     public function index(Request $request)
     {
-        // 만료된 프로모션 자동 해제
-        JobPost::where('promotion_tier', '!=', 'none')
-            ->where('promotion_expires_at', '<', now())
-            ->update(['promotion_tier' => 'none', 'promotion_expires_at' => null]);
+        $this->expireStalePromotions();
 
         $query = JobPost::with('user:id,name,nickname')
             ->active()
@@ -35,62 +37,8 @@ class JobController extends Controller
             $query->nearby($request->lat, $request->lng, $request->radius ?? 50);
         }
 
-        // ─── 위치 모드별 프로모션 티어 분리 ───
-        // 내 위치 모드 (lat/lng 있음): national 프로모션 제외 (전국 광고는 '전국' 탭에서만)
-        // 전국 모드 (lat/lng 없음): state_plus, sponsored 제외 (주 단위 광고는 '내 위치' 탭에서만)
-        // 일반 공고 (promotion_tier='none') 는 양쪽 모두 노출
-        if ($hasLocation) {
-            $query->where('promotion_tier', '!=', 'national');
-        } else {
-            $query->whereNotIn('promotion_tier', ['state_plus', 'sponsored']);
-        }
-
-        // ─── 프로모션 우선순위 (사용자 주 기반) ───
-        // state_plus: 광고주의 promotion_states 에 사용자 주 또는 인접 주가 포함된 경우만 상위
-        //            (예: 아틀란타/GA 사용자 → promotion_states 에 GA/AL/FL/NC/SC/TN 중 하나라도 있으면 부스트)
-        // sponsored: 같은 주 한정 상위
-        // national: 전국 모드에서만 최상위
-        $userState = $request->user_state ? strtoupper(trim($request->user_state)) : null;
-        $neighborStates = \App\Support\StateNeighbors::neighbors($userState);
-
-        // promotion_states JSON 에 사용자 주/인접주가 들어있는지 OR 조건 (MySQL 5.7+ 호환)
-        $statePlusCond = 'FALSE';
-        if ($neighborStates) {
-            $parts = [];
-            $neighborSqlList = [];
-            foreach ($neighborStates as $st) {
-                if (preg_match('/^[A-Z]{2}$/', $st)) {
-                    $parts[] = "JSON_CONTAINS(promotion_states, '\"" . $st . "\"')";
-                    $neighborSqlList[] = "'{$st}'";
-                }
-            }
-            if ($parts) {
-                // 폴백: promotion_states 가 비어있으면 공고의 state 컬럼으로 매칭 (예전 데이터 호환)
-                $fallback = '(promotion_states IS NULL OR JSON_LENGTH(promotion_states) = 0) AND state IN (' . implode(',', $neighborSqlList) . ')';
-                $statePlusCond = '((' . implode(' OR ', $parts) . ') OR (' . $fallback . '))';
-            }
-        }
-
-        $stateSql = $userState && preg_match('/^[A-Z]{2}$/', $userState) ? "'{$userState}'" : "''";
-
-        // 상위 고정: 내 위치 모드 → 내 주/인접주 매칭 state_plus 만
-        //           전국 모드 → national 만
-        // sponsored 는 상위 부스트 없이 일반 순서(최신순)로 배치 (색만 다름)
-        if ($hasLocation && $userState) {
-            $query->orderByRaw("
-                CASE
-                    WHEN promotion_tier = 'state_plus' AND {$statePlusCond} THEN 1
-                    ELSE 9
-                END
-            ");
-        } else {
-            $query->orderByRaw("
-                CASE
-                    WHEN promotion_tier = 'national' THEN 1
-                    ELSE 9
-                END
-            ");
-        }
+        $this->excludeCrossTierPromotion($query, $hasLocation);
+        $this->applyPromotionOrdering($query, $request->user_state, $hasLocation);
         $query->orderByDesc('created_at');
 
         return response()->json(['success' => true, 'data' => $query->paginate($request->per_page ?? 20)]);
@@ -170,181 +118,40 @@ class JobController extends Controller
         ]);
     }
 
-    // 프로모션 슬롯 현황 조회 (카테고리별 최대 5개)
-    // 파라미터:
-    //   tier: state_plus | national (sponsored 는 무제한)
-    //   category: 필수 (카테고리별 슬롯이 분리됨)
-    //   state: state_plus 일 때 공고의 주 (필수)
+    // 프로모션 슬롯 현황 조회 — HasPromotions trait 사용
     public function promotionSlots(Request $request)
     {
-        $tier = $request->tier ?: 'national';
-        $category = $request->category;
-        $state = $request->state;
-
-        if (!$category) {
-            return response()->json(['success' => false, 'message' => 'category 파라미터가 필요합니다'], 422);
-        }
-
-        $query = JobPost::where('promotion_tier', $tier)
-            ->where('category', $category)
-            ->where('promotion_expires_at', '>', now());
-
-        // state_plus: promotion_states 에 주어진 state 가 포함된 것만 카운트
-        //   (같은 주 그룹의 슬롯 경쟁. 예: GA 공고는 다른 GA 공고와 경쟁)
-        //   빈 promotion_states 는 공고의 state 컬럼으로 폴백
-        if ($tier === 'state_plus') {
-            if (!$state || !preg_match('/^[A-Z]{2}$/i', $state)) {
-                return response()->json(['success' => false, 'message' => 'state_plus 는 state 파라미터가 필요합니다'], 422);
-            }
-            $stUp = strtoupper($state);
-            $query->where(function ($q) use ($stUp) {
-                $q->whereJsonContains('promotion_states', $stUp)
-                  ->orWhere(function ($inner) use ($stUp) {
-                      $inner->where(function ($x) {
-                          $x->whereNull('promotion_states')
-                            ->orWhereRaw('JSON_LENGTH(promotion_states) = 0');
-                      })->where('state', $stUp);
-                  });
-            });
-        }
-
-        $active = $query->orderBy('promotion_expires_at')
-            ->get(['id', 'title', 'promotion_expires_at']);
-        $used = $active->count();
-        $max = \App\Support\PromotionSettings::maxSlots($tier); // 5
-        $available = max($max - $used, 0);
-        $nextSlotTime = $used >= $max ? $active->first()?->promotion_expires_at : null;
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'tier' => $tier,
-                'category' => $category,
-                'state' => $tier === 'state_plus' ? strtoupper($state) : null,
-                'max_slots' => $max,
-                'used' => $used,
-                'available' => $available,
-                'is_full' => $used >= $max,
-                'daily_cost' => \App\Support\PromotionSettings::pricePerDay($tier),
-                'next_slot_time' => $nextSlotTime,
-            ]
-        ]);
+        return $this->handlePromotionSlots($request);
     }
 
-    // 프로모션 구매
+    // 프로모션 구매 — HasPromotions trait + JobPromotion 감사 레코드
     public function promote(Request $request, $id)
     {
         $job = $this->findOwnedOrAdmin(JobPost::class, $id);
+        $response = $this->handlePromote($job, $request);
 
-        $request->validate([
-            'tier' => 'required|in:national,state_plus,sponsored',
-            'days' => 'required|integer|min:1|max:90',
-        ]);
+        // 실패(422)면 그대로 반환
+        $payload = $response->getData(true);
+        if (empty($payload['success'])) return $response;
 
+        // 성공 시 JobPromotion 감사 레코드 생성 (구인구직만 별도 테이블 유지)
         $tier = $request->tier;
         $days = (int) $request->days;
-        $dailyCost = \App\Support\PromotionSettings::pricePerDay($tier);
-        $totalCost = $dailyCost * $days;
-
-        // state_plus 선택 시 공고의 주 + 인접 주를 자동 계산 (광고주가 직접 선택 X)
-        $autoStates = null;
-        if ($tier === 'state_plus') {
-            if (!$job->state) {
-                return response()->json([
-                    'success' => false,
-                    'message' => '공고에 주(State) 정보가 없어 state_plus 상위노출을 적용할 수 없습니다. 공고의 근무 위치를 먼저 입력해주세요.'
-                ], 422);
-            }
-            $autoStates = \App\Support\StateNeighbors::neighbors($job->state);
-        }
-
-        // 슬롯 체크 (카테고리별 최대 5개. sponsored 는 무제한)
-        if ($tier !== 'sponsored') {
-            if (!$job->category) {
-                return response()->json(['success' => false, 'message' => '공고의 카테고리가 필요합니다'], 422);
-            }
-
-            $slotQuery = JobPost::where('promotion_tier', $tier)
-                ->where('category', $job->category)
-                ->where('promotion_expires_at', '>', now());
-
-            if ($tier === 'state_plus') {
-                $stUp = strtoupper($job->state);
-                $slotQuery->where(function ($q) use ($stUp) {
-                    $q->whereJsonContains('promotion_states', $stUp)
-                      ->orWhere(function ($inner) use ($stUp) {
-                          $inner->where(function ($x) {
-                              $x->whereNull('promotion_states')
-                                ->orWhereRaw('JSON_LENGTH(promotion_states) = 0');
-                          })->where('state', $stUp);
-                      });
-                });
-            }
-
-            $usedCount = $slotQuery->count();
-            if ($usedCount >= \App\Support\PromotionSettings::maxSlots($tier)) {
-                $nextSlot = $slotQuery->orderBy('promotion_expires_at')->first();
-                $when = $nextSlot?->promotion_expires_at?->format('Y-m-d H:i');
-                $tierLabel = $tier === 'national' ? '전국 상위노출' : '주(State) 상위노출';
-                $where = $tier === 'state_plus' ? " ({$job->state} 주)" : '';
-                $msg = "{$tierLabel}{$where} - '{$job->category}' 카테고리 슬롯이 모두 사용 중입니다. "
-                    . ($when ? "{$when} 이후 가능합니다." : '');
-                return response()->json([
-                    'success' => false,
-                    'message' => $msg,
-                    'data' => [
-                        'is_full' => true,
-                        'next_slot_time' => $nextSlot?->promotion_expires_at,
-                        'used' => $usedCount,
-                        'max_slots' => \App\Support\PromotionSettings::maxSlots($tier),
-                    ],
-                ], 422);
-            }
-        }
-
-        // 포인트 차감
-        $user = auth()->user();
-        if ($user->points < $totalCost) {
-            return response()->json(['success' => false, 'message' => '포인트가 부족합니다'], 422);
-        }
-
-        $user->addPoints(-$totalCost, 'job_promotion', "구인 상위노출 ({$tier}, {$days}일)");
-
-        $startsAt = now();
-        $expiresAt = now()->addDays($days);
-
+        $dailyCost = \App\Support\PromotionSettings::pricePerDay($tier, 'jobs');
         JobPromotion::create([
             'job_post_id' => $id,
             'user_id' => auth()->id(),
             'tier' => $tier,
-            'states' => $autoStates, // 자동 계산된 주 목록
+            'states' => $payload['data']['states'] ?? null,
             'days' => $days,
             'daily_cost' => $dailyCost,
-            'total_cost' => $totalCost,
-            'starts_at' => $startsAt,
-            'expires_at' => $expiresAt,
+            'total_cost' => $dailyCost * $days,
+            'starts_at' => now(),
+            'expires_at' => $payload['data']['expires_at'] ?? now()->addDays($days),
             'status' => 'active',
         ]);
 
-        $job->update([
-            'promotion_tier' => $tier,
-            'promotion_expires_at' => $expiresAt,
-            'promotion_states' => $autoStates,
-        ]);
-
-        $msg = '상위노출이 적용되었습니다';
-        if ($tier === 'state_plus' && $autoStates) {
-            $msg .= ' (노출 주: ' . implode(', ', $autoStates) . ')';
-        }
-        return response()->json([
-            'success' => true,
-            'message' => $msg,
-            'data' => [
-                'tier' => $tier,
-                'states' => $autoStates,
-                'expires_at' => $expiresAt,
-            ],
-        ]);
+        return $response;
     }
 
     public function show($id)

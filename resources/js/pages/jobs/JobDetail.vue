@@ -250,6 +250,7 @@
 
         <!-- Comments -->
         <CommentSection v-if="job.id" type="job" :typeId="job.id" class="mt-4" />
+        <MobileBanner page="jobs" class="lg:hidden" />
         <PostNavigator :prev-id="prev?.id" :prev-title="prev?.title"
           :next-id="next?.id" :next-title="next?.title"
           list-path="/jobs" detail-base="/jobs/" />
@@ -307,6 +308,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useLocation } from '../../composables/useLocation'
 import CommentSection from '../../components/CommentSection.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
 import DetailHeader from '../../components/DetailHeader.vue'
 import PostNavigator from '../../components/PostNavigator.vue'
 import AdSlot from '../../components/AdSlot.vue'

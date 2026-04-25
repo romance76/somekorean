@@ -107,7 +107,7 @@
             <div class="text-center">
               <div class="text-[10px] font-bold mb-1"
                 :class="tier.tier === 'premium' ? 'text-amber-700' : tier.tier === 'standard' ? 'text-blue-700' : 'text-green-700'">
-                {{ {premium:'🥇 프리미엄',standard:'🥈 스탠다드',economy:'🥉 이코노미'}[tier.tier] }}
+                {{ {premium:'🥇 프A',standard:'🥈 스A',economy:'🥉 이코노미'}[tier.tier] }}
                 <span class="text-gray-400">#{{ s.index }}</span>
               </div>
               <template v-if="s.ad">
@@ -145,8 +145,8 @@
             @click="openSlot(s, tier, 'right')">
             <div class="text-center">
               <div class="text-[10px] font-bold mb-1"
-                :class="tier.tier === 'premium' ? 'text-amber-700' : 'text-green-700'">
-                {{ {premium:'🥇 프리미엄',economy:'🥉 이코노미'}[tier.tier] }}
+                :class="tier.tier === 'premium' ? 'text-amber-700' : tier.tier === 'standard' ? 'text-blue-700' : 'text-green-700'">
+                {{ {premium:'🥇 프B',standard:'🥈 스B',economy:'🥉 이코노미'}[tier.tier] }}
                 <span class="text-gray-400">#{{ s.index }}</span>
               </div>
               <template v-if="s.ad">
@@ -170,16 +170,13 @@
       </div>
     </div>
 
-    <!-- 범례 -->
-    <div class="px-4 pb-4 flex gap-2 text-[10px]">
-      <div class="flex-1 bg-amber-50 border border-amber-200 rounded p-2">
-        <strong class="text-amber-700">🥇 프리미엄</strong> 한 달 독점, 100% 보장
+    <!-- 범례: 프A/프B/스A/스B 고정 독점 -->
+    <div class="px-4 pb-4 flex gap-2 text-[10px] flex-wrap">
+      <div class="flex-1 min-w-[180px] bg-amber-50 border border-amber-200 rounded p-2">
+        <strong class="text-amber-700">🥇 프A / 프B</strong> 한 달 독점, 데스크톱 100% + 모바일 35%씩
       </div>
-      <div class="flex-1 bg-blue-50 border border-blue-200 rounded p-2">
-        <strong class="text-blue-700">🥈 스탠다드</strong> 2명 랜덤 교대, ~50%
-      </div>
-      <div class="flex-1 bg-green-50 border border-green-200 rounded p-2">
-        <strong class="text-green-700">🥉 이코노미</strong> 3~5명 랜덤, 부담없는 가격
+      <div class="flex-1 min-w-[180px] bg-blue-50 border border-blue-200 rounded p-2">
+        <strong class="text-blue-700">🥈 스A / 스B</strong> 한 달 독점, 데스크톱 100% + 모바일 15%씩
       </div>
     </div>
   </div>

@@ -146,9 +146,11 @@
           </div>
         </div>
       </RouterLink>
-      <MobileAdInline v-if="i === 4" page="clubs" />
+      <MobileBanner v-if="i === 4" page="clubs" class="sm:col-span-2 lg:hidden" />
       </template>
     </div>
+    <!-- 📝 텍스트 인라인 -->
+    <TextInlineAd page="clubs" class="mt-3" />
     </div>
     <!-- 오른쪽 위젯 -->
     <div class="col-span-12 lg:col-span-3 hidden lg:block">
@@ -171,6 +173,8 @@ import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
 import BookmarkToggle from '../../components/BookmarkToggle.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
+import TextInlineAd from '../../components/TextInlineAd.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

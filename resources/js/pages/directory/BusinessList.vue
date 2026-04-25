@@ -277,7 +277,7 @@
           </div>
         </div>
       </div>
-      <MobileAdInline v-if="i === 4" page="directory" />
+      <MobileBanner v-if="i === 4" page="directory" class="col-span-full lg:hidden" />
       </template>
     </div>
     <!-- 리스트형 -->
@@ -302,10 +302,12 @@
           </div>
         </div>
       </div>
-      <MobileAdInline v-if="i === 4" page="directory" />
+      <MobileBanner v-if="i === 4" page="directory" class="lg:hidden" />
       </template>
     </div>
 
+    <!-- 📝 텍스트 인라인: 페이지네이션 위 한 줄 -->
+    <TextInlineAd page="directory" class="mt-3" />
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />
     </div>
     <!-- 오른쪽 위젯 -->
@@ -356,6 +358,8 @@ import { thumb } from '../../utils/thumb'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
 import BookmarkToggle from '../../components/BookmarkToggle.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
+import TextInlineAd from '../../components/TextInlineAd.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()

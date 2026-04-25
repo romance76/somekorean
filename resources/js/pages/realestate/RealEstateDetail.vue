@@ -160,6 +160,7 @@
         </div>
 
         <CommentSection v-if="listing.id" type="realestate" :typeId="listing.id" />
+        <MobileBanner page="realestate" class="lg:hidden" />
         <PostNavigator :prev-id="prev?.id" :prev-title="prev?.title"
           :next-id="next?.id" :next-title="next?.title"
           list-path="/realestate" detail-base="/realestate/" />
@@ -207,6 +208,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
 import AdSlot from '../../components/AdSlot.vue'
 import ReportModal from '../../components/ReportModal.vue'
 import MessageModal from '../../components/MessageModal.vue'

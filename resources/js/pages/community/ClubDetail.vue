@@ -487,6 +487,7 @@
 
         <!-- General comment section (for club page itself, non-member view) -->
         <CommentSection v-if="!isMember && club.id" :type="'club'" :typeId="club.id" class="mt-4" />
+        <MobileBanner page="clubs" class="lg:hidden" />
 
         <PostNavigator v-if="club" :prev-id="prev?.id" :prev-title="prev?.title"
           :next-id="next?.id" :next-title="next?.title"
@@ -563,6 +564,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useSiteStore } from '../../stores/site'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import CommentSection from '../../components/CommentSection.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
 import AdSlot from '../../components/AdSlot.vue'
 import Pagination from '../../components/Pagination.vue'
 import { useChatStore } from '../../stores/chat'

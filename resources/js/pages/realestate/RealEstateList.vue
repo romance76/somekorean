@@ -244,7 +244,7 @@
           </div>
         </div>
       </div>
-      <MobileAdInline v-if="i === 4" page="realestate" />
+      <MobileBanner v-if="i === 4" page="realestate" class="col-span-full lg:hidden" />
       </template>
     </div>
     <!-- 리스트형 -->
@@ -286,10 +286,12 @@
           </div>
         </div>
       </div>
-      <MobileAdInline v-if="i === 4" page="realestate" />
+      <MobileBanner v-if="i === 4" page="realestate" class="lg:hidden" />
       </template>
     </div>
 
+    <!-- 📝 텍스트 인라인: 페이지네이션 위 한 줄 -->
+    <TextInlineAd page="realestate" class="mt-3" />
     <Pagination :page="page" :lastPage="lastPage" @page="loadPage" />
     </div>
     <!-- 오른쪽 위젯 -->
@@ -314,6 +316,8 @@ import { useMenuConfig } from '../../composables/useMenuConfig'
 import axios from 'axios'
 import AdSlot from '../../components/AdSlot.vue'
 import BookmarkToggle from '../../components/BookmarkToggle.vue'
+import MobileBanner from '../../components/MobileBanner.vue'
+import TextInlineAd from '../../components/TextInlineAd.vue'
 
 const auth = useAuthStore()
 const bStore = useBookmarkStore()
