@@ -2,8 +2,27 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
     <DetailHeader :title="listing?.title || '부동산'" fallback="/realestate" />
-    <div class="hidden lg:flex items-center justify-between mb-4">
-      <h1 class="text-xl font-black text-gray-800">🏠 부동산</h1>
+    <!-- 헤더: 데스크탑 (리스트와 동일한 렌트/매매/룸메이트 세그먼트) -->
+    <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-3">
+      <RouterLink to="/realestate" class="text-xl font-black text-gray-800 flex-shrink-0 hover:text-amber-600 transition">🏠 부동산</RouterLink>
+      <div class="flex border border-gray-200 rounded-lg overflow-hidden bg-white">
+        <RouterLink to="/realestate?type=rent"
+          :class="['px-3 py-1 text-xs font-bold transition whitespace-nowrap',
+            listing?.type === 'rent' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50']">
+          🔑 렌트
+        </RouterLink>
+        <RouterLink to="/realestate?type=sale"
+          :class="['px-3 py-1 text-xs font-bold transition whitespace-nowrap',
+            listing?.type === 'sale' ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-50']">
+          🏠 매매
+        </RouterLink>
+        <RouterLink to="/realestate?type=roommate"
+          :class="['px-3 py-1 text-xs font-bold transition whitespace-nowrap',
+            listing?.type === 'roommate' ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-50']">
+          👥 룸메이트
+        </RouterLink>
+      </div>
+      <div class="flex-1"></div>
       <RouterLink v-if="auth.isLoggedIn" to="/realestate/write" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs">✏️ 등록</RouterLink>
     </div>
 

@@ -2,9 +2,24 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 py-5">
     <DetailHeader :title="job?.title || '구인구직'" fallback="/jobs" />
-    <router-link to="/jobs" class="hidden lg:inline-block text-xl font-black text-gray-800 mb-3 hover:text-amber-600 transition">
-      💼 구인구직
-    </router-link>
+    <!-- 헤더: 데스크탑 (리스트와 동일한 구인/구직 세그먼트) -->
+    <div class="hidden lg:flex items-center justify-between mb-4 flex-wrap gap-2">
+      <router-link to="/jobs" class="text-xl font-black text-gray-800 flex-shrink-0 hover:text-amber-600 transition">💼 구인구직</router-link>
+      <div class="flex border border-gray-200 rounded-lg overflow-hidden bg-white">
+        <router-link to="/jobs?type=hiring"
+          :class="['px-3 py-1 text-xs font-bold transition whitespace-nowrap',
+            job?.post_type !== 'seeking' ? 'bg-amber-400 text-amber-900' : 'text-gray-500 hover:bg-gray-50']">
+          💼 구인
+        </router-link>
+        <router-link to="/jobs?type=seeking"
+          :class="['px-3 py-1 text-xs font-bold transition whitespace-nowrap',
+            job?.post_type === 'seeking' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50']">
+          🙋 구직
+        </router-link>
+      </div>
+      <div class="flex-1"></div>
+      <RouterLink v-if="auth.isLoggedIn" to="/jobs/write" class="bg-amber-400 text-amber-900 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500">✏️ 등록</RouterLink>
+    </div>
 
     <div v-if="loading" class="text-center py-20 text-gray-400">로딩중...</div>
 
