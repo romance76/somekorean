@@ -254,15 +254,6 @@
         <PostNavigator :prev-id="prev?.id" :prev-title="prev?.title"
           :next-id="next?.id" :next-title="next?.title"
           list-path="/jobs" detail-base="/jobs/" />
-
-        <!-- Prev / List / Next -->
-        <div class="flex justify-between items-center mt-4 bg-white rounded-xl p-3 border">
-          <button v-if="prevJob" @click="$router.push('/jobs/'+prevJob.id)" class="text-xs text-gray-600 hover:text-amber-600">&larr; 이전글</button>
-          <span v-else></span>
-          <router-link to="/jobs" class="text-xs font-bold text-amber-700 hover:text-amber-500">📋 목록</router-link>
-          <button v-if="nextJob" @click="$router.push('/jobs/'+nextJob.id)" class="text-xs text-gray-600 hover:text-amber-600">다음글 &rarr;</button>
-          <span v-else></span>
-        </div>
       </main>
 
       <!-- ══════════ RIGHT: 내 위치 기반 관련 목록 ══════════ -->
