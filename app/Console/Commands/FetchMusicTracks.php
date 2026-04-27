@@ -9,18 +9,18 @@ use Illuminate\Support\Facades\Http;
 class FetchMusicTracks extends Command
 {
     protected $signature = 'music:fetch {--daily=500}';
-    protected $description = '음악 트랙 자동 수집 (카테고리별 한국/미국 비율 차등, 2분30초~5분, 7일 롤링)';
+    protected $description = '음악 트랙 자동 수집 (전 카테고리 한국 100%, 2분30초~5분, 7일 롤링)';
 
-    // 카테고리별 한국:미국 비율 (한국 %)
+    // 카테고리별 한국:미국 비율 (한국 %) — 전부 한국 100%
     private $ratios = [
-        'ballad'  => 100, // 한국 발라드만
-        'trot'    => 100, // 트로트는 한국만
-        'kpop'    => 100, // K-POP 한국만
-        'hiphop'  => 60,  // 한국 60% 미국 40%
-        'rnb'     => 40,  // 한국 40% 미국 60%
-        'jazz'    => 40,  // 한국 40% 미국 60%
-        'classic' => 50,  // 한국/미국/유럽 반반
-        'ost'     => 50,  // 한국 50% 미국 50%
+        'ballad'  => 100,
+        'trot'    => 100,
+        'kpop'    => 100,
+        'hiphop'  => 100,
+        'rnb'     => 100,
+        'jazz'    => 100,
+        'classic' => 100,
+        'ost'     => 100,
     ];
 
     // 카테고리별 한국 검색어
