@@ -13,6 +13,9 @@
         <span>{{ lv.desc }}</span>
       </div>
     </div>
+    <div class="progress-info" v-if="maxCompletedLevel > 0">
+      🎯 최고 클리어: Lv.{{ maxCompletedLevel }} · 다음 도전: Lv.{{ maxUnlockedLevel }}
+    </div>
     <button class="start-btn" @click="startGame" :disabled="loadingPool">
       {{ loadingPool ? '불러오는 중...' : '시작하기 ▶' }}
     </button>
@@ -73,9 +76,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import axios from 'axios'
 import GameShell from '../../components/GameShell.vue'
+import { useGameRecord } from '../../composables/useGameRecord'
+
+const progressRec = useGameRecord('wordcard')
+const maxCompletedLevel = progressRec.maxCompletedLevel
+const maxUnlockedLevel = progressRec.maxUnlockedLevel
 
 const levelDesc = [
   {lv:1, desc:'기초 음식/과일 (15개)'},
@@ -213,6 +221,13 @@ function endGame() {
   } else speak('다시 한번 도전해봐요!')
 }
 
+onMounted(async () => {
+  await progressRec.loadProgress()
+  if (maxUnlockedLevel.value > level.value) {
+    level.value = maxUnlockedLevel.value
+    localStorage.setItem('wordcard_level', level.value)
+  }
+})
 onUnmounted(() => { clearInterval(fbTimer); window.speechSynthesis?.cancel() })
 loadPool()
 </script>
@@ -229,6 +244,7 @@ loadPool()
 .lv-badge { background:#0ea5e9; color:#fff; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; min-width:36px; text-align:center; }
 .start-btn { background:linear-gradient(135deg,#0ea5e9,#0369a1); color:#fff; border:none; padding:16px 40px; border-radius:30px; font-size:18px; font-weight:800; cursor:pointer; box-shadow:0 4px 20px rgba(14,165,233,0.4); }
 .start-btn:disabled { opacity: 0.6; cursor: default; }
+.progress-info { background:rgba(14,165,233,0.15); color:#0c4a6e; padding:8px 16px; border-radius:14px; font-size:13px; font-weight:600; margin-bottom:14px; display:inline-block; }
 
 .play-box { max-width:520px; margin:0 auto; padding:12px 16px; width:100%; }
 .progress-bar { height:8px; background:rgba(255,255,255,0.5); border-radius:4px; margin-bottom:8px; overflow:hidden; }

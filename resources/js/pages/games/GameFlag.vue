@@ -18,6 +18,9 @@
         <span>{{ lv.desc }}</span>
       </div>
     </div>
+    <div class="progress-info" v-if="maxCompletedLevel > 0">
+      🎯 최고 클리어: Lv.{{ maxCompletedLevel }} · 다음 도전: Lv.{{ maxUnlockedLevel }}
+    </div>
     <button class="play-btn" @click="startGame" :disabled="loadingPool">
       {{ loadingPool ? '불러오는 중...' : '게임 시작! 🎮' }}
     </button>
@@ -97,12 +100,17 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, onMounted } from 'vue'
 import axios from 'axios'
 import GameShell from '../../components/GameShell.vue'
 import GameLeaderboard from '../../components/GameLeaderboard.vue'
 import { useAuthStore } from '../../stores/auth'
 import { useSiteStore } from '../../stores/site'
+import { useGameRecord } from '../../composables/useGameRecord'
+
+const progressRec = useGameRecord('flag')
+const maxCompletedLevel = progressRec.maxCompletedLevel
+const maxUnlockedLevel = progressRec.maxUnlockedLevel
 
 const levelDesc = [
   {lv:1, desc:'친숙한 국가 (10개국)'},
@@ -278,6 +286,13 @@ async function endGame() {
   }
 }
 
+onMounted(async () => {
+  await progressRec.loadProgress()
+  if (maxUnlockedLevel.value > level.value) {
+    level.value = maxUnlockedLevel.value
+    localStorage.setItem('flag_level', level.value)
+  }
+})
 onUnmounted(() => { clearInterval(fbTimer); clearInterval(countTimer) })
 loadPool()
 </script>
@@ -299,6 +314,7 @@ loadPool()
 .lv-badge { background:#3b82f6; color:#fff; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; min-width:36px; text-align:center; }
 .play-btn { background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; border:none; padding:16px 48px; border-radius:30px; font-size:20px; font-weight:800; cursor:pointer; box-shadow:0 4px 20px rgba(59,130,246,0.4); }
 .play-btn:disabled { opacity: 0.6; cursor: default; }
+.progress-info { background:rgba(59,130,246,0.15); color:#1e3a8a; padding:8px 16px; border-radius:14px; font-size:13px; font-weight:600; margin-bottom:14px; display:inline-block; }
 
 .play-screen { padding:12px 16px; max-width:500px; margin:0 auto; width:100%; }
 .play-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }

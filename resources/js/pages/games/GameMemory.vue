@@ -16,6 +16,9 @@
         <div>레벨 5+: 18쌍 카드 (6×6)</div>
       </div>
       <div class="best-time" v-if="bestTime">🏆 최단시간: {{ bestTime }}초</div>
+      <div class="progress-info" v-if="rec.maxCompletedLevel.value > 0">
+        🎯 최고 클리어: Lv.{{ rec.maxCompletedLevel.value }} · 다음 도전: Lv.{{ rec.maxUnlockedLevel.value }}
+      </div>
       <button class="start-btn" @click="startGame">시작! 🃏</button>
     </div>
 
@@ -51,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import GameResultExtras from '../../components/GameResultExtras.vue'
 import { useGameRecord } from '../../composables/useGameRecord'
@@ -145,6 +148,14 @@ function flipCard(i) {
 }
 
 function goBack() { clearInterval(timerInterval); router.push('/games') }
+
+onMounted(async () => {
+  await rec.loadProgress()
+  if (rec.maxUnlockedLevel.value > level.value) {
+    level.value = rec.maxUnlockedLevel.value
+    localStorage.setItem('memory_level', level.value)
+  }
+})
 onUnmounted(() => clearInterval(timerInterval))
 </script>
 
@@ -158,6 +169,7 @@ onUnmounted(() => clearInterval(timerInterval))
 .subtitle { color:rgba(255,255,255,0.85); font-size:15px; }
 .level-info { background:rgba(0,0,0,0.2); border-radius:12px; padding:12px 20px; color:#bae6fd; font-size:14px; line-height:1.8; margin:12px auto; max-width:220px; text-align:left; }
 .best-time { color:#fbbf24; font-size:15px; margin:8px 0; }
+.progress-info { color:#bae6fd; font-size:14px; margin:6px 0; background:rgba(0,0,0,0.2); padding:6px 14px; border-radius:14px; display:inline-block; }
 .start-btn { background:#0ea5e9; color:#fff; border:none; padding:14px 40px; border-radius:30px; font-size:20px; font-weight:800; cursor:pointer; margin-top:16px; }
 .play-area { display:flex; flex-direction:column; align-items:center; }
 .game-info { display:flex; gap:16px; margin-bottom:14px; }

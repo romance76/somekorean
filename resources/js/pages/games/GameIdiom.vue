@@ -13,6 +13,9 @@
         <span>{{ lv.desc }}</span>
       </div>
     </div>
+    <div class="progress-info" v-if="rec.maxCompletedLevel.value > 0">
+      🎯 최고 클리어: Lv.{{ rec.maxCompletedLevel.value }} · 다음 도전: Lv.{{ rec.maxUnlockedLevel.value }}
+    </div>
     <button class="play-btn" @click="startGame" :disabled="loadingPool">
       {{ loadingPool ? '불러오는 중...' : '게임 시작! 🎮' }}
     </button>
@@ -87,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, onMounted } from 'vue'
 import axios from 'axios'
 import GameShell from '../../components/GameShell.vue'
 import GameResultExtras from '../../components/GameResultExtras.vue'
@@ -222,6 +225,13 @@ async function endGame() {
   await rec.end({ won, leveledUp: leveled.value, score: score.value })
 }
 
+onMounted(async () => {
+  await rec.loadProgress()
+  if (rec.maxUnlockedLevel.value > level.value) {
+    level.value = rec.maxUnlockedLevel.value
+    localStorage.setItem('idiom_level', level.value)
+  }
+})
 onUnmounted(() => { clearInterval(fbTimer); clearInterval(countTimer) })
 loadPool()
 </script>
@@ -238,6 +248,7 @@ loadPool()
 .lv-badge { background:#d97706; color:#fff; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; min-width:36px; text-align:center; }
 .play-btn { background:linear-gradient(135deg,#d97706,#92400e); color:#fff; border:none; padding:16px 48px; border-radius:30px; font-size:20px; font-weight:800; cursor:pointer; box-shadow:0 4px 20px rgba(217,119,6,0.4); }
 .play-btn:disabled { opacity: 0.6; cursor: default; }
+.progress-info { background:rgba(217,119,6,0.15); color:#92400e; padding:8px 16px; border-radius:14px; font-size:13px; font-weight:600; margin-bottom:14px; display:inline-block; }
 
 .play-screen { padding:12px 16px; max-width:560px; margin:0 auto; width:100%; }
 .play-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
