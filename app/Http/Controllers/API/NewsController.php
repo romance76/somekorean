@@ -45,7 +45,7 @@ class NewsController extends Controller
     {
         $news = News::with('category:id,name,slug')->findOrFail($id);
         $news->increment('view_count');
-        $adj = $this->adjacentPair(News::class, $id, 'title', $news->category_id ? ['category_id' => $news->category_id] : []);
+        $adj = $this->adjacentPair(News::class, $id, 'title', $news->category_id ? ['category_id' => $news->category_id] : [], 'published_at', 'desc');
         return response()->json(['success' => true, 'data' => $news, 'prev' => $adj['prev'], 'next' => $adj['next']]);
     }
 
