@@ -12,7 +12,10 @@
             <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{{ biz.category }}</span>
             <span v-if="biz.subcategory" class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ biz.subcategory }}</span>
           </div>
-          <h1 class="text-lg font-bold text-gray-900">🏪 {{ biz.name }}</h1>
+          <div class="flex items-center justify-between gap-2">
+            <h1 class="text-lg font-bold text-gray-900">🏪 {{ biz.name }}</h1>
+            <BookmarkToggle v-if="auth.isLoggedIn" :active="isFavorited" @toggle="toggleFav" size="lg" class="flex-shrink-0" />
+          </div>
           <div class="flex items-center gap-1 mt-1">
             <span class="text-amber-400">{{ '★'.repeat(Math.round(biz.rating)) }}{{ '☆'.repeat(5 - Math.round(biz.rating)) }}</span>
             <span class="text-sm text-gray-600 font-semibold">{{ biz.rating }}</span>
@@ -102,10 +105,13 @@ import PostNavigator from '../../components/PostNavigator.vue'
 import SidebarWidgets from '../../components/SidebarWidgets.vue'
 import LeafletMap from '../../components/LeafletMap.vue'
 import BoostButton from '../../components/BoostButton.vue'
+import BookmarkToggle from '../../components/BookmarkToggle.vue'
 import axios from 'axios'
+const BM_TYPE = 'App\\Models\\Business'
 const route = useRoute()
 const auth = useAuthStore()
 const biz = ref(null)
+const isFavorited = ref(false)
 const prev = ref(null)
 const next = ref(null)
 const reviews = ref([])
@@ -132,6 +138,25 @@ async function submitReview() {
     reviewForm.content = ''
   } catch {}
 }
+async function loadFavorited() {
+  if (!auth.isLoggedIn || !biz.value) return
+  try {
+    const { data } = await axios.get('/api/bookmarks/check', {
+      params: { type: BM_TYPE, ids: biz.value.id },
+    })
+    isFavorited.value = (data.data || []).includes(biz.value.id)
+  } catch {}
+}
+async function toggleFav() {
+  if (!auth.isLoggedIn) return
+  try {
+    const { data } = await axios.post('/api/bookmarks', {
+      bookmarkable_type: BM_TYPE,
+      bookmarkable_id: biz.value.id,
+    })
+    isFavorited.value = data.bookmarked
+  } catch {}
+}
 onMounted(async () => {
   try {
     const { data } = await axios.get(`/api/businesses/${route.params.id}`)
@@ -139,6 +164,7 @@ onMounted(async () => {
     prev.value = data.prev || null
     next.value = data.next || null
     reviews.value = data.data.reviews || []
+    await loadFavorited()
   } catch {}
   loading.value = false
 })
