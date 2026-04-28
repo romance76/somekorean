@@ -125,24 +125,24 @@
           <!-- 댓글 -->
           <CommentSection :type="'post'" :typeId="activeItem.id" ref="commentSection" />
 
-          <!-- 이전글 / 목록 / 다음글 (제목 표시) -->
+          <!-- 이전글 / 목록 / 다음글 (같은 게시판 한정, 서버 prev/next) -->
           <div class="mt-4 flex items-stretch bg-white rounded-xl shadow-sm border border-gray-200 text-sm overflow-hidden">
-            <button v-if="currentIdx > 0" @click="navItem(-1)"
+            <button v-if="adjPrev" @click="navItem(-1)"
               class="flex-1 min-w-0 px-4 py-3 hover:bg-amber-50 text-left text-gray-700 border-r border-gray-100 transition">
               <div class="text-gray-400 text-xs">← 이전글</div>
-              <div class="text-xs text-gray-600 truncate mt-0.5">{{ items[currentIdx - 1]?.title || '' }}</div>
+              <div class="text-xs text-gray-600 truncate mt-0.5">{{ adjPrev.title || '' }}</div>
             </button>
             <div v-else class="flex-1 min-w-0 px-4 py-3 text-left text-gray-300 border-r border-gray-100 text-xs flex items-center">← 이전글 없음</div>
 
-            <button @click="activeItem=null"
+            <button @click="activeItem=null; adjPrev=null; adjNext=null"
               class="px-5 py-3 hover:bg-amber-50 text-center text-gray-700 font-bold border-r border-gray-100 flex-shrink-0 transition">
               목록
             </button>
 
-            <button v-if="currentIdx < items.length - 1" @click="navItem(1)"
+            <button v-if="adjNext" @click="navItem(1)"
               class="flex-1 min-w-0 px-4 py-3 hover:bg-amber-50 text-right text-gray-700 transition">
               <div class="text-gray-400 text-xs">다음글 →</div>
-              <div class="text-xs text-gray-600 truncate mt-0.5">{{ items[currentIdx + 1]?.title || '' }}</div>
+              <div class="text-xs text-gray-600 truncate mt-0.5">{{ adjNext.title || '' }}</div>
             </button>
             <div v-else class="flex-1 min-w-0 px-4 py-3 text-right text-gray-300 text-xs flex items-center justify-end">다음글 없음 →</div>
           </div>
@@ -236,22 +236,31 @@ const lastPage = ref(1)
 // 인라인 상세
 const activeItem = ref(null)
 const currentIdx = ref(-1)
+const adjPrev = ref(null) // 같은 게시판 내 이전글 (서버 prev)
+const adjNext = ref(null) // 같은 게시판 내 다음글 (서버 next)
 const liked = ref(false)
 const bookmarked = ref(false)
 const commentSection = ref(null)
 
 function navItem(dir) {
-  const newIdx = currentIdx.value + dir
-  if (newIdx >= 0 && newIdx < items.value.length) openItem(items.value[newIdx])
+  const target = dir < 0 ? adjPrev.value : adjNext.value
+  if (target && target.id) {
+    const inList = items.value.find(i => i.id === target.id)
+    openItem(inList || { id: target.id, title: target.title })
+  }
 }
 
 async function openItem(item) {
   currentIdx.value = items.value.findIndex(i => i.id === item.id)
   liked.value = false
   bookmarked.value = false
+  adjPrev.value = null
+  adjNext.value = null
   try {
     const { data } = await axios.get(`/api/posts/${item.id}`)
     activeItem.value = data.data
+    adjPrev.value = data.prev || null
+    adjNext.value = data.next || null
     // 좋아요/북마크 상태 로드
     liked.value = !!data.data?.is_liked
     bookmarked.value = !!data.data?.is_bookmarked

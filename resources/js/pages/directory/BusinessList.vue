@@ -212,16 +212,16 @@
         </div>
       </div>
 
-      <!-- 이전글 / 목록 / 다음글 (제목 표시) -->
+      <!-- 이전 / 목록 / 다음 (같은 카테고리 한정, 서버 prev/next) -->
       <div class="mt-4 flex items-stretch bg-white rounded-xl shadow-sm border border-gray-200 text-sm overflow-hidden">
         <button v-if="bizPrev" @click="openItem(bizPrev)"
           class="flex-1 min-w-0 px-4 py-3 hover:bg-amber-50 text-left text-gray-700 border-r border-gray-100 transition">
           <div class="text-gray-400 text-xs">← 이전</div>
-          <div class="text-xs text-gray-600 truncate mt-0.5">{{ bizPrev.name || bizPrev.title || '' }}</div>
+          <div class="text-xs text-gray-600 truncate mt-0.5">{{ bizPrev.title || bizPrev.name || '' }}</div>
         </button>
         <div v-else class="flex-1 min-w-0 px-4 py-3 text-left text-gray-300 border-r border-gray-100 text-xs flex items-center">← 이전 없음</div>
 
-        <button @click="activeItem=null"
+        <button @click="activeItem=null; bizPrev=null; bizNext=null"
           class="px-5 py-3 hover:bg-amber-50 text-center text-gray-700 font-bold border-r border-gray-100 flex-shrink-0 transition">
           목록
         </button>
@@ -229,7 +229,7 @@
         <button v-if="bizNext" @click="openItem(bizNext)"
           class="flex-1 min-w-0 px-4 py-3 hover:bg-amber-50 text-right text-gray-700 transition">
           <div class="text-gray-400 text-xs">다음 →</div>
-          <div class="text-xs text-gray-600 truncate mt-0.5">{{ bizNext.name || bizNext.title || '' }}</div>
+          <div class="text-xs text-gray-600 truncate mt-0.5">{{ bizNext.title || bizNext.name || '' }}</div>
         </button>
         <div v-else class="flex-1 min-w-0 px-4 py-3 text-right text-gray-300 text-xs flex items-center justify-end">다음 없음 →</div>
       </div>
@@ -390,9 +390,8 @@ const { loadConfig, getDefaultView } = useMenuConfig()
 const viewMode = ref('list')
 const activeItem = ref(null)
 const activeReviews = ref([])
-const bizCurIdx = computed(() => activeItem.value ? items.value.findIndex(i => i.id === activeItem.value.id) : -1)
-const bizPrev = computed(() => bizCurIdx.value > 0 ? items.value[bizCurIdx.value - 1] : null)
-const bizNext = computed(() => bizCurIdx.value >= 0 && bizCurIdx.value < items.value.length - 1 ? items.value[bizCurIdx.value + 1] : null)
+const bizPrev = ref(null) // 같은 카테고리 내 이전 (서버 prev)
+const bizNext = ref(null) // 같은 카테고리 내 다음 (서버 next)
 const lightboxImg = ref(null)
 const googleKey = import.meta.env.VITE_GOOGLE_MAPS_KEY || 'AIzaSyAeG46feoDm6HJbre4_FODaxyhz9SBBsAE'
 const reviewRating = ref(0)
@@ -403,7 +402,14 @@ const claimFile = ref(null)
 const claimStatus = ref(null) // null, 'pending', 'approved'
 
 async function openItem(item) {
-  try { const { data } = await axios.get(`/api/businesses/${item.id}`); activeItem.value = data.data }
+  bizPrev.value = null
+  bizNext.value = null
+  try {
+    const { data } = await axios.get(`/api/businesses/${item.id}`)
+    activeItem.value = data.data
+    bizPrev.value = data.prev || null
+    bizNext.value = data.next || null
+  }
   catch { activeItem.value = item }
   if (activeItem.value?.category) activeCat.value = activeItem.value.category
   // 리뷰 로드 (구글리뷰 + 사이트리뷰 합치기)

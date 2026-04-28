@@ -146,24 +146,24 @@
             <button @click="submitAnswer" :disabled="!newAnswer.trim()" class="mt-2 bg-amber-400 text-amber-900 font-bold px-5 py-2 rounded-lg text-sm hover:bg-amber-500 disabled:opacity-50">답변 등록</button>
           </div>
 
-          <!-- 이전글 / 목록 / 다음글 (제목 표시) -->
+          <!-- 이전글 / 목록 / 다음글 (같은 카테고리 한정, 서버 prev/next 사용) -->
           <div class="mt-4 flex items-stretch bg-white rounded-xl shadow-sm border border-gray-200 text-sm overflow-hidden">
-            <button v-if="currentIdx > 0" @click="navItem(-1)"
+            <button v-if="adjPrev" @click="navItem(-1)"
               class="flex-1 min-w-0 px-4 py-3 hover:bg-amber-50 text-left text-gray-700 border-r border-gray-100 transition">
               <div class="text-gray-400 text-xs">← 이전글</div>
-              <div class="text-xs text-gray-600 truncate mt-0.5">{{ items[currentIdx - 1]?.title || '' }}</div>
+              <div class="text-xs text-gray-600 truncate mt-0.5">{{ adjPrev.title || '' }}</div>
             </button>
             <div v-else class="flex-1 min-w-0 px-4 py-3 text-left text-gray-300 border-r border-gray-100 text-xs flex items-center">← 이전글 없음</div>
 
-            <button @click="activeItem=null; answers=[]"
+            <button @click="activeItem=null; answers=[]; adjPrev=null; adjNext=null"
               class="px-5 py-3 hover:bg-amber-50 text-center text-gray-700 font-bold border-r border-gray-100 flex-shrink-0 transition">
               목록
             </button>
 
-            <button v-if="currentIdx < items.length - 1" @click="navItem(1)"
+            <button v-if="adjNext" @click="navItem(1)"
               class="flex-1 min-w-0 px-4 py-3 hover:bg-amber-50 text-right text-gray-700 transition">
               <div class="text-gray-400 text-xs">다음글 →</div>
-              <div class="text-xs text-gray-600 truncate mt-0.5">{{ items[currentIdx + 1]?.title || '' }}</div>
+              <div class="text-xs text-gray-600 truncate mt-0.5">{{ adjNext.title || '' }}</div>
             </button>
             <div v-else class="flex-1 min-w-0 px-4 py-3 text-right text-gray-300 text-xs flex items-center justify-end">다음글 없음 →</div>
           </div>
@@ -241,10 +241,17 @@ const activeItem = ref(null)
 const answers = ref([])
 const newAnswer = ref('')
 const currentIdx = ref(-1)
+const adjPrev = ref(null) // 같은 카테고리 내 이전글 (API 제공)
+const adjNext = ref(null) // 같은 카테고리 내 다음글 (API 제공)
 
 function navItem(dir) {
-  const newIdx = currentIdx.value + dir
-  if (newIdx >= 0 && newIdx < items.value.length) openItem(items.value[newIdx])
+  const target = dir < 0 ? adjPrev.value : adjNext.value
+  if (target && target.id) {
+    // API id 기반: items 에 있으면 그대로 openItem, 없으면 fetch
+    const inList = items.value.find(i => i.id === target.id)
+    if (inList) openItem(inList)
+    else openItem({ id: target.id, title: target.title })
+  }
 }
 const loading = ref(true)
 const page = ref(1)
@@ -270,9 +277,13 @@ async function openItem(item) {
     const { data } = await axios.get(`/api/qa/${item.id}`)
     activeItem.value = data.data
     answers.value = data.data?.answers || []
+    adjPrev.value = data.prev || null
+    adjNext.value = data.next || null
   } catch {
     activeItem.value = item
     answers.value = []
+    adjPrev.value = null
+    adjNext.value = null
   }
   if (activeItem.value?.category_id) activeCat.value = categories.value.find(c => c.id === activeItem.value.category_id) || null
   window.scrollTo({ top: 0, behavior: 'smooth' })
